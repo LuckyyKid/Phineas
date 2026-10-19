@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Phineas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/phineas.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/mascot.css" asp-append-version="true" />
+</head>
+<body class="auth-body">
+    <div class="auth-shell">
+        <section class="auth-aside d-none d-lg-flex">
+            <div>
+                <a class="brand brand-lg" asp-controller="Home" asp-action="Index"><span class="brand-mark">P</span><span>Phineas</span></a>
+                <h2 class="mt-5">Toutes les opérations de la concession, au même endroit.</h2>
+                <ul class="auth-points">
+                    <li><i class="bi bi-qr-code-scan"></i>Suivi des véhicules par code QR</li>
+                    <li><i class="bi bi-broadcast"></i>Tableau de bord en temps réel</li>
+                    <li><i class="bi bi-shield-lock"></i>Dossiers financiers protégés et audités</li>
+                    <li><i class="bi bi-stars"></i>Annonces générées par IA</li>
+                </ul>
+            </div>
+            <p class="small opacity-75 mb-0">Conforme à la Loi 25 sur la protection des renseignements personnels.</p>
+        </section>
+
+        <section class="auth-main">
+            <div class="mb-4">
+                <a class="auth-back" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark d-lg-none">P</span>
+                    <span class="d-lg-none fw-bold text-body">Phineas</span>
+                    <span class="d-none d-lg-inline"><i class="bi bi-arrow-left me-1"></i>Retour à l'accueil</span>
+                </a>
+            </div>
+            <div class="auth-card">
+                @RenderBody()
+            </div>
+        </section>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/mascot.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,4 +1,3 @@
-# Build output
 [Bb]in/
 [Oo]bj/
 [Dd]ebug/
@@ -9,13 +8,11 @@ artifacts/
 publish/
 *.pubxml
 
-# NuGet
 *.nupkg
 *.snupkg
 **/[Pp]ackages/*
 .nuget/
 
-# ASP.NET / .NET temp files
 *.tmp
 *.temp
 *.cache
@@ -30,7 +27,6 @@ TestResults/
 *.db-wal
 node_modules/
 
-# Visual Studio
 .vs/
 *.suo
 *.user
@@ -39,30 +35,24 @@ node_modules/
 *.DotSettings.user
 _ReSharper*/
 
-# Rider
 .idea/
 *.sln.iml
 
-# VS Code
 .vscode/
 
-# macOS
 .DS_Store
 ._*
 .Spotlight-V100
 .Trashes
 
-# Windows
 Thumbs.db
 Desktop.ini
 
-# Editor leftovers
 *.swp
 *~
 *.bak
 *.orig
 
-# Secrets
 .env
 .env.*
 *.pfx
