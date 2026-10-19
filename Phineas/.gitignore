@@ -1,0 +1,68 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+publish/
+*.pubxml
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+.nuget/
+
+# ASP.NET / .NET temp files
+*.tmp
+*.temp
+*.cache
+*.log
+*.pdb
+*.binlog
+ScaffoldingReadMe.txt
+TestResults/
+*.mdf
+*.ldf
+*.db-shm
+*.db-wal
+node_modules/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.DotSettings.user
+_ReSharper*/
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor leftovers
+*.swp
+*~
+*.bak
+*.orig
+
+# Secrets
+.env
+.env.*
+*.pfx

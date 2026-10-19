@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Phineas", "Phineas\Phineas.csproj", "{87A01092-8F7F-4E46-8B36-89D5D9878456}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87A01092-8F7F-4E46-8B36-89D5D9878456}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87A01092-8F7F-4E46-8B36-89D5D9878456}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87A01092-8F7F-4E46-8B36-89D5D9878456}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87A01092-8F7F-4E46-8B36-89D5D9878456}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,179 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Phineas · Gestion des opérations en concession automobile";
+
+    var features = new[]
+    {
+        (Icon: "bi-car-front", Title: "Inventaire centralisé", Text: "Tous les véhicules, leurs caractéristiques et leur prix au même endroit, avec recherche et filtres."),
+        (Icon: "bi-qr-code-scan", Title: "Suivi par code QR", Text: "Chaque véhicule reçoit un QR unique. Un scan au téléphone suffit pour le localiser ou changer son statut."),
+        (Icon: "bi-broadcast", Title: "Tableau de bord en direct", Text: "Inspection terminée? Nettoyage en cours? Toute l'équipe le voit à l'instant, sans recharger la page."),
+        (Icon: "bi-folder2-open", Title: "Dossiers de financement", Text: "Du brouillon à l'approbation par le directeur, avec versement estimé et pièces justificatives."),
+        (Icon: "bi-file-earmark-lock", Title: "Documents sécurisés", Text: "Fichiers vérifiés, associés aux bons dossiers, réservés aux bons rôles, et chaque accès est tracé."),
+        (Icon: "bi-stars", Title: "Annonces générées par IA", Text: "Une description de vente rédigée en quelques secondes, en français, anglais ou espagnol, relue avant publication.")
+    };
+
+    var roles = new[]
+    {
+        (Icon: "bi-briefcase", Role: "Directeur des ventes / F&A", Text: "Supervise l'équipe et l'inventaire, approuve les dossiers et consulte les documents financiers."),
+        (Icon: "bi-person-vcard", Role: "Conseiller aux ventes", Text: "Crée les profils clients, monte les dossiers, téléverse les pièces et génère les annonces."),
+        (Icon: "bi-wrench-adjustable", Role: "Mécanicien / Préparateur", Text: "Scanne les véhicules et met à jour leur statut de préparation, directement depuis le terrain.")
+    };
+    
+    var preview = new[]
+    {
+        (Css: "s-InspectionEnCours", Icon: "bi-wrench-adjustable", Label: "Inspection en cours",
+         Cars: new[] { ("2022 Honda Civic", "STK-24102"), ("2023 Honda CR-V", "STK-24110") }),
+        (Css: "s-NettoyageEnCours", Icon: "bi-droplet", Label: "Nettoyage en cours",
+         Cars: new[] { ("2021 Mazda CX-5", "STK-24103") }),
+        (Css: "s-PretPourVente", Icon: "bi-check2-circle", Label: "Prêt pour la vente",
+         Cars: new[] { ("2023 Toyota RAV4", "STK-24101"), ("2020 Ford F-150", "STK-24105") })
+    };
+}
+
+<section class="hero">
+    <div class="public-container">
+        <div class="row align-items-center g-4 g-lg-5">
+            <div class="col-lg-6">
+                <span class="hero-eyebrow"><i class="bi bi-buildings me-1"></i>Pour les concessions automobiles</span>
+                <h1 class="hero-title">Toute votre concession, en temps réel.</h1>
+                <p class="hero-lead">Phineas réunit l'inventaire, le suivi des véhicules sur le terrain, les dossiers de financement et le marketing dans une seule application, simple et sécurisée.</p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <a class="btn btn-accent btn-lg" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right me-2"></i>Se connecter</a>
+                    <a class="btn btn-outline-light btn-lg" href="#fonctionnalites">Découvrir les fonctionnalités</a>
+                </div>
+                <ul class="hero-points">
+                    <li><i class="bi bi-check2"></i>Français, anglais et espagnol</li>
+                    <li><i class="bi bi-check2"></i>Web et mobile</li>
+                    <li><i class="bi bi-check2"></i>Conforme à la Loi 25</li>
+                </ul>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-preview" aria-hidden="true">
+                    <div class="hero-preview-bar">
+                        <span></span><span></span><span></span>
+                        <div class="ms-auto live-badge" data-state="online"><i class="bi bi-broadcast"></i><span>En direct</span></div>
+                    </div>
+                    <div class="hero-preview-board">
+                        @foreach (var col in preview)
+                        {
+                            <div class="board-col">
+                                <header><span class="status-pill @col.Css"><i class="bi @col.Icon"></i>@col.Label</span></header>
+                                <div class="board-cards">
+                                    @foreach (var (title, stock) in col.Cars)
+                                    {
+                                        <div class="vcard @col.Css"><strong>@title</strong><span class="vcard-meta">@stock</span></div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="hero-preview-toast">
+                        <i class="bi bi-qr-code-scan"></i>
+                        <div><strong>2021 Mazda CX-5</strong><span>Inspection terminée → Nettoyage en cours</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="boulon-road" data-boulon-road aria-hidden="true"></div>
+    </div>
+</section>
+
+<section class="public-section" id="fonctionnalites">
+    <div class="public-container">
+        <div class="section-head">
+            <h2>Tout ce dont l'équipe a besoin, rien de superflu</h2>
+            <p>Moins de temps à chercher un véhicule ou un dossier, plus de temps avec les clients.</p>
+        </div>
+        <div class="row g-4">
+            @foreach (var f in features)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <span class="feature-icon"><i class="bi @f.Icon"></i></span>
+                        <h3>@f.Title</h3>
+                        <p>@f.Text</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="public-section public-section-alt" id="fonctionnement">
+    <div class="public-container">
+        <div class="section-head">
+            <h2>Du stationnement au tableau de bord en trois gestes</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="step"><span class="step-num">1</span><h3>Ajoutez le véhicule</h3><p>Ses caractéristiques sont saisies une fois; son code QR unique est généré automatiquement, prêt à imprimer.</p></div>
+            </div>
+            <div class="col-md-4">
+                <div class="step"><span class="step-num">2</span><h3>Scannez sur le terrain</h3><p>Le mécanicien scanne le QR avec son téléphone et indique la nouvelle étape : inspection, nettoyage, prêt pour la vente.</p></div>
+            </div>
+            <div class="col-md-4">
+                <div class="step"><span class="step-num">3</span><h3>Toute l'équipe est à jour</h3><p>Le tableau de bord de chaque personne connectée se met à jour instantanément, et l'historique garde la trace.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="public-section">
+    <div class="public-container">
+        <div class="section-head">
+            <h2>Chacun voit ce dont il a besoin</h2>
+            <p>Les accès sont définis par rôle : un mécanicien n'a jamais accès aux données financières.</p>
+        </div>
+        <div class="row g-4">
+            @foreach (var r in roles)
+            {
+                <div class="col-md-4">
+                    <div class="role-card">
+                        <i class="bi @r.Icon"></i>
+                        <h3>@r.Role</h3>
+                        <p>@r.Text</p>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="tenant-band mt-4">
+            <i class="bi bi-diagram-3"></i>
+            <div>
+                <strong>Une plateforme, plusieurs concessions.</strong>
+                Chaque concession dispose de son propre espace : son personnel, ses véhicules et ses clients ne sont jamais visibles par une autre.
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="public-section public-section-dark" id="securite">
+    <div class="public-container">
+        <div class="row g-4 g-lg-5 align-items-center">
+            <div class="col-lg-5">
+                <h2>La sécurité des données clients, prise au sérieux</h2>
+                <p class="opacity-75">Les dossiers de financement contiennent des renseignements sensibles. Phineas les protège à chaque étape.</p>
+            </div>
+            <div class="col-lg-7">
+                <div class="row g-3">
+                    <div class="col-sm-6"><div class="sec-item"><i class="bi bi-shield-lock"></i><div><strong>Authentification à deux facteurs</strong><span>Obligatoire pour les rôles ayant accès aux finances.</span></div></div></div>
+                    <div class="col-sm-6"><div class="sec-item"><i class="bi bi-people"></i><div><strong>Accès selon le rôle</strong><span>Chacun n'ouvre que ce que son travail exige.</span></div></div></div>
+                    <div class="col-sm-6"><div class="sec-item"><i class="bi bi-journal-check"></i><div><strong>Piste d'audit</strong><span>Qui a consulté quel document, et quand.</span></div></div></div>
+                    <div class="col-sm-6"><div class="sec-item"><i class="bi bi-file-earmark-check"></i><div><strong>Loi 25</strong><span>Consentement, minimisation et droit à l'effacement.</span></div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="public-section">
+    <div class="public-container">
+        <div class="cta-band">
+            <div>
+                <h2>Prêt à commencer votre journée?</h2>
+                <p class="mb-0">Connectez-vous avec le compte fourni par votre directeur ou par l'administrateur de la plateforme.</p>
+            </div>
+            <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right me-2"></i>Se connecter</a>
+        </div>
+    </div>
+</section>

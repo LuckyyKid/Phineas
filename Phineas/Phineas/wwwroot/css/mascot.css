@@ -1,0 +1,459 @@
+.b-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: boulon-blink 4.5s infinite;
+}
+@keyframes boulon-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.12);
+  }
+}
+
+.spin {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.moving .spin {
+  animation: boulon-spin 0.5s linear infinite;
+}
+@keyframes boulon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.moving .car-bounce {
+  animation: boulon-bounce 0.32s ease-in-out infinite alternate;
+}
+@keyframes boulon-bounce {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2.5px);
+  }
+}
+
+.puff {
+  fill: #cbd5e1;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.moving .puff {
+  animation: boulon-puff 1.2s ease-out infinite;
+}
+.moving .puff:nth-child(2) {
+  animation-delay: 0.4s;
+}
+.moving .puff:nth-child(3) {
+  animation-delay: 0.8s;
+}
+@keyframes boulon-puff {
+  0% {
+    opacity: 0.8;
+    transform: translate(0, 0) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-22px, -10px) scale(1.8);
+  }
+}
+
+.b-arm {
+  transform-origin: 88px 106px;
+}
+.waving .b-arm,
+.boulon-dock.is-out .b-arm {
+  animation: boulon-wave 1.1s ease-in-out infinite;
+}
+@keyframes boulon-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(-22deg);
+  }
+}
+
+.boulon-dock {
+  position: fixed;
+  right: 16px;
+  bottom: 0;
+  z-index: 1040;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+.boulon-btn {
+  pointer-events: auto;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  width: 88px;
+  height: 101px;
+  display: block;
+  transform: translateY(50%);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.18));
+}
+.boulon-btn:hover {
+  transform: translateY(40%);
+}
+body[data-boulon-dock] .app-footer {
+  padding-right: 120px;
+}
+.boulon-btn:focus-visible {
+  outline: 3px solid var(--ph-accent, #f5a524);
+  outline-offset: 4px;
+  border-radius: 16px;
+}
+.boulon-btn .boulon-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.boulon-dock.is-out .boulon-btn {
+  transform: translateY(3%);
+}
+.boulon-dock.is-away .boulon-btn {
+  transform: translateY(115%);
+}
+.boulon-btn.jump {
+  animation: boulon-jump 0.55s ease;
+}
+@keyframes boulon-jump {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 -16px;
+  }
+  70% {
+    translate: 0 2px;
+  }
+}
+
+.boulon-bubble {
+  pointer-events: auto;
+  position: relative;
+  max-width: 270px;
+  margin-bottom: 64px;
+  padding: 12px 30px 10px 14px;
+  background: #fff;
+  color: var(--ph-ink, #0f172a);
+  border: 1px solid var(--ph-border, #e3e8ef);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.96);
+  transform-origin: bottom right;
+  transition:
+    opacity 0.2s,
+    transform 0.25s,
+    visibility 0s 0.25s;
+}
+.boulon-bubble::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  bottom: 18px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-right: 1px solid var(--ph-border, #e3e8ef);
+  border-top: 1px solid var(--ph-border, #e3e8ef);
+  transform: rotate(45deg);
+}
+.boulon-dock.is-out .boulon-bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.2s,
+    transform 0.25s;
+}
+.boulon-bubble-text {
+  margin: 0;
+}
+.boulon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+.boulon-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ph-primary, #2457d6);
+}
+.boulon-link:hover {
+  text-decoration: underline;
+}
+.boulon-x {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  border: 0;
+  background: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--ph-muted, #64748b);
+  padding: 2px 4px;
+}
+
+.boulon-lane {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 110px;
+  pointer-events: none;
+  z-index: 1041;
+  overflow: hidden;
+}
+.boulon-rig {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  will-change: transform;
+}
+.boulon-car {
+  width: 190px;
+  flex-shrink: 0;
+}
+.boulon-car-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+.boulon-flag {
+  position: relative;
+  margin: 0 14px 44px 0;
+  padding: 5px 12px;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--ph-accent, #f5a524);
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+}
+.boulon-flag::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  width: 14px;
+  height: 2px;
+  background: #0f172a;
+}
+
+.boulon-road {
+  position: relative;
+  height: 96px;
+  margin-top: 2.5rem;
+  overflow: hidden;
+}
+.boulon-road::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+}
+.boulon-road::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.35) 0 18px,
+    transparent 18px 36px
+  );
+}
+.boulon-road .boulon-rig {
+  bottom: 6px;
+  z-index: 1;
+  cursor: pointer;
+}
+.boulon-road .boulon-car {
+  width: 150px;
+}
+.boulon-honk {
+  position: absolute;
+  left: 70%;
+  top: -6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.8);
+  pointer-events: none;
+}
+.boulon-honk.show {
+  animation: boulon-honk 1.1s ease forwards;
+}
+@keyframes boulon-honk {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
+  }
+  15%,
+  70% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(1);
+  }
+}
+
+.boulon-hello {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+.boulon-mini {
+  width: 62px;
+  flex-shrink: 0;
+}
+.boulon-mini .boulon-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.boulon-mini.sad {
+  animation: boulon-shake 0.5s ease 2;
+}
+.boulon-mini.sad .b-mouth {
+  d: path("M50 87 Q60 81 70 87");
+}
+@keyframes boulon-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px) rotate(-3deg);
+  }
+  75% {
+    transform: translateX(5px) rotate(3deg);
+  }
+}
+.boulon-say {
+  position: relative;
+  margin-bottom: 28px;
+  padding: 8px 12px;
+  background: var(--ph-primary-50, #eaf0fd);
+  color: var(--ph-ink, #0f172a);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.boulon-say::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  bottom: 12px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.boulon-flat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.boulon-flat .boulon-car {
+  width: 210px;
+}
+.boulon-flat .boulon-car-svg {
+  transform: rotate(-3deg);
+}
+.boulon-flat .rear {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transform: translateY(5px) scaleY(0.7);
+}
+.boulon-say-up {
+  margin-bottom: 8px;
+}
+.boulon-say-up::before {
+  left: 50%;
+  bottom: -6px;
+  margin-left: -6px;
+}
+
+@media (max-width: 575.98px) {
+  .boulon-dock {
+    right: 8px;
+  }
+  .boulon-btn {
+    width: 70px;
+    height: 80px;
+  }
+  .boulon-bubble {
+    max-width: calc(100vw - 100px);
+    margin-bottom: 50px;
+  }
+  .boulon-car {
+    width: 150px;
+  }
+  .boulon-flag {
+    max-width: 46vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .b-eyes,
+  .moving .spin,
+  .moving .car-bounce,
+  .moving .puff,
+  .waving .b-arm,
+  .boulon-dock.is-out .b-arm,
+  .boulon-mini.sad,
+  .boulon-btn.jump {
+    animation: none !important;
+  }
+  .boulon-btn,
+  .boulon-bubble {
+    transition: none;
+  }
+}
