@@ -245,6 +245,34 @@ namespace Phineas.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.CodeQR", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DateGeneration")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("Jeton")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("VehiculeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Jeton")
+                        .IsUnique();
+
+                    b.HasIndex("VehiculeId")
+                        .IsUnique();
+
+                    b.ToTable("CodesQR");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.Dealership", b =>
                 {
                     b.Property<int>("Id")
@@ -270,6 +298,125 @@ namespace Phineas.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Dealerships");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.HistoriqueStatut", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AncienStatut")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("Commentaire")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime>("DateHeure")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NouveauStatut")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("UtilisateurId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("VehiculeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilisateurId");
+
+                    b.HasIndex("VehiculeId");
+
+                    b.ToTable("HistoriquesStatut");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Annee")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Carburant")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Carrosserie")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Couleur")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("DateAjout")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DealershipId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Emplacement")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("Kilometrage")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Marque")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Modele")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NIV")
+                        .IsRequired()
+                        .HasMaxLength(17)
+                        .HasColumnType("varchar(17)");
+
+                    b.Property<string>("NumeroStock")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<decimal>("PrixDemande")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("StatutActuel")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("Transmission")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DealershipId", "NIV")
+                        .IsUnique();
+
+                    b.HasIndex("DealershipId", "NumeroStock")
+                        .IsUnique();
+
+                    b.ToTable("Vehicules");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -333,9 +480,57 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Dealership");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.CodeQR", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.Vehicule", "Vehicule")
+                        .WithOne("CodeQR")
+                        .HasForeignKey("Phineas.Models.Entities.CodeQR", "VehiculeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Vehicule");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.HistoriqueStatut", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.ApplicationUser", "Utilisateur")
+                        .WithMany()
+                        .HasForeignKey("UtilisateurId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.Vehicule", "Vehicule")
+                        .WithMany("Historique")
+                        .HasForeignKey("VehiculeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Utilisateur");
+
+                    b.Navigation("Vehicule");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.Dealership", "Dealership")
+                        .WithMany()
+                        .HasForeignKey("DealershipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Dealership");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.Dealership", b =>
                 {
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
+                {
+                    b.Navigation("CodeQR");
+
+                    b.Navigation("Historique");
                 });
 #pragma warning restore 612, 618
         }
