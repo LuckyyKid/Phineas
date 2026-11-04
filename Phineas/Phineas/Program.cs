@@ -5,6 +5,7 @@ using Phineas.Data;
 using Phineas.Data.Seed;
 using Phineas.Models.Entities;
 using Phineas.Services.Account;
+using Phineas.Services.Vehicules;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ var connectionString =
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 0)))
 );
+
+builder.Services.AddScoped<IServiceStatut, ServiceStatut>();
 
 builder
     .Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
