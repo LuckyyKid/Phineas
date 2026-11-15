@@ -1,0 +1,79 @@
+@model ConcessionDetailsViewModel
+@{
+    var c = Model.Concession;
+    ViewData["Title"] = c.Nom;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Concessions</a></li>
+        <li class="breadcrumb-item active">@c.Nom</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <h1 class="h3 mb-0 d-flex align-items-center gap-2">
+        @c.Nom
+        @if (c.EstActive)
+        {
+            <span class="badge text-bg-success fs-6">Active</span>
+        }
+        else
+        {
+            <span class="badge text-bg-secondary fs-6">Suspendue</span>
+        }
+    </h1>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Modifier" asp-route-id="@c.Id"><i class="bi bi-pencil me-1"></i>Modifier</a>
+        <form asp-action="BasculerActivation" asp-route-id="@c.Id" method="post"
+              onsubmit="@(c.EstActive ? "return confirm('Suspendre cette concession? Tout son personnel sera déconnecté.');" : "")">
+            @if (c.EstActive)
+            {
+                <button type="submit" class="btn btn-outline-warning"><i class="bi bi-pause-circle me-1"></i>Suspendre</button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-outline-success"><i class="bi bi-play-circle me-1"></i>Réactiver</button>
+            }
+        </form>
+        <a class="btn btn-outline-danger" asp-action="Supprimer" asp-route-id="@c.Id"><i class="bi bi-trash me-1"></i>Supprimer</a>
+    </div>
+</div>
+
+<partial name="_Alertes" />
+
+@if (!c.EstActive)
+{
+    <div class="alert alert-secondary"><i class="bi bi-info-circle me-1"></i>Cette concession est suspendue : son personnel ne peut pas se connecter.</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card h-100"><div class="card-body">
+            <div class="small text-muted">Personnel</div>
+            <div class="fs-3 fw-bold">@c.NbEmployes</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card h-100"><div class="card-body">
+            <div class="small text-muted">Véhicules</div>
+            <div class="fs-3 fw-bold">@c.NbVehicules</div>
+        </div></div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card h-100"><div class="card-body">
+            <div class="small text-muted">Directeur</div>
+            <div class="fw-semibold mt-2">@(c.NomDirecteur ?? "Aucun pour l'instant")</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-people me-2"></i>Personnel</span>
+        <a class="btn btn-primary btn-sm" asp-controller="Utilisateurs" asp-action="Creer" asp-route-dealershipId="@c.Id">
+            <i class="bi bi-person-plus me-1"></i>Ajouter une personne
+        </a>
+    </div>
+    <partial name="_TableUtilisateurs" model="Model.Employes" />
+</div>

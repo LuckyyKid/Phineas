@@ -49,13 +49,10 @@ public class Vehicule
 
     public DateTime DateAjout { get; set; } = DateTime.UtcNow;
 
-    // Clé étrangère et relation vers Dealership
     public int DealershipId { get; set; }
     public Dealership? Dealership { get; set; }
 
-    // Relation 1 à 1 optionnelle avec CodeQR
     public CodeQR? CodeQR { get; set; }
 
-    // Collection pour l'historique des statuts
     public ICollection<HistoriqueStatut> Historique { get; set; } = new List<HistoriqueStatut>();
 }

@@ -9,5 +9,5 @@ public enum StatutVehicule
     PretPourVente,
     Reserve,
     Vendu,
-    Livre
+    Livre,
 }

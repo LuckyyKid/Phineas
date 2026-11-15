@@ -1,0 +1,34 @@
+@model UtilisateursIndexViewModel
+@{ ViewData["Title"] = "Personnel"; }
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <div>
+        <h1 class="h3 mb-0">Personnel</h1>
+        <div class="text-muted">Tous les comptes de la plateforme.</div>
+    </div>
+    <a class="btn btn-primary" asp-action="Creer" asp-route-dealershipId="@Model.DealershipId"><i class="bi bi-person-plus me-1"></i>Ajouter une personne</a>
+</div>
+
+<partial name="_Alertes" />
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-md-6">
+        <input type="search" name="q" value="@Model.Recherche" class="form-control" placeholder="Rechercher un nom ou un courriel" />
+    </div>
+    <div class="col-md-4">
+        <select name="dealershipId" class="form-select">
+            <option value="">Toutes les concessions</option>
+            @foreach (var c in Model.Concessions)
+            {
+                <option value="@c.Value" selected="@(c.Value == Model.DealershipId?.ToString())">@c.Text</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
+    </div>
+</form>
+
+<div class="card">
+    <partial name="_TableUtilisateurs" model="Model.Utilisateurs" view-data='new ViewDataDictionary(ViewData) { ["AfficherConcession"] = true }' />
+</div>
