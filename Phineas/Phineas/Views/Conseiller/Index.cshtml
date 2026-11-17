@@ -22,7 +22,7 @@
         </div>
     </div>
     <div class="sv-quick" role="group" aria-label="Actions rapides">
-        <button type="button" class="btn btn-primary btn-sm" data-bientot="La création de prospects arrive dans une prochaine version."><i class="bi bi-person-plus me-1"></i>Nouveau prospect</button>
+        <a class="btn btn-primary btn-sm" asp-controller="Prospects" asp-action="Index" asp-route-nouveau="true"><i class="bi bi-person-plus me-1"></i>Nouveau prospect</a>
         <button type="button" class="btn btn-outline-primary btn-sm" data-bientot="La planification des rendez-vous arrive dans une prochaine version."><i class="bi bi-calendar-plus me-1"></i>Rendez-vous</button>
         <button type="button" class="btn btn-outline-primary btn-sm" data-bientot="Les soumissions arrivent dans une prochaine version."><i class="bi bi-file-earmark-plus me-1"></i>Soumission</button>
     </div>
@@ -75,7 +75,7 @@
                         data-id="@a.Id" data-urgence="@a.Urgence.ToString().ToLowerInvariant()" data-aujourdhui="@(a.EcheanceAujourdhui ? "1" : "0")">
                         <div class="sv-prio-top">
                             <div class="sv-prio-who">
-                                <strong>@a.Prospect</strong>
+                                <a class="sv-lien-fiche" asp-controller="Prospects" asp-action="Fiche" asp-route-id="@a.ProspectId"><strong>@a.Prospect</strong></a>
                                 <span class="sv-prio-vehicule"><i class="bi bi-car-front"></i>@a.Vehicule</span>
                             </div>
                             <div class="sv-prio-tags">
@@ -125,7 +125,7 @@
                             <div class="sv-rdv @(passe ? "is-past" : "")">
                                 <time class="sv-rdv-time" datetime="@r.Debut.ToString("s")">@FormatVente.Heure(r.Debut)</time>
                                 <div class="sv-rdv-info">
-                                    <strong>@r.Client</strong>
+                                    <a class="sv-lien-fiche" asp-controller="Prospects" asp-action="Fiche" asp-route-id="@r.ProspectId"><strong>@r.Client</strong></a>
                                     <span>@r.Vehicule</span>
                                     <span class="sv-rdv-meta">
                                         <span class="badge-soft">@FormatVente.Libelle(r.Type)</span>

@@ -64,6 +64,7 @@ builder.Services.AddScoped<IServiceUtilisateurs, ServiceUtilisateurs>();
 builder.Services.AddScoped<IServiceConcessions, ServiceConcessions>();
 // Données fictives (phase frontend vendeur) : remplacer par l'implémentation réelle.
 builder.Services.AddScoped<IServiceTableauBordConseiller, ServiceTableauBordDemo>();
+builder.Services.AddScoped<IServiceProspects, ServiceProspectsDemo>();
 
 builder.Services.AddControllersWithViews();
 

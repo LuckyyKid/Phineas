@@ -17,16 +17,7 @@ public static class NavigationVendeur
     public static readonly IReadOnlyList<EntreeNavigation> Menu =
     [
         new("Tableau de bord", "bi-speedometer2", "Conseiller", "Index"),
-        new(
-            "Clients",
-            "bi-people",
-            Enfants:
-            [
-                new("Prospects et opportunités", "bi-person-lines-fill"),
-                new("Suivis", "bi-arrow-repeat"),
-                new("Référencement", "bi-share"),
-            ]
-        ),
+        new("Prospects", "bi-person-lines-fill", "Prospects", "Index"),
         new("Rendez-vous", "bi-calendar-event"),
         new(
             "Ventes",
@@ -43,7 +34,9 @@ public static class NavigationVendeur
             "bi-grid",
             Enfants:
             [
+                new("Suivis", "bi-arrow-repeat"),
                 new("Assistant vendeur", "bi-stars"),
+                new("Référencement", "bi-share"),
                 new("Statistiques", "bi-bar-chart-line"),
             ]
         ),

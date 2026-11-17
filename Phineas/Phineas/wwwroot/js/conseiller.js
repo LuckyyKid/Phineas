@@ -18,6 +18,9 @@
     toast.show();
   }
 
+  // Partagé avec les autres pages de l'espace vendeur (ex. prospects).
+  window.SalesOS = { notifier: notifier };
+
   if (annulerBtn) {
     annulerBtn.addEventListener("click", function () {
       if (annulerAction) annulerAction();

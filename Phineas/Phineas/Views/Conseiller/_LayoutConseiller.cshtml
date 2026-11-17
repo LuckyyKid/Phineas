@@ -2,12 +2,13 @@
 @{
     Layout = "_Layout";
     var controleur = ViewContext.RouteData.Values["controller"]?.ToString();
-    var action = ViewContext.RouteData.Values["action"]?.ToString();
-    bool EstActive(EntreeNavigation e) => e.Controleur == controleur && e.Action == action;
+    // Une section reste active sur toutes ses pages (ex. liste et fiche des prospects).
+    bool EstActive(EntreeNavigation e) => e.Controleur is not null && e.Controleur == controleur;
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/conseiller.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 }
 
 <nav class="sv-nav" aria-label="Navigation de l'espace vendeur">

@@ -5,6 +5,7 @@ namespace Phineas.Models.ViewModels.Conseiller;
 public enum EtapeVente
 {
     Nouveau,
+    AQualifier,
     Qualifie,
     Soumission,
     EssaiRoutier,
@@ -49,6 +50,7 @@ public record Indicateur(string Libelle, int Valeur, string Detail, string Icone
 
 public record ActionPrioritaire(
     int Id,
+    string ProspectId,
     string Prospect,
     string Vehicule,
     string Evenement,
@@ -61,7 +63,7 @@ public record ActionPrioritaire(
     bool EcheanceAujourdhui
 );
 
-public record RendezVousResume(DateTime Debut, string Client, string Vehicule, TypeVisite Type, bool Confirme);
+public record RendezVousResume(DateTime Debut, string ProspectId, string Client, string Vehicule, TypeVisite Type, bool Confirme);
 
 public record EtapePipeline(EtapeVente Etape, int Nombre, decimal Valeur);
 
@@ -126,6 +128,7 @@ public static class FormatVente
         etape switch
         {
             EtapeVente.Nouveau => "Nouveau",
+            EtapeVente.AQualifier => "À qualifier",
             EtapeVente.Qualifie => "Qualifié",
             EtapeVente.Soumission => "Soumission",
             EtapeVente.EssaiRoutier => "Rendez-vous / essai",

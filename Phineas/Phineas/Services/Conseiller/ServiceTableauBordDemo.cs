@@ -15,27 +15,27 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
 
         var actions = new List<ActionPrioritaire>
         {
-            new(1, "Chloé Bouchard", "Toyota RAV4 Hybride XLE 2024",
+            new(1, IdsProspectsDemo.ChloeBouchard, "Chloé Bouchard", "Toyota RAV4 Hybride XLE 2024",
                 "Soumission envoyée, sans réponse", maintenant.AddDays(-3),
                 "La soumission expire demain", "Relancer par téléphone", "bi-telephone",
                 EtapeVente.Soumission, Urgence.Critique, true),
-            new(2, "Vincent Morin", "Honda Civic Touring 2023",
+            new(2, IdsProspectsDemo.VincentMorin, "Vincent Morin", "Honda Civic Touring 2023",
                 "Financement : preuve de revenu manquante", maintenant.AddDays(-2),
                 "Dossier bloqué depuis 2 jours, signature prévue demain", "Demander la pièce manquante", "bi-file-earmark-arrow-up",
                 EtapeVente.Finalisation, Urgence.Critique, true),
-            new(3, "Inès Benali", "Mazda CX-5 GT 2022",
+            new(3, IdsProspectsDemo.InesBenali, "Inès Benali", "Mazda CX-5 GT 2022",
                 "Nouvelle demande reçue par le site Web", maintenant.AddMinutes(-40),
                 "Objectif de première réponse : moins d'une heure", "Appeler la prospecte", "bi-telephone",
                 EtapeVente.Nouveau, Urgence.Haute, true),
-            new(4, "Karim Benjelloun", "Subaru Outback Touring 2022",
+            new(4, IdsProspectsDemo.KarimBenjelloun, "Karim Benjelloun", "Subaru Outback Touring 2022",
                 "Contre-offre reçue", maintenant.AddHours(-5),
                 "Écart de 1 200 $ avec le prix affiché", "Préparer une réponse", "bi-chat-left-text",
                 EtapeVente.Negociation, Urgence.Haute, true),
-            new(5, "Julien Côté", "Ford F-150 XLT 2021",
+            new(5, IdsProspectsDemo.JulienCote, "Julien Côté", "Ford F-150 XLT 2021",
                 "Essai routier effectué", maintenant.AddDays(-1),
                 "Intérêt élevé, aucune suite planifiée", "Envoyer une soumission", "bi-file-earmark-text",
                 EtapeVente.EssaiRoutier, Urgence.Haute, false),
-            new(6, "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024",
+            new(6, IdsProspectsDemo.CamilleLavoie, "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024",
                 "Véhicule recherché maintenant disponible", maintenant.AddHours(-1),
                 "Correspond à ses critères (VÉ, TI, moins de 50 000 $)", "Informer la cliente", "bi-envelope",
                 EtapeVente.Qualifie, Urgence.Normale, false),
@@ -43,11 +43,11 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
 
         var rendezVous = new List<RendezVousResume>
         {
-            new(aujourdhui.AddHours(10).AddMinutes(30), "Isabelle Fortin", "Kia Sorento LX 2023", TypeVisite.EssaiRoutier, true),
-            new(aujourdhui.AddHours(14), "Karim Benjelloun", "Subaru Outback Touring 2022", TypeVisite.Negociation, true),
-            new(aujourdhui.AddHours(16).AddMinutes(30), "Olivier Pelletier", "Chevrolet Equinox LT 2022", TypeVisite.Presentation, false),
-            new(aujourdhui.AddDays(1).AddHours(9).AddMinutes(30), "Vincent Morin", "Honda Civic Touring 2023", TypeVisite.Signature, false),
-            new(aujourdhui.AddDays(2).AddHours(11), "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024", TypeVisite.EssaiRoutier, true),
+            new(aujourdhui.AddHours(10).AddMinutes(30), IdsProspectsDemo.IsabelleFortin, "Isabelle Fortin", "Kia Sorento LX 2023", TypeVisite.EssaiRoutier, true),
+            new(aujourdhui.AddHours(14), IdsProspectsDemo.KarimBenjelloun, "Karim Benjelloun", "Subaru Outback Touring 2022", TypeVisite.Negociation, true),
+            new(aujourdhui.AddHours(16).AddMinutes(30), IdsProspectsDemo.OlivierPelletier, "Olivier Pelletier", "Chevrolet Equinox LT 2022", TypeVisite.Presentation, false),
+            new(aujourdhui.AddDays(1).AddHours(9).AddMinutes(30), IdsProspectsDemo.VincentMorin, "Vincent Morin", "Honda Civic Touring 2023", TypeVisite.Signature, false),
+            new(aujourdhui.AddDays(2).AddHours(11), IdsProspectsDemo.CamilleLavoie, "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024", TypeVisite.EssaiRoutier, true),
         };
 
         var pipeline = new List<EtapePipeline>

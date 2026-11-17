@@ -1,0 +1,455 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model ProspectsPageViewModel
+@{
+    ViewData["Title"] = "Fiche prospect";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Prospects et opportunités</a>
+
+<partial name="_BandeauDemo" />
+
+<div class="pr-etat-vide card" id="fiche-introuvable" hidden>
+    <i class="bi bi-person-x"></i>
+    <strong>Prospect introuvable</strong>
+    <span>Ce prospect n'existe pas dans les données de démonstration de cet onglet (elles ont peut-être été réinitialisées).</span>
+    <a class="btn btn-sm btn-outline-primary" asp-action="Index">Retour aux prospects</a>
+</div>
+
+<div id="fiche" data-prospect-id="@Model.ProspectId" hidden>
+
+    <section class="card pr-fiche-tete" aria-labelledby="fiche-nom">
+        <div class="pr-fiche-identite">
+            <span class="avatar pr-avatar" data-champ="initiales"></span>
+            <div class="pr-fiche-titre">
+                <h1 id="fiche-nom" data-champ="nom"></h1>
+                <div class="pr-fiche-badges" data-champ="badges"></div>
+            </div>
+            <div class="pr-fiche-actions">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="modifier"><i class="bi bi-pencil me-1"></i>Modifier</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="note"><i class="bi bi-journal-plus me-1"></i>Ajouter une note</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="opportunite"><i class="bi bi-briefcase me-1"></i>Créer une opportunité</button>
+                <button type="button" class="btn btn-sm btn-primary" data-action="suivi"><i class="bi bi-alarm me-1"></i>Planifier un suivi</button>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-sm btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Plus</button>
+                    <ul class="dropdown-menu dropdown-menu-end sv-menu">
+                        <li><span class="dropdown-item disabled" aria-disabled="true"><i class="bi bi-file-earmark-text"></i>Créer une soumission<span class="sv-soon">Bientôt</span></span></li>
+                        <li><span class="dropdown-item disabled" aria-disabled="true"><i class="bi bi-calendar-plus"></i>Planifier un rendez-vous<span class="sv-soon">Bientôt</span></span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <dl class="pr-fiche-meta">
+            <div><dt>Conseiller</dt><dd data-champ="conseiller"></dd></div>
+            <div><dt>Provenance</dt><dd data-champ="source"></dd></div>
+            <div><dt>Coordonnées</dt><dd data-champ="coordonnees"></dd></div>
+            <div><dt>Dernière interaction</dt><dd data-champ="derniere"></dd></div>
+            <div class="pr-meta-large"><dt>Prochaine action</dt><dd data-champ="prochaine"></dd></div>
+        </dl>
+    </section>
+
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-apercu" data-bs-toggle="tab" data-bs-target="#panneau-apercu" type="button" role="tab" aria-controls="panneau-apercu" aria-selected="true">Vue d'ensemble</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-qualification" data-bs-toggle="tab" data-bs-target="#panneau-qualification" type="button" role="tab" aria-controls="panneau-qualification" aria-selected="false">Qualification</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-historique" data-bs-toggle="tab" data-bs-target="#panneau-historique" type="button" role="tab" aria-controls="panneau-historique" aria-selected="false">Historique <span class="pr-compte" data-champ="nb-interactions"></span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-opportunites" data-bs-toggle="tab" data-bs-target="#panneau-opportunites" type="button" role="tab" aria-controls="panneau-opportunites" aria-selected="false">Opportunités <span class="pr-compte" data-champ="nb-opportunites"></span></button></li>
+    </ul>
+
+    <div class="tab-content">
+
+        @* ---------- Vue d'ensemble ---------- *@
+        <div class="tab-pane fade show active" id="panneau-apercu" role="tabpanel" aria-labelledby="onglet-apercu" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-briefcase me-2"></i>Opportunités</span></div>
+                        <div data-zone="apercu-opportunites"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header">
+                            <span><i class="bi bi-clock-history me-2"></i>Dernières interactions</span>
+                            <button type="button" class="btn btn-sm btn-link p-0" data-aller-onglet="historique">Tout l'historique</button>
+                        </div>
+                        <div data-zone="apercu-interactions"></div>
+                    </section>
+                </div>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <section class="card" data-zone="apercu-resume"></section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-person-lines-fill me-2"></i>Contact</span></div>
+                        <dl class="pr-liste-def" data-zone="apercu-contact"></dl>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Qualification ---------- *@
+        <div class="tab-pane fade" id="panneau-qualification" role="tabpanel" aria-labelledby="onglet-qualification" tabindex="0">
+            <div class="pr-choix-opp" data-zone="choix-opportunite" role="group" aria-label="Opportunité à qualifier"></div>
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <form class="card" id="form-qualification" novalidate>
+                        <div class="card-header sv-card-header">
+                            <span><i class="bi bi-clipboard-check me-2"></i>Qualification de <span data-champ="titre-opp-qualif"></span></span>
+                            <span class="badge-soft">Propre à cette opportunité</span>
+                        </div>
+                        <div class="card-body">
+
+                            <fieldset class="pr-section">
+                                <legend><span class="pr-section-num">A</span>Besoin automobile</legend>
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-categorie">Catégorie</label>
+                                        <select class="form-select" id="q-categorie" name="categorie">
+                                            <option value="">Non précisée</option>
+                                            @foreach (var (cle, libelle) in ReferentielsVente.Categories)
+                                            {
+                                                <option value="@cle">@libelle</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <span class="form-label d-block" id="q-etat-label">Neuf ou occasion</span>
+                                        <div class="pr-segment" role="radiogroup" aria-labelledby="q-etat-label">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.Etats)
+                                            {
+                                                <input type="radio" class="btn-check" name="etat" id="q-etat-@cle" value="@cle" />
+                                                <label class="btn btn-sm" for="q-etat-@cle">@libelle</label>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-marques">Marques préférées</label>
+                                        <input class="form-control" id="q-marques" name="marques" maxlength="120" placeholder="Séparées par des virgules" />
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-modeles">Modèles envisagés</label>
+                                        <input class="form-control" id="q-modeles" name="modeles" maxlength="120" placeholder="Ex. : RAV4, CR-V" />
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-places">Nombre de places</label>
+                                        <select class="form-select" id="q-places" name="places">
+                                            <option value="">Non précisé</option>
+                                            <option value="2">2</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="7">7</option>
+                                            <option value="8">8 et plus</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-utilisation">Utilisation principale</label>
+                                        <select class="form-select" id="q-utilisation" name="utilisation">
+                                            <option value="">Non précisée</option>
+                                            @foreach (var (cle, libelle) in ReferentielsVente.Utilisations)
+                                            {
+                                                <option value="@cle">@libelle</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <span class="form-label d-block">Caractéristiques importantes</span>
+                                        <div class="pr-puces">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.Caracteristiques)
+                                            {
+                                                <input type="checkbox" class="btn-check" name="caracteristiques" id="q-car-@cle" value="@cle" />
+                                                <label class="sv-chip" for="q-car-@cle">@libelle</label>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="pr-section">
+                                <legend><span class="pr-section-num">B</span>Budget</legend>
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-budget-total">Budget d'achat total</label>
+                                        <div class="input-group has-validation">
+                                            <input class="form-control" id="q-budget-total" name="budgetTotal" type="number" min="0" max="500000" step="500" inputmode="numeric" />
+                                            <span class="input-group-text">$</span>
+                                            <div class="invalid-feedback">Montant entre 0 et 500 000 $.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-budget-mensuel">Budget mensuel souhaité</label>
+                                        <div class="input-group has-validation">
+                                            <input class="form-control" id="q-budget-mensuel" name="budgetMensuel" type="number" min="0" max="10000" step="25" inputmode="numeric" />
+                                            <span class="input-group-text">$ / mois</span>
+                                            <div class="invalid-feedback">Montant entre 0 et 10 000 $.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <span class="form-label d-block" id="q-mode-label">Mode d'achat envisagé</span>
+                                        <div class="pr-segment" role="radiogroup" aria-labelledby="q-mode-label">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.ModesAchat)
+                                            {
+                                                <input type="radio" class="btn-check" name="modeAchat" id="q-mode-@cle" value="@cle" />
+                                                <label class="btn btn-sm" for="q-mode-@cle">@libelle</label>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-mise">Mise de fonds envisagée</label>
+                                        <div class="input-group has-validation">
+                                            <input class="form-control" id="q-mise" name="miseDeFonds" type="number" min="0" max="500000" step="500" inputmode="numeric" />
+                                            <span class="input-group-text">$</span>
+                                            <div class="invalid-feedback">Montant entre 0 et 500 000 $.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <span class="form-label d-block" id="q-reprise-label">Véhicule à reprendre</span>
+                                        <div class="pr-segment" role="radiogroup" aria-labelledby="q-reprise-label">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.Reprises)
+                                            {
+                                                <input type="radio" class="btn-check" name="reprise" id="q-reprise-@cle" value="@cle" />
+                                                <label class="btn btn-sm" for="q-reprise-@cle">@libelle</label>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6" data-si-reprise>
+                                        <label class="form-label" for="q-reprise-detail">Véhicule repris</label>
+                                        <input class="form-control" id="q-reprise-detail" name="repriseDetail" maxlength="120" placeholder="Marque, modèle, année, kilométrage" />
+                                    </div>
+                                    <div class="col-12 form-text mt-1">
+                                        <i class="bi bi-info-circle me-1"></i>Montants indicatifs déclarés par le client. Ce n'est ni une approbation de crédit ni une offre de financement.
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="pr-section">
+                                <legend><span class="pr-section-num">C</span>Calendrier</legend>
+                                <div class="row g-3">
+                                    <div class="col-sm-8">
+                                        <span class="form-label d-block" id="q-horizon-label">Horizon d'achat</span>
+                                        <div class="pr-segment pr-segment-wrap" role="radiogroup" aria-labelledby="q-horizon-label">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.Horizons)
+                                            {
+                                                <input type="radio" class="btn-check" name="horizon" id="q-horizon-@cle" value="@cle" />
+                                                <label class="btn btn-sm" for="q-horizon-@cle">@libelle</label>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <label class="form-label" for="q-date-cible">Date précise <span class="text-muted fw-normal">(si connue)</span></label>
+                                        <input class="form-control" id="q-date-cible" name="dateCible" type="date" />
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="pr-section mb-0">
+                                <legend><span class="pr-section-num">D</span>Préférences relationnelles</legend>
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-contact-prefere">Moyen de communication préféré</label>
+                                        <select class="form-select" id="q-contact-prefere" name="contactPrefere">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.MoyensContact)
+                                            {
+                                                <option value="@cle">@libelle</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label" for="q-moment">Moment de contact souhaité</label>
+                                        <select class="form-select" id="q-moment" name="momentContact">
+                                            <option value="">Non précisé</option>
+                                            @foreach (var (cle, libelle) in ReferentielsVente.MomentsContact)
+                                            {
+                                                <option value="@cle">@libelle</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-12 form-text mt-1"><i class="bi bi-person me-1"></i>Ces deux préférences s'appliquent au contact, donc à toutes ses opportunités.</div>
+                                    <div class="col-12">
+                                        <span class="form-label d-block">Éléments importants pour sa décision</span>
+                                        <div class="pr-puces">
+                                            @foreach (var (cle, libelle) in ReferentielsVente.ElementsDecision)
+                                            {
+                                                <input type="checkbox" class="btn-check" name="elementsDecision" id="q-dec-@cle" value="@cle" />
+                                                <label class="sv-chip" for="q-dec-@cle">@libelle</label>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label" for="q-objections">Questions ou objections exprimées</label>
+                                        <textarea class="form-control" id="q-objections" name="objections" rows="2" maxlength="500" placeholder="Ce que le client a réellement exprimé."></textarea>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="pr-form-pied">
+                            <span class="pr-modifie" data-indicateur-modifie hidden><i class="bi bi-circle-fill"></i>Modifications non enregistrées</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-annuler-qualification>Annuler les changements</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Enregistrer la qualification</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-lg-4">
+                    <section class="card pr-resume-collant" data-zone="qualif-resume" aria-live="polite"></section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Historique ---------- *@
+        <div class="tab-pane fade" id="panneau-historique" role="tabpanel" aria-labelledby="onglet-historique" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-5 order-lg-2">
+                    <form class="card" id="form-note" novalidate>
+                        <div class="card-header sv-card-header"><span><i class="bi bi-journal-plus me-2"></i>Ajouter une note</span></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-sm-6 col-lg-12 col-xl-6">
+                                    <label class="form-label" for="n-type">Type</label>
+                                    <select class="form-select" id="n-type" name="type">
+                                        @foreach (var (cle, libelle) in ReferentielsVente.TypesNote)
+                                        {
+                                            <option value="@cle">@libelle</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-sm-6 col-lg-12 col-xl-6">
+                                    <label class="form-label" for="n-opp">Concerne</label>
+                                    <select class="form-select" id="n-opp" name="opportuniteId"></select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="n-resume">Résumé <span class="pr-requis">*</span></label>
+                                    <textarea class="form-control" id="n-resume" name="resume" rows="3" maxlength="600" required placeholder="Ex. : souhaite comparer avec un CR-V, préfère être contacté par courriel."></textarea>
+                                    <div class="invalid-feedback">Écrivez le résumé de l'échange.</div>
+                                    <div class="form-text">Notez les faits utiles à la vente. Évitez les informations personnelles sensibles.</div>
+                                </div>
+                                <div class="col-sm-7 col-lg-12 col-xl-7">
+                                    <label class="form-label" for="n-action">Prochaine action <span class="text-muted fw-normal">(facultatif)</span></label>
+                                    <input class="form-control" id="n-action" name="prochaineAction" maxlength="120" />
+                                </div>
+                                <div class="col-sm-5 col-lg-12 col-xl-5">
+                                    <label class="form-label" for="n-date">Pour le</label>
+                                    <input class="form-control" id="n-date" name="date" type="date" />
+                                    <div class="invalid-feedback" data-message-date>Indiquez une date à venir.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pr-form-pied">
+                            <button type="reset" class="btn btn-outline-secondary btn-sm">Effacer</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Ajouter la note</button>
+                        </div>
+                    </form>
+                    <p class="small text-muted mt-2 mb-0"><i class="bi bi-info-circle me-1"></i>Courriel, texto et WhatsApp ne sont pas encore connectés : notez un résumé de l'échange.</p>
+                </div>
+                <div class="col-lg-7 order-lg-1">
+                    <section class="card">
+                        <div class="card-header sv-card-header">
+                            <span><i class="bi bi-clock-history me-2"></i>Historique</span>
+                            <select class="form-select form-select-sm pr-select-compact" id="h-filtre" aria-label="Filtrer l'historique par opportunité"></select>
+                        </div>
+                        <ol class="pr-timeline" data-zone="timeline"></ol>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Opportunités ---------- *@
+        <div class="tab-pane fade" id="panneau-opportunites" role="tabpanel" aria-labelledby="onglet-opportunites" tabindex="0">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <p class="text-muted small mb-0">Chaque opportunité garde son propre besoin, son budget et son étape.</p>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="opportunite"><i class="bi bi-plus-lg me-1"></i>Nouvelle opportunité</button>
+            </div>
+            <div class="pr-opps" data-zone="opportunites"></div>
+        </div>
+    </div>
+</div>
+
+@* ---------- Planifier un suivi ---------- *@
+<div class="modal fade" id="modal-suivi" tabindex="-1" aria-labelledby="modal-suivi-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-suivi" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-suivi-titre">Planifier un suivi</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="s-opp">Opportunité <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="s-opp" name="opportuniteId" required></select>
+                        <div class="invalid-feedback">Aucune opportunité active : créez-en une d'abord.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="s-action">Action à faire <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="s-action" name="action" required maxlength="120" placeholder="Ex. : rappeler pour confirmer sa disponibilité" />
+                        <div class="invalid-feedback">Décrivez l'action à faire.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="s-date">Date <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="s-date" name="date" type="date" required />
+                        <div class="invalid-feedback">Choisissez aujourd'hui ou une date à venir.</div>
+                    </div>
+                </div>
+                <p class="small text-muted mt-3 mb-0">Ce suivi devient la prochaine action de l'opportunité. Aucun rappel automatique n'est envoyé.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary">Planifier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ---------- Nouvelle opportunité ---------- *@
+<div class="modal fade" id="modal-opportunite" tabindex="-1" aria-labelledby="modal-opp-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-opportunite" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-opp-titre">Créer une opportunité</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Un nouveau projet d'achat pour ce contact. Sa qualification sera indépendante des autres opportunités.</p>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="o-titre">Projet d'achat <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="o-titre" name="titre" required maxlength="80" placeholder="Ex. : deuxième véhicule pour la ville" />
+                        <div class="invalid-feedback">Décrivez le projet en quelques mots.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="o-categorie">Type de véhicule</label>
+                        <select class="form-select" id="o-categorie" name="categorie">
+                            <option value="">Pas encore connu</option>
+                            @foreach (var (cle, libelle) in ReferentielsVente.Categories)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="o-etape">Étape initiale</label>
+                        <select class="form-select" id="o-etape" name="etape">
+                            <option value="@EtapeVente.Nouveau">@FormatVente.Libelle(EtapeVente.Nouveau)</option>
+                            <option value="@EtapeVente.AQualifier" selected>@FormatVente.Libelle(EtapeVente.AQualifier)</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="o-vehicules">Véhicules envisagés <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <input class="form-control" id="o-vehicules" name="vehicules" maxlength="200" placeholder="Séparés par des virgules" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary">Créer l'opportunité</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<partial name="_TiroirProspect" model="Model" />
+<partial name="_DonneesProspects" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/prospects-tiroir.js" asp-append-version="true"></script>
+    <script src="~/js/prospects-fiche.js" asp-append-version="true"></script>
+}

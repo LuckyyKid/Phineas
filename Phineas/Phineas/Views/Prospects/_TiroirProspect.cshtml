@@ -1,0 +1,161 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model ProspectsPageViewModel
+@{
+    var etapesInitiales = new[] { EtapeVente.Nouveau, EtapeVente.AQualifier, EtapeVente.Qualifie };
+}
+<div class="offcanvas offcanvas-end pr-tiroir" tabindex="-1" id="tiroir-prospect" aria-labelledby="tiroir-titre">
+    <div class="offcanvas-header">
+        <div>
+            <h2 class="offcanvas-title h5 mb-0" id="tiroir-titre" data-titre-creation="Nouveau prospect" data-titre-modification="Modifier le prospect">Nouveau prospect</h2>
+            <div class="small text-muted">Les champs marqués <span class="pr-requis">*</span> sont obligatoires.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+    </div>
+
+    <form class="offcanvas-body" id="form-prospect" novalidate>
+        <div class="alert alert-danger small d-none" role="alert" data-resume-erreurs></div>
+
+        <fieldset class="pr-section">
+            <legend><span class="pr-section-num">1</span>Informations de contact</legend>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-prenom">Prénom <span class="pr-requis">*</span></label>
+                    <input class="form-control" id="p-prenom" name="prenom" autocomplete="off" required maxlength="60" />
+                    <div class="invalid-feedback">Indiquez le prénom.</div>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-nom">Nom <span class="pr-requis">*</span></label>
+                    <input class="form-control" id="p-nom" name="nom" autocomplete="off" required maxlength="60" />
+                    <div class="invalid-feedback">Indiquez le nom.</div>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-courriel">Courriel</label>
+                    <input class="form-control" id="p-courriel" name="courriel" type="email" autocomplete="off" maxlength="120" />
+                    <div class="invalid-feedback" data-message-courriel>Adresse courriel invalide.</div>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-telephone">Téléphone</label>
+                    <input class="form-control" id="p-telephone" name="telephone" type="tel" autocomplete="off" placeholder="514-555-0100" maxlength="20" />
+                    <div class="invalid-feedback" data-message-telephone>Numéro invalide (10 chiffres).</div>
+                </div>
+                <div class="col-12 form-text mt-1">Au moins un moyen de joindre la personne est requis.</div>
+                <div class="col-12">
+                    <span class="form-label d-block" id="p-pref-label">Moyen de contact préféré <span class="pr-requis">*</span></span>
+                    <div class="pr-segment" role="radiogroup" aria-labelledby="p-pref-label">
+                        @foreach (var (cle, libelle) in ReferentielsVente.MoyensContact)
+                        {
+                            <input type="radio" class="btn-check" name="contactPrefere" id="p-pref-@cle" value="@cle" @(cle == "telephone" ? "checked" : "") />
+                            <label class="btn btn-sm" for="p-pref-@cle">@libelle</label>
+                        }
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="pr-section">
+            <legend><span class="pr-section-num">2</span>Provenance</legend>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-source">Source <span class="pr-requis">*</span></label>
+                    <select class="form-select" id="p-source" name="source" required>
+                        <option value="">Choisir…</option>
+                        @foreach (var (cle, libelle) in ReferentielsVente.Sources)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                    <div class="invalid-feedback">Choisissez la provenance.</div>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-source-detail">Précision <span class="text-muted fw-normal">(facultatif)</span></label>
+                    <input class="form-control" id="p-source-detail" name="sourceDetail" maxlength="120" placeholder="Ex. : nom de la campagne, référé par…" />
+                </div>
+                <div class="col-12 form-text mt-1">
+                    <i class="bi bi-info-circle me-1"></i>Saisie manuelle : l'importation automatique depuis Meta, Google ou Kijiji n'est pas disponible.
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="pr-section" data-creation-seulement>
+            <legend><span class="pr-section-num">3</span>Premier intérêt</legend>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-categorie">Type de véhicule</label>
+                    <select class="form-select" id="p-categorie" name="categorie">
+                        <option value="">Pas encore connu</option>
+                        @foreach (var (cle, libelle) in ReferentielsVente.Categories)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-modele">Marque ou modèle souhaité</label>
+                    <input class="form-control" id="p-modele" name="modele" maxlength="80" placeholder="Ex. : Toyota RAV4" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-budget">Budget approximatif</label>
+                    <div class="input-group has-validation">
+                        <input class="form-control" id="p-budget" name="budget" type="number" min="0" max="500000" step="500" inputmode="numeric" />
+                        <span class="input-group-text">$</span>
+                        <div class="invalid-feedback">Montant entre 0 et 500 000 $.</div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-horizon">Achat envisagé</label>
+                    <select class="form-select" id="p-horizon" name="horizon">
+                        <option value="">Pas encore connu</option>
+                        @foreach (var (cle, libelle) in ReferentielsVente.Horizons)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="p-commentaire">Commentaire initial</label>
+                    <textarea class="form-control" id="p-commentaire" name="commentaire" rows="2" maxlength="500" placeholder="Ce que la personne a exprimé lors du premier échange."></textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="pr-section">
+            <legend><span class="pr-section-num" data-num-attribution>4</span>Attribution</legend>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label" for="p-conseiller">Conseiller responsable <span class="pr-requis">*</span></label>
+                    <select class="form-select" id="p-conseiller" name="conseillerId" required>
+                        @foreach (var c in Model.Donnees.Conseillers)
+                        {
+                            <option value="@c.Id" selected="@(c.Id == Model.Donnees.ConseillerConnecteId)">@c.Nom@(c.EstFictif ? " (fictif)" : " (moi)")</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-sm-6" data-creation-seulement>
+                    <label class="form-label" for="p-etape">Statut initial <span class="pr-requis">*</span></label>
+                    <select class="form-select" id="p-etape" name="etape" required>
+                        @foreach (var e in etapesInitiales)
+                        {
+                            <option value="@e">@FormatVente.Libelle(e)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-sm-6" data-creation-seulement>
+                    <label class="form-label" for="p-suivi-action">Prochaine action</label>
+                    <input class="form-control" id="p-suivi-action" name="prochaineAction" maxlength="120" placeholder="Premier contact" />
+                </div>
+                <div class="col-sm-6" data-creation-seulement>
+                    <label class="form-label" for="p-suivi-date">Date du prochain suivi</label>
+                    <input class="form-control" id="p-suivi-date" name="dateSuivi" type="date" />
+                    <div class="invalid-feedback">La date ne peut pas être passée.</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <p class="small text-muted mb-0"><i class="bi bi-cone-striped me-1"></i>Démonstration : le prospect est ajouté aux données locales de cet onglet, pas à la base de données.</p>
+    </form>
+
+    <div class="pr-tiroir-pied">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Annuler</button>
+        <button type="submit" class="btn btn-primary" form="form-prospect" data-libelle-creation="Créer le prospect" data-libelle-modification="Enregistrer">Créer le prospect</button>
+    </div>
+</div>
