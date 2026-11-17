@@ -1,0 +1,51 @@
+namespace Phineas.Models.ViewModels.Conseiller;
+
+// Une entrée sans Controleur est affichée comme « Bientôt » : la page n'existe pas encore.
+public record EntreeNavigation(
+    string Libelle,
+    string Icone,
+    string? Controleur = null,
+    string? Action = null,
+    IReadOnlyList<EntreeNavigation>? Enfants = null
+)
+{
+    public bool Disponible => Controleur is not null || (Enfants?.Any(e => e.Disponible) ?? false);
+}
+
+public static class NavigationVendeur
+{
+    public static readonly IReadOnlyList<EntreeNavigation> Menu =
+    [
+        new("Tableau de bord", "bi-speedometer2", "Conseiller", "Index"),
+        new(
+            "Clients",
+            "bi-people",
+            Enfants:
+            [
+                new("Prospects et opportunités", "bi-person-lines-fill"),
+                new("Suivis", "bi-arrow-repeat"),
+                new("Référencement", "bi-share"),
+            ]
+        ),
+        new("Rendez-vous", "bi-calendar-event"),
+        new(
+            "Ventes",
+            "bi-receipt",
+            Enfants:
+            [
+                new("Soumissions", "bi-file-earmark-text"),
+                new("Transactions", "bi-cash-coin"),
+            ]
+        ),
+        new("Inventaire", "bi-car-front"),
+        new(
+            "Outils",
+            "bi-grid",
+            Enfants:
+            [
+                new("Assistant vendeur", "bi-stars"),
+                new("Statistiques", "bi-bar-chart-line"),
+            ]
+        ),
+    ];
+}

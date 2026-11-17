@@ -6,6 +6,7 @@ using Phineas.Data.Seed;
 using Phineas.Models.Entities;
 using Phineas.Services.Account;
 using Phineas.Services.Admin;
+using Phineas.Services.Conseiller;
 using Phineas.Services.Vehicules;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,6 +62,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IServiceUtilisateurs, ServiceUtilisateurs>();
 builder.Services.AddScoped<IServiceConcessions, ServiceConcessions>();
+// Données fictives (phase frontend vendeur) : remplacer par l'implémentation réelle.
+builder.Services.AddScoped<IServiceTableauBordConseiller, ServiceTableauBordDemo>();
 
 builder.Services.AddControllersWithViews();
 

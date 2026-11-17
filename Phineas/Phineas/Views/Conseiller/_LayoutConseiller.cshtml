@@ -1,0 +1,68 @@
+@using Phineas.Models.ViewModels.Conseiller
+@{
+    Layout = "_Layout";
+    var controleur = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool EstActive(EntreeNavigation e) => e.Controleur == controleur && e.Action == action;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/conseiller.css" asp-append-version="true" />
+}
+
+<nav class="sv-nav" aria-label="Navigation de l'espace vendeur">
+    <span class="sv-nav-title d-none d-lg-inline-flex"><i class="bi bi-person-vcard"></i>Sales OS</span>
+    @foreach (var entree in NavigationVendeur.Menu)
+    {
+        if (entree.Enfants is { } enfants)
+        {
+            <div class="dropdown">
+                <button type="button" class="sv-nav-link dropdown-toggle @(enfants.Any(EstActive) ? "active" : "")"
+                        data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                    <i class="bi @entree.Icone"></i>@entree.Libelle
+                </button>
+                <ul class="dropdown-menu sv-menu">
+                    @foreach (var enfant in enfants)
+                    {
+                        <li>
+                            @if (enfant.Disponible)
+                            {
+                                <a class="dropdown-item @(EstActive(enfant) ? "active" : "")" asp-controller="@enfant.Controleur" asp-action="@enfant.Action"><i class="bi @enfant.Icone"></i>@enfant.Libelle</a>
+                            }
+                            else
+                            {
+                                <span class="dropdown-item disabled" aria-disabled="true"><i class="bi @enfant.Icone"></i>@enfant.Libelle<span class="sv-soon">Bientôt</span></span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else if (entree.Disponible)
+        {
+            var active = EstActive(entree);
+            <a class="sv-nav-link @(active ? "active" : "")" asp-controller="@entree.Controleur" asp-action="@entree.Action" aria-current="@(active ? "page" : null)"><i class="bi @entree.Icone"></i>@entree.Libelle</a>
+        }
+        else
+        {
+            <span class="sv-nav-link is-soon" aria-disabled="true" title="Disponible dans une prochaine version"><i class="bi @entree.Icone"></i>@entree.Libelle<span class="sv-soon">Bientôt</span></span>
+        }
+    }
+</nav>
+
+@RenderBody()
+
+<div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+    <div id="sv-toast" class="toast align-items-center border-0" role="status" aria-live="polite" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-info-circle me-2"></i><span data-toast-texte></span></div>
+            <button type="button" class="btn btn-sm sv-toast-annuler d-none" data-toast-annuler>Annuler</button>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/conseiller.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+}
