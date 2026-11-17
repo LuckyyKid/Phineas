@@ -37,6 +37,8 @@
   var etat = lire() || cloner(donneesInitiales);
   var modifie = !!lire();
   var abonnes = [];
+  // Autres modules locaux (ex. soumissions) partageant le bandeau de démonstration.
+  var modules = [];
 
   function changer() {
     modifie = true;
@@ -376,12 +378,24 @@
     return i;
   }
 
+  // Sert à annuler une action d'un autre module qui avait ajouté une entrée d'historique.
+  function retirerDerniereInteraction(contactId) {
+    var derniere = interactionsDe(contactId)[0];
+    if (!derniere) return;
+    etat.interactions = etat.interactions.filter(function (x) { return x.id !== derniere.id; });
+    changer();
+  }
+
   function reinitialiser() {
     try {
       window.sessionStorage.removeItem(CLE);
     } catch (e) {}
     etat = cloner(donneesInitiales);
     modifie = false;
+    modules.forEach(function (m) { m.reinitialiser(); });
+    abonnes.forEach(function (f) { f(); });
+  }
+  function rafraichir() {
     abonnes.forEach(function (f) { f(); });
   }
 
@@ -390,8 +404,9 @@
     var marque = document.querySelector("[data-etat-demo]");
     var bouton = document.querySelector("[data-reinitialiser]");
     function maj() {
-      if (marque) marque.hidden = !modifie;
-      if (bouton) bouton.hidden = !modifie;
+      var change = modifie || modules.some(function (m) { return m.estModifie(); });
+      if (marque) marque.hidden = !change;
+      if (bouton) bouton.hidden = !change;
     }
     if (bouton) {
       bouton.addEventListener("click", function () {
@@ -415,6 +430,8 @@
     urlFiche: function (id) { return charge.urlFiche.replace("__id__", encodeURIComponent(id)); },
     urlListe: charge.urlListe,
     abonner: function (f) { abonnes.push(f); },
+    enregistrerModule: function (m) { modules.push(m); rafraichir(); },
+    rafraichir: rafraichir,
     notifier: notifier,
     // lecture
     contacts: contacts,
@@ -442,6 +459,7 @@
     enregistrerQualification: enregistrerQualification,
     planifierSuivi: planifierSuivi,
     ajouterNote: ajouterNote,
+    retirerDerniereInteraction: retirerDerniereInteraction,
     // outils
     esc: esc,
     argent: argent,

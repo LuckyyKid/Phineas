@@ -7,6 +7,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
 }
 
 <a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Prospects et opportunités</a>
@@ -37,7 +38,7 @@
                 <div class="dropdown">
                     <button type="button" class="btn btn-sm btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Plus</button>
                     <ul class="dropdown-menu dropdown-menu-end sv-menu">
-                        <li><span class="dropdown-item disabled" aria-disabled="true"><i class="bi bi-file-earmark-text"></i>Créer une soumission<span class="sv-soon">Bientôt</span></span></li>
+                        <li><a class="dropdown-item" asp-controller="Soumissions" asp-action="Nouvelle" asp-route-prospect="@Model.ProspectId"><i class="bi bi-file-earmark-text"></i>Créer une soumission</a></li>
                         <li><span class="dropdown-item disabled" aria-disabled="true"><i class="bi bi-calendar-plus"></i>Planifier un rendez-vous<span class="sv-soon">Bientôt</span></span></li>
                     </ul>
                 </div>
@@ -447,9 +448,15 @@
 
 <partial name="_TiroirProspect" model="Model" />
 <partial name="_DonneesProspects" model="Model" />
+@if (Model.Soumissions is not null)
+{
+    var moi = Model.Donnees.Conseillers.First(c => c.Id == Model.Donnees.ConseillerConnecteId);
+    <partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, moi.Nom, string.Empty, null)" />
+}
 
 @section Scripts {
     <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
     <script src="~/js/prospects-tiroir.js" asp-append-version="true"></script>
     <script src="~/js/prospects-fiche.js" asp-append-version="true"></script>
 }

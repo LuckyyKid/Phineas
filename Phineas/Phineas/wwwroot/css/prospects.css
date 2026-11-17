@@ -803,3 +803,40 @@
 .pr-timeline-compacte {
   padding-top: 0.25rem;
 }
+
+/* Soumissions d'une opportunité (fiche) — pastilles définies dans soumissions.css */
+.pr-soumissions {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--ph-border);
+  font-size: 0.86rem;
+}
+.pr-soumissions-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  color: var(--ph-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pr-soumissions-tete .btn {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+}
+.pr-soumissions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+.pr-soumissions li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+}

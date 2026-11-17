@@ -22,6 +22,7 @@
     suivi: { libelle: "Suivi planifié", icone: "bi-alarm" },
     qualification: { libelle: "Qualification", icone: "bi-clipboard-check" },
     opportunite: { libelle: "Nouvelle opportunité", icone: "bi-briefcase" },
+    soumission: { libelle: "Soumission", icone: "bi-file-earmark-text" },
   };
 
   function zone(nom) {
@@ -402,7 +403,7 @@
         "<div><dt>Critères</dt><dd>" + (criteres.length ? esc(criteres.join(" · ")) : aPreciser()) +
         '<span class="pr-sous d-block">Complétude : ' + comp.remplis + " / " + comp.total + "</span></dd></div>" +
         "<div><dt>Prochaine action</dt><dd>" + (P.estActive(o) ? prochaineHtml(o) + badgeSuivi(o) : '<span class="text-muted">Opportunité clôturée</span>') + "</dd></div>" +
-        "</dl></div>" +
+        "</dl>" + soumissionsHtml(o) + "</div>" +
         '<div class="pr-opp-pied">' +
         '<span class="pr-sous">Ouverte le ' + esc(P.dateCourte(o.dateCreation)) + " · activité " + esc(P.relatif(o.derniereActivite)) + "</span>" +
         '<label class="visually-hidden" for="opp-etape-' + esc(o.id) + '">Étape de « ' + esc(o.titre) + " »</label>" +
@@ -411,6 +412,23 @@
         "</div></article>"
       );
     }).join("") : '<div class="pr-etat-vide card"><i class="bi bi-briefcase"></i><strong>Aucune opportunité</strong><span>Créez une opportunité pour suivre un projet d\'achat.</span></div>';
+  }
+
+  // Soumissions de l'opportunité (module Soumissions chargé sur la fiche).
+  function soumissionsHtml(o) {
+    var S = window.Soumissions;
+    if (!S) return "";
+    var liste = S.parOpportunite(o.id);
+    return '<div class="pr-soumissions"><div class="pr-soumissions-tete"><span>Soumissions</span>' +
+      (P.estActive(o) ? '<a class="btn btn-sm btn-link p-0" href="' + esc(S.urlNouvelle(o.id)) + '"><i class="bi bi-plus-lg me-1"></i>Créer une soumission</a>' : "") + "</div>" +
+      (liste.length
+        ? "<ul>" + liste.map(function (s) {
+            var v = S.versionCourante(s);
+            return '<li><a href="' + esc(S.urlDetail(s.id)) + '">' + esc(s.reference) + "</a>" +
+              '<span class="so-statut so-st-' + esc(v.statut) + '">' + esc(S.libelleStatut(v.statut)) + "</span>" +
+              '<span class="pr-sous">' + esc(S.nomVehicule(v.vehicule)) + " · v" + v.numero + "</span></li>";
+          }).join("") + "</ul>"
+        : '<p class="pr-sous mb-0">Aucune soumission pour cette opportunité.</p>') + "</div>";
   }
 
   // ---------- Rendu global ----------
@@ -548,6 +566,7 @@
   });
 
   P.abonner(rendre);
+  if (window.Soumissions) window.Soumissions.abonner(rendre);
   rendre();
   var hash = window.location.hash.replace("#", "");
   if (["qualification", "historique", "opportunites"].indexOf(hash) >= 0 && !racine.hidden) onglet(hash);

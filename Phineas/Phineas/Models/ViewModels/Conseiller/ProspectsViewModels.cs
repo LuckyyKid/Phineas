@@ -77,6 +77,9 @@ public class ProspectsPageViewModel
     public bool DonneesFictives { get; init; }
     public string? ProspectId { get; init; }
     public bool OuvrirCreation { get; init; }
+
+    // Fourni sur la fiche pour afficher les soumissions de chaque opportunité.
+    public DonneesSoumissions? Soumissions { get; init; }
 }
 
 // Libellés métier : une seule source pour les vues Razor et le JavaScript.
