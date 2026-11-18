@@ -361,7 +361,8 @@
     if (!o || !libelle || (o.vehiculesEnvisages || []).indexOf(libelle) >= 0) return false;
     o.vehiculesEnvisages = (o.vehiculesEnvisages || []).concat([libelle]);
     o.derniereActivite = iso(maintenant());
-    journaliser(o.prospectId, o.id, "note", "Véhicule ajouté aux options envisagées : " + libelle + ".");
+    // Entrée « qualification » : un changement interne, pas un échange avec le client (ne résout pas une première réponse).
+    journaliser(o.prospectId, o.id, "qualification", "Véhicule ajouté aux options envisagées : " + libelle + ".");
     changer();
     return true;
   }

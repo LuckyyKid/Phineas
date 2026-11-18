@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
 }
 
 <header class="sv-head">
@@ -84,6 +85,17 @@
                 <a class="btn btn-sm btn-link p-0" asp-controller="Relations" asp-action="Satisfaction">Après-vente</a>
             </div>
             <div class="card-body" data-rc-zone>
+                <div class="sv-empty"><i class="bi bi-hourglass"></i><span>Chargement…</span></div>
+            </div>
+        </section>
+
+        @* Outils du vendeur (phase 08) : accès rapides et indicateurs essentiels, calculés par performances-calcul.js. *@
+        <section class="card" id="ov-outils" aria-labelledby="titre-outils">
+            <div class="card-header sv-card-header">
+                <span id="titre-outils"><i class="bi bi-grid me-2"></i>Mes outils</span>
+                <a class="btn btn-sm btn-link p-0" asp-controller="Outils" asp-action="Performances">Mes performances</a>
+            </div>
+            <div class="card-body" data-ov-zone>
                 <div class="sv-empty"><i class="bi bi-hourglass"></i><span>Chargement…</span></div>
             </div>
         </section>
@@ -244,12 +256,16 @@
             {
                 <script src="~/js/relations-regles.js" asp-append-version="true"></script>
                 <script src="~/js/relations-store.js" asp-append-version="true"></script>
+                <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+                <script src="~/js/outils-store.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-tableau.js" asp-append-version="true"></script>
                 <script src="~/js/relations-liens.js" asp-append-version="true"></script>
+                <script src="~/js/performances-calcul.js" asp-append-version="true"></script>
+                <script src="~/js/outils-liens.js" asp-append-version="true"></script>
             }
         }
     }

@@ -48,8 +48,10 @@ public static class NavigationVendeur
             [
                 new("Mes suivis", "bi-arrow-repeat", "Intelligence", "Suivis"),
                 new("Recommandations véhicules", "bi-car-front", "Intelligence", "Vehicules"),
-                new("Assistant vendeur", "bi-stars"),
-                new("Statistiques", "bi-bar-chart-line"),
+                new("Assistant vendeur", "bi-stars", "Outils", "Assistant"),
+                new("Studio d'annonces", "bi-megaphone", "Outils", "Annonces"),
+                new("Acquisition commerciale", "bi-diagram-3", "Outils", "Acquisition"),
+                new("Mes performances", "bi-graph-up", "Outils", "Performances"),
             ]
         ),
     ];

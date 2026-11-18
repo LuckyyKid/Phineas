@@ -67,7 +67,9 @@ public record DonneesIntelligence(
     IReadOnlyDictionary<string, IReadOnlyList<string>> BlocagesConnus,
     // Phase 07 : faits des relations clients (clôtures, enquêtes, problèmes, recommandations), entrées du moteur au même
     // titre que les préférences de contact. Sérialisés à part (balise #relations-donnees) avec leurs propres libellés.
-    [property: JsonIgnore] DonneesRelationsClients? Relations = null
+    [property: JsonIgnore] DonneesRelationsClients? Relations = null,
+    // Phase 08 : annonces, liens de provenance et attributions (provenance des prospects, prise en charge).
+    [property: JsonIgnore] DonneesOutilsVendeur? Outils = null
 );
 
 public class IntelligencePageViewModel

@@ -1,0 +1,198 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model OutilsPageViewModel
+@{
+    ViewData["Title"] = "Acquisition commerciale";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Acquisition commerciale</h1>
+        <p class="text-muted mb-0">D'où viennent vos prospects, et comment vos annonces et votre prospection contribuent à créer des opportunités.</p>
+    </div>
+    <div class="sv-quick">
+        <a class="btn btn-outline-primary btn-sm" asp-action="Annonces"><i class="bi bi-megaphone me-1"></i>Studio d'annonces</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div class="ov-simulation" role="note">
+    <i class="bi bi-plug" aria-hidden="true"></i>
+    <span><strong>Aucune plateforme publicitaire n'est connectée.</strong> Les liens sont fictifs, les publications sont déclarées par vous, et l'attribution d'un prospect ne prouve pas qu'une annonce a causé une vente.</span>
+</div>
+
+<div id="acquisition" data-onglet="@Model.Onglet">
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-sources" data-bs-toggle="tab" data-bs-target="#panneau-sources" type="button" role="tab" aria-controls="panneau-sources" aria-selected="true">Sources</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-liens" data-bs-toggle="tab" data-bs-target="#panneau-liens" type="button" role="tab" aria-controls="panneau-liens" aria-selected="false">Liens de provenance</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-publications" data-bs-toggle="tab" data-bs-target="#panneau-publications" type="button" role="tab" aria-controls="panneau-publications" aria-selected="false">Publications</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-entrants" data-bs-toggle="tab" data-bs-target="#panneau-entrants" type="button" role="tab" aria-controls="panneau-entrants" aria-selected="false">Prospects entrants</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-prospection" data-bs-toggle="tab" data-bs-target="#panneau-prospection" type="button" role="tab" aria-controls="panneau-prospection" aria-selected="false">Prospection personnelle</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-publicite" data-bs-toggle="tab" data-bs-target="#panneau-publicite" type="button" role="tab" aria-controls="panneau-publicite" aria-selected="false">Performance publicitaire</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-sources" role="tabpanel" aria-labelledby="onglet-sources" tabindex="0">
+            <div class="rc-grille">
+                <section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-pie-chart me-2"></i>Mes prospects par source</span><span class="badge-soft">Démonstration</span></div><div class="card-body" data-zone="sources"></div></section>
+                <section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-person-badge me-2"></i>Origine des prospects</span></div><div class="card-body" data-zone="origines"></div></section>
+            </div>
+            <section class="card pr-module">
+                <div class="card-header sv-card-header"><span><i class="bi bi-link-45deg me-2"></i>Provenance de mes prospects</span></div>
+                <div class="pr-filtres"><select class="form-select form-select-sm" id="f-origine" aria-label="Filtrer par origine"><option value="">Toutes les origines</option>
+                    @foreach (var (cle, libelle) in ReferentielsOutils.Origines)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select></div>
+                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Prospect</th><th scope="col">Source déclarée</th><th scope="col">Origine</th><th scope="col">Provenance établie</th><th scope="col">Opportunité</th></tr></thead><tbody id="provenances-corps"></tbody></table></div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-liens" role="tabpanel" aria-labelledby="onglet-liens" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-link me-2"></i>Préparer un lien de provenance</span><span class="badge-soft">Fictif</span></div>
+                <div class="card-body">
+                    <form id="form-lien" novalidate class="row g-3">
+                        <div class="col-md-4"><label class="form-label" for="lk-annonce">Annonce</label><select class="form-select" id="lk-annonce" name="annonceId"><option value="">Aucune annonce</option></select></div>
+                        <div class="col-md-4"><label class="form-label" for="lk-vehicule">Véhicule</label><select class="form-select" id="lk-vehicule" name="vehiculeId"><option value="">Choisir</option></select><div class="invalid-feedback" data-erreur="vehicule"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="lk-source">Source</label><select class="form-select" id="lk-source" name="source"><option value="">Choisir</option>
+                            @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select><div class="invalid-feedback" data-erreur="source"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="lk-support">Support</label><select class="form-select" id="lk-support" name="support"><option value="">Choisir</option>
+                            @foreach (var (cle, libelle) in ReferentielsOutils.Supports)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select><div class="invalid-feedback" data-erreur="support"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="lk-campagne">Campagne <span class="pr-sous">(facultatif)</span></label><input class="form-control" id="lk-campagne" name="campagne" placeholder="Ex. : vus-hybrides-novembre" /><div class="invalid-feedback" data-erreur="campagne"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="lk-conseiller">Conseiller</label><select class="form-select" id="lk-conseiller" name="conseillerId">
+                            @foreach (var c in Model.Prospects.Conseillers)
+                            {
+                                <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Moi" : c.Nom + " (fictif)")</option>
+                            }
+                        </select></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Préparer le lien</button></div>
+                    </form>
+                    <div class="mt-3" data-zone="lien-apercu"></div>
+                    <p class="pr-note mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Structure illustrative : la page publique de destination n'existe pas, et chaque plateforme suit les visites à sa manière. Aucun renseignement personnel n'est placé dans les paramètres.</p>
+                </div>
+            </section>
+            <section class="card pr-module">
+                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Référence de suivi</th><th scope="col">Source et support</th><th scope="col">Campagne</th><th scope="col">Annonce et véhicule</th><th scope="col">Conseiller</th><th scope="col">Créé le</th><th scope="col">Prospects rattachés</th></tr></thead><tbody id="liens-corps"></tbody></table></div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-publications" role="tabpanel" aria-labelledby="onglet-publications" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-calendar-plus me-2"></i>Prévoir une publication</span></div>
+                <div class="card-body">
+                    <form id="form-publication" novalidate class="row g-3 align-items-end">
+                        <div class="col-md-5"><label class="form-label" for="pb-annonce">Annonce approuvée</label><select class="form-select" id="pb-annonce" name="annonceId"></select></div>
+                        <div class="col-md-3"><label class="form-label" for="pb-plateforme">Plateforme</label><select class="form-select" id="pb-plateforme" name="plateforme">
+                            @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select></div>
+                        <div class="col-md-2"><label class="form-label" for="pb-date">Date envisagée</label><input type="date" class="form-control" id="pb-date" name="date" /></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-primary btn-sm w-100">Ajouter</button></div>
+                    </form>
+                </div>
+            </section>
+            <section class="card pr-module">
+                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Plateforme</th><th scope="col">Annonce</th><th scope="col">Véhicule</th><th scope="col">Statut</th><th scope="col">Date</th><th scope="col">Conseiller</th><th scope="col">Adresse</th><th scope="col">Actions</th></tr></thead><tbody id="publications-corps"></tbody></table></div>
+                <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-lock me-1"></i>Phineas ne publie rien sur Meta, Google ou Kijiji : « Publiée » signifie que vous déclarez l'avoir fait vous-même. Aucun identifiant de plateforme n'est créé.</p>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-entrants" role="tabpanel" aria-labelledby="onglet-entrants" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-inbox me-2"></i>Enregistrer un prospect entrant (démonstration)</span></div>
+                <div class="card-body">
+                    <form id="form-entrant" novalidate class="row g-3">
+                        <div class="col-md-3"><label class="form-label" for="en-prenom">Prénom</label><input class="form-control" id="en-prenom" name="prenom" /><div class="invalid-feedback" data-erreur="prenom"></div></div>
+                        <div class="col-md-3"><label class="form-label" for="en-nom">Nom</label><input class="form-control" id="en-nom" name="nom" /><div class="invalid-feedback" data-erreur="nom"></div></div>
+                        <div class="col-md-3"><label class="form-label" for="en-courriel">Courriel</label><input type="email" class="form-control" id="en-courriel" name="courriel" /><div class="invalid-feedback" data-erreur="contact"></div></div>
+                        <div class="col-md-3"><label class="form-label" for="en-tel">Téléphone</label><input type="tel" class="form-control" id="en-tel" name="telephone" /></div>
+                        <div class="col-md-4"><label class="form-label" for="en-source">Source déclarée</label><select class="form-select" id="en-source" name="source"><option value="">Choisir</option>
+                            @foreach (var (cle, libelle) in ReferentielsVente.Sources)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select><div class="invalid-feedback" data-erreur="source"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="en-lien">Lien de provenance <span class="pr-sous">(si établi)</span></label><select class="form-select" id="en-lien" name="lienId"><option value="">Aucun lien établi</option></select></div>
+                        <div class="col-md-4"><label class="form-label" for="en-campagne">Campagne déclarée <span class="pr-sous">(facultatif)</span></label><input class="form-control" id="en-campagne" name="campagne" /></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Enregistrer</button></div>
+                    </form>
+                    <p class="pr-note mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Un contact déjà connu (même courriel ou téléphone) est rattaché, jamais dupliqué. Une campagne déclarée sans lien établi n'est pas créditée des ventes.</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-prospection" role="tabpanel" aria-labelledby="onglet-prospection" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-person-plus me-2"></i>Ajouter un contact de prospection</span></div>
+                <div class="card-body">
+                    <form id="form-prospection" novalidate class="row g-3">
+                        <div class="col-md-4"><label class="form-label" for="pp-nom">Personne contactée</label><input class="form-control" id="pp-nom" name="nom" /><div class="invalid-feedback" data-erreur="nom"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="pp-entreprise">Entreprise <span class="pr-sous">(facultatif)</span></label><input class="form-control" id="pp-entreprise" name="entreprise" /></div>
+                        <div class="col-md-4"><label class="form-label" for="pp-type">Source</label><select class="form-select" id="pp-type" name="type"><option value="">Choisir</option>
+                            @foreach (var (cle, libelle) in ReferentielsOutils.TypesProspection)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select><div class="invalid-feedback" data-erreur="type"></div></div>
+                        <div class="col-md-4"><label class="form-label" for="pp-vehicule">Véhicule d'intérêt</label><input class="form-control" id="pp-vehicule" name="vehiculeInteret" /></div>
+                        <div class="col-md-4"><label class="form-label" for="pp-moyen">Moyen de contact autorisé</label><input class="form-control" id="pp-moyen" name="moyenContactAutorise" placeholder="Ex. : téléphone, accordé lors de la rencontre" /></div>
+                        <div class="col-md-4"><label class="form-label" for="pp-action">Prochaine action</label><input class="form-control" id="pp-action" name="prochaineAction" /></div>
+                        <div class="col-12"><label class="form-label" for="pp-contexte">Contexte commercial</label><textarea class="form-control" id="pp-contexte" name="contexte" rows="2"></textarea></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Ajouter</button></div>
+                    </form>
+                    <p class="pr-note mt-3 mb-0"><i class="bi bi-shield-check me-1"></i>Saisie manuelle seulement : aucune collecte automatique de coordonnées, aucun envoi de messages en masse.</p>
+                </div>
+            </section>
+            <section class="card rc-bloc"><div class="card-body"><ul class="ov-prospection" data-zone="prospection"></ul></div></section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-publicite" role="tabpanel" aria-labelledby="onglet-publicite" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-plug me-2"></i>Indicateurs publicitaires</span><span class="ov-non-connecte">Données non connectées</span></div>
+                <div class="card-body">
+                    <div class="rc-chiffres" data-zone="publicite"></div>
+                    <p class="small mb-0">Ces indicateurs exigent une intégration réelle des plateformes (dépenses, conversions). Aucune dépense n'est inventée. Même avec ces données, une attribution indique d'où vient un prospect, pas que la publicité a causé la vente (l'incrémentalité est une autre mesure).</p>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/acquisition-page.js" asp-append-version="true"></script>
+}

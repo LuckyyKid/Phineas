@@ -105,6 +105,8 @@ public static class ReferentielsVente
         ("recommandation", "Recommandation"),
         ("prospection", "Prospection"),
         ("autre", "Autre"),
+        // Phase 08 : provenance non notée (jamais devinée).
+        ("inconnue", "Source inconnue"),
     ];
 
     public static readonly IReadOnlyList<(string Cle, string Libelle)> MoyensContact =

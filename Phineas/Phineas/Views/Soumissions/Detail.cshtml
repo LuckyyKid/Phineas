@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
 }
 
 <a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Soumissions</a>
@@ -59,6 +60,7 @@
     @* Transaction issue de cette soumission, ou ouverture depuis une version acceptée : transactions-liens.js. *@
     <div data-trx-lien="soumission" data-id="@Model.SoumissionId"></div>
     <div data-ia-lien="soumission" data-id="@Model.SoumissionId"></div>
+    <div data-ov-lien="soumission" data-id="@Model.SoumissionId"></div>
 
     <ul class="nav pr-onglets" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-offre" data-bs-toggle="tab" data-bs-target="#panneau-offre" type="button" role="tab" aria-controls="panneau-offre" aria-selected="true">Offre</button></li>
@@ -194,10 +196,13 @@
         <script src="~/js/transactions-liens.js" asp-append-version="true"></script>
         <script src="~/js/relations-regles.js" asp-append-version="true"></script>
         <script src="~/js/relations-store.js" asp-append-version="true"></script>
+        <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+        <script src="~/js/outils-store.js" asp-append-version="true"></script>
         <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
         <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
         <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
         <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
         <script src="~/js/intelligence-liens.js" asp-append-version="true"></script>
+        <script src="~/js/outils-liens.js" asp-append-version="true"></script>
     }
 }

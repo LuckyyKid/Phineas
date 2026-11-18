@@ -13,8 +13,13 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
     private const string Antoine = "c-antoine";
 
     private readonly IServiceRelationsClients _relations;
+    private readonly IServiceOutilsVendeur _outils;
 
-    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations) => _relations = relations;
+    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations, IServiceOutilsVendeur outils)
+    {
+        _relations = relations;
+        _outils = outils;
+    }
 
     public async Task<DonneesIntelligence> ObtenirAsync(UserSummaryViewModel conseiller)
     {
@@ -104,6 +109,8 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
 
         // Phase 07 : les faits des relations clients sont des entrées du moteur (clôtures, enquêtes, recommandations).
         var relations = await _relations.ObtenirAsync(conseiller);
-        return new DonneesIntelligence(preferences, pauses, demandes, indispensables, etats, simules, blocagesConnus, relations);
+        // Phase 08 : provenance des prospects et outils du vendeur.
+        var outils = await _outils.ObtenirAsync(conseiller);
+        return new DonneesIntelligence(preferences, pauses, demandes, indispensables, etats, simules, blocagesConnus, relations, outils);
     }
 }

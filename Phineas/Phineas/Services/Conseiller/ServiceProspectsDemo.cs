@@ -49,6 +49,9 @@ public static class IdsProspectsDemo
     public const string MartineLavigne = "martine-lavigne";
     public const string BenoitLachance = "benoit-lachance";
     public const string MelissaHebert = "melissa-hebert";
+
+    // Phase 08 : provenance non notée.
+    public const string RemiGosselin = "remi-gosselin";
 }
 
 // DONNÉES FICTIVES — phase frontend uniquement.
@@ -154,6 +157,8 @@ public class ServiceProspectsDemo : IServiceProspects
                 "telephone", "matin", "visite", null, Moi, n.AddDays(-80)),
             new(IdsProspectsDemo.MelissaHebert, "Mélissa", "Hébert", "melissa.hebert@exemple.test", null,
                 "courriel", null, "recommandation", "Formulaire de la carte de recommandation (démonstration)", Moi, n.AddHours(-5)),
+            new(IdsProspectsDemo.RemiGosselin, "Rémi", "Gosselin", null, "450-555-0161",
+                "telephone", null, "inconnue", null, Moi, n.AddDays(-3)),
         };
 
         var opportunites = new List<Opportunite>
@@ -395,6 +400,12 @@ public class ServiceProspectsDemo : IServiceProspects
                 n.AddHours(-5), n.AddHours(-5), null, null,
                 [],
                 new() { Categorie = "vus", BudgetTotal = 30_000, Horizon = "1-3-mois" }),
+
+            // Phase 08 : source inconnue (coordonnées laissées à l'accueil).
+            new("o-remi-berline", IdsProspectsDemo.RemiGosselin, "Berline d'occasion", EtapeVente.AQualifier,
+                n.AddDays(-3), n.AddDays(-2), "Rappeler pour préciser le budget", j.AddDays(1),
+                [],
+                new() { Categorie = "berline", Etat = "occasion" }),
         };
 
         var i = 0;
@@ -625,6 +636,10 @@ public class ServiceProspectsDemo : IServiceProspects
                 "Problème après-vente signalé : certificat d'immatriculation définitif non reçu."),
             new(Id(), IdsProspectsDemo.MelissaHebert, "o-melissa-vus", n.AddHours(-5), "creation", Systeme,
                 "Demande reçue par le formulaire de la carte de recommandation (démonstration) : recherche un VUS compact. Source : recommandation."),
+            new(Id(), IdsProspectsDemo.RemiGosselin, "o-remi-berline", n.AddDays(-3), "creation", moi,
+                "Coordonnées laissées à l'accueil ; provenance non notée."),
+            new(Id(), IdsProspectsDemo.RemiGosselin, "o-remi-berline", n.AddDays(-2), "appel", moi,
+                "Premier appel : cherche une berline d'occasion, budget à préciser."),
         };
 
         return Task.FromResult(new DonneesProspects(Moi, conseillers, contacts, opportunites, interactions));

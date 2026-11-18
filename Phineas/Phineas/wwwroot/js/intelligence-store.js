@@ -12,6 +12,8 @@
   var Regles = window.IntelligenceRegles, M = window.IntelligenceMatching;
   // Relations clients (phase 07) : facultatif ; une page sans ces données ne produit simplement pas ces règles.
   var RC = window.RelationsClients || null;
+  // Outils du vendeur (phase 08) : provenance des prospects ; facultatif.
+  var OV = window.OutilsVendeur || null;
   // Tous les modules sont requis : sans eux, des recommandations seraient à tort considérées comme obsolètes.
   if (!P || !S || !R || !T || !Regles || !M) return;
   var d = charge.donnees;
@@ -113,6 +115,7 @@
       x.nbSoumissions = S.parOpportunite(o.id).length;
       x.transactionEnCours = T ? !!T.enCoursPourOpportunite(o.id) : false;
       x.recommandation = rel ? rel.recommandationsParOpp[o.id] || null : null;
+      x.provenance = OV ? OV.provenance(o.id) : null;
       return x;
     });
     var soumissions = S.liste().map(function (s) {
@@ -305,6 +308,7 @@
   if (R) R.abonner(surChangementExterne);
   if (T) T.abonner(surChangementExterne);
   if (RC) RC.abonner(surChangementExterne);
+  if (OV) OV.abonner(surChangementExterne);
 
   // ---------- Lecture ----------
   function enrichir(x) {

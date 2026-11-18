@@ -24,3 +24,8 @@
 {
     <partial name="~/Views/Relations/_DonneesRelations.cshtml" model="new ChargeRelations(relations, Model.ConseillerNom, Model.Concession)" />
 }
+@* Phase 08 : outils du vendeur (annonces, provenance, prospection, assistant). *@
+@if (Model.Donnees.Outils is { } outils)
+{
+    <partial name="~/Views/Outils/_DonneesOutils.cshtml" model="new ChargeOutils(outils, Model.ConseillerNom, Model.Concession)" />
+}

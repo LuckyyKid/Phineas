@@ -151,7 +151,8 @@
           declencheur: "Demande reçue " + relatif(o.dateCreation, mo.m) + ".", detecteLe: o.dateCreation,
           echeance: new Date(new Date(o.dateCreation).getTime() + cfg.delaiPremiereReponseHeures * HEURE).toISOString(),
           motif: "Aucune première réponse n'est enregistrée depuis la demande.", actionProposee: "Préparer une réponse initiale",
-          contexte: [o.titre + (o.vehiculesEnvisages && o.vehiculesEnvisages.length ? " — " + o.vehiculesEnvisages.join(", ") : "")],
+          contexte: [o.titre + (o.vehiculesEnvisages && o.vehiculesEnvisages.length ? " — " + o.vehiculesEnvisages.join(", ") : "")]
+            .concat(o.provenance ? ["Provenance : " + o.provenance.source + " — " + o.provenance.methode + (o.provenance.campagne ? ", campagne « " + o.provenance.campagne + " »" : "") + (o.provenance.annonce ? ", annonce " + o.provenance.annonce : "")] : []),
           resolution: "Un premier échange (appel, courriel, visite…) est enregistré.", expiration: "L'opportunité est clôturée.",
           relance: "premiere-reponse",
         });

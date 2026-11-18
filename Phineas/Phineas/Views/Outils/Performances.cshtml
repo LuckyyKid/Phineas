@@ -1,0 +1,67 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model OutilsPageViewModel
+@{
+    ViewData["Title"] = "Mes performances commerciales";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Mes performances commerciales</h1>
+        <p class="text-muted mb-0">Comprendre vos résultats à partir de vos dossiers : des observations, sans notation ni prédiction.</p>
+    </div>
+    <div class="sv-quick">
+        <label class="visually-hidden" for="f-periode">Période</label>
+        <select class="form-select form-select-sm" id="f-periode">
+            <option value="30">30 derniers jours</option>
+            <option value="90" selected>90 derniers jours</option>
+            <option value="365">12 derniers mois</option>
+            <option value="">Depuis le début</option>
+        </select>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="performances">
+    <p class="rc-legende" role="note">
+        <span><span class="rc-tag rc-tag-observe">Observé</span> calculé à partir de vos dossiers (y compris un zéro)</span>
+        <span><span class="rc-tag rc-tag-manquant">Non disponible</span> aucune donnée ou dénominateur nul</span>
+        <span><span class="rc-tag rc-tag-demo">Démonstration</span> données fictives</span>
+    </p>
+    <section class="card rc-bloc" aria-labelledby="pf-axes"><div class="card-header sv-card-header"><span id="pf-axes"><i class="bi bi-compass me-2"></i>Mes axes d'amélioration</span><span class="badge-soft">Constats descriptifs</span></div><div class="card-body" data-zone="axes"></div></section>
+    <section class="card rc-bloc" aria-labelledby="pf-acq"><div class="card-header sv-card-header"><span id="pf-acq"><i class="bi bi-diagram-3 me-2"></i>1. Acquisition</span><span data-periode></span></div><div class="card-body" data-zone="acquisition"></div></section>
+    <section class="card rc-bloc" aria-labelledby="pf-pipe"><div class="card-header sv-card-header"><span id="pf-pipe"><i class="bi bi-kanban me-2"></i>2. Pipeline</span><span data-periode></span></div><div class="card-body" data-zone="pipeline"></div></section>
+    <section class="card rc-bloc" aria-labelledby="pf-soum"><div class="card-header sv-card-header"><span id="pf-soum"><i class="bi bi-file-earmark-text me-2"></i>3. Soumissions</span><span data-periode></span></div><div class="card-body" data-zone="soumissions"></div></section>
+    <section class="card rc-bloc" aria-labelledby="pf-rdv"><div class="card-header sv-card-header"><span id="pf-rdv"><i class="bi bi-calendar-event me-2"></i>4. Rendez-vous</span><span data-periode></span></div><div class="card-body" data-zone="rendezvous"></div></section>
+    <section class="card rc-bloc" aria-labelledby="pf-trx"><div class="card-header sv-card-header"><span id="pf-trx"><i class="bi bi-cash-coin me-2"></i>5. Transactions</span><span data-periode></span></div><div class="card-body" data-zone="transactions"></div></section>
+    <section class="card rc-bloc" aria-labelledby="pf-rel"><div class="card-header sv-card-header"><span id="pf-rel"><i class="bi bi-people me-2"></i>6. Relation client</span><a class="btn btn-sm btn-link p-0" asp-controller="Relations" asp-action="Statistiques">Statistiques relationnelles</a></div><div class="card-body" data-zone="relation"></div></section>
+    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>Ces chiffres dépendent des dossiers que vous recevez : ils ne mesurent pas la compétence d'un conseiller et ne servent à aucune notation. Aucune prédiction de performance n'est calculée.</p>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/performances-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/performances-page.js" asp-append-version="true"></script>
+}

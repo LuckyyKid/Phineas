@@ -69,7 +69,8 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
         };
 
         if (aConfirmer is not null)
-            alertes.Insert(3, new(4, TypeAlerte.RendezVousAConfirmer, $"Rendez-vous à confirmer — {aConfirmer.Client}",
+            // Entre l'alerte 3 et l'alerte 5 (les alertes « Dossier bloqué » ne sont plus dans cette liste).
+            alertes.Insert(1, new(4, TypeAlerte.RendezVousAConfirmer, $"Rendez-vous à confirmer — {aConfirmer.Client}",
                 $"{FormatVente.Jour(aConfirmer.Debut, maintenant)} à {FormatVente.Heure(aConfirmer.Debut)}, aucune confirmation du client.",
                 maintenant.AddHours(-3), aConfirmer.Id));
 

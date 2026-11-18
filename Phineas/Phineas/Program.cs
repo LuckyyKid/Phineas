@@ -70,6 +70,7 @@ builder.Services.AddScoped<IServiceRendezVous, ServiceRendezVousDemo>();
 builder.Services.AddScoped<IServiceTransactions, ServiceTransactionsDemo>();
 builder.Services.AddScoped<IServiceIntelligenceCommerciale, ServiceIntelligenceCommercialeDemo>();
 builder.Services.AddScoped<IServiceRelationsClients, ServiceRelationsClientsDemo>();
+builder.Services.AddScoped<IServiceOutilsVendeur, ServiceOutilsVendeurDemo>();
 
 builder.Services.AddControllersWithViews();
 

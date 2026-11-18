@@ -1,0 +1,181 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model OutilsPageViewModel
+@{
+    ViewData["Title"] = "Studio d'annonces";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Studio d'annonces</h1>
+        <p class="text-muted mb-0">Préparer des annonces exactes à partir de l'inventaire, les relire et les valider avant toute publication.</p>
+    </div>
+    <div class="sv-quick">
+        <button type="button" class="btn btn-primary btn-sm" data-an="nouvelle"><i class="bi bi-plus-lg me-1"></i>Nouvelle annonce</button>
+        <a class="btn btn-outline-primary btn-sm" asp-action="Acquisition" asp-route-onglet="publications"><i class="bi bi-diagram-3 me-1"></i>Publications</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div class="ov-simulation" role="note">
+    <i class="bi bi-cpu" aria-hidden="true"></i>
+    <span><strong>Générateur d'annonces IA non connecté.</strong> Les textes sont composés par des modèles déterministes à partir des seuls champs de la fiche d'inventaire. La validation humaine reste obligatoire ; aucune annonce n'est publiée par Phineas.</span>
+</div>
+
+<div id="annonces" data-annonce="@Model.AnnonceId" data-vehicule="@Model.VehiculeId">
+    <section class="card rc-bloc ov-editeur" id="editeur" hidden aria-labelledby="titre-editeur">
+        <div class="card-header sv-card-header"><span id="titre-editeur"><i class="bi bi-pencil-square me-2"></i><span data-zone="titre-editeur">Nouvelle annonce</span></span>
+            <button type="button" class="btn-close" data-an="fermer" aria-label="Fermer l'éditeur"></button></div>
+        <div class="card-body">
+            <ol class="ov-etapes" data-zone="etapes"></ol>
+            <div data-etape="1">
+                <label class="form-label" for="ed-vehicule">Véhicule de l'inventaire</label>
+                <select class="form-select" id="ed-vehicule"></select>
+                <div class="invalid-feedback" data-erreur="vehicule"></div>
+                <div class="mt-3" data-zone="fiche-vehicule"></div>
+            </div>
+            <div data-etape="2" hidden>
+                <fieldset><legend class="form-label fs-6">Objectif de l'annonce</legend>
+                    @foreach (var (cle, libelle) in ReferentielsOutils.ObjectifsAnnonce)
+                    {
+                        <div class="form-check"><input class="form-check-input" type="radio" name="objectif" id="obj-@cle" value="@cle" /><label class="form-check-label" for="obj-@cle">@libelle</label></div>
+                    }
+                </fieldset>
+            </div>
+            <div data-etape="3" hidden>
+                <fieldset><legend class="form-label fs-6">Style rédactionnel</legend>
+                    @foreach (var (cle, libelle) in ReferentielsOutils.StylesAnnonce)
+                    {
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="style" id="sty-@cle" value="@cle" /><label class="form-check-label" for="sty-@cle">@libelle</label></div>
+                    }
+                </fieldset>
+                <div class="row g-3 mt-1">
+                    <div class="col-sm-6"><label class="form-label" for="ed-canal">Canal envisagé</label>
+                        <select class="form-select" id="ed-canal">
+                            @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select></div>
+                    <div class="col-sm-6"><label class="form-label" for="ed-langue">Langue</label>
+                        <select class="form-select" id="ed-langue">
+                            @foreach (var (cle, libelle, dispo) in ReferentielsOutils.Langues)
+                            {
+                                <option value="@cle" disabled="@(!dispo)">@libelle@(dispo ? "" : " (à venir)")</option>
+                            }
+                        </select></div>
+                </div>
+            </div>
+            <div data-etape="4" hidden>
+                <div class="ov-edition">
+                    <div>
+                        <label class="form-label" for="ed-titre">Titre</label>
+                        <input class="form-control" id="ed-titre" maxlength="120" />
+                        <label class="form-label mt-2" for="ed-description">Description</label>
+                        <textarea class="form-control" id="ed-description" rows="5"></textarea>
+                        <label class="form-label mt-2" for="ed-points">Points forts <span class="pr-sous">(un par ligne)</span></label>
+                        <textarea class="form-control" id="ed-points" rows="3"></textarea>
+                        <label class="form-label mt-2" for="ed-appel">Appel à l'action</label>
+                        <input class="form-control" id="ed-appel" maxlength="160" />
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-an="enregistrer"><i class="bi bi-save me-1"></i>Enregistrer</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-an="variantes"><i class="bi bi-layout-three-columns me-1"></i>Comparer 3 variantes</button>
+                        </div>
+                    </div>
+                    <aside>
+                        <h2 class="ia-sous-titre">Informations de l'inventaire</h2>
+                        <dl class="ov-inventaire" data-zone="inventaire"></dl>
+                        <h2 class="ia-sous-titre">À vérifier avant validation</h2>
+                        <ul class="ov-verifier" data-zone="verifier"></ul>
+                    </aside>
+                </div>
+                <div class="ov-variantes" data-zone="variantes"></div>
+                <h2 class="ia-sous-titre">Prévisualisation</h2>
+                <div data-zone="apercu"></div>
+                <div class="ov-validation" data-zone="validation"></div>
+                <h2 class="ia-sous-titre">Historique</h2>
+                <ol class="ia-historique" data-zone="historique"></ol>
+            </div>
+            <div class="d-flex gap-2 mt-3" data-zone="navigation">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-an="precedent">Précédent</button>
+                <button type="button" class="btn btn-sm btn-primary" data-an="suivant">Suivant</button>
+            </div>
+            <p class="alert alert-danger mt-3 mb-0" data-zone="erreur" hidden></p>
+        </div>
+    </section>
+
+    <section class="card pr-module" aria-label="Bibliothèque d'annonces">
+        <div class="pr-toolbar">
+            <div class="pr-search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" class="form-control" id="f-recherche" placeholder="Référence, véhicule ou titre" aria-label="Rechercher une annonce" autocomplete="off" />
+            </div>
+        </div>
+        <div class="pr-filtres">
+            <select class="form-select form-select-sm" id="f-statut" aria-label="Filtrer par statut">
+                <option value="">Tous les statuts</option>
+                @foreach (var (cle, libelle) in ReferentielsOutils.StatutsAnnonce)
+                {
+                    <option value="@cle">@libelle</option>
+                }
+            </select>
+            <select class="form-select form-select-sm" id="f-canal" aria-label="Filtrer par canal">
+                <option value="">Tous les canaux</option>
+                @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
+                {
+                    <option value="@cle">@libelle</option>
+                }
+            </select>
+            <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+        </div>
+        <div class="pr-resultat" id="resultat" aria-live="polite"></div>
+        <div class="table-responsive">
+            <table class="table pr-table ov-table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Annonce</th>
+                        <th scope="col">Véhicule</th>
+                        <th scope="col">Titre et aperçu</th>
+                        <th scope="col">Canal</th>
+                        <th scope="col">Créée / modifiée</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col">Provenance</th>
+                    </tr>
+                </thead>
+                <tbody id="liste-corps"></tbody>
+            </table>
+        </div>
+        <div class="pr-etat-vide" id="etat-vide" hidden>
+            <i class="bi bi-megaphone"></i>
+            <strong>Aucune annonce</strong>
+            <span>Aucune annonce ne correspond à ces critères.</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-effacer-filtres>Effacer les filtres</button>
+        </div>
+    </section>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-page.js" asp-append-version="true"></script>
+}
