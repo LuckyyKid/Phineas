@@ -1,0 +1,14 @@
+@* Logo Phineas (le « Cycle ») — ViewData["Taille"] en px, 28 par défaut *@
+@{
+    var taille = ViewData["Taille"] as int? ?? 28;
+}
+<svg viewBox="0 0 100 100" width="@taille" height="@taille" aria-hidden="true">
+    <g fill="none" stroke-width="13">
+        <path d="M53.34 18.18A32 32 0 0 1 79.23 36.98" stroke="#0F172A" />
+        <path d="M81.3 43.35A32 32 0 0 1 71.41 73.78" stroke="#0F172A" />
+        <path d="M66 77.71A32 32 0 0 1 34 77.71" stroke="#0F172A" />
+        <path d="M28.59 73.78A32 32 0 0 1 18.7 43.35" stroke="#0F172A" />
+        <path d="M20.77 36.98A32 32 0 0 1 46.66 18.18" stroke="#0F766E" />
+    </g>
+    <circle cx="50" cy="50" r="7.5" fill="#0F172A" />
+</svg>
