@@ -1,0 +1,60 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RelationsPageViewModel
+@{
+    ViewData["Title"] = "Statistiques relationnelles";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Statistiques relationnelles</h1>
+        <p class="text-muted mb-0">Comprendre vos ventes perdues, la satisfaction de vos clients et les résultats de votre réseau. Observations, pas prédictions.</p>
+    </div>
+    <div class="sv-quick">
+        <label class="visually-hidden" for="f-periode">Période</label>
+        <select class="form-select form-select-sm" id="f-periode">
+            <option value="30">30 derniers jours</option>
+            <option value="90" selected>90 derniers jours</option>
+            <option value="365">12 derniers mois</option>
+            <option value="">Depuis le début</option>
+        </select>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="statistiques">
+    <p class="rc-legende" role="note">
+        <span><span class="rc-tag rc-tag-observe">Observé</span> calculé à partir des données enregistrées</span>
+        <span><span class="rc-tag rc-tag-hypothese">Hypothèse</span> motif supposé, non confirmé</span>
+        <span><span class="rc-tag rc-tag-manquant">Manquant</span> information absente</span>
+        <span><span class="rc-tag rc-tag-demo">Démonstration</span> données fictives</span>
+    </p>
+    <section class="card rc-bloc" aria-labelledby="st-pertes"><div class="card-header sv-card-header"><span id="st-pertes"><i class="bi bi-x-octagon me-2"></i>Ventes perdues</span><span data-echantillon="pertes"></span></div><div class="card-body" data-zone="pertes"></div></section>
+    <section class="card rc-bloc" aria-labelledby="st-satisfaction"><div class="card-header sv-card-header"><span id="st-satisfaction"><i class="bi bi-emoji-smile me-2"></i>Satisfaction après-vente</span><span data-echantillon="satisfaction"></span></div><div class="card-body" data-zone="satisfaction"></div></section>
+    <section class="card rc-bloc" aria-labelledby="st-reseau"><div class="card-header sv-card-header"><span id="st-reseau"><i class="bi bi-share me-2"></i>Recommandations</span><span data-echantillon="reseau"></span></div><div class="card-body" data-zone="reseau"></div></section>
+    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>Aucun score prédictif de satisfaction, de fidélité ou de recommandation n'est calculé. Avec peu d'observations, ces chiffres décrivent des cas, pas une tendance.</p>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-statistiques.js" asp-append-version="true"></script>
+}

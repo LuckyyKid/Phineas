@@ -594,6 +594,12 @@
   racine.addEventListener("change", function (e) {
     var sel = e.target.closest("[data-etape-opp]");
     if (!sel) return;
+    // Phase 07 : une opportunité perdue passe par le parcours de clôture (motif et origine du motif).
+    if (sel.value === "Perdu" && window.RelationsUI) {
+      sel.value = P.opportunite(sel.dataset.etapeOpp).etape;
+      window.RelationsUI.ouvrirCloture(sel.dataset.etapeOpp);
+      return;
+    }
     var annuler = P.changerEtape(sel.dataset.etapeOpp, sel.value);
     if (annuler) P.notifier("Étape changée : « " + P.libelleEtape(sel.value) + " » (modification locale).", annuler);
     var focus = document.getElementById("opp-etape-" + sel.dataset.etapeOpp);

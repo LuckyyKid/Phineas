@@ -10,7 +10,7 @@
 
   var NIVEAUX = ["Faible", "Normal", "Eleve", "Urgent"];
   // Seules ces règles peuvent atteindre « Urgent » : la priorité n'est jamais gonflée arbitrairement.
-  var URGENCE_POSSIBLE = ["premiere-reponse", "rdv-vehicule-indisponible", "rdv-a-confirmer", "soumission-expire"];
+  var URGENCE_POSSIBLE = ["premiere-reponse", "nouveau-prospect-recommande", "rdv-vehicule-indisponible", "rdv-a-confirmer", "soumission-expire"];
   // Interactions qui comptent comme un échange avec le client (un brouillon n'en est pas un).
   var ECHANGES = ["appel", "courriel", "visite", "texto", "relance", "note"];
   var HEURE = 3600000, JOUR = 86400000;
@@ -98,9 +98,10 @@
 
   // ---------- Priorisation déterministe et explicable ----------
   function prioriser(x, mo) {
-    var base = mo.regles[x.regle].priorite;
+    // Priorité de base du catalogue, ou celle de l'objet lorsqu'il en porte une (ex. priorité d'un problème client).
+    var base = x.prioriteBase || mo.regles[x.regle].priorite;
     var niveau = NIVEAUX.indexOf(base);
-    var raisons = ["Importance de la situation : " + mo.ctx.ref.libellesPriorite[base].toLowerCase() + " (règle « " + x.regleLibelle + " »)."];
+    var raisons = [x.prioriteBase ? "Priorité indiquée dans le dossier : " + mo.ctx.ref.libellesPriorite[base].toLowerCase() + "." : "Importance de la situation : " + mo.ctx.ref.libellesPriorite[base].toLowerCase() + " (règle « " + x.regleLibelle + " »)."];
     var m = mo.m;
     if (x.echeance) {
       var e = new Date(x.echeance);
@@ -133,6 +134,18 @@
       var echange = mo.dernierEchange(o.prospectId, null, o.dateCreation);
       // Un rendez-vous déjà confirmé, tenu ou annulé par le client prouve un premier contact.
       if (o.etape === "Nouveau" && !echange && !o.rdvContact) {
+        // Prospect recommandé : même délai de première réponse, avec l'attribution de la recommandation (une seule action).
+        if (o.recommandation) {
+          mo.ajouter({
+            id: "nouveau-prospect-recommande:" + o.id, regle: "nouveau-prospect-recommande", prospectId: o.prospectId, opportuniteId: o.id, objet: { type: "opportunite", id: o.id },
+            declencheur: "Demande reçue " + relatif(o.dateCreation, mo.m) + " par recommandation (" + o.recommandation.reference + ").", detecteLe: o.dateCreation,
+            echeance: new Date(new Date(o.dateCreation).getTime() + cfg.delaiPremiereReponseHeures * HEURE).toISOString(),
+            motif: "Le prospect a manifesté lui-même son intérêt ; aucune première réponse n'est encore enregistrée.", actionProposee: "Prendre en charge la nouvelle opportunité",
+            contexte: [o.titre, "Attribution : " + o.recommandation.attribution + (o.recommandation.parrain ? " — recommandé par un client (" + o.recommandation.parrain + ")" : "")],
+            resolution: "Un premier échange est enregistré.", expiration: "L'opportunité est clôturée.", relance: "premiere-reponse",
+          });
+          return;
+        }
         mo.ajouter({
           id: "premiere-reponse:" + o.id, regle: "premiere-reponse", prospectId: o.prospectId, opportuniteId: o.id, objet: { type: "opportunite", id: o.id },
           declencheur: "Demande reçue " + relatif(o.dateCreation, mo.m) + ".", detecteLe: o.dateCreation,
@@ -362,6 +375,108 @@
     });
   }
 
+  // ---------- Relations clients (phase 07) : ventes perdues, après-vente, référencement ----------
+  // Les états (récupération, éligibilité) sont calculés par relations-regles.js ; ici, seulement les recommandations.
+  function relations(mo) {
+    var rel = mo.ctx.relations;
+    if (!rel) return;
+    var cfg = rel.config, m = mo.m;
+    // Les champs communs (client, opportunité, objet) complètent l'action sans écraser ses propres champs.
+    function base(x, extra) { Object.keys(extra || {}).forEach(function (k) { if (!(k in x)) x[k] = extra[k]; }); return mo.ajouter(x); }
+
+    rel.clotures.forEach(function (c) {
+      if (c.reactivation || c.etapeOpp !== "Perdu") return;
+      var b = { prospectId: c.prospectId, opportuniteId: c.opportuniteId, objet: { type: "cloture", id: c.opportuniteId }, vehicule: c.vehicule, conseillerId: c.conseillerId };
+      var declencheur = "Opportunité « " + c.titre + " » clôturée " + relatif(c.date, m) + ".";
+      // Motif inconnu ou supposé : vérifier si une information est disponible (sans jamais l'inventer).
+      if ((c.motif === "inconnu" || c.origine === "hypothese" || c.origine === "inconnu") && !c.retour && joursDepuis(c.date, m) <= cfg.fenetreVerificationMotifJours) {
+        base({ id: "perte-motif-inconnu:" + c.opportuniteId + ":" + c.motif + ":" + c.origine, regle: "perte-motif-inconnu", declencheur: declencheur, detecteLe: c.date,
+          motif: c.origine === "hypothese" ? "Motif supposé (« " + c.motifLibelle.toLowerCase() + " ») : il n'est pas confirmé par le client." : "Aucun motif de perte n'est connu.",
+          actionProposee: "Vérifier si une information supplémentaire est disponible",
+          contexte: ["L'absence de réponse ne prouve pas que le client a acheté ailleurs.", "Un retour volontaire du client peut être recueilli (formulaire facultatif)."],
+          resolution: "Le motif est confirmé ou un retour du client est reçu.", expiration: cfg.fenetreVerificationMotifJours + " jours après la clôture (règle de démonstration)." }, b);
+      }
+      if (c.motif === "experience-insatisfaisante" && joursDepuis(c.date, m) <= cfg.fenetreVerificationMotifJours) {
+        base({ id: "client-insatisfait:" + c.opportuniteId, regle: "client-insatisfait", declencheur: declencheur, detecteLe: c.date,
+          motif: "Opportunité perdue en raison d'une expérience insatisfaisante" + (c.commentaire ? " : « " + c.commentaire + " »" : "."),
+          actionProposee: "Prendre contact pour comprendre et résoudre le problème (action de service)", contexte: ["Il ne s'agit pas d'une relance commerciale."],
+          resolution: "L'action de service est réalisée.", expiration: cfg.fenetreVerificationMotifJours + " jours après la clôture." }, b);
+      }
+      if (["a-verifier", "attente-evenement", "suivi-planifie"].indexOf(c.etat) < 0) return;
+      // Achat reporté : la date de reprise souhaitée par le client est atteinte.
+      if (c.etat === "suivi-planifie" && c.dateReprise && new Date(c.dateReprise) <= m && joursDepuis(c.dateReprise, m) <= cfg.fenetreRepriseJours && !mo.dernierEchange(c.prospectId, c.opportuniteId, c.dateReprise)) {
+        base({ id: "perte-achat-reporte:" + c.opportuniteId + ":" + cleJour(c.dateReprise), regle: "perte-achat-reporte", declencheur: "Date de reprise souhaitée : " + new Date(c.dateReprise).toLocaleDateString("fr-CA", DATE_LISIBLE) + ".",
+          detecteLe: c.dateReprise, echeance: finJour(new Date(new Date(c.dateReprise).getTime() + 2 * JOUR)), motif: "Le client avait reporté son achat" + (c.commentaire ? " (« " + c.commentaire + " »)" : "") + " ; la date convenue est atteinte.",
+          actionProposee: "Reprendre contact comme convenu et mettre à jour les besoins", contexte: ["Projet initial : " + c.titre, "Une réactivation reste une décision du conseiller."],
+          resolution: "Un échange est enregistré ou l'opportunité est réactivée.", expiration: cfg.fenetreRepriseJours + " jours après la date de reprise.", relance: "perte-reprise" }, b);
+      }
+      // Véhicule correspondant à une ancienne demande (Vehicle Matching Engine).
+      if ((c.correspondances || []).length) {
+        var v = c.correspondances;
+        base({ id: "perte-correspondance:" + c.opportuniteId + ":" + v.map(function (x) { return x.vehiculeId; }).sort().join("+"), regle: "perte-correspondance", vehiculeId: v[0].vehiculeId,
+          declencheur: v.length + " véhicule(s) disponible(s) correspondant à l'ancienne recherche.", detecteLe: v[0].depuis || c.date, horizon: c.horizon,
+          motif: "Opportunité perdue (" + c.motifLibelle.toLowerCase() + ") : " + v.map(function (x) { return x.vehiculeNom; }).join(", ") + " respecte(nt) les critères connus.",
+          actionProposee: "Examiner la correspondance et préparer une présentation", vehicule: v.map(function (x) { return x.vehiculeNom; }).join(", "),
+          contexte: v.map(function (x) { return x.vehiculeNom + (x.score != null ? " — " + x.score + " % des critères connus (couverture " + x.couverture + " %)" : "") + (x.ecarts.length ? " ; écarts : " + x.ecarts.join(", ") : "") + (x.inconnus.length ? " ; à vérifier : " + x.inconnus.join(", ") : "") + (x.disponibilite ? " ; " + x.disponibilite.charAt(0).toLowerCase() + x.disponibilite.slice(1) : ""); })
+            .concat(["Prix affiché en inventaire seulement : aucune remise ni condition non confirmée."]),
+          resolution: "Le véhicule est présenté, l'opportunité est réactivée ou classée sans suite.", expiration: "Le véhicule n'est plus disponible ou ne correspond plus.", relance: "perte-correspondance" }, b);
+      }
+      // Événement déclaré ou retour du client : examiner les nouvelles conditions (aucune réactivation automatique).
+      var ev = c.evenement || (c.retour && c.retour.informerSiDisponible === true ? { texte: "Le client accepte d'être informé si un véhicule correspondant devient disponible.", le: c.retour.recuLe } : null);
+      if (ev && joursDepuis(ev.le, m) <= cfg.fenetreEvenementJours) {
+        base({ id: "perte-recuperable:" + c.opportuniteId + ":" + cleJour(ev.le), regle: "perte-recuperable", declencheur: "Nouvel élément " + relatif(ev.le, m) + " : " + ev.texte, detecteLe: ev.le,
+          motif: "Opportunité perdue (" + c.motifLibelle.toLowerCase() + ") potentiellement récupérable" + (c.conditions ? " ; condition notée : " + c.conditions : "") + ".",
+          actionProposee: "Examiner les nouvelles conditions et décider d'une réactivation", contexte: ["Une recommandation de récupération n'est pas une preuve que le client achètera."],
+          resolution: "L'opportunité est réactivée ou classée sans suite.", expiration: cfg.fenetreEvenementJours + " jours après l'événement." }, b);
+      }
+    });
+
+    rel.livraisons.forEach(function (l) {
+      var b = { prospectId: l.prospectId, opportuniteId: l.opportuniteId, vehicule: l.vehiculeNom, conseillerId: l.conseillerId };
+      // Une livraison confirmée (pas une soumission acceptée ni une livraison planifiée) déclenche le suivi.
+      if (!l.enquete && joursDepuis(l.confirmeeLe, m) <= cfg.fenetreSatisfactionJours) {
+        base({ id: "satisfaction-a-planifier:" + l.transactionId, regle: "satisfaction-a-planifier", objet: { type: "livraison", id: l.transactionId },
+          declencheur: l.reference + " : livraison confirmée " + relatif(l.confirmeeLe, m) + ".", detecteLe: l.confirmeeLe,
+          echeance: finJour(new Date(new Date(l.confirmeeLe).getTime() + cfg.delaiSuiviSatisfactionJours * JOUR)),
+          motif: "Aucun suivi de satisfaction n'est enregistré depuis la livraison (délai de démonstration : " + cfg.delaiSuiviSatisfactionJours + " jours).",
+          actionProposee: "Planifier un suivi de satisfaction", contexte: ["Vérifier que tout se passe bien, sans sollicitation commerciale."],
+          resolution: "Un retour de satisfaction est reçu ou le suivi est déclaré réalisé.", expiration: cfg.fenetreSatisfactionJours + " jours après la livraison.", relance: "satisfaction" }, b);
+      }
+      if (l.eligible) {
+        base({ id: "invitation-referencement:" + l.transactionId, regle: "invitation-referencement", objet: { type: "invitation", id: l.transactionId },
+          declencheur: l.reference + " : client satisfait, aucun problème ouvert.", detecteLe: l.confirmeeLe,
+          motif: "Les conditions préalables sont réunies ; une bonne note n'est pas, à elle seule, un consentement à être sollicité.",
+          actionProposee: "Préparer une invitation facultative à recommander", contexte: ["Invitation modifiable, sans récompense ni urgence ; aucun envoi automatique."],
+          resolution: "Une invitation est préparée.", expiration: "Un problème est ouvert, ou la fenêtre de démonstration est dépassée." }, b);
+      }
+    });
+
+    rel.enquetes.forEach(function (e) {
+      if (!e.insatisfait || e.problemeLie) return;
+      base({ id: "client-insatisfait:" + e.transactionId + ":" + e.id, regle: "client-insatisfait", prospectId: e.prospectId, opportuniteId: e.opportuniteId, objet: { type: "enquete", id: e.transactionId },
+        vehicule: e.vehiculeNom, conseillerId: e.conseillerId, declencheur: "Retour de satisfaction reçu " + relatif(e.recueLe, m) + ".", detecteLe: e.recueLe,
+        echeance: finJour(new Date(new Date(e.recueLe).getTime() + JOUR)),
+        motif: "Insatisfaction exprimée" + (e.dimensionsInsatisfaites.length ? " : " + e.dimensionsInsatisfaites.join(", ").toLowerCase() : " (satisfaction globale)") + "." + (e.recontacter ? " Le client accepte d'être recontacté." : ""),
+        actionProposee: "Prendre en charge ou transférer le problème", contexte: ["Chaque dimension est évaluée séparément : le conseiller n'est pas responsable de tous les départements."],
+        resolution: "Un dossier de suivi est ouvert ou l'action est réalisée.", expiration: "Jamais automatiquement." });
+    });
+
+    rel.problemes.forEach(function (p) {
+      var b = { prospectId: p.prospectId, opportuniteId: p.opportuniteId, objet: { type: "probleme", id: p.id }, vehicule: p.vehiculeNom, conseillerId: p.conseillerId };
+      if (p.statut === "Nouveau" || p.statut === "EnCours") {
+        base({ id: "probleme-a-traiter:" + p.id + ":" + p.statut, regle: "probleme-a-traiter", prioriteBase: p.priorite, declencheur: "Problème signalé " + relatif(p.signaleLe, m) + " (" + p.statutLibelle.toLowerCase() + ").",
+          detecteLe: p.signaleLe, motif: p.nature, actionProposee: p.prochaineAction || (p.statut === "Nouveau" ? "Prendre en charge ou transférer au département concerné" : "Définir la prochaine action"),
+          contexte: ["Département concerné : " + p.departementLibelle], resolution: "Le problème est résolu ou transféré au département concerné.", expiration: "Le problème est clôturé." }, b);
+      }
+      if (p.statut === "Resolu" && !p.verifieLe) {
+        base({ id: "probleme-resolu-verifier:" + p.id + ":" + cleJour(p.resoluLe), regle: "probleme-resolu-verifier", declencheur: "Problème déclaré résolu " + relatif(p.resoluLe, m) + ".", detecteLe: p.resoluLe,
+          echeance: finJour(new Date(new Date(p.resoluLe).getTime() + cfg.delaiVerificationResolutionJours * JOUR)), motif: p.nature,
+          actionProposee: "Vérifier avec le client que la résolution répond à son besoin", contexte: ["Résolu par : " + p.departementLibelle],
+          resolution: "La résolution est vérifiée (dossier clôturé) ou le problème est rouvert.", expiration: "Le problème est clôturé." }, b);
+      }
+    });
+  }
+
   function relatif(d, m) {
     var h = (m - new Date(d)) / HEURE;
     if (h < 0) {
@@ -380,6 +495,7 @@
     var mo = new Moteur(ctx);
     // Ordre : situations précises d'abord ; les suivis génériques et la surveillance seulement s'il ne reste rien.
     transactions(mo);
+    relations(mo);
     soumissions(mo);
     rendezVous(mo);
     prospects(mo);

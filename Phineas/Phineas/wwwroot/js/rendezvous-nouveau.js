@@ -53,14 +53,18 @@
       return;
     }
     z.innerHTML = '<div class="so-opps" role="radiogroup" aria-label="Opportunité">' + opps.map(function (o) {
-      var active = P.estActive(o);
+      var active = selectionnable(o);
       var choisie = o.id === etat.oppId;
       var aVenir = R.parOpportunite(o.id).filter(function (r) { return R.estActif(r) && R.fin(r) >= new Date(); }).length;
       return '<button type="button" role="radio" aria-checked="' + choisie + '" class="so-choix' + (choisie ? " is-active" : "") + '" data-opp="' + esc(o.id) + '"' + (active ? "" : ' disabled aria-disabled="true"') + ">" +
         "<span><strong>" + esc(o.titre) + '</strong> <span class="status-pill sv-et-' + esc(o.etape) + '">' + esc(P.libelleEtape(o.etape)) + "</span>" +
         '<span class="pr-sous d-block">' + esc(P.resumeVehicule(o) || "Véhicule à préciser") +
-        (aVenir ? " · " + aVenir + " rendez-vous à venir" : "") + (active ? "" : " · opportunité clôturée") + "</span></span></button>";
+        (aVenir ? " · " + aVenir + " rendez-vous à venir" : "") + (active ? (P.estActive(o) ? "" : " · suivi après-vente") : " · opportunité clôturée") + "</span></span></button>";
     }).join("") + "</div>";
+  }
+  // Opportunité utilisable : active, ou gagnée pour un suivi après-vente (phase 07 : relation après la vente).
+  function selectionnable(o) {
+    return !!o && (P.estActive(o) || (o.etape === "Gagne" && etat.type === "SuiviApresVente"));
   }
   function rendreSoumissions() {
     var carte = zone("carte-soumissions");
@@ -330,6 +334,8 @@
       rendre();
     } else if (b.dataset.type) {
       etat.type = b.dataset.type;
+      // Une vente gagnée n'accepte qu'un suivi après-vente.
+      if (etat.oppId && !selectionnable(P.opportunite(etat.oppId))) etat.oppId = null;
       if (etat.type !== "EssaiRoutier" && R.avecVehicule.indexOf(etat.type) < 0 && !vehiculeSoumission()) etat.vehiculeId = null;
       reinitialiserApres(2);
       aide.textContent = "";
@@ -429,7 +435,7 @@
     if (R.etatVehicule(S.vehicule(vS), etat.type, vehiculeSoumission()).selectionnable) etat.vehiculeId = vS;
   } else if (dsO) {
     etat.prospectId = dsO.prospectId;
-    if (P.estActive(dsO)) etat.oppId = dsO.id;
+    if (selectionnable(dsO)) etat.oppId = dsO.id;
     // Véhicule présélectionné (ex. essai depuis les recommandations de véhicules), s'il est sélectionnable.
     var vD = racine.dataset.vehicule && S.vehicule(racine.dataset.vehicule);
     if (vD && R.etatVehicule(vD, etat.type).selectionnable) etat.vehiculeId = vD.id;

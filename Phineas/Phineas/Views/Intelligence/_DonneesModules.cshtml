@@ -5,4 +5,4 @@
 <partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
 <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Prospects, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = Model.ConseillerNom, Concession = Model.Concession }" />
 <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />
-<partial name="_DonneesIntelligence" model="new ChargeIntelligence(Model.Intelligence, Model.ConseillerNom)" />
+<partial name="~/Views/Intelligence/_DonneesIntelligence.cshtml" model="new ChargeIntelligence(Model.Intelligence, Model.ConseillerNom, Model.Concession)" />

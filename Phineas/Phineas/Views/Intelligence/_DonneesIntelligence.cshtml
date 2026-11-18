@@ -19,3 +19,8 @@
     };
 }
 <script type="application/json" id="intelligence-donnees">@Html.Raw(JsonSerializer.Serialize(charge, options))</script>
+@* Phase 07 : faits des relations clients, entrées du moteur (balise distincte, libellés propres). *@
+@if (Model.Donnees.Relations is { } relations)
+{
+    <partial name="~/Views/Relations/_DonneesRelations.cshtml" model="new ChargeRelations(relations, Model.ConseillerNom, Model.Concession)" />
+}

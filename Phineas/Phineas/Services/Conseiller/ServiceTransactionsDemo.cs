@@ -306,6 +306,44 @@ public class ServiceTransactionsDemo : IServiceTransactions
                 ],
             },
 
+            // Phase 07 : ventes livrées et clôturées (suivi de satisfaction, problème après-vente, recommandation).
+            new()
+            {
+                Id = "t-martine-hrv", Reference = "TRX-2026-0012", ProspectId = IdsProspectsDemo.MartineLavigne, OpportuniteId = "o-martine-hrv",
+                ConseillerId = Moi, VehiculeId = "v-hrv", SoumissionId = "s-martine-hrv", VersionNumero = 1,
+                Proposition = Figer("s-martine-hrv", 1, n.AddDays(-26)), ModeAchat = "comptant", Statut = StatutTransaction.Cloturee, DateCreation = n.AddDays(-26),
+                Commercial = new() { PrixConfirme = true, OptionsConfirmees = true, AccordClient = n.AddDays(-27) },
+                Financement = new() { Statut = StatutFinancement.NonApplicable },
+                Paiement = new() { DepotPrevu = 1_000, Depot = StatutPaiement.Confirme, Versement = StatutPaiement.Confirme },
+                Administratif = new() { Statut = StatutAdministratif.Confirme, Depuis = n.AddDays(-22) },
+                Livraison = new() { DatePrevue = n.AddDays(-20), RemiseLe = n.AddDays(-20), ConfirmeeLe = n.AddDays(-20) },
+                ClotureLe = n.AddDays(-15),
+                Historique =
+                [
+                    Moi_(n.AddDays(-26), "creation", "Transaction ouverte.", null, "En cours"),
+                    Moi_(n.AddDays(-20), "statut", "Livraison confirmée.", "Prête à livrer", "Livrée"),
+                    Moi_(n.AddDays(-15), "statut", "Dossier clôturé.", "Livrée", "Clôturée"),
+                ],
+            },
+            new()
+            {
+                Id = "t-benoit-forester", Reference = "TRX-2026-0010", ProspectId = IdsProspectsDemo.BenoitLachance, OpportuniteId = "o-benoit-forester",
+                ConseillerId = Moi, VehiculeId = "v-forester", SoumissionId = "s-benoit-forester", VersionNumero = 1,
+                Proposition = Figer("s-benoit-forester", 1, n.AddDays(-52)), ModeAchat = "comptant", Statut = StatutTransaction.Cloturee, DateCreation = n.AddDays(-52),
+                Commercial = new() { PrixConfirme = true, OptionsConfirmees = true, AccordClient = n.AddDays(-53) },
+                Financement = new() { Statut = StatutFinancement.NonApplicable },
+                Paiement = new() { DepotPrevu = 1_000, Depot = StatutPaiement.Confirme, Versement = StatutPaiement.Confirme },
+                Administratif = new() { Statut = StatutAdministratif.Confirme, Depuis = n.AddDays(-47) },
+                Livraison = new() { DatePrevue = n.AddDays(-45), RemiseLe = n.AddDays(-45), ConfirmeeLe = n.AddDays(-45) },
+                ClotureLe = n.AddDays(-40),
+                Historique =
+                [
+                    Moi_(n.AddDays(-52), "creation", "Transaction ouverte.", null, "En cours"),
+                    Moi_(n.AddDays(-45), "statut", "Livraison confirmée.", "Prête à livrer", "Livrée"),
+                    Moi_(n.AddDays(-40), "statut", "Dossier clôturé.", "Livrée", "Clôturée"),
+                ],
+            },
+
             // 12. Annulée (client a acheté ailleurs) : conservée dans l'historique.
             new()
             {

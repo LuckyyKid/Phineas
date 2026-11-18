@@ -1,0 +1,177 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RelationsPageViewModel
+@{
+    ViewData["Title"] = "Mon réseau et recommandations";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Mon réseau et recommandations</h1>
+        <p class="text-muted mb-0">Développer un réseau fondé sur la recommandation volontaire de vos clients satisfaits.</p>
+    </div>
+    <div class="sv-quick">
+        <a class="btn btn-outline-primary btn-sm" data-rc-apercu href="@Url.Action("Recommande")"><i class="bi bi-eye me-1"></i>Prévisualiser le parcours du prospect</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="reseau" data-transaction="@Model.TransactionId" data-onglet="@Model.Onglet">
+    <section class="card sv-kpis rc-kpis rc-kpis-7" aria-label="Résultats de mon réseau">
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-envelope-paper"></i>Invitations préparées</div><div class="sv-kpi-value" data-compteur="preparees">—</div><div class="sv-kpi-detail">par vous</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-send-check"></i>Déclarées partagées</div><div class="sv-kpi-value" data-compteur="partagees">—</div><div class="sv-kpi-detail">hors Phineas</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-person-plus"></i>Prospects recommandés</div><div class="sv-kpi-value" data-compteur="prospects">—</div><div class="sv-kpi-detail" data-detail="doublons">nouveaux</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-briefcase"></i>Opportunités</div><div class="sv-kpi-value" data-compteur="opportunites">—</div><div class="sv-kpi-detail">issues du réseau</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-calendar-check"></i>Rendez-vous</div><div class="sv-kpi-value" data-compteur="rendezVous">—</div><div class="sv-kpi-detail">obtenus</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-file-earmark-check"></i>Transactions conclues</div><div class="sv-kpi-value" data-compteur="transactions">—</div><div class="sv-kpi-detail">vente enregistrée</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-key"></i>Ventes livrées</div><div class="sv-kpi-value" data-compteur="livrees">—</div><div class="sv-kpi-detail">issues du réseau</div></div>
+    </section>
+
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-resultats" data-bs-toggle="tab" data-bs-target="#panneau-resultats" type="button" role="tab" aria-controls="panneau-resultats" aria-selected="true">Résultats et historique</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-invitations" data-bs-toggle="tab" data-bs-target="#panneau-invitations" type="button" role="tab" aria-controls="panneau-invitations" aria-selected="false">Invitations <span class="pr-compte" data-champ="nb-eligibles"></span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-profil" data-bs-toggle="tab" data-bs-target="#panneau-profil" type="button" role="tab" aria-controls="panneau-profil" aria-selected="false">Profil et carte</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-resultats" role="tabpanel" aria-labelledby="onglet-resultats" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-funnel me-2"></i>Parcours des prospects recommandés</span><span class="badge-soft">Données de démonstration</span></div>
+                <div class="card-body">
+                    <ol class="rc-entonnoir" id="entonnoir"></ol>
+                    <p class="pr-note mb-0"><i class="bi bi-info-circle me-1"></i>Chaque étape ne compte que les prospects ayant franchi les précédentes. Un taux sans dénominateur est « non disponible ». Les visites et clics sur la carte ne sont pas mesurés : aucune donnée de ce type n'est collectée. Ces chiffres ne mesurent pas l'efficacité du conseiller.</p>
+                </div>
+            </section>
+            <section class="card pr-module">
+                <div class="card-header sv-card-header"><span><i class="bi bi-clock-history me-2"></i>Historique des recommandations</span></div>
+                <div class="table-responsive">
+                    <table class="table pr-table rc-table mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Référence</th>
+                                <th scope="col">Prospect recommandé</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Opportunité et étape</th>
+                                <th scope="col">Résultat</th>
+                                <th scope="col">Attribution</th>
+                                <th scope="col">Conseiller attribué</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recommandations-corps"></tbody>
+                    </table>
+                </div>
+                <div class="pr-etat-vide" id="recommandations-vide" hidden>
+                    <i class="bi bi-share"></i>
+                    <strong>Aucune recommandation</strong>
+                    <span>Les prospects qui vous contactent grâce à votre carte apparaîtront ici.</span>
+                </div>
+                <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-shield-lock me-1"></i>Confidentialité : le client qui a partagé votre carte ne reçoit jamais d'information sur le dossier de la personne recommandée.</p>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-invitations" role="tabpanel" aria-labelledby="onglet-invitations" tabindex="0">
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-envelope-paper me-2"></i>Clients livrés et conditions d'invitation</span></div>
+                <div class="card-body">
+                    <p class="small">Une invitation peut être envisagée lorsque la livraison est confirmée, qu'un suivi de satisfaction a été reçu, qu'aucun problème n'est ouvert et que les préférences de communication le permettent. Une excellente note n'est pas, à elle seule, un consentement : vous validez toujours la démarche.</p>
+                    <div class="rc-invitations" id="eligibles"></div>
+                </div>
+            </section>
+            <section class="card rc-bloc" id="editeur-invitation" hidden>
+                <div class="card-header sv-card-header"><span><i class="bi bi-pencil-square me-2"></i>Préparer une invitation</span><span class="badge-soft">Aucun envoi réel</span></div>
+                <div class="card-body">
+                    <p class="small mb-2" data-zone="invitation-client"></p>
+                    <label class="form-label" for="invitation-texte">Message (modifiable)</label>
+                    <textarea class="form-control" id="invitation-texte" rows="5"></textarea>
+                    <p class="form-text">Aucune récompense, aucun sentiment d'urgence. La personne recommandée manifestera elle-même son intérêt.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-primary" data-reseau="preparer"><i class="bi bi-check2 me-1"></i>Enregistrer l'invitation</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-reseau="copier-invitation"><i class="bi bi-clipboard me-1"></i>Copier le message</button>
+                        <button type="button" class="btn btn-sm btn-ghost" data-reseau="fermer-editeur">Annuler</button>
+                    </div>
+                </div>
+            </section>
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-send me-2"></i>Invitations préparées</span></div>
+                <div class="card-body"><div id="invitations"></div></div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-profil" role="tabpanel" aria-labelledby="onglet-profil" tabindex="0">
+            <div class="rc-grille">
+                <section class="card rc-bloc">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-person-vcard me-2"></i>Mon profil commercial</span><span class="badge-soft">Local</span></div>
+                    <div class="card-body">
+                        <form id="form-profil" novalidate>
+                            <label class="form-label" for="pf-presentation">Présentation professionnelle</label>
+                            <textarea class="form-control" id="pf-presentation" name="presentation" rows="3" maxlength="400"></textarea>
+                            <div class="row g-3 mt-1">
+                                <div class="col-sm-6"><label class="form-label" for="pf-telephone">Téléphone professionnel</label><input type="tel" class="form-control" id="pf-telephone" name="telephonePro" /></div>
+                                <div class="col-sm-6"><label class="form-label" for="pf-courriel">Courriel professionnel</label><input type="email" class="form-control" id="pf-courriel" name="courrielPro" /></div>
+                            </div>
+                            <fieldset class="mt-3"><legend class="form-label fs-6">Langues parlées</legend>
+                                @foreach (var (cle, libelle) in ReferentielsRelations.Langues)
+                                {
+                                    <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="langue" value="@cle" id="pf-l-@cle" /><label class="form-check-label" for="pf-l-@cle">@libelle</label></div>
+                                }
+                            </fieldset>
+                            <fieldset class="mt-3"><legend class="form-label fs-6">Informations présentées</legend>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="afficherTelephone" id="pf-a-tel" /><label class="form-check-label" for="pf-a-tel">Téléphone professionnel</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="afficherCourriel" id="pf-a-cou" /><label class="form-check-label" for="pf-a-cou">Courriel professionnel</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="afficherLangues" id="pf-a-lan" /><label class="form-check-label" for="pf-a-lan">Langues parlées</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="afficherPhoto" id="pf-a-pho" disabled /><label class="form-check-label" for="pf-a-pho">Photo professionnelle <span class="pr-sous">(aucune photo disponible)</span></label></div>
+                            </fieldset>
+                            <label class="form-label mt-3" for="pf-message">Message de la carte</label>
+                            <textarea class="form-control" id="pf-message" name="messageCarte" rows="3" maxlength="300"></textarea>
+                            <p class="form-text">Aucune information personnelle privée n'est publiée. Le compte de connexion n'est pas modifié.</p>
+                            <button type="submit" class="btn btn-sm btn-primary">Enregistrer le profil</button>
+                        </form>
+                    </div>
+                </section>
+                <section class="card rc-bloc">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-credit-card-2-front me-2"></i>Carte de recommandation</span><span class="badge-soft">Fictive</span></div>
+                    <div class="card-body">
+                        <div id="carte-apercu"></div>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-reseau="copier-lien"><i class="bi bi-link-45deg me-1"></i>Copier le lien de démonstration</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-reseau="copier-message"><i class="bi bi-clipboard me-1"></i>Copier un message de partage</button>
+                            <button type="button" class="btn btn-sm btn-ghost" data-reseau="voir-recommandations"><i class="bi bi-list-ul me-1"></i>Recommandations associées</button>
+                        </div>
+                        <p class="pr-note mt-3 mb-0"><i class="bi bi-exclamation-circle me-1"></i>Lien de démonstration : aucune infrastructure publique n'existe ; il ne permet à personne d'accéder à Phineas. Utilisez « Prévisualiser le parcours du prospect » pour voir ce que la personne recommandée verrait.</p>
+                    </div>
+                </section>
+            </div>
+            <section class="card rc-bloc">
+                <div class="card-header sv-card-header"><span><i class="bi bi-eye me-2"></i>Aperçu du profil public</span></div>
+                <div class="card-body"><div id="profil-apercu"></div></div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-reseau.js" asp-append-version="true"></script>
+}

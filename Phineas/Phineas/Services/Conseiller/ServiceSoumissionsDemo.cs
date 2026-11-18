@@ -76,6 +76,12 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
                 31_995, StatutVehicule.Livre, false, "Traction intégrale"),
             V("v-santafe", "DEMO-0975", "Hyundai", "Santa Fe", 2022, "Preferred", 41_300, "Bleu", "VUS", "Essence",
                 33_995, StatutVehicule.EnInspection, false, "Traction intégrale", "Démarreur à distance"),
+
+            // Phase 07 : véhicules déjà livrés (suivi après-vente).
+            V("v-hrv", "DEMO-0958", "Honda", "HR-V", 2023, "EX-L", 19_800, "Bleu", "VUS", "Essence",
+                29_995, StatutVehicule.Livre, false, "Traction intégrale", "Sièges chauffants"),
+            V("v-forester", "DEMO-0937", "Subaru", "Forester", 2022, "Touring", 33_400, "Gris", "VUS", "Essence",
+                33_495, StatutVehicule.Livre, false, "Traction intégrale", "Grand espace de chargement"),
         };
 
         // Emplacements fictifs sur le terrain (même champ que Vehicule.Emplacement). Absent = non renseigné.
@@ -460,6 +466,38 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
                     Note = "Proposition initiale",
                     Vehicule = Inv("v-crv"),
                     Offre = new() { PrixAnnonce = 46_290, Options = [O("tapis")], ModeAchat = "comptant", DateValidite = j.AddDays(6) },
+                },
+            ]),
+
+            // Phase 07 : proposition refusée (vente perdue pour le prix) et ventes livrées.
+            new("s-daniel-rav4", "SOU-2026-0039", IdsProspectsDemo.DanielProulx, "o-daniel-rav4", Moi, n.AddDays(-32),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-32), Auteur = moi, Statut = StatutSoumission.Refusee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-rav4"),
+                    Offre = new() { PrixAnnonce = 41_490, ModeAchat = "financement", MiseDeFonds = 3_000, TauxAnnuel = 6.49m, DateValidite = j.AddDays(-25) },
+                },
+            ]),
+            new("s-martine-hrv", "SOU-2026-0027", IdsProspectsDemo.MartineLavigne, "o-martine-hrv", Moi, n.AddDays(-28),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-28), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-hrv") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new() { PrixAnnonce = 29_995, Options = [O("tapis")], ModeAchat = "comptant", DateValidite = j.AddDays(-21) },
+                },
+            ]),
+            new("s-benoit-forester", "SOU-2026-0021", IdsProspectsDemo.BenoitLachance, "o-benoit-forester", Moi, n.AddDays(-55),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-55), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-forester") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new() { PrixAnnonce = 33_495, ModeAchat = "comptant", DateValidite = j.AddDays(-48) },
                 },
             ]),
 

@@ -37,6 +37,18 @@ public static class IdsProspectsDemo
     public const string NadiaCloutier = "nadia-cloutier";
     public const string KevinOuimet = "kevin-ouimet";
     public const string SimonThibault = "simon-thibault";
+
+    // Phase 07 : ventes perdues, après-vente et recommandations.
+    public const string DanielProulx = "daniel-proulx";
+    public const string JulieMenard = "julie-menard";
+    public const string AnnieLessard = "annie-lessard";
+    public const string PierreLavallee = "pierre-lavallee";
+    public const string YannickPoirier = "yannick-poirier";
+    public const string SteveTremblay = "steve-tremblay";
+    public const string ValerieDesjardins = "valerie-desjardins";
+    public const string MartineLavigne = "martine-lavigne";
+    public const string BenoitLachance = "benoit-lachance";
+    public const string MelissaHebert = "melissa-hebert";
 }
 
 // DONNÉES FICTIVES — phase frontend uniquement.
@@ -121,6 +133,27 @@ public class ServiceProspectsDemo : IServiceProspects
                 "telephone", "soir", "meta", null, Moi, n.AddDays(-16)),
             new(IdsProspectsDemo.SimonThibault, "Simon", "Thibault", "simon.thibault@exemple.test", "514-555-0129",
                 "courriel", "indifferent", "recommandation", "Recommandé par Gabriel Roy", Moi, n.AddDays(-12)),
+
+            new(IdsProspectsDemo.DanielProulx, "Daniel", "Proulx", "daniel.proulx@exemple.test", "514-555-0145",
+                "courriel", "soir", "site-web", null, Moi, n.AddDays(-60)),
+            new(IdsProspectsDemo.JulieMenard, "Julie", "Ménard", "julie.menard@exemple.test", "450-555-0112",
+                "texto", "midi", "google", null, Moi, n.AddDays(-50)),
+            new(IdsProspectsDemo.AnnieLessard, "Annie", "Lessard", "annie.lessard@exemple.test", "819-555-0164",
+                "telephone", "apres-midi", "visite", null, Moi, n.AddDays(-70)),
+            new(IdsProspectsDemo.PierreLavallee, "Pierre", "Lavallée", "pierre.lavallee@exemple.test", "438-555-0139",
+                "courriel", null, "meta", null, Moi, n.AddDays(-35)),
+            new(IdsProspectsDemo.YannickPoirier, "Yannick", "Poirier", null, "514-555-0157",
+                "telephone", "soir", "kijiji", "Annonce Mazda CX-5 2022", Moi, n.AddDays(-40)),
+            new(IdsProspectsDemo.SteveTremblay, "Steve", "Tremblay", "steve.tremblay@exemple.test", "819-555-0121",
+                "telephone", "matin", "appel", null, Moi, n.AddDays(-55)),
+            new(IdsProspectsDemo.ValerieDesjardins, "Valérie", "Desjardins", "valerie.desjardins@exemple.test", "450-555-0190",
+                "courriel", "soir", "site-web", null, Moi, n.AddDays(-65)),
+            new(IdsProspectsDemo.MartineLavigne, "Martine", "Lavigne", "martine.lavigne@exemple.test", "514-555-0176",
+                "courriel", "indifferent", "site-web", null, Moi, n.AddDays(-50)),
+            new(IdsProspectsDemo.BenoitLachance, "Benoît", "Lachance", "benoit.lachance@exemple.test", "450-555-0143",
+                "telephone", "matin", "visite", null, Moi, n.AddDays(-80)),
+            new(IdsProspectsDemo.MelissaHebert, "Mélissa", "Hébert", "melissa.hebert@exemple.test", null,
+                "courriel", null, "recommandation", "Formulaire de la carte de recommandation (démonstration)", Moi, n.AddHours(-5)),
         };
 
         var opportunites = new List<Opportunite>
@@ -308,6 +341,60 @@ public class ServiceProspectsDemo : IServiceProspects
                 ["Honda CR-V Hybride EX-L 2024"],
                 new() { Categorie = "vus", Etat = "neuf", Marques = ["Honda"], Modeles = ["CR-V"], Places = 5, Caracteristiques = ["hybride", "ti"],
                     Utilisation = "famille", BudgetTotal = 48_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat" }),
+
+            // Phase 07 : opportunités perdues (motifs et origines distincts) et opportunité réactivée.
+            new("o-daniel-rav4", IdsProspectsDemo.DanielProulx, "VUS hybride neuf", EtapeVente.Perdu,
+                n.AddDays(-60), n.AddDays(-25), null, null,
+                ["Toyota RAV4 Hybride XLE 2024"],
+                new() { Categorie = "vus", Etat = "neuf", Marques = ["Toyota"], Modeles = ["RAV4 Hybride"], Places = 5, Caracteristiques = ["hybride"],
+                    Utilisation = "quotidien", BudgetTotal = 36_000, ModeAchat = "financement", Reprise = "non", Horizon = "30j", ElementsDecision = ["prix"] }),
+            new("o-julie-hybride", IdsProspectsDemo.JulieMenard, "VUS hybride d'occasion", EtapeVente.Perdu,
+                n.AddDays(-50), n.AddDays(-18), null, null,
+                ["Toyota Corolla Cross Hybride 2022 (vendu)"],
+                new() { Categorie = "vus", Etat = "occasion", Places = 5, Caracteristiques = ["hybride", "ti"], Utilisation = "quotidien",
+                    BudgetTotal = 32_000, ModeAchat = "financement", Reprise = "non", Horizon = "1-3-mois", ElementsDecision = ["consommation"] }),
+            new("o-annie-berline", IdsProspectsDemo.AnnieLessard, "Berline compacte", EtapeVente.Perdu,
+                n.AddDays(-70), n.AddDays(-40), null, null,
+                [],
+                new() { Categorie = "berline", Etat = "occasion", Places = 5, Utilisation = "urbain", BudgetTotal = 25_000,
+                    ModeAchat = "financement", Reprise = "oui", RepriseDetail = "Véhicule en location, fin de contrat prévue", Horizon = "plus-tard" }),
+            new("o-pierre-civic", IdsProspectsDemo.PierreLavallee, "Berline sportive", EtapeVente.Perdu,
+                n.AddDays(-35), n.AddDays(-14), null, null,
+                ["Honda Civic Touring 2023"],
+                new() { Categorie = "berline", Marques = ["Honda"], Modeles = ["Civic"], BudgetTotal = 32_000 }),
+            new("o-yannick-tucson", IdsProspectsDemo.YannickPoirier, "VUS compact", EtapeVente.Perdu,
+                n.AddDays(-40), n.AddDays(-12), null, null,
+                ["Mazda CX-5 GT 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Places = 5, Caracteristiques = ["ti"], BudgetTotal = 33_000,
+                    ModeAchat = "comptant", Horizon = "30j" }),
+            new("o-steve-camionnette", IdsProspectsDemo.SteveTremblay, "Camionnette 4x4 d'occasion", EtapeVente.Perdu,
+                n.AddDays(-55), n.AddDays(-30), null, null,
+                ["Chevrolet Silverado LT 2021"],
+                new() { Categorie = "camionnette", Etat = "occasion", Places = 5, Caracteristiques = ["ti", "remorquage"], Utilisation = "travail",
+                    BudgetTotal = 46_000, ModeAchat = "financement", MiseDeFonds = 5_000, Reprise = "non", Horizon = "1-3-mois" }),
+            new("o-valerie-cx5", IdsProspectsDemo.ValerieDesjardins, "VUS compact", EtapeVente.AQualifier,
+                n.AddDays(-65), n.AddDays(-3), "Mettre à jour le budget et les besoins", j.AddDays(1),
+                ["Mazda CX-5 GT 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Places = 5, Caracteristiques = ["ti"], BudgetMensuel = 450,
+                    ModeAchat = "financement", Horizon = "30j" }),
+
+            // Ventes conclues et livrées : suivi après-vente.
+            new("o-martine-hrv", IdsProspectsDemo.MartineLavigne, "VUS sous-compact", EtapeVente.Gagne,
+                n.AddDays(-50), n.AddDays(-15), null, null,
+                ["Honda HR-V EX-L 2023"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Honda"], Modeles = ["HR-V"], Places = 5, Caracteristiques = ["ti"],
+                    Utilisation = "urbain", BudgetTotal = 31_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat" }),
+            new("o-benoit-forester", IdsProspectsDemo.BenoitLachance, "VUS familial", EtapeVente.Gagne,
+                n.AddDays(-80), n.AddDays(-40), null, null,
+                ["Subaru Forester Touring 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Subaru"], Modeles = ["Forester"], Places = 5, Caracteristiques = ["ti"],
+                    Utilisation = "famille", BudgetTotal = 35_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat" }),
+
+            // Prospect recommandé : a rempli lui-même le formulaire de la carte (démonstration).
+            new("o-melissa-vus", IdsProspectsDemo.MelissaHebert, "VUS compact", EtapeVente.Nouveau,
+                n.AddHours(-5), n.AddHours(-5), null, null,
+                [],
+                new() { Categorie = "vus", BudgetTotal = 30_000, Horizon = "1-3-mois" }),
         };
 
         var i = 0;
@@ -469,6 +556,75 @@ public class ServiceProspectsDemo : IServiceProspects
                 "Prospect créé : recommandé par Gabriel Roy."),
             new(Id(), IdsProspectsDemo.SimonThibault, "o-simon-crv", n.AddDays(-1), "visite", moi,
                 "Le client accepte la soumission SOU-2026-0048 (CR-V hybride)."),
+
+            new(Id(), IdsProspectsDemo.DanielProulx, "o-daniel-rav4", n.AddDays(-60), "creation", Systeme,
+                "Prospect créé à partir du formulaire du site Web (RAV4 Hybride)."),
+            new(Id(), IdsProspectsDemo.DanielProulx, "o-daniel-rav4", n.AddDays(-32), "courriel", moi,
+                "Soumission SOU-2026-0039 envoyée par courriel."),
+            new(Id(), IdsProspectsDemo.DanielProulx, "o-daniel-rav4", n.AddDays(-26), "appel", moi,
+                "Le client refuse la proposition : le prix dépasse ce qu'il est prêt à payer. Il demande à ne plus être sollicité."),
+            new(Id(), IdsProspectsDemo.DanielProulx, "o-daniel-rav4", n.AddDays(-25), "perte", moi,
+                "Opportunité clôturée comme perdue : prix trop élevé (déclaré par le client)."),
+            new(Id(), IdsProspectsDemo.JulieMenard, "o-julie-hybride", n.AddDays(-50), "creation", Systeme,
+                "Prospect saisi à partir d'une demande reçue par la publicité Google."),
+            new(Id(), IdsProspectsDemo.JulieMenard, "o-julie-hybride", n.AddDays(-19), "texto", moi,
+                "Le Corolla Cross hybride qui l'intéressait a été vendu ; aucun équivalent en inventaire."),
+            new(Id(), IdsProspectsDemo.JulieMenard, "o-julie-hybride", n.AddDays(-18), "perte", moi,
+                "Opportunité clôturée comme perdue : véhicule indisponible (information confirmée). Suivi possible si un véhicule comparable arrive."),
+            new(Id(), IdsProspectsDemo.AnnieLessard, "o-annie-berline", n.AddDays(-70), "creation", moi,
+                "Prospect créé à la suite d'une visite en concession."),
+            new(Id(), IdsProspectsDemo.AnnieLessard, "o-annie-berline", n.AddDays(-40), "appel", moi,
+                "Préfère attendre la fin de son contrat de location ; accepte d'être recontactée à cette date."),
+            new(Id(), IdsProspectsDemo.AnnieLessard, "o-annie-berline", n.AddDays(-40), "perte", moi,
+                "Opportunité clôturée comme perdue : achat reporté (déclaré par la cliente)."),
+            new(Id(), IdsProspectsDemo.PierreLavallee, "o-pierre-civic", n.AddDays(-35), "creation", Systeme,
+                "Prospect saisi à partir d'une réponse à la publicité Meta."),
+            new(Id(), IdsProspectsDemo.PierreLavallee, "o-pierre-civic", n.AddDays(-20), "courriel", moi,
+                "Information sur la Civic Touring transmise par courriel."),
+            new(Id(), IdsProspectsDemo.PierreLavallee, "o-pierre-civic", n.AddDays(-14), "perte", moi,
+                "Opportunité clôturée comme perdue : motif inconnu."),
+            new(Id(), IdsProspectsDemo.YannickPoirier, "o-yannick-tucson", n.AddDays(-40), "creation", moi,
+                "Prospect créé à la suite d'une annonce Kijiji."),
+            new(Id(), IdsProspectsDemo.YannickPoirier, "o-yannick-tucson", n.AddDays(-25), "appel", moi,
+                "Proposition sur le Mazda CX-5 présentée par téléphone."),
+            new(Id(), IdsProspectsDemo.YannickPoirier, "o-yannick-tucson", n.AddDays(-12), "perte", moi,
+                "Opportunité clôturée comme perdue : client ayant acheté ailleurs (hypothèse du conseiller, non confirmée)."),
+            new(Id(), IdsProspectsDemo.SteveTremblay, "o-steve-camionnette", n.AddDays(-55), "creation", moi,
+                "Prospect créé à la suite d'un appel téléphonique."),
+            new(Id(), IdsProspectsDemo.SteveTremblay, "o-steve-camionnette", n.AddDays(-35), "visite", moi,
+                "Essai du Chevrolet Silverado LT 2021 ; souhaite réfléchir quelques jours."),
+            new(Id(), IdsProspectsDemo.SteveTremblay, "o-steve-camionnette", n.AddDays(-30), "perte", moi,
+                "Opportunité clôturée comme perdue : véhicule indisponible (vendu à un autre client). Le client souhaite être informé d'une camionnette comparable."),
+            new(Id(), IdsProspectsDemo.ValerieDesjardins, "o-valerie-cx5", n.AddDays(-65), "creation", Systeme,
+                "Prospect créé à partir du formulaire du site Web."),
+            new(Id(), IdsProspectsDemo.ValerieDesjardins, "o-valerie-cx5", n.AddDays(-40), "perte", moi,
+                "Opportunité clôturée comme perdue : budget incompatible (déclaré par la cliente)."),
+            new(Id(), IdsProspectsDemo.ValerieDesjardins, "o-valerie-cx5", n.AddDays(-3), "recuperation", moi,
+                "Opportunité réactivée par le conseiller : la cliente nous a recontactés, sa mise de fonds a augmenté.", "Mettre à jour le budget et les besoins"),
+            new(Id(), IdsProspectsDemo.NicolasBergeron, "o-nicolas-tiguan", n.AddDays(-30), "perte", moi,
+                "Opportunité clôturée comme perdue : budget incompatible (déclaré par le client)."),
+            new(Id(), IdsProspectsDemo.NicolasBergeron, "o-nicolas-tiguan", n.AddDays(-22), "recuperation", moi,
+                "Opportunité réactivée par le conseiller : un Tiguan d'occasion correspondant à son budget est arrivé en inventaire."),
+            new(Id(), IdsProspectsDemo.MartineLavigne, "o-martine-hrv", n.AddDays(-50), "creation", Systeme,
+                "Prospect créé à partir du formulaire du site Web."),
+            new(Id(), IdsProspectsDemo.MartineLavigne, "o-martine-hrv", n.AddDays(-20), "transaction", Systeme,
+                "TRX-2026-0012 · Véhicule livré : Honda HR-V EX-L 2023."),
+            new(Id(), IdsProspectsDemo.MartineLavigne, "o-martine-hrv", n.AddDays(-17), "satisfaction", moi,
+                "Retour de satisfaction reçu (représenté dans le prototype) : satisfaite de l'accompagnement, insatisfaite de la préparation."),
+            new(Id(), IdsProspectsDemo.MartineLavigne, "o-martine-hrv", n.AddDays(-17), "probleme", moi,
+                "Problème après-vente signalé : deuxième clé et tapis promis non remis."),
+            new(Id(), IdsProspectsDemo.BenoitLachance, "o-benoit-forester", n.AddDays(-80), "creation", moi,
+                "Prospect créé à la suite d'une visite en concession."),
+            new(Id(), IdsProspectsDemo.BenoitLachance, "o-benoit-forester", n.AddDays(-45), "transaction", Systeme,
+                "TRX-2026-0010 · Véhicule livré : Subaru Forester Touring 2022."),
+            new(Id(), IdsProspectsDemo.BenoitLachance, "o-benoit-forester", n.AddDays(-42), "satisfaction", moi,
+                "Retour de satisfaction reçu (représenté dans le prototype) : très satisfait."),
+            new(Id(), IdsProspectsDemo.BenoitLachance, "o-benoit-forester", n.AddDays(-38), "recommandation", moi,
+                "Invitation facultative à recommander le conseiller préparée et déclarée partagée par le conseiller (aucun envoi automatique)."),
+            new(Id(), IdsProspectsDemo.BenoitLachance, "o-benoit-forester", n.AddDays(-10), "probleme", moi,
+                "Problème après-vente signalé : certificat d'immatriculation définitif non reçu."),
+            new(Id(), IdsProspectsDemo.MelissaHebert, "o-melissa-vus", n.AddHours(-5), "creation", Systeme,
+                "Demande reçue par le formulaire de la carte de recommandation (démonstration) : recherche un VUS compact. Source : recommandation."),
         };
 
         return Task.FromResult(new DonneesProspects(Moi, conseillers, contacts, opportunites, interactions));

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Phineas.Models.ViewModels.Conseiller;
 
 // Phineas Sales Intelligence Engine (phase 06, frontend) : catalogue de règles, paramètres et données de démonstration.
@@ -62,7 +64,10 @@ public record DonneesIntelligence(
     IReadOnlyDictionary<string, IReadOnlyList<string>> Indispensables,
     IReadOnlyList<EtatActionDemo> EtatsActions,
     IReadOnlyList<VehiculeSimule> VehiculesSimules,
-    IReadOnlyDictionary<string, IReadOnlyList<string>> BlocagesConnus
+    IReadOnlyDictionary<string, IReadOnlyList<string>> BlocagesConnus,
+    // Phase 07 : faits des relations clients (clôtures, enquêtes, problèmes, recommandations), entrées du moteur au même
+    // titre que les préférences de contact. Sérialisés à part (balise #relations-donnees) avec leurs propres libellés.
+    [property: JsonIgnore] DonneesRelationsClients? Relations = null
 );
 
 public class IntelligencePageViewModel
@@ -80,7 +85,7 @@ public class IntelligencePageViewModel
     public string? VehiculeId { get; init; }
 }
 
-public record ChargeIntelligence(DonneesIntelligence Donnees, string ConseillerNom);
+public record ChargeIntelligence(DonneesIntelligence Donnees, string ConseillerNom, string? Concession = null);
 
 // Libellés, règles et réglages : une seule source pour Razor et le JavaScript (prépare la localisation FR / EN / ES).
 public static class ReferentielsIntelligence
@@ -128,6 +133,18 @@ public static class ReferentielsIntelligence
         ("opportunite-inactive", "Opportunité inactive", "opportunites", "Faible", "interne"),
         ("qualifiee-sans-vehicule", "Opportunité qualifiée sans véhicule proposé", "opportunites", "Normal", "interne"),
         ("horizon-sans-proposition", "Achat proche sans proposition", "opportunites", "Normal", "commerciale"),
+        // Phase 07 : relations clients (ventes perdues, après-vente, référencement). Même déduplication, priorisation,
+        // résolution, report et expiration que les règles précédentes.
+        ("perte-motif-inconnu", "Vente perdue : motif à vérifier", "relations", "Faible", "interne"),
+        ("perte-recuperable", "Opportunité perdue : nouvelles conditions à examiner", "relations", "Normal", "interne"),
+        ("perte-achat-reporte", "Achat reporté : date de reprise atteinte (opportunité perdue)", "relations", "Normal", "commerciale"),
+        ("perte-correspondance", "Véhicule correspondant à une ancienne demande", "relations", "Normal", "commerciale"),
+        ("satisfaction-a-planifier", "Livraison confirmée : suivi de satisfaction", "relations", "Normal", "dossier"),
+        ("client-insatisfait", "Client insatisfait : prise en charge", "relations", "Eleve", "dossier"),
+        ("probleme-a-traiter", "Problème client à traiter", "relations", "Eleve", "dossier"),
+        ("probleme-resolu-verifier", "Problème résolu : vérifier avec le client", "relations", "Normal", "dossier"),
+        ("invitation-referencement", "Client satisfait : invitation facultative à recommander", "relations", "Faible", "commerciale"),
+        ("nouveau-prospect-recommande", "Nouveau prospect recommandé à prendre en charge", "prospects", "Eleve", "commerciale"),
     ];
 
     public static readonly IReadOnlyList<(string Cle, string Libelle, string Icone)> Categories =
@@ -137,6 +154,7 @@ public static class ReferentielsIntelligence
         ("rendezvous", "Rendez-vous", "bi-calendar-event"),
         ("transactions", "Transactions", "bi-cash-coin"),
         ("opportunites", "Opportunités commerciales", "bi-binoculars"),
+        ("relations", "Relations clients", "bi-people"),
     ];
 
     public static readonly IReadOnlyList<(string Cle, string Libelle, string Icone)> Priorites =

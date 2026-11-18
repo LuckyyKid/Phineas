@@ -10,6 +10,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
 }
 
 <header class="sv-head">
@@ -73,6 +74,17 @@
             </div>
             <div data-ia-zone>
                 <div class="sv-empty"><i class="bi bi-hourglass"></i><span>Chargement des actions…</span></div>
+            </div>
+        </section>
+
+        @* Relations clients (phase 07) : compteurs lus dans le moteur partagé (relations-liens.js). *@
+        <section class="card" id="rc-relations" aria-labelledby="titre-relations">
+            <div class="card-header sv-card-header">
+                <span id="titre-relations"><i class="bi bi-people me-2"></i>Relations clients</span>
+                <a class="btn btn-sm btn-link p-0" asp-controller="Relations" asp-action="Satisfaction">Après-vente</a>
+            </div>
+            <div class="card-body" data-rc-zone>
+                <div class="sv-empty"><i class="bi bi-hourglass"></i><span>Chargement…</span></div>
             </div>
         </section>
     </div>
@@ -230,11 +242,14 @@
             <script src="~/js/transactions-tableau.js" asp-append-version="true"></script>
             @if (Model.Intelligence is not null)
             {
+                <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+                <script src="~/js/relations-store.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
                 <script src="~/js/intelligence-tableau.js" asp-append-version="true"></script>
+                <script src="~/js/relations-liens.js" asp-append-version="true"></script>
             }
         }
     }

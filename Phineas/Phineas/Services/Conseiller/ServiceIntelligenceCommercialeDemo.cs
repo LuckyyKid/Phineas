@@ -12,7 +12,11 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
     private const string Moi = "moi";
     private const string Antoine = "c-antoine";
 
-    public Task<DonneesIntelligence> ObtenirAsync(UserSummaryViewModel conseiller)
+    private readonly IServiceRelationsClients _relations;
+
+    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations) => _relations = relations;
+
+    public async Task<DonneesIntelligence> ObtenirAsync(UserSummaryViewModel conseiller)
     {
         var n = DateTime.Now;
         var j = n.Date;
@@ -24,6 +28,9 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
             new(IdsProspectsDemo.IsabelleFortin, "implicite", false, null, "Cliente depuis 2025."),
             // Ne souhaite plus recevoir de sollicitations commerciales (déclaré au téléphone).
             new(IdsProspectsDemo.HugoLambert, "retire", true, n.AddDays(-2), "Demande faite lors d'un appel entrant."),
+            // Phase 07 : demande exprimée lors de la clôture de son opportunité perdue.
+            new(IdsProspectsDemo.DanielProulx, "retire", true, n.AddDays(-26), "Demande faite au téléphone en refusant la soumission."),
+            new(IdsProspectsDemo.BenoitLachance, "explicite", false, null, "Accepte d'être recontacté par téléphone."),
         };
 
         var pauses = new List<PauseSuivi>
@@ -95,6 +102,8 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
             ["t-emilie-corolla"] = ["decision|Décision financière communiquée"],
         };
 
-        return Task.FromResult(new DonneesIntelligence(preferences, pauses, demandes, indispensables, etats, simules, blocagesConnus));
+        // Phase 07 : les faits des relations clients sont des entrées du moteur (clôtures, enquêtes, recommandations).
+        var relations = await _relations.ObtenirAsync(conseiller);
+        return new DonneesIntelligence(preferences, pauses, demandes, indispensables, etats, simules, blocagesConnus, relations);
     }
 }

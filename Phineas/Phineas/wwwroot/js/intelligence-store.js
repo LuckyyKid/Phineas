@@ -10,6 +10,8 @@
   var charge = JSON.parse(source.textContent);
   var P = window.Prospects, S = window.Soumissions, R = window.RendezVous, T = window.Transactions, C = window.SoumissionsCalcul;
   var Regles = window.IntelligenceRegles, M = window.IntelligenceMatching;
+  // Relations clients (phase 07) : facultatif ; une page sans ces données ne produit simplement pas ces règles.
+  var RC = window.RelationsClients || null;
   // Tous les modules sont requis : sans eux, des recommandations seraient à tort considérées comme obsolètes.
   if (!P || !S || !R || !T || !Regles || !M) return;
   var d = charge.donnees;
@@ -96,6 +98,9 @@
 
   function instantane() {
     var m = new Date();
+    // Phase 07 : faits des relations clients ; les correspondances des opportunités perdues réutilisent le matching.
+    var rel = RC ? RC.pourMoteur() : null;
+    if (rel) rel.clotures.forEach(function (c) { c.correspondances = c.matching ? correspondancesPerte(c) : []; });
     var opps = P.toutesOpportunites().map(function (o) {
       var x = cloner(o);
       var c = P.contact(o.prospectId);
@@ -107,6 +112,7 @@
       x.rdvContact = R.parOpportunite(o.id).some(function (r) { return r.statut !== "Planifie"; });
       x.nbSoumissions = S.parOpportunite(o.id).length;
       x.transactionEnCours = T ? !!T.enCoursPourOpportunite(o.id) : false;
+      x.recommandation = rel ? rel.recommandationsParOpp[o.id] || null : null;
       return x;
     });
     var soumissions = S.liste().map(function (s) {
@@ -163,8 +169,21 @@
     return {
       maintenant: m, ref: ref, moiId: P.moiId, contacts: P.contacts(), opportunites: opps, interactions: toutesInteractions(),
       soumissions: soumissions, rendezVous: rendezVous, transactions: transactions,
-      preferences: etat.preferences, pauses: etat.pauses, correspondances: correspondances(),
+      preferences: etat.preferences, pauses: etat.pauses, correspondances: correspondances(), relations: rel,
     };
+  }
+  // Ancienne demande (opportunité perdue) × inventaire : véhicules compatibles et disponibles, mêmes règles de matching.
+  function correspondancesPerte(c) {
+    var o = P.opportunite(c.opportuniteId);
+    if (!o) return [];
+    return M.classer(criteresOpp(o), S.inventaire(), ref, { statut: function (v) { return statutVehicule(v.id); }, retenuPar: function (v) { return retenuPar(v.id, o.id); } })
+      .filter(function (r) { return r.niveau === "compatible" && r.disponibilite.cle !== "indisponible"; }).slice(0, 3)
+      .map(function (r) {
+        return { vehiculeId: r.vehiculeId, vehiculeNom: S.nomVehicule(S.vehicule(r.vehiculeId)), score: r.score, couverture: r.couverture, depuis: etat.arrivees[r.vehiculeId] || null,
+          disponibilite: r.disponibilite.cle === "disponible" ? null : r.disponibilite.texte,
+          ecarts: r.items.filter(function (i) { return i.statut === "non-satisfait"; }).map(function (i) { return i.libelle; }),
+          inconnus: r.inconnus.map(function (i) { return i.libelle; }) };
+      });
   }
 
   // Mémoire des blocages vus : un blocage qui disparaît devient « récemment résolu ».
@@ -285,6 +304,7 @@
   S.abonner(surChangementExterne);
   if (R) R.abonner(surChangementExterne);
   if (T) T.abonner(surChangementExterne);
+  if (RC) RC.abonner(surChangementExterne);
 
   // ---------- Lecture ----------
   function enrichir(x) {
@@ -343,6 +363,8 @@
   }
   function urlObjet(a) {
     var o = a.objet || {};
+    var u = RC ? RC.urlObjet(o, a) : null;
+    if (u) return u;
     if (o.type === "soumission") return S.urlDetail(o.id);
     if (o.type === "rendezvous" && R) return R.urlDetail(o.id);
     if (o.type === "transaction" && T) return T.urlDetail(o.id);
@@ -487,6 +509,15 @@
           (concis ? "" : " Je vous tiens informé de la suite.");
       case "correspondance":
         return "Un véhicule qui pourrait correspondre à votre recherche est arrivé chez nous : " + v + ". Souhaitez-vous que je vous en présente les caractéristiques ?";
+      case "satisfaction":
+        return concis ? "Comment se passent vos premiers jours avec votre " + (ctx0.vehicule || "véhicule") + " ?"
+          : "Je voulais prendre de vos nouvelles depuis la livraison de votre " + (ctx0.vehicule || "véhicule") + ". Tout se passe-t-il comme vous le souhaitiez ? Si quelque chose ne vous convient pas, je m'en occupe avec l'équipe concernée.";
+      case "perte-reprise":
+        return "Lors de notre dernier échange, vous préfériez reporter votre projet" + (ctx0.opportunite ? " (" + ctx0.opportunite.titre.toLowerCase() + ")" : "") + " à cette période. Est-ce un bon moment pour en reparler ?" +
+          (concis ? "" : " Vos besoins ont peut-être changé : j'en tiendrai compte.");
+      case "perte-correspondance":
+        return "Vous recherchiez" + (ctx0.opportunite ? " un " + ctx0.opportunite.titre.toLowerCase() : " un véhicule") + ". Un véhicule qui pourrait correspondre à vos critères est disponible : " + v + "." +
+          (concis ? " Souhaitez-vous en savoir plus ?" : " Souhaitez-vous que je vous en présente les caractéristiques ? Je préfère vérifier avec vous qu'il répond bien à vos besoins.");
       case "reprise":
         return "Comme convenu, je reprends contact au sujet de votre projet" + (ctx0.opportunite ? " (" + ctx0.opportunite.titre.toLowerCase() + ")" : "") + ". Est-ce un bon moment pour en reparler ?";
       default:
@@ -501,13 +532,13 @@
     return OUVERTURES[ton](prenom) + "\n\n" + corps(ctx0, ton) + "\n\n" + FERMETURES[ton] + "\n\n" + charge.conseillerNom;
   }
   // Conditions empêchant une sollicitation : renvoie le motif, ou null.
-  function suspensionContact(prospectId, opportuniteId, nature) {
+  function suspensionContact(prospectId, opportuniteId, nature, horsPipeline) {
     var pref = etat.preferences[prospectId];
     if (pref && (pref.nePlusContacter || pref.consentement === "retire") && nature !== "dossier") return "Le client a demandé à ne plus être sollicité.";
     var p = etat.pauses[opportuniteId];
     if (p && new Date(p.jusqua) > new Date() && nature !== "dossier") return "Suivi en pause jusqu'au " + P.dateCourte(p.jusqua) + ".";
     var o = P.opportunite(opportuniteId);
-    if (o && ["Gagne", "Perdu"].indexOf(o.etape) >= 0) return "L'opportunité est clôturée.";
+    if (o && ["Gagne", "Perdu"].indexOf(o.etape) >= 0 && !horsPipeline) return "L'opportunité est clôturée.";
     return null;
   }
   // Brouillon enregistré : identifié comme brouillon, ne compte pas comme un contact.
@@ -521,15 +552,17 @@
   // Contact déclaré explicitement par le conseiller (fait hors Phineas) : compte comme un échange et termine l'action.
   function declarerContact(id, canal, resume) {
     var x = action(id);
-    var raison = x && suspensionContact(x.prospectId, x.opportuniteId, x.nature);
+    var raison = x && suspensionContact(x.prospectId, x.opportuniteId, x.nature, x.categorie === "relations");
     if (!x || raison) return null;
     var nb = P.interactionsDe(x.prospectId).length;
     var types = { telephone: "appel", courriel: "courriel", texto: "texto" };
-    P.ajouterNote(x.prospectId, { type: types[canal] || "note", opportuniteId: x.opportuniteId, resume: "Relance effectuée par " + (P.libelle("moyensContact", canal) || canal).toLowerCase() + " (déclarée par le conseiller)" + (resume ? " : " + resume : "") + "." });
+    // L'action est terminée AVANT l'ajout de l'échange : sinon le recalcul déclenché par l'échange la classerait
+    // « devenue obsolète » au lieu de « terminée ».
     var annulerAction = etat.actions[id] && ACTIVES.indexOf(etat.actions[id].statut) >= 0 ? transition(id, "Terminee", "Contact déclaré par le conseiller.", { termineeLe: iso() }) : null;
+    P.ajouterNote(x.prospectId, { type: types[canal] || "note", opportuniteId: x.opportuniteId, resume: "Relance effectuée par " + (P.libelle("moyensContact", canal) || canal).toLowerCase() + " (déclarée par le conseiller)" + (resume ? " : " + resume : "") + "." });
     return function () {
-      if (annulerAction) annulerAction();
       while (P.interactionsDe(x.prospectId).length > nb) P.retirerDerniereInteraction(x.prospectId);
+      if (annulerAction) annulerAction();
     };
   }
   function programmerSuivi(id, date, texte) {

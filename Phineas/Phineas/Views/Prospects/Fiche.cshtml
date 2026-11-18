@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
 }
 
 <a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Prospects et opportunités</a>
@@ -70,6 +71,7 @@
         <div class="tab-pane fade show active" id="panneau-apercu" role="tabpanel" aria-labelledby="onglet-apercu" tabindex="0">
             @* Actions recommandées, correspondances et suivis : intelligence-liens.js (phase 06). *@
             <div data-ia-lien="prospect" data-id="@Model.ProspectId"></div>
+            <div data-rc-lien="prospect" data-id="@Model.ProspectId"></div>
             <div class="row g-4">
                 <div class="col-lg-7 d-flex flex-column gap-4">
                     <section class="card">
@@ -479,9 +481,13 @@
     <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
     <script src="~/js/prospects-tiroir.js" asp-append-version="true"></script>
     <script src="~/js/prospects-fiche.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-liens.js" asp-append-version="true"></script>
+    <script src="~/js/relations-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-liens.js" asp-append-version="true"></script>
 }
