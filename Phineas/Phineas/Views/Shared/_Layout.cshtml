@@ -1,70 +1,109 @@
-﻿@using Phineas.Models.Constants
+@using Phineas.Models.Constants
 @using Phineas.Services.Account
 @{
     var fullName = User.FindFirst(AppClaims.FullName)?.Value ?? User.Identity?.Name ?? "";
     var dealershipName = User.FindFirst(AppClaims.DealershipName)?.Value;
-    var roleLabel = AppRoles.Label(AppRoles.Of(User));
+    var role = AppRoles.Of(User);
+    var roleLabel = AppRoles.Label(role);
     var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => p[0]));
+    var controleur = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var accueil = AppRoles.Spaces.FirstOrDefault(s => s.Role == role).Controller ?? "Home";
+    string Actif(params string[] noms) => noms.Contains(controleur, StringComparer.OrdinalIgnoreCase) ? "is-active" : "";
+    var estAdmin = User.IsInRole(AppRoles.SystemAdmin);
+    var voitFinance = estAdmin || User.IsInRole(AppRoles.Directeur);
 }
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="view-transition" content="same-origin" />
     <title>@ViewData["Title"] · Phineas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/phineas.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/mascot.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/lumiere.css" asp-append-version="true" />
 </head>
-<body class="app-body" data-boulon-dock>
-    <header class="app-topbar">
-        <div class="app-container d-flex align-items-center gap-3">
-            <a class="brand brand-dark" asp-controller="Account" asp-action="Home"><span class="brand-mark">P</span><span class="d-none d-sm-inline">Phineas</span></a>
+<body data-boulon-dock>
+    <div class="lm-app">
+        <aside class="lm-side" aria-label="Navigation principale">
+            <a class="lm-logo" asp-controller="Account" asp-action="Home"><partial name="_Logo" />phineas</a>
 
             @if (dealershipName is not null)
             {
-                <span class="tenant-pill"><i class="bi bi-buildings"></i><span class="text-truncate">@dealershipName</span></span>
+                <div class="lm-tenant"><i class="bi bi-buildings"></i><span class="text-truncate">@dealershipName</span></div>
             }
 
-            @if (User.IsInRole(AppRoles.SystemAdmin))
-            {
-                <nav class="admin-nav d-flex gap-1">
-                    <a asp-controller="Concessions" asp-action="Index"><i class="bi bi-buildings"></i><span class="d-none d-md-inline">Concessions</span></a>
-                    <a asp-controller="Utilisateurs" asp-action="Index"><i class="bi bi-people"></i><span class="d-none d-md-inline">Personnel</span></a>
-                </nav>
-            }
+            <nav class="lm-nav">
+                <a class="@Actif(accueil)" asp-controller="@accueil" asp-action="Index"><i class="bi bi-house"></i>Accueil</a>
 
-            <div class="ms-auto d-flex align-items-center gap-2 gap-sm-3">
+                @if (estAdmin)
+                {
+                    <div class="lm-nav-label">Administration</div>
+                    <a class="@Actif("Concessions")" asp-controller="Concessions" asp-action="Index"><i class="bi bi-buildings"></i>Concessions</a>
+                    <a class="@Actif("Utilisateurs")" asp-controller="Utilisateurs" asp-action="Index"><i class="bi bi-people"></i>Personnel</a>
+                }
+
+                <div class="lm-nav-label">Bientôt</div>
+                <span class="lm-soon" aria-disabled="true"><i class="bi bi-car-front"></i>Inventaire<em>Bientôt</em></span>
+                <span class="lm-soon" aria-disabled="true"><i class="bi bi-qr-code-scan"></i>Scan QR<em>Bientôt</em></span>
+                <span class="lm-soon" aria-disabled="true"><i class="bi bi-chat-dots"></i>Messagerie<em>Bientôt</em></span>
+                @if (voitFinance)
+                {
+                    <span class="lm-soon" aria-disabled="true"><i class="bi bi-shield-lock"></i>Coffre-fort F&amp;A<em>Bientôt</em></span>
+                }
+                <span class="lm-soon" aria-disabled="true"><i class="bi bi-stars"></i>Annonces IA<em>Bientôt</em></span>
+            </nav>
+
+            <div class="lm-side-foot">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <div class="text-end lh-sm d-none d-md-block">
-                        <div class="fw-semibold">@fullName</div>
-                        <div class="small text-muted">@roleLabel</div>
+                    <div class="lm-user">
+                        <span class="lm-avatar" aria-hidden="true">@initials</span>
+                        <div class="min-w-0">
+                            <strong class="text-truncate">@fullName</strong>
+                            <small>@roleLabel</small>
+                        </div>
                     </div>
-                    <span class="avatar" title="@fullName">@initials</span>
                     <form asp-controller="Account" asp-action="Logout" method="post">
-                        <button type="submit" class="btn btn-ghost btn-sm"><i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline ms-1">Se déconnecter</span></button>
+                        <button type="submit" class="btn btn-ghost w-100 justify-content-start d-flex align-items-center gap-2"><i class="bi bi-box-arrow-right"></i>Se déconnecter</button>
                     </form>
                 }
-                else
-                {
-                    <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Login">Se connecter</a>
-                }
             </div>
-        </div>
-    </header>
+        </aside>
+        <div class="lm-scrim"></div>
 
-    <main class="app-container app-main">
-        @RenderBody()
-    </main>
+        <div class="lm-content">
+            <header class="lm-top">
+                <button type="button" class="btn btn-ghost btn-sm lm-menu-btn" data-menu-toggle aria-expanded="false" aria-label="Ouvrir le menu"><i class="bi bi-list fs-5"></i></button>
+                <p class="lm-top-title">@ViewData["Title"]</p>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <span class="lm-live d-none d-sm-inline-flex">En ligne</span>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <span class="lm-avatar d-lg-none" title="@fullName">@initials</span>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Login">Se connecter</a>
+                    }
+                </div>
+            </header>
+
+            <main class="lm-main lm-enter">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/mascot.js" asp-append-version="true"></script>
+    <script src="~/js/lumiere.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
