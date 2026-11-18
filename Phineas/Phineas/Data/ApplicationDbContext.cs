@@ -30,8 +30,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(u => u.DealershipId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
-        
-        
+
         builder.Entity<Vehicule>(e =>
         {
             e.HasIndex(v => new { v.DealershipId, v.NIV }).IsUnique();
@@ -48,7 +47,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<CodeQR>(e =>
         {
             e.HasIndex(c => c.Jeton).IsUnique();
-            
+
             e.HasOne(c => c.Vehicule)
                 .WithOne(v => v.CodeQR)
                 .HasForeignKey<CodeQR>(c => c.VehiculeId)
@@ -59,7 +58,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             e.Property(h => h.AncienStatut).HasConversion<string>().HasMaxLength(30);
             e.Property(h => h.NouveauStatut).HasConversion<string>().HasMaxLength(30);
-            
+
             e.HasOne(h => h.Vehicule)
                 .WithMany(v => v.Historique)
                 .HasForeignKey(h => h.VehiculeId)

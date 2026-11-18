@@ -20,6 +20,6 @@ public class HistoriqueStatut
 
     [Required]
     public string UtilisateurId { get; set; } = string.Empty;
-        
+
     public ApplicationUser? Utilisateur { get; set; }
 }

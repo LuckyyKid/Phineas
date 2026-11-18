@@ -1,0 +1,29 @@
+@model ConcessionFormViewModel
+
+<form asp-action="@(Model.EstModification ? "Modifier" : "Creer")" asp-route-id="@Model.Id" method="post" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Nom" class="form-label"></label>
+        <input asp-for="Nom" class="form-control" autofocus />
+        <span asp-validation-for="Nom" class="text-danger small"></span>
+    </div>
+
+    <div class="form-check form-switch mb-4">
+        <input asp-for="EstActive" class="form-check-input" role="switch" />
+        <label asp-for="EstActive" class="form-check-label"></label>
+        <div class="form-text">Une concession suspendue garde ses données, mais son personnel ne peut plus se connecter.</div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@(Model.EstModification ? "Enregistrer" : "Créer la concession")</button>
+        @if (Model.EstModification)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Annuler</a>
+        }
+        else
+        {
+            <a class="btn btn-outline-secondary" asp-action="Index">Annuler</a>
+        }
+    </div>
+</form>

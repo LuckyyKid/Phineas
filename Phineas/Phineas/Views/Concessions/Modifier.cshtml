@@ -1,0 +1,18 @@
+@model ConcessionFormViewModel
+@{ ViewData["Title"] = "Modifier la concession"; }
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Concessions</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Nom</a></li>
+        <li class="breadcrumb-item active">Modifier</li>
+    </ol>
+</nav>
+
+<h1 class="h3 mb-4">Modifier la concession</h1>
+
+<div class="card" style="max-width: 640px">
+    <div class="card-body">
+        <partial name="_Formulaire" model="Model" />
+    </div>
+</div>

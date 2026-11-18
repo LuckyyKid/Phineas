@@ -100,36 +100,104 @@ public static class DbSeeder
                 AppRoles.Directeur
             );
         }
-        
+
         if (config.GetValue<bool>("Seed:DemoData") && !await db.Vehicules.AnyAsync())
             await SeedVehiculesAsync(db, users);
     }
-    
-        private static async Task SeedVehiculesAsync(ApplicationDbContext db, UserManager<ApplicationUser> users)
+
+    private static async Task SeedVehiculesAsync(
+        ApplicationDbContext db,
+        UserManager<ApplicationUser> users
+    )
     {
-        var brossard = await db.Dealerships.FirstOrDefaultAsync(d => d.Name == "Auto Prestige Brossard");
+        var brossard = await db.Dealerships.FirstOrDefaultAsync(d =>
+            d.Name == "Auto Prestige Brossard"
+        );
         var directeur = await users.FindByEmailAsync("ma.tremblay@autoprestige.example");
-        if (brossard is null || directeur is null) return;
+        if (brossard is null || directeur is null)
+            return;
 
         var vehicules = new[]
         {
-            new Vehicule { NIV = "1HGCV1F30LA000001", NumeroStock = "STK-0042", Marque = "Honda",  Modele = "Accord",  Annee = 2020, Kilometrage = 48000, Couleur = "Gris",  Carrosserie = "Berline", Carburant = "Essence",    Transmission = "Automatique", PrixDemande = 24995m, Emplacement = "Zone B-12", StatutActuel = StatutVehicule.InspectionTerminee },
-            new Vehicule { NIV = "2T1BURHE5KC000002", NumeroStock = "STK-0038", Marque = "Toyota", Modele = "Corolla", Annee = 2019, Kilometrage = 62000, Couleur = "Blanc", Carrosserie = "Berline", Carburant = "Essence",    Transmission = "Automatique", PrixDemande = 17495m, Emplacement = "Atelier 2", StatutActuel = StatutVehicule.EnInspection },
-            new Vehicule { NIV = "5YJ3E1EA7LF000003", NumeroStock = "STK-0031", Marque = "Tesla",  Modele = "Model 3", Annee = 2021, Kilometrage = 35000, Couleur = "Noir",  Carrosserie = "Berline", Carburant = "Électrique", Transmission = "Automatique", PrixDemande = 38995m, Emplacement = "Zone A-04", StatutActuel = StatutVehicule.PretPourVente },
-            new Vehicule { NIV = "1FTFW1E50MF000004", NumeroStock = "STK-0027", Marque = "Ford",   Modele = "F-150",   Annee = 2021, Kilometrage = 71000, Couleur = "Bleu",  Carrosserie = "Camion",  Carburant = "Essence",    Transmission = "Automatique", PrixDemande = 41995m, Emplacement = "Réception", StatutActuel = StatutVehicule.Recu },
+            new Vehicule
+            {
+                NIV = "1HGCV1F30LA000001",
+                NumeroStock = "STK-0042",
+                Marque = "Honda",
+                Modele = "Accord",
+                Annee = 2020,
+                Kilometrage = 48000,
+                Couleur = "Gris",
+                Carrosserie = "Berline",
+                Carburant = "Essence",
+                Transmission = "Automatique",
+                PrixDemande = 24995m,
+                Emplacement = "Zone B-12",
+                StatutActuel = StatutVehicule.InspectionTerminee,
+            },
+            new Vehicule
+            {
+                NIV = "2T1BURHE5KC000002",
+                NumeroStock = "STK-0038",
+                Marque = "Toyota",
+                Modele = "Corolla",
+                Annee = 2019,
+                Kilometrage = 62000,
+                Couleur = "Blanc",
+                Carrosserie = "Berline",
+                Carburant = "Essence",
+                Transmission = "Automatique",
+                PrixDemande = 17495m,
+                Emplacement = "Atelier 2",
+                StatutActuel = StatutVehicule.EnInspection,
+            },
+            new Vehicule
+            {
+                NIV = "5YJ3E1EA7LF000003",
+                NumeroStock = "STK-0031",
+                Marque = "Tesla",
+                Modele = "Model 3",
+                Annee = 2021,
+                Kilometrage = 35000,
+                Couleur = "Noir",
+                Carrosserie = "Berline",
+                Carburant = "Électrique",
+                Transmission = "Automatique",
+                PrixDemande = 38995m,
+                Emplacement = "Zone A-04",
+                StatutActuel = StatutVehicule.PretPourVente,
+            },
+            new Vehicule
+            {
+                NIV = "1FTFW1E50MF000004",
+                NumeroStock = "STK-0027",
+                Marque = "Ford",
+                Modele = "F-150",
+                Annee = 2021,
+                Kilometrage = 71000,
+                Couleur = "Bleu",
+                Carrosserie = "Camion",
+                Carburant = "Essence",
+                Transmission = "Automatique",
+                PrixDemande = 41995m,
+                Emplacement = "Réception",
+                StatutActuel = StatutVehicule.Recu,
+            },
         };
 
         foreach (var v in vehicules)
         {
             v.DealershipId = brossard.Id;
-            v.CodeQR = new CodeQR();   // le Guid est généré tout seul
-            v.Historique.Add(new HistoriqueStatut
-            {
-                AncienStatut = null,
-                NouveauStatut = StatutVehicule.Recu,
-                UtilisateurId = directeur.Id,
-                Commentaire = "Véhicule reçu à la concession",
-            });
+            v.CodeQR = new CodeQR();
+            v.Historique.Add(
+                new HistoriqueStatut
+                {
+                    AncienStatut = null,
+                    NouveauStatut = StatutVehicule.Recu,
+                    UtilisateurId = directeur.Id,
+                    Commentaire = "Véhicule reçu à la concession",
+                }
+            );
         }
 
         db.Vehicules.AddRange(vehicules);

@@ -5,6 +5,7 @@ using Phineas.Data;
 using Phineas.Data.Seed;
 using Phineas.Models.Entities;
 using Phineas.Services.Account;
+using Phineas.Services.Admin;
 using Phineas.Services.Vehicules;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,12 +48,19 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.Zero;
+});
+
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 });
 
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IServiceUtilisateurs, ServiceUtilisateurs>();
+builder.Services.AddScoped<IServiceConcessions, ServiceConcessions>();
 
 builder.Services.AddControllersWithViews();
 
