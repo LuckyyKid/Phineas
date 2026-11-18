@@ -1,0 +1,68 @@
+@using Phineas.Models.Entities
+@model Phineas.Models.ViewModels.Vehicules.FicheVehiculeViewModel
+@{ ViewData["Title"] = $"Véhicule {Model.NumeroStock}"; }
+
+<div class="mx-auto" style="max-width: 560px">
+    <a asp-action="Index" class="btn btn-ghost btn-sm mb-3"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+
+    @if (TempData["Succes"] is string succes)
+    {
+        <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>@succes</div>
+    }
+    @if (TempData["Erreur"] is string erreur)
+    {
+        <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@erreur</div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h1 class="h4 mb-1">@Model.Marque @Model.Modele @Model.Annee</h1>
+            <div class="text-muted small font-monospace">@Model.NumeroStock · NIV @Model.NIV</div>
+            @if (Model.Emplacement is not null)
+            {
+                <div class="text-muted small mt-1"><i class="bi bi-geo-alt me-1"></i>@Model.Emplacement</div>
+            }
+            <div class="d-flex justify-content-between align-items-center mt-3 p-2 rounded bg-light">
+                <span class="text-muted">Statut actuel</span>
+                <span class="badge text-bg-secondary fs-6">@Model.StatutActuel.Libelle()</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="bi bi-arrow-repeat me-2"></i>Changer le statut</div>
+        <div class="card-body">
+            @if (Model.StatutsPermis.Count == 0)
+            {
+                <p class="text-muted mb-0">Aucun changement de statut n'est possible pour votre rôle à cette étape.</p>
+            }
+            else
+            {
+                <form asp-action="ChangerStatut" method="post">
+                    <input type="hidden" name="VehiculeId" value="@Model.Id" />
+                    <input type="hidden" name="Jeton" value="@Model.Jeton" />
+
+                    <fieldset class="mb-3">
+                        <legend class="form-label">Nouveau statut</legend>
+                        @foreach (var s in Model.StatutsPermis)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="NouveauStatut"
+                                       id="statut-@s" value="@s" required />
+                                <label class="form-check-label" for="statut-@s">@s.Libelle()</label>
+                            </div>
+                        }
+                    </fieldset>
+
+                    <div class="mb-3">
+                        <label for="Commentaire" class="form-label">Commentaire (optionnel)</label>
+                        <textarea class="form-control" id="Commentaire" name="Commentaire"
+                                  rows="3" maxlength="500" placeholder="Ex. pneus avant à surveiller"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">Confirmer le changement</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
