@@ -23,6 +23,7 @@
     qualification: { libelle: "Qualification", icone: "bi-clipboard-check" },
     opportunite: { libelle: "Nouvelle opportunité", icone: "bi-briefcase" },
     soumission: { libelle: "Soumission", icone: "bi-file-earmark-text" },
+    rendezvous: { libelle: "Rendez-vous", icone: "bi-calendar-event" },
   };
 
   function zone(nom) {
@@ -403,7 +404,7 @@
         "<div><dt>Critères</dt><dd>" + (criteres.length ? esc(criteres.join(" · ")) : aPreciser()) +
         '<span class="pr-sous d-block">Complétude : ' + comp.remplis + " / " + comp.total + "</span></dd></div>" +
         "<div><dt>Prochaine action</dt><dd>" + (P.estActive(o) ? prochaineHtml(o) + badgeSuivi(o) : '<span class="text-muted">Opportunité clôturée</span>') + "</dd></div>" +
-        "</dl>" + soumissionsHtml(o) + "</div>" +
+        "</dl>" + soumissionsHtml(o) + rendezVousHtml(o) + "</div>" +
         '<div class="pr-opp-pied">' +
         '<span class="pr-sous">Ouverte le ' + esc(P.dateCourte(o.dateCreation)) + " · activité " + esc(P.relatif(o.derniereActivite)) + "</span>" +
         '<label class="visually-hidden" for="opp-etape-' + esc(o.id) + '">Étape de « ' + esc(o.titre) + " »</label>" +
@@ -429,6 +430,31 @@
               '<span class="pr-sous">' + esc(S.nomVehicule(v.vehicule)) + " · v" + v.numero + "</span></li>";
           }).join("") + "</ul>"
         : '<p class="pr-sous mb-0">Aucune soumission pour cette opportunité.</p>') + "</div>";
+  }
+
+  // Rendez-vous de l'opportunité (module Rendez-vous chargé sur la fiche) : à venir, passés, essais et résultats.
+  function rendezVousHtml(o) {
+    var R = window.RendezVous;
+    if (!R) return "";
+    var maintenant = new Date();
+    var liste = R.parOpportunite(o.id);
+    var aVenir = liste.filter(function (r) { return R.estActif(r) && R.fin(r) >= maintenant; });
+    var passes = liste.filter(function (r) { return aVenir.indexOf(r) < 0; }).reverse();
+    var essais = liste.filter(function (r) { return R.estEssai(r) && r.statut === "Termine"; }).length;
+    function ligne(r) {
+      var res = r.resultat;
+      var action = res && res.prochaineAction && res.prochaineAction !== "aucune" ? R.libelle("prochainesActions", res.prochaineAction) : null;
+      return '<li><a href="' + esc(R.urlDetail(r.id)) + '">' + esc(R.type(r.type).libelle) + "</a>" +
+        '<span class="rv-statut rv-st-' + esc(r.statut) + '"><i class="bi ' + esc(R.statut(r.statut).icone) + '" aria-hidden="true"></i>' + esc(R.statut(r.statut).libelle) + "</span>" +
+        '<span class="pr-sous">' + esc(R.jourCourt(r.debut) + ", " + R.plage(r)) + "</span>" +
+        (res ? '<span class="pr-sous d-block w-100">Résultat : ' + esc(R.libelle("resultats", res.resultat)) + (action ? " · prochaine action : " + esc(action.toLowerCase()) : "") + "</span>" : "") +
+        "</li>";
+    }
+    return '<div class="pr-soumissions"><div class="pr-soumissions-tete"><span>Rendez-vous' + (essais ? " · " + essais + " essai" + (essais > 1 ? "s" : "") + " réalisé" + (essais > 1 ? "s" : "") : "") + "</span>" +
+      (P.estActive(o) ? '<a class="btn btn-sm btn-link p-0" href="' + esc(R.urlNouveau({ opportunite: o.id })) + '"><i class="bi bi-calendar-plus me-1"></i>Planifier un rendez-vous</a>' : "") + "</div>" +
+      (aVenir.length ? '<p class="pr-sous mb-1">À venir</p><ul>' + aVenir.map(ligne).join("") + "</ul>" : "") +
+      (passes.length ? '<p class="pr-sous mb-1 mt-2">Passés</p><ul>' + passes.map(ligne).join("") + "</ul>" : "") +
+      (!liste.length ? '<p class="pr-sous mb-0">Aucun rendez-vous pour cette opportunité.</p>' : "") + "</div>";
   }
 
   // ---------- Rendu global ----------
@@ -567,6 +593,7 @@
 
   P.abonner(rendre);
   if (window.Soumissions) window.Soumissions.abonner(rendre);
+  if (window.RendezVous) window.RendezVous.abonner(rendre);
   rendre();
   var hash = window.location.hash.replace("#", "");
   if (["qualification", "historique", "opportunites"].indexOf(hash) >= 0 && !racine.hidden) onglet(hash);

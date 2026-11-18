@@ -1,0 +1,127 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@{
+    ViewData["Title"] = "Agenda et rendez-vous";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Agenda et rendez-vous</h1>
+        <div class="sv-head-meta">
+            <span><i class="bi bi-calendar3"></i>@FormatVente.DateLongue(DateTime.Now)</span>
+            <span><i class="bi bi-person"></i>@Model.ConseillerNom</span>
+        </div>
+    </div>
+    <div class="sv-quick">
+        <a class="btn btn-primary btn-sm" asp-action="Nouveau"><i class="bi bi-plus-lg me-1"></i>Nouveau rendez-vous</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<section class="card sv-kpis rv-kpis" aria-label="Résumé de mes rendez-vous">
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-calendar-day"></i>Aujourd'hui</div><div class="sv-kpi-value" data-compteur="aujourdhui">—</div><div class="sv-kpi-detail">rendez-vous prévus</div></div>
+    <div class="sv-kpi sv-ton-attention"><div class="sv-kpi-label"><i class="bi bi-question-circle"></i>À confirmer</div><div class="sv-kpi-value" data-compteur="aconfirmer">—</div><div class="sv-kpi-detail">confirmation du client</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-speedometer"></i>Essais routiers</div><div class="sv-kpi-value" data-compteur="essais">—</div><div class="sv-kpi-detail">prévus à venir</div></div>
+    <div class="sv-kpi sv-ton-critique"><div class="sv-kpi-label"><i class="bi bi-arrow-return-right"></i>Suivis requis</div><div class="sv-kpi-value" data-compteur="suivis">—</div><div class="sv-kpi-detail">absences, annulations, résultats</div></div>
+</section>
+
+<div id="agenda" data-date="@Model.Date">
+    <section class="card rv-bande-aconfirmer" aria-labelledby="aconfirmer-titre">
+        <div class="card-header sv-card-header">
+            <span id="aconfirmer-titre"><i class="bi bi-question-circle me-2"></i>À confirmer <span class="pr-compte" data-zone="nb-aconfirmer"></span></span>
+            <span class="pr-sous d-none d-md-inline"><i class="bi bi-info-circle me-1"></i>Aucun texto ni courriel n'est envoyé par Phineas : le rappel est un brouillon à transmettre vous-même.</span>
+        </div>
+        <ul class="rv-aconfirmer" data-zone="aconfirmer"></ul>
+    </section>
+
+    <section class="card pr-module" aria-labelledby="agenda-periode">
+        <div class="pr-toolbar rv-barre">
+            <div class="rv-nav-dates" role="group" aria-label="Naviguer dans l'agenda">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-naviguer="-1" aria-label="Période précédente"><i class="bi bi-chevron-left"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-aujourdhui>Aujourd'hui</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-naviguer="1" aria-label="Période suivante"><i class="bi bi-chevron-right"></i></button>
+                <h2 class="rv-periode" id="agenda-periode" aria-live="polite"></h2>
+            </div>
+            <div class="pr-vues btn-group" role="group" aria-label="Mode d'affichage">
+                <input type="radio" class="btn-check" name="vue" id="vue-jour" value="jour" />
+                <label class="btn btn-sm" for="vue-jour">Jour</label>
+                <input type="radio" class="btn-check" name="vue" id="vue-semaine" value="semaine" />
+                <label class="btn btn-sm" for="vue-semaine">Semaine</label>
+                <input type="radio" class="btn-check" name="vue" id="vue-mois" value="mois" />
+                <label class="btn btn-sm" for="vue-mois">Mois</label>
+                <input type="radio" class="btn-check" name="vue" id="vue-liste" value="liste" />
+                <label class="btn btn-sm" for="vue-liste">Liste</label>
+            </div>
+        </div>
+        <div class="pr-filtres">
+            <label class="visually-hidden" for="f-date">Aller à la date</label>
+            <input type="date" class="form-control form-control-sm rv-champ-date" id="f-date" />
+            <select class="form-select form-select-sm" id="f-type" aria-label="Filtrer par type">
+                <option value="">Tous les types</option>
+                @foreach (var t in Enum.GetValues<TypeRendezVous>())
+                {
+                    <option value="@t">@ReferentielsRendezVous.Libelle(t)</option>
+                }
+            </select>
+            <select class="form-select form-select-sm" id="f-statut" aria-label="Filtrer par statut">
+                <option value="">Tous les statuts</option>
+                @foreach (var s in Enum.GetValues<StatutRendezVous>())
+                {
+                    <option value="@s">@ReferentielsRendezVous.Libelle(s)</option>
+                }
+            </select>
+            <select class="form-select form-select-sm" id="f-conseiller" aria-label="Filtrer par conseiller">
+                @foreach (var c in Model.Prospects.Conseillers)
+                {
+                    <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes rendez-vous" : c.Nom + " (fictif)")</option>
+                }
+                <option value="">Tous les conseillers</option>
+            </select>
+            <select class="form-select form-select-sm" id="f-vehicule" aria-label="Filtrer par véhicule">
+                <option value="">Tous les véhicules</option>
+            </select>
+            <div class="form-check form-switch pr-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="f-action" />
+                <label class="form-check-label" for="f-action">Nécessitant une action</label>
+            </div>
+            <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+        </div>
+        <div class="pr-resultat" id="resultat" aria-live="polite"></div>
+        <div class="rv-calendrier" id="calendrier"></div>
+        <div class="pr-etat-vide" id="etat-vide" hidden>
+            <i class="bi bi-calendar-x"></i>
+            <strong>Aucun rendez-vous sur cette période</strong>
+            <span>Changez de période ou de filtres, ou planifiez un rendez-vous.</span>
+            <a class="btn btn-sm btn-primary" asp-action="Nouveau">Nouveau rendez-vous</a>
+        </div>
+        <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-cone-striped me-1"></i>Agenda de démonstration : aucun calendrier externe n'est lu ni synchronisé, et aucune réservation réelle n'est faite.</p>
+    </section>
+</div>
+
+<div class="offcanvas offcanvas-end rv-panneau" tabindex="-1" id="selection" aria-labelledby="selection-titre">
+    <div class="offcanvas-header">
+        <h2 class="offcanvas-title h5" id="selection-titre"><i class="bi bi-calendar-event me-2"></i>Rendez-vous sélectionné</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+    </div>
+    <div class="offcanvas-body" data-zone="selection"></div>
+</div>
+
+<partial name="_ModaleRappel" />
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-rappel.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-agenda.js" asp-append-version="true"></script>
+}

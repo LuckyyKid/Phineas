@@ -36,6 +36,7 @@
                 <button type="button" class="btn btn-sm btn-primary" data-action="version" hidden><i class="bi bi-layers me-1"></i>Nouvelle version</button>
                 <button type="button" class="btn btn-sm btn-outline-primary" data-action="apercu"><i class="bi bi-eye me-1"></i>Prévisualiser</button>
                 <button type="button" class="btn btn-sm btn-outline-primary" data-action="dupliquer"><i class="bi bi-copy me-1"></i>Dupliquer</button>
+                <a class="btn btn-sm btn-outline-primary" asp-controller="RendezVous" asp-action="Nouveau" asp-route-soumission="@Model.SoumissionId"><i class="bi bi-calendar-plus me-1"></i>Planifier un rendez-vous</a>
                 <div class="dropdown" data-zone="menu-statut">
                     <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-flag me-1"></i>Statut</button>
                     <ul class="dropdown-menu dropdown-menu-end sv-menu" data-zone="transitions"></ul>

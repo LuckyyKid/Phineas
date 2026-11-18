@@ -23,7 +23,7 @@
     </div>
     <div class="sv-quick" role="group" aria-label="Actions rapides">
         <a class="btn btn-primary btn-sm" asp-controller="Prospects" asp-action="Index" asp-route-nouveau="true"><i class="bi bi-person-plus me-1"></i>Nouveau prospect</a>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-bientot="La planification des rendez-vous arrive dans une prochaine version."><i class="bi bi-calendar-plus me-1"></i>Rendez-vous</button>
+        <a class="btn btn-outline-primary btn-sm" asp-controller="RendezVous" asp-action="Nouveau"><i class="bi bi-calendar-plus me-1"></i>Rendez-vous</a>
         <a class="btn btn-outline-primary btn-sm" asp-controller="Soumissions" asp-action="Nouvelle"><i class="bi bi-file-earmark-plus me-1"></i>Soumission</a>
     </div>
 </header>
@@ -41,7 +41,7 @@
     {
         <div class="sv-kpi sv-ton-@i.Ton.ToString().ToLowerInvariant()">
             <div class="sv-kpi-label"><i class="bi @i.Icone"></i>@i.Libelle</div>
-            <div class="sv-kpi-value">@i.Valeur</div>
+            <div class="sv-kpi-value" data-indicateur="@i.Icone">@i.Valeur</div>
             <div class="sv-kpi-detail">
                 @if (i.Ton != TonIndicateur.Neutre)
                 {
@@ -107,47 +107,48 @@
         <section class="card" aria-labelledby="titre-rdv">
             <div class="card-header sv-card-header">
                 <span id="titre-rdv"><i class="bi bi-calendar-event me-2"></i>Rendez-vous à venir</span>
-                <span class="badge-soft sv-fictif">Fictif</span>
+                <a class="btn btn-sm btn-link p-0" asp-controller="RendezVous" asp-action="Index">Voir l'agenda</a>
             </div>
-            @if (Model.RendezVous.Count == 0)
-            {
-                <div class="sv-empty"><i class="bi bi-calendar"></i><span>Aucun rendez-vous prévu.</span></div>
-            }
-            else
-            {
-                <div class="sv-rdv-list">
-                    @foreach (var jour in Model.RendezVous.OrderBy(r => r.Debut).GroupBy(r => r.Debut.Date))
-                    {
-                        <div class="sv-rdv-day">@FormatVente.Jour(jour.Key, maintenant)</div>
-                        @foreach (var r in jour)
+            @* Rendu serveur à partir des mêmes données que l'agenda, puis rafraîchi depuis l'état local (rendezvous-tableau.js). *@
+            <div data-rdv-tableau>
+                @if (Model.RendezVous.Count == 0)
+                {
+                    <div class="sv-empty"><i class="bi bi-calendar"></i><span>Aucun rendez-vous prévu.</span></div>
+                }
+                else
+                {
+                    <div class="sv-rdv-list">
+                        @foreach (var jour in Model.RendezVous.OrderBy(r => r.Debut).GroupBy(r => r.Debut.Date))
                         {
-                            var passe = r.Debut < maintenant;
-                            <div class="sv-rdv @(passe ? "is-past" : "")">
-                                <time class="sv-rdv-time" datetime="@r.Debut.ToString("s")">@FormatVente.Heure(r.Debut)</time>
-                                <div class="sv-rdv-info">
-                                    <a class="sv-lien-fiche" asp-controller="Prospects" asp-action="Fiche" asp-route-id="@r.ProspectId"><strong>@r.Client</strong></a>
-                                    <span>@r.Vehicule</span>
-                                    <span class="sv-rdv-meta">
-                                        <span class="badge-soft">@FormatVente.Libelle(r.Type)</span>
-                                        @if (passe)
+                            <div class="sv-rdv-day">@FormatVente.Jour(jour.Key, maintenant)</div>
+                            @foreach (var r in jour)
+                            {
+                                <div class="sv-rdv">
+                                    <time class="sv-rdv-time" datetime="@r.Debut.ToString("s")">@FormatVente.Heure(r.Debut)</time>
+                                    <div class="sv-rdv-info">
+                                        <a class="sv-lien-fiche" asp-controller="RendezVous" asp-action="Detail" asp-route-id="@r.Id"><strong>@r.Client</strong></a>
+                                        @if (r.Vehicule is not null)
                                         {
-                                            <span class="text-muted small">Passé</span>
+                                            <span>@r.Vehicule</span>
                                         }
-                                        else if (r.Confirme)
-                                        {
-                                            <span class="sv-ok"><i class="bi bi-check-circle-fill"></i>Confirmé</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="sv-warn"><i class="bi bi-question-circle-fill"></i>À confirmer</span>
-                                        }
-                                    </span>
+                                        <span class="sv-rdv-meta">
+                                            <span class="badge-soft">@ReferentielsRendezVous.Libelle(r.Type)</span>
+                                            @if (r.Statut == StatutRendezVous.Confirme)
+                                            {
+                                                <span class="sv-ok"><i class="bi bi-check-circle-fill"></i>Confirmé</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="sv-warn"><i class="bi bi-question-circle-fill"></i>@ReferentielsRendezVous.Libelle(r.Statut)</span>
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         }
-                    }
-                </div>
-            }
+                    </div>
+                }
+            </div>
         </section>
 
         <section class="card" id="sv-alertes" aria-labelledby="titre-alertes">
@@ -159,7 +160,7 @@
                 @foreach (var al in Model.Alertes)
                 {
                     var (typeLibelle, typeIcone) = FormatVente.Libelle(al.Type);
-                    <li class="sv-alert sv-al-@al.Type" data-alerte="@al.Id">
+                    <li class="sv-alert sv-al-@al.Type" data-alerte="@al.Id" data-rdv-alerte="@al.RendezVousId">
                         <span class="sv-alert-icon"><i class="bi @typeIcone"></i></span>
                         <div class="sv-alert-body">
                             <span class="sv-alert-type">@typeLibelle · @FormatVente.Relatif(al.Date, maintenant)</span>
@@ -212,3 +213,19 @@
     </div>
 
 </div>
+
+@if (Model.Agenda is not null)
+{
+    <partial name="~/Views/RendezVous/_DonneesModules.cshtml" model="Model.Agenda" />
+}
+
+@section Scripts {
+    @if (Model.Agenda is not null)
+    {
+        <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+        <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+        <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+        <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+        <script src="~/js/rendezvous-tableau.js" asp-append-version="true"></script>
+    }
+}

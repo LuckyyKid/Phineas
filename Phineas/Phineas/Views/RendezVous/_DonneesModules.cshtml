@@ -1,0 +1,6 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@* Données des trois modules locaux (prospects, inventaire et soumissions, rendez-vous) pour les pages de l'agenda. *@
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+<partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+<partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="Model" />

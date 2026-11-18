@@ -35,6 +35,7 @@ public class ServiceProspectsDemo : IServiceProspects
         var n = DateTime.Now;
         var j = n.Date;
         var moi = conseiller.FullName;
+        var heureOlivier = FormatVente.Heure(CreneauxDemo.PresentationOlivier(n));
 
         var conseillers = new List<ConseillerResume>
         {
@@ -120,7 +121,7 @@ public class ServiceProspectsDemo : IServiceProspects
 
             // Budget précis, prospect issu d'une recommandation.
             new("o-camille-ioniq", IdsProspectsDemo.CamilleLavoie, "Véhicule électrique", EtapeVente.Qualifie,
-                n.AddDays(-15), n.AddHours(-1), "L'informer que la Ioniq 5 est disponible", j,
+                n.AddDays(-15), n.AddHours(-1), "Préparer l'essai routier de la Ioniq 5 (aujourd'hui)", j,
                 ["Hyundai Ioniq 5 Preferred 2024", "Kia EV6 Wind 2024"],
                 new() { Categorie = "vus", Etat = "indifferent", Marques = ["Hyundai", "Kia"], Modeles = ["Ioniq 5", "EV6"],
                     Places = 5, Caracteristiques = ["electrique", "ti", "aides"], Utilisation = "quotidien",
@@ -130,7 +131,7 @@ public class ServiceProspectsDemo : IServiceProspects
 
             // Contact avec plusieurs opportunités distinctes (dont une ancienne vente gagnée).
             new("o-isabelle-sorento", IdsProspectsDemo.IsabelleFortin, "VUS 7 places", EtapeVente.EssaiRoutier,
-                n.AddDays(-10), n.AddDays(-1), "Faire le suivi de l'essai routier de ce matin", j.AddDays(1),
+                n.AddDays(-10), n.AddDays(-1), "Faire le suivi de l'essai routier d'hier", j,
                 ["Kia Sorento LX 2023"],
                 new() { Categorie = "vus", Etat = "occasion", Marques = ["Kia"], Modeles = ["Sorento"], Places = 7,
                     Caracteristiques = ["ti", "coffre"], Utilisation = "famille",
@@ -151,7 +152,7 @@ public class ServiceProspectsDemo : IServiceProspects
 
             // Dossier aux informations de qualification manquantes.
             new("o-olivier-equinox", IdsProspectsDemo.OlivierPelletier, "VUS compact", EtapeVente.AQualifier,
-                n.AddDays(-4), n.AddDays(-1), "Confirmer le rendez-vous de 16 h 30", j,
+                n.AddDays(-4), n.AddDays(-1), $"Confirmer le rendez-vous de {heureOlivier}", j,
                 ["Chevrolet Equinox LT 2022"],
                 new() { Categorie = "vus" }),
 
@@ -197,6 +198,8 @@ public class ServiceProspectsDemo : IServiceProspects
                 "Étape : Rendez-vous / essai → Soumission"),
             new(Id(), IdsProspectsDemo.ChloeBouchard, "o-chloe-rav4", n.AddDays(-3), "courriel", moi,
                 "Soumission envoyée par courriel, valide 4 jours.", "Relancer sans réponse"),
+            new(Id(), IdsProspectsDemo.ChloeBouchard, "o-chloe-rav4", n.AddDays(-2), "rendezvous", moi,
+                "Discussion de la soumission replanifiée en fin de journée, à la demande de la cliente (retard au travail)."),
 
             new(Id(), IdsProspectsDemo.VincentMorin, "o-vincent-civic", n.AddDays(-20), "visite", moi,
                 "Visite spontanée, intéressé par la Civic Touring d'occasion."),
@@ -239,16 +242,21 @@ public class ServiceProspectsDemo : IServiceProspects
                 "A vu notre annonce Kijiji du Sorento. Cherche un 7 places."),
             new(Id(), IdsProspectsDemo.IsabelleFortin, "o-isabelle-compacte", n.AddDays(-3), "note", moi,
                 "Mentionne un second projet, plus tard : une petite voiture d'occasion pour la ville."),
-            new(Id(), IdsProspectsDemo.IsabelleFortin, "o-isabelle-sorento", n.AddDays(-1), "appel", moi,
-                "Essai routier du Sorento confirmé pour demain 10 h 30.", "Faire le suivi de l'essai"),
+            new(Id(), IdsProspectsDemo.IsabelleFortin, "o-isabelle-sorento", n.AddDays(-2), "appel", moi,
+                "Essai routier du Sorento confirmé pour demain 10 h 30."),
+            new(Id(), IdsProspectsDemo.IsabelleFortin, "o-isabelle-sorento", j.AddDays(-1).AddHours(11).AddMinutes(30), "rendezvous", moi,
+                "Essai routier terminé : client toujours intéressé. Apprécie l'espace de la troisième rangée ; trouve la consommation élevée.",
+                "Préparer une soumission avec reprise du CR-V 2017"),
 
             new(Id(), IdsProspectsDemo.OlivierPelletier, "o-olivier-equinox", n.AddDays(-4), "creation", moi,
                 "Prospect saisi manuellement à partir d'une demande reçue par la publicité Google."),
             new(Id(), IdsProspectsDemo.OlivierPelletier, "o-olivier-equinox", n.AddDays(-1), "appel", moi,
-                "Présentation de l'Equinox fixée à demain 16 h 30. Budget et délai non abordés.", "Confirmer le rendez-vous"),
+                $"Présentation de l'Equinox fixée à demain {heureOlivier}. Budget et délai non abordés.", "Confirmer le rendez-vous"),
 
             new(Id(), IdsProspectsDemo.LaurenceOuellet, "o-laurence-vus", n.AddDays(-2), "creation", moi,
                 "Prospect saisi manuellement à partir d'une réponse à la publicité Meta."),
+            new(Id(), IdsProspectsDemo.LaurenceOuellet, "o-laurence-vus", n.AddDays(-1).AddHours(-3), "rendezvous", moi,
+                "Consultation d'hier annulée par la cliente (empêchement). Souhaite revenir plus tard dans la semaine."),
 
             new(Id(), IdsProspectsDemo.MathieuGauthier, "o-mathieu-tacoma", n.AddDays(-45), "visite", "Antoine Lefebvre",
                 "Rencontre au Salon de l'auto, intéressé par un Tacoma."),
@@ -260,8 +268,10 @@ public class ServiceProspectsDemo : IServiceProspects
             new(Id(), IdsProspectsDemo.SarahNguyen, "o-sarah-tucson", n.AddDays(-6), "etape", Systeme,
                 "Étape : Finalisation → Gagné. Véhicule livré."),
 
-            new(Id(), IdsProspectsDemo.AlexandreDube, "o-alexandre", n.AddDays(-1), "appel", "Antoine Lefebvre",
-                "Appel entrant, besoin encore flou.", "Rappeler pour préciser son besoin"),
+            new(Id(), IdsProspectsDemo.AlexandreDube, "o-alexandre", n.AddDays(-1).AddHours(-6), "appel", "Antoine Lefebvre",
+                "Appel entrant, besoin encore flou. Consultation fixée à 14 h."),
+            new(Id(), IdsProspectsDemo.AlexandreDube, "o-alexandre", j.AddDays(-1).AddHours(14).AddMinutes(25), "rendezvous", "Antoine Lefebvre",
+                "Client absent à la consultation de 14 h.", "Rappeler pour préciser son besoin"),
         };
 
         return Task.FromResult(new DonneesProspects(Moi, conseillers, contacts, opportunites, interactions));

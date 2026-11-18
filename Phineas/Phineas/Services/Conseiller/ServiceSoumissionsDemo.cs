@@ -56,6 +56,20 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
                 40_495, StatutVehicule.Livre, true, "Traction intégrale", "Sièges chauffants"),
         };
 
+        // Emplacements fictifs sur le terrain (même champ que Vehicule.Emplacement). Absent = non renseigné.
+        var emplacements = new Dictionary<string, string>
+        {
+            ["v-rav4"] = "Salle d'exposition",
+            ["v-outback"] = "Terrain A · rangée 2",
+            ["v-f150"] = "Terrain B · rangée 1",
+            ["v-ram"] = "Atelier d'esthétique",
+            ["v-ioniq5"] = "Borne de recharge 3",
+            ["v-sorento"] = "Terrain A · rangée 4",
+            ["v-equinox"] = "Terrain A · rangée 1",
+            ["v-cx5"] = "Terrain B · rangée 3",
+        };
+        inventaire = inventaire.Select(v => emplacements.TryGetValue(v.Id, out var e) ? v with { Emplacement = e } : v).ToList();
+
         // Prix illustratifs. Ce sont des produits FACULTATIFS : ils ne sont ajoutés que si le client les choisit.
         var options = new List<OptionCatalogue>
         {

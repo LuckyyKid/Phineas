@@ -80,6 +80,9 @@ public class ProspectsPageViewModel
 
     // Fourni sur la fiche pour afficher les soumissions de chaque opportunité.
     public DonneesSoumissions? Soumissions { get; init; }
+
+    // Fourni sur la fiche pour afficher les rendez-vous de chaque opportunité.
+    public DonneesRendezVous? RendezVous { get; init; }
 }
 
 // Libellés métier : une seule source pour les vues Razor et le JavaScript.

@@ -30,7 +30,8 @@ public record VehiculeInventaire(
     decimal PrixDemande,
     StatutVehicule StatutActuel,
     bool Neuf,
-    IReadOnlyList<string> Caracteristiques
+    IReadOnlyList<string> Caracteristiques,
+    string? Emplacement = null
 );
 
 public record OptionCatalogue(string Code, string Libelle, decimal Prix);

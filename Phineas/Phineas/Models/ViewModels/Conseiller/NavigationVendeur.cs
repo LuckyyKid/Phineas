@@ -18,7 +18,7 @@ public static class NavigationVendeur
     [
         new("Tableau de bord", "bi-speedometer2", "Conseiller", "Index"),
         new("Prospects", "bi-person-lines-fill", "Prospects", "Index"),
-        new("Rendez-vous", "bi-calendar-event"),
+        new("Rendez-vous", "bi-calendar-event", "RendezVous", "Index"),
         new(
             "Ventes",
             "bi-receipt",

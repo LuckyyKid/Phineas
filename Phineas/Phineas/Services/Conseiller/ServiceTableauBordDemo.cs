@@ -8,10 +8,27 @@ namespace Phineas.Services.Conseiller;
 // À remplacer par une implémentation de IServiceTableauBordConseiller branchée sur la base de données.
 public class ServiceTableauBordDemo : IServiceTableauBordConseiller
 {
-    public Task<TableauBordConseillerViewModel> ObtenirAsync(UserSummaryViewModel conseiller)
+    private static readonly StatutRendezVous[] StatutsActifs =
+        [StatutRendezVous.Planifie, StatutRendezVous.AConfirmer, StatutRendezVous.Confirme, StatutRendezVous.EnCours];
+
+    private readonly IServiceProspects _prospects;
+    private readonly IServiceSoumissions _soumissions;
+    private readonly IServiceRendezVous _rendezVous;
+
+    public ServiceTableauBordDemo(IServiceProspects prospects, IServiceSoumissions soumissions, IServiceRendezVous rendezVous)
+    {
+        _prospects = prospects;
+        _soumissions = soumissions;
+        _rendezVous = rendezVous;
+    }
+
+    public async Task<TableauBordConseillerViewModel> ObtenirAsync(UserSummaryViewModel conseiller)
     {
         var maintenant = DateTime.Now;
         var aujourdhui = maintenant.Date;
+        var prospects = await _prospects.ObtenirAsync(conseiller);
+        var soumissions = await _soumissions.ObtenirAsync(conseiller);
+        var agenda = await _rendezVous.ObtenirAsync(conseiller);
 
         var actions = new List<ActionPrioritaire>
         {
@@ -21,7 +38,7 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
                 EtapeVente.Soumission, Urgence.Critique, true),
             new(2, IdsProspectsDemo.VincentMorin, "Vincent Morin", "Honda Civic Touring 2023",
                 "Financement : preuve de revenu manquante", maintenant.AddDays(-2),
-                "Dossier bloqué depuis 2 jours, signature prévue demain", "Demander la pièce manquante", "bi-file-earmark-arrow-up",
+                "Dossier bloqué depuis 2 jours, rencontre de financement prévue demain", "Demander la pièce manquante", "bi-file-earmark-arrow-up",
                 EtapeVente.Finalisation, Urgence.Critique, true),
             new(3, IdsProspectsDemo.InesBenali, "Inès Benali", "Mazda CX-5 GT 2022",
                 "Nouvelle demande reçue par le site Web", maintenant.AddMinutes(-40),
@@ -33,22 +50,28 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
                 EtapeVente.Negociation, Urgence.Haute, true),
             new(5, IdsProspectsDemo.JulienCote, "Julien Côté", "Ford F-150 XLT 2021",
                 "Essai routier effectué", maintenant.AddDays(-1),
-                "Intérêt élevé, aucune suite planifiée", "Envoyer une soumission", "bi-file-earmark-text",
+                "Deuxième essai (Ram 1500) prévu demain, comparatif attendu", "Préparer le comparatif", "bi-file-earmark-text",
                 EtapeVente.EssaiRoutier, Urgence.Haute, false),
             new(6, IdsProspectsDemo.CamilleLavoie, "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024",
                 "Véhicule recherché maintenant disponible", maintenant.AddHours(-1),
-                "Correspond à ses critères (VÉ, TI, moins de 50 000 $)", "Informer la cliente", "bi-envelope",
+                "Essai routier prévu aujourd'hui (VÉ, TI, moins de 50 000 $)", "Préparer l'essai routier", "bi-speedometer",
                 EtapeVente.Qualifie, Urgence.Normale, false),
         };
 
-        var rendezVous = new List<RendezVousResume>
-        {
-            new(aujourdhui.AddHours(10).AddMinutes(30), IdsProspectsDemo.IsabelleFortin, "Isabelle Fortin", "Kia Sorento LX 2023", TypeVisite.EssaiRoutier, true),
-            new(aujourdhui.AddHours(14), IdsProspectsDemo.KarimBenjelloun, "Karim Benjelloun", "Subaru Outback Touring 2022", TypeVisite.Negociation, true),
-            new(aujourdhui.AddHours(16).AddMinutes(30), IdsProspectsDemo.OlivierPelletier, "Olivier Pelletier", "Chevrolet Equinox LT 2022", TypeVisite.Presentation, false),
-            new(aujourdhui.AddDays(1).AddHours(9).AddMinutes(30), IdsProspectsDemo.VincentMorin, "Vincent Morin", "Honda Civic Touring 2023", TypeVisite.Signature, false),
-            new(aujourdhui.AddDays(2).AddHours(11), IdsProspectsDemo.CamilleLavoie, "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024", TypeVisite.EssaiRoutier, true),
-        };
+        // Mes rendez-vous actifs qui ne sont pas encore terminés : même source que l'agenda.
+        var rendezVous = agenda.RendezVous
+            .Where(r => r.ConseillerId == prospects.ConseillerConnecteId && StatutsActifs.Contains(r.Statut)
+                && r.Debut.AddMinutes(r.DureeMinutes) >= maintenant)
+            .OrderBy(r => r.Debut)
+            .Select(r =>
+            {
+                var c = prospects.Contacts.First(x => x.Id == r.ProspectId);
+                var v = r.VehiculeId is null ? null : soumissions.Inventaire.FirstOrDefault(x => x.Id == r.VehiculeId);
+                return new RendezVousResume(r.Id, r.Debut, c.Id, $"{c.Prenom} {c.Nom}",
+                    v is null ? null : $"{v.Marque} {v.Modele} {v.Version} {v.Annee}", r.Type, r.Statut);
+            })
+            .ToList();
+        var aConfirmer = rendezVous.FirstOrDefault(r => r.Statut == StatutRendezVous.AConfirmer);
 
         var pipeline = new List<EtapePipeline>
         {
@@ -63,18 +86,21 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
         var alertes = new List<AlerteVente>
         {
             new(1, TypeAlerte.DossierBloque, "Financement en attente — Vincent Morin",
-                "Preuve de revenu manquante. La signature de demain est compromise.", maintenant.AddDays(-2)),
+                "Preuve de revenu manquante. La rencontre de financement de demain est compromise.", maintenant.AddDays(-2)),
             new(2, TypeAlerte.DossierBloque, "Échange non évalué — Karim Benjelloun",
                 "Le véhicule d'échange n'a pas encore été évalué.", maintenant.AddDays(-1)),
             new(3, TypeAlerte.SoumissionSansReponse, "Soumission sans réponse — Chloé Bouchard",
                 "Envoyée il y a 3 jours, expire demain.", maintenant.AddDays(-3)),
-            new(4, TypeAlerte.RendezVousAConfirmer, "Rendez-vous à confirmer — Olivier Pelletier",
-                "Aujourd'hui à 16 h 30, aucune confirmation du client.", maintenant.AddHours(-3)),
             new(5, TypeAlerte.VehiculeDisponible, "Hyundai Ioniq 5 2024 prête pour la vente",
-                "Correspond à la recherche d'Camille Lavoie.", maintenant.AddHours(-1)),
+                "Correspond à la recherche de Camille Lavoie.", maintenant.AddHours(-1)),
         };
 
-        var rdvAVenir = rendezVous.Where(r => r.Debut >= maintenant).ToList();
+        if (aConfirmer is not null)
+            alertes.Insert(3, new(4, TypeAlerte.RendezVousAConfirmer, $"Rendez-vous à confirmer — {aConfirmer.Client}",
+                $"{FormatVente.Jour(aConfirmer.Debut, maintenant)} à {FormatVente.Heure(aConfirmer.Debut)}, aucune confirmation du client.",
+                maintenant.AddHours(-3), aConfirmer.Id));
+
+        var rdvAVenir = rendezVous;
         var rdvAujourdhui = rdvAVenir.Count(r => r.Debut.Date == aujourdhui);
         var bloques = alertes.Count(a => a.Type == TypeAlerte.DossierBloque);
 
@@ -101,6 +127,6 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
             Alertes = alertes,
         };
 
-        return Task.FromResult(modele);
+        return modele;
     }
 }

@@ -22,15 +22,6 @@ public enum Urgence
     Normale,
 }
 
-public enum TypeVisite
-{
-    EssaiRoutier,
-    Presentation,
-    Negociation,
-    Signature,
-    Livraison,
-}
-
 public enum TypeAlerte
 {
     VehiculeDisponible,
@@ -63,11 +54,12 @@ public record ActionPrioritaire(
     bool EcheanceAujourdhui
 );
 
-public record RendezVousResume(DateTime Debut, string ProspectId, string Client, string Vehicule, TypeVisite Type, bool Confirme);
+// Construit à partir de IServiceRendezVous : même source que l'agenda.
+public record RendezVousResume(string Id, DateTime Debut, string ProspectId, string Client, string? Vehicule, TypeRendezVous Type, StatutRendezVous Statut);
 
 public record EtapePipeline(EtapeVente Etape, int Nombre, decimal Valeur);
 
-public record AlerteVente(int Id, TypeAlerte Type, string Titre, string Detail, DateTime Date);
+public record AlerteVente(int Id, TypeAlerte Type, string Titre, string Detail, DateTime Date, string? RendezVousId = null);
 
 public class TableauBordConseillerViewModel
 {
@@ -86,6 +78,9 @@ public class TableauBordConseillerViewModel
     public int Gagnes { get; set; }
     public int Perdus { get; set; }
     public IReadOnlyList<AlerteVente> Alertes { get; set; } = [];
+
+    // Données complètes pour l'état local partagé avec l'agenda (rendez-vous confirmés, annulés… dans cet onglet).
+    public RendezVousPageViewModel? Agenda { get; set; }
 }
 
 public static class FormatVente
@@ -137,17 +132,6 @@ public static class FormatVente
             EtapeVente.Gagne => "Gagné",
             EtapeVente.Perdu => "Perdu",
             _ => etape.ToString(),
-        };
-
-    public static string Libelle(TypeVisite type) =>
-        type switch
-        {
-            TypeVisite.EssaiRoutier => "Essai routier",
-            TypeVisite.Presentation => "Présentation",
-            TypeVisite.Negociation => "Négociation",
-            TypeVisite.Signature => "Signature",
-            TypeVisite.Livraison => "Livraison",
-            _ => type.ToString(),
         };
 
     public static (string Libelle, string Icone) Libelle(Urgence urgence) =>
