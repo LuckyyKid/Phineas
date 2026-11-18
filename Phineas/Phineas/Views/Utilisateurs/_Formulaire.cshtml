@@ -1,0 +1,58 @@
+@model UtilisateurFormViewModel
+
+<form asp-action="@(Model.EstModification ? "Modifier" : "Creer")" asp-route-id="@Model.Id" method="post" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="row g-3">
+        <div class="col-sm-6">
+            <label asp-for="Prenom" class="form-label"></label>
+            <input asp-for="Prenom" class="form-control" autofocus />
+            <span asp-validation-for="Prenom" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-6">
+            <label asp-for="Nom" class="form-label"></label>
+            <input asp-for="Nom" class="form-control" />
+            <span asp-validation-for="Nom" class="text-danger small"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" type="email" />
+            <div class="form-text">C'est l'identifiant de connexion de la personne.</div>
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-6">
+            <label asp-for="Role" class="form-label"></label>
+            <select asp-for="Role" asp-items="Model.Roles" class="form-select" id="choix-role"></select>
+            <span asp-validation-for="Role" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-6" id="bloc-concession">
+            <label asp-for="DealershipId" class="form-label"></label>
+            <select asp-for="DealershipId" asp-items="Model.Concessions" class="form-select">
+                <option value="">— Choisir —</option>
+            </select>
+            <span asp-validation-for="DealershipId" class="text-danger small"></span>
+        </div>
+    </div>
+
+    @if (!Model.EstModification)
+    {
+        <div class="alert alert-info mt-4 mb-0 small">
+            <i class="bi bi-info-circle me-1"></i>Un mot de passe temporaire sera généré et affiché une seule fois. La personne devra le changer à sa première connexion.
+        </div>
+    }
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">@(Model.EstModification ? "Enregistrer" : "Créer le compte")</button>
+        <a class="btn btn-outline-secondary" href="javascript:history.back()">Annuler</a>
+    </div>
+</form>
+
+<script>
+    (function () {
+        var role = document.getElementById('choix-role');
+        var bloc = document.getElementById('bloc-concession');
+        function maj() { bloc.style.display = role.value === '@AppRoles.SystemAdmin' ? 'none' : ''; }
+        role.addEventListener('change', maj);
+        maj();
+    })();
+</script>

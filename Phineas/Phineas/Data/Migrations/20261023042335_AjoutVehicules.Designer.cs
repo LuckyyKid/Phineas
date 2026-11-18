@@ -15,7 +15,6 @@ namespace Phineas.Data.Migrations
     [Migration("20261023042335_AjoutVehicules")]
     partial class AjoutVehicules
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
