@@ -16,18 +16,21 @@ public class RendezVousController : Controller
     private readonly IServiceProspects _prospects;
     private readonly IServiceSoumissions _soumissions;
     private readonly IServiceRendezVous _rendezVous;
+    private readonly IServiceTransactions _transactions;
 
     public RendezVousController(
         IAccountService account,
         IServiceProspects prospects,
         IServiceSoumissions soumissions,
-        IServiceRendezVous rendezVous
+        IServiceRendezVous rendezVous,
+        IServiceTransactions transactions
     )
     {
         _account = account;
         _prospects = prospects;
         _soumissions = soumissions;
         _rendezVous = rendezVous;
+        _transactions = transactions;
     }
 
     public async Task<IActionResult> Index(string? date)
@@ -36,14 +39,15 @@ public class RendezVousController : Controller
         return modele is null ? Challenge() : View(modele);
     }
 
-    public async Task<IActionResult> Nouveau(string? opportunite, string? prospect, string? soumission, string? replanifier, string? date)
+    public async Task<IActionResult> Nouveau(string? opportunite, string? prospect, string? soumission, string? replanifier, string? date, string? type)
     {
         var modele = await ConstruireAsync(
             opportuniteId: opportunite,
             prospectId: prospect,
             soumissionId: soumission,
             replanifier: replanifier,
-            date: date
+            date: date,
+            type: type
         );
         return modele is null ? Challenge() : View(modele);
     }
@@ -53,7 +57,7 @@ public class RendezVousController : Controller
         if (string.IsNullOrWhiteSpace(id))
             return RedirectToAction(nameof(Index));
 
-        var modele = await ConstruireAsync(rendezVousId: id);
+        var modele = await ConstruireAsync(rendezVousId: id, avecTransactions: true);
         return modele is null ? Challenge() : View(modele);
     }
 
@@ -63,7 +67,9 @@ public class RendezVousController : Controller
         string? prospectId = null,
         string? soumissionId = null,
         string? replanifier = null,
-        string? date = null
+        string? date = null,
+        string? type = null,
+        bool avecTransactions = false
     )
     {
         var me = await _account.GetSummaryAsync(User);
@@ -85,6 +91,8 @@ public class RendezVousController : Controller
             SoumissionId = soumissionId,
             Replanifier = replanifier,
             Date = date,
+            Type = type,
+            Transactions = avecTransactions ? await _transactions.ObtenirAsync(me) : null,
         };
     }
 }

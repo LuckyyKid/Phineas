@@ -269,6 +269,50 @@ public class ServiceRendezVousDemo : IServiceRendezVous
                     E(j.AddDays(-1).AddHours(15).AddMinutes(50), "resultat", "Résultat : deuxième essai à prévoir."),
                 ],
             },
+
+            // Phase 05 : livraison planifiée depuis une transaction prête à livrer (le rendez-vous ne vaut pas livraison).
+            new()
+            {
+                Id = "r-amelie-livraison", ProspectId = IdsProspectsDemo.AmelieGirard, OpportuniteId = "o-amelie-crosstrek",
+                SoumissionId = "s-amelie-crosstrek", VehiculeId = "v-crosstrek", ConseillerId = Moi,
+                Type = TypeRendezVous.Livraison, Statut = StatutRendezVous.Confirme,
+                Debut = j.AddDays(1).AddHours(16), DureeMinutes = 60, Mode = "concession", Lieu = "Salle de livraison",
+                Objectif = "Remise du Crosstrek et présentation des commandes.",
+                DateCreation = n.AddDays(-1), Checklist = Coches("besoins", "soumission", "disponibilite"),
+                Historique =
+                [
+                    E(n.AddDays(-1), "creation", "Rendez-vous créé depuis la transaction TRX-2026-0017."),
+                    E(n.AddDays(-1).AddMinutes(20), "confirmation", "Confirmé par texto avec la cliente."),
+                ],
+            },
+
+            // Livraison planifiée alors que le véhicule était prêt : il est depuis retourné en inspection.
+            new()
+            {
+                Id = "r-rachel-livraison", ProspectId = IdsProspectsDemo.RachelDion, OpportuniteId = "o-rachel-santafe",
+                SoumissionId = "s-rachel-santafe", VehiculeId = "v-santafe", ConseillerId = Moi,
+                Type = TypeRendezVous.Livraison, Statut = StatutRendezVous.Confirme,
+                Debut = j.AddDays(2).AddHours(11), DureeMinutes = 60, Mode = "concession", Lieu = "Salle de livraison",
+                Objectif = "Remise du Santa Fe.",
+                DateCreation = n.AddDays(-3),
+                Historique =
+                [
+                    E(n.AddDays(-3), "creation", "Rendez-vous créé depuis la transaction TRX-2026-0020."),
+                    E(n.AddDays(-3).AddMinutes(30), "confirmation", "Confirmé par courriel avec la cliente."),
+                ],
+            },
+
+            // Rencontre de finalisation : revoir les conditions de financement avec la cliente.
+            new()
+            {
+                Id = "r-lea-finalisation", ProspectId = IdsProspectsDemo.LeaMartin, OpportuniteId = "o-lea-kona",
+                SoumissionId = "s-lea-kona", VehiculeId = "v-kona", ConseillerId = Moi,
+                Type = TypeRendezVous.Finalisation, Statut = StatutRendezVous.Planifie,
+                Debut = j.AddDays(2).AddHours(10), DureeMinutes = 45, Mode = "concession", Lieu = "Bureau des ventes 2",
+                Objectif = "Revoir les conditions de l'approbation et les éléments à fournir.",
+                DateCreation = n.AddHours(-25),
+                Historique = [E(n.AddHours(-25), "creation", "Rendez-vous créé depuis la transaction TRX-2026-0023.")],
+            },
         };
 
         return Task.FromResult(new DonneesRendezVous(rendezVous, 8, 20, "Salle d'exposition"));

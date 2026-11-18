@@ -16,18 +16,21 @@ public class ProspectsController : Controller
     private readonly IServiceProspects _prospects;
     private readonly IServiceSoumissions _soumissions;
     private readonly IServiceRendezVous _rendezVous;
+    private readonly IServiceTransactions _transactions;
 
     public ProspectsController(
         IAccountService account,
         IServiceProspects prospects,
         IServiceSoumissions soumissions,
-        IServiceRendezVous rendezVous
+        IServiceRendezVous rendezVous,
+        IServiceTransactions transactions
     )
     {
         _account = account;
         _prospects = prospects;
         _soumissions = soumissions;
         _rendezVous = rendezVous;
+        _transactions = transactions;
     }
 
     public async Task<IActionResult> Index(bool nouveau = false)
@@ -59,6 +62,7 @@ public class ProspectsController : Controller
             OuvrirCreation = ouvrirCreation,
             Soumissions = avecModules ? await _soumissions.ObtenirAsync(me) : null,
             RendezVous = avecModules ? await _rendezVous.ObtenirAsync(me) : null,
+            Transactions = avecModules ? await _transactions.ObtenirAsync(me) : null,
         };
     }
 }

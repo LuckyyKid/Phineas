@@ -9,6 +9,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
 }
 
 <a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Soumissions</a>
@@ -53,6 +54,9 @@
     </section>
 
     <div data-zone="alertes"></div>
+
+    @* Transaction issue de cette soumission, ou ouverture depuis une version acceptée : transactions-liens.js. *@
+    <div data-trx-lien="soumission" data-id="@Model.SoumissionId"></div>
 
     <ul class="nav pr-onglets" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-offre" data-bs-toggle="tab" data-bs-target="#panneau-offre" type="button" role="tab" aria-controls="panneau-offre" aria-selected="true">Offre</button></li>
@@ -165,6 +169,11 @@
 
 <partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
 <partial name="_DonneesSoumissions" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+@if (Model.RendezVous is not null && Model.Transactions is not null)
+{
+    <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Prospects, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = Model.ConseillerNom, Concession = Model.Concession }" />
+    <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />
+}
 
 @section Scripts {
     <script src="~/js/prospects-store.js" asp-append-version="true"></script>
@@ -173,4 +182,12 @@
     <script src="~/js/soumissions-composants.js" asp-append-version="true"></script>
     <script src="~/js/soumissions-editeur.js" asp-append-version="true"></script>
     <script src="~/js/soumissions-detail.js" asp-append-version="true"></script>
+    @if (Model.Transactions is not null)
+    {
+        <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-liens.js" asp-append-version="true"></script>
+    }
 }

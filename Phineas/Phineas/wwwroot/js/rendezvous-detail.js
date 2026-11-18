@@ -131,7 +131,7 @@
     zone("preparation").innerHTML = UI.preparation(r);
     zone("checklist").innerHTML = UI.checklistHtml(r, false, modifiable) + (modifiable ? "" : '<p class="pr-note mb-0 mt-2">Rendez-vous clôturé : checklist en lecture seule.</p>');
     var v = R.vehicule(r.vehiculeId);
-    zone("vehicule-prep").innerHTML = UI.vehiculeHtml(v);
+    zone("vehicule-prep").innerHTML = UI.vehiculeHtml(v, r.type, R.vehiculeAttendu(r.soumissionId));
     var p = UI.progression(UI.checklist(r, false));
     remplir("progression", p.faits + "/" + p.total);
     var manquants = R.actionsRequises(r);

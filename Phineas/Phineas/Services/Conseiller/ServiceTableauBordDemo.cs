@@ -85,10 +85,7 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
 
         var alertes = new List<AlerteVente>
         {
-            new(1, TypeAlerte.DossierBloque, "Financement en attente — Vincent Morin",
-                "Preuve de revenu manquante. La rencontre de financement de demain est compromise.", maintenant.AddDays(-2)),
-            new(2, TypeAlerte.DossierBloque, "Échange non évalué — Karim Benjelloun",
-                "Le véhicule d'échange n'a pas encore été évalué.", maintenant.AddDays(-1)),
+            // Les alertes « Dossier bloqué » sont calculées dans le navigateur à partir des transactions (transactions-tableau.js).
             new(3, TypeAlerte.SoumissionSansReponse, "Soumission sans réponse — Chloé Bouchard",
                 "Envoyée il y a 3 jours, expire demain.", maintenant.AddDays(-3)),
             new(5, TypeAlerte.VehiculeDisponible, "Hyundai Ioniq 5 2024 prête pour la vente",
@@ -102,7 +99,6 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
 
         var rdvAVenir = rendezVous;
         var rdvAujourdhui = rdvAVenir.Count(r => r.Debut.Date == aujourdhui);
-        var bloques = alertes.Count(a => a.Type == TypeAlerte.DossierBloque);
 
         var modele = new TableauBordConseillerViewModel
         {
@@ -117,7 +113,7 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
                     FormatVente.Argent(pipeline.Sum(e => e.Valeur)) + " en jeu", "bi-briefcase", TonIndicateur.Neutre),
                 new("Prospects à recontacter", 3, "dont 1 nouveau aujourd'hui", "bi-chat-dots", TonIndicateur.Attention),
                 new("Rendez-vous à venir", rdvAVenir.Count, $"{rdvAujourdhui} aujourd'hui", "bi-calendar-event", TonIndicateur.Neutre),
-                new("Transactions bloquées", bloques, "financement et échange", "bi-sign-stop", TonIndicateur.Critique),
+                new("Transactions bloquées", null, "calculé à partir de vos transactions", "bi-sign-stop", TonIndicateur.Critique),
             ],
             Actions = actions,
             RendezVous = rendezVous,

@@ -9,6 +9,7 @@ public enum TypeRendezVous
     DiscussionSoumission,
     Negociation,
     Financement,
+    Finalisation,
     Livraison,
     SuiviApresVente,
     Autre,
@@ -98,6 +99,12 @@ public class RendezVousPageViewModel
     public string? SoumissionId { get; init; }
     public string? Replanifier { get; init; }
     public string? Date { get; init; }
+
+    // Type présélectionné (ex. « Livraison » depuis une transaction).
+    public string? Type { get; init; }
+
+    // Fourni pour relier un rendez-vous de livraison, de financement ou de finalisation à sa transaction.
+    public DonneesTransactions? Transactions { get; init; }
 }
 
 // Libellés métier : une seule source pour Razor et le JavaScript (prépare la future localisation FR / EN / ES).
@@ -113,6 +120,7 @@ public static class ReferentielsRendezVous
             TypeRendezVous.DiscussionSoumission => "Discussion d'une soumission",
             TypeRendezVous.Negociation => "Rencontre de négociation",
             TypeRendezVous.Financement => "Rencontre avec le service financement",
+            TypeRendezVous.Finalisation => "Rencontre de finalisation",
             TypeRendezVous.Livraison => "Livraison du véhicule",
             TypeRendezVous.SuiviApresVente => "Suivi après vente",
             _ => "Autre",
@@ -128,6 +136,7 @@ public static class ReferentielsRendezVous
             TypeRendezVous.DiscussionSoumission => "bi-file-earmark-text",
             TypeRendezVous.Negociation => "bi-arrow-left-right",
             TypeRendezVous.Financement => "bi-bank",
+            TypeRendezVous.Finalisation => "bi-clipboard-check",
             TypeRendezVous.Livraison => "bi-key",
             TypeRendezVous.SuiviApresVente => "bi-arrow-repeat",
             _ => "bi-calendar-event",

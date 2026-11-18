@@ -1,0 +1,7 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model TransactionsPageViewModel
+@* Données des quatre modules locaux (prospects, inventaire et soumissions, rendez-vous, transactions). *@
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+<partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+<partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Prospects, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = Model.ConseillerNom, Concession = Model.Concession }" />
+<partial name="_DonneesTransactions" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />

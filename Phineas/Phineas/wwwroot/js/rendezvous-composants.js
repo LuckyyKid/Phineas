@@ -118,9 +118,9 @@
   }
 
   // Fiche véhicule compacte, avec son statut de disponibilité.
-  function vehiculeHtml(v) {
+  function vehiculeHtml(v, typeRdv, attendu) {
     if (!v) return '<p class="text-muted mb-0">Aucun véhicule associé.</p>';
-    var ev = R.etatVehicule(v);
+    var ev = R.etatVehicule(v, typeRdv, attendu);
     return '<div class="rv-vehicule"><span class="so-photo"><i class="bi bi-car-front"></i><small>Photo non disponible</small></span><div>' +
       "<strong>" + esc(S.nomVehicule(v)) + "</strong>" +
       '<span class="pr-sous d-block">N° ' + esc(v.numeroStock) + " · " + esc(v.neuf ? "Neuf" : v.kilometrage.toLocaleString("fr-CA") + " km") + " · " + esc(P.argent(v.prixDemande)) + "</span>" +

@@ -67,6 +67,7 @@ builder.Services.AddScoped<IServiceTableauBordConseiller, ServiceTableauBordDemo
 builder.Services.AddScoped<IServiceProspects, ServiceProspectsDemo>();
 builder.Services.AddScoped<IServiceSoumissions, ServiceSoumissionsDemo>();
 builder.Services.AddScoped<IServiceRendezVous, ServiceRendezVousDemo>();
+builder.Services.AddScoped<IServiceTransactions, ServiceTransactionsDemo>();
 
 builder.Services.AddControllersWithViews();
 

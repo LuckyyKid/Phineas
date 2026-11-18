@@ -25,6 +25,7 @@
         <a class="btn btn-primary btn-sm" asp-controller="Prospects" asp-action="Index" asp-route-nouveau="true"><i class="bi bi-person-plus me-1"></i>Nouveau prospect</a>
         <a class="btn btn-outline-primary btn-sm" asp-controller="RendezVous" asp-action="Nouveau"><i class="bi bi-calendar-plus me-1"></i>Rendez-vous</a>
         <a class="btn btn-outline-primary btn-sm" asp-controller="Soumissions" asp-action="Nouvelle"><i class="bi bi-file-earmark-plus me-1"></i>Soumission</a>
+        <a class="btn btn-outline-primary btn-sm" asp-controller="Transactions" asp-action="Nouvelle"><i class="bi bi-cash-coin me-1"></i>Transaction</a>
     </div>
 </header>
 
@@ -41,7 +42,7 @@
     {
         <div class="sv-kpi sv-ton-@i.Ton.ToString().ToLowerInvariant()">
             <div class="sv-kpi-label"><i class="bi @i.Icone"></i>@i.Libelle</div>
-            <div class="sv-kpi-value" data-indicateur="@i.Icone">@i.Valeur</div>
+            <div class="sv-kpi-value" data-indicateur="@i.Icone">@(i.Valeur?.ToString() ?? "—")</div>
             <div class="sv-kpi-detail">
                 @if (i.Ton != TonIndicateur.Neutre)
                 {
@@ -151,12 +152,24 @@
             </div>
         </section>
 
+        @* Rendu par transactions-tableau.js à partir de l'état local des transactions (même source que le module). *@
+        <section class="card" aria-labelledby="titre-transactions" data-trx-tableau>
+            <div class="card-header sv-card-header">
+                <span id="titre-transactions"><i class="bi bi-cash-coin me-2"></i>Mes transactions</span>
+                <a class="btn btn-sm btn-link p-0" asp-controller="Transactions" asp-action="Index">Voir les transactions</a>
+            </div>
+            <div data-trx-zone>
+                <div class="sv-empty"><i class="bi bi-hourglass"></i><span>Chargement des transactions…</span></div>
+            </div>
+        </section>
+
         <section class="card" id="sv-alertes" aria-labelledby="titre-alertes">
             <div class="card-header sv-card-header">
                 <span id="titre-alertes"><i class="bi bi-bell me-2"></i>Ce qui bloque mes ventes</span>
                 <span class="badge-soft sv-fictif">Fictif</span>
             </div>
             <ul class="sv-alert-list">
+                <li hidden data-trx-alertes></li>
                 @foreach (var al in Model.Alertes)
                 {
                     var (typeLibelle, typeIcone) = FormatVente.Libelle(al.Type);
@@ -217,6 +230,10 @@
 @if (Model.Agenda is not null)
 {
     <partial name="~/Views/RendezVous/_DonneesModules.cshtml" model="Model.Agenda" />
+    @if (Model.Transactions is not null)
+    {
+        <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.Agenda.ConseillerNom)" />
+    }
 }
 
 @section Scripts {
@@ -227,5 +244,13 @@
         <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
         <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
         <script src="~/js/rendezvous-tableau.js" asp-append-version="true"></script>
+        @if (Model.Transactions is not null)
+        {
+            <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+            <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+            <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+            <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+            <script src="~/js/transactions-tableau.js" asp-append-version="true"></script>
+        }
     }
 }

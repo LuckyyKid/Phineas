@@ -1,0 +1,324 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model TransactionsPageViewModel
+@{
+    ViewData["Title"] = "Transaction";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Transactions</a>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div class="pr-etat-vide card" id="transaction-introuvable" hidden>
+    <i class="bi bi-cash-coin"></i>
+    <strong>Transaction introuvable</strong>
+    <span>Elle n'existe pas dans les données de démonstration de cet onglet (elles ont peut-être été réinitialisées).</span>
+    <a class="btn btn-sm btn-outline-primary" asp-action="Index">Retour aux transactions</a>
+</div>
+
+<div id="transaction" data-transaction-id="@Model.TransactionId" hidden>
+
+    <section class="card pr-fiche-tete" aria-labelledby="tx-titre">
+        <div class="pr-fiche-identite">
+            <span class="so-icone-tete"><i class="bi bi-cash-coin"></i></span>
+            <div class="pr-fiche-titre">
+                <h1 id="tx-titre" data-champ="titre"></h1>
+                <div class="pr-fiche-badges" data-champ="badges"></div>
+            </div>
+            <div class="pr-fiche-actions" data-zone="actions-tete"></div>
+        </div>
+        <dl class="pr-fiche-meta tx-meta">
+            <div><dt>Client</dt><dd data-champ="client"></dd></div>
+            <div><dt>Véhicule</dt><dd data-champ="vehicule"></dd></div>
+            <div><dt>Conseiller</dt><dd data-champ="conseiller"></dd></div>
+            <div><dt>Proposition retenue</dt><dd data-champ="montant"></dd></div>
+            <div><dt>Mode d'achat</dt><dd data-champ="mode"></dd></div>
+            <div><dt>Blocages</dt><dd data-champ="nb-blocages"></dd></div>
+            <div><dt>Livraison</dt><dd data-champ="livraison"></dd></div>
+        </dl>
+    </section>
+
+    @* Ce qui empêche la transaction d'avancer, visible sans changer d'onglet. *@
+    <section class="card tx-situation" aria-labelledby="tx-situation-titre" data-zone="situation"></section>
+
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-apercu" data-bs-toggle="tab" data-bs-target="#panneau-apercu" type="button" role="tab" aria-controls="panneau-apercu" aria-selected="true">Vue d'ensemble</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-proposition" data-bs-toggle="tab" data-bs-target="#panneau-proposition" type="button" role="tab" aria-controls="panneau-proposition" aria-selected="false">Proposition</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-paiement" data-bs-toggle="tab" data-bs-target="#panneau-paiement" type="button" role="tab" aria-controls="panneau-paiement" aria-selected="false">Paiement et financement</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-vehicule" data-bs-toggle="tab" data-bs-target="#panneau-vehicule" type="button" role="tab" aria-controls="panneau-vehicule" aria-selected="false">Véhicule et préparation</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-livraison" data-bs-toggle="tab" data-bs-target="#panneau-livraison" type="button" role="tab" aria-controls="panneau-livraison" aria-selected="false">Livraison</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-historique" data-bs-toggle="tab" data-bs-target="#panneau-historique" type="button" role="tab" aria-controls="panneau-historique" aria-selected="false">Historique <span class="pr-compte" data-champ="nb-historique"></span></button></li>
+    </ul>
+
+    <div class="tab-content">
+        @* ---------- Vue d'ensemble : Deal Control Tower ---------- *@
+        <div class="tab-pane fade show active" id="panneau-apercu" role="tabpanel" aria-labelledby="onglet-apercu" tabindex="0">
+            <div class="row g-4">
+                <div class="col-xl-8 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-tour">
+                        <div class="card-header sv-card-header"><span id="titre-tour"><i class="bi bi-broadcast me-2"></i>Deal Control Tower</span><span class="pr-sous" data-champ="progression"></span></div>
+                        <div class="card-body" data-zone="tour"></div>
+                    </section>
+                    <section class="card" aria-labelledby="titre-elements">
+                        <div class="card-header sv-card-header"><span id="titre-elements"><i class="bi bi-diagram-3 me-2"></i>Blocages, actions et dépendances</span></div>
+                        <div class="card-body" data-zone="elements"></div>
+                    </section>
+                </div>
+                <div class="col-xl-4 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-pret">
+                        <div class="card-header sv-card-header"><span id="titre-pret"><i class="bi bi-key me-2"></i>Préparation à la livraison</span></div>
+                        <div class="card-body" data-zone="pret-apercu"></div>
+                    </section>
+                    <section class="card tx-simulation" aria-labelledby="titre-simulation">
+                        <div class="card-header sv-card-header"><span id="titre-simulation"><i class="bi bi-cone-striped me-2"></i>Simulation d'événements</span><span class="badge-soft sv-fictif">Fictif</span></div>
+                        <div class="card-body">
+                            <p class="small mb-2">Démonstration uniquement : chaque bouton simule ce qu'un autre département ferait depuis son propre espace. Ce ne sont pas des actions du conseiller et rien n'est modifié hors de cet onglet.</p>
+                            <div data-zone="simulation"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Proposition commerciale ---------- *@
+        <div class="tab-pane fade" id="panneau-proposition" role="tabpanel" aria-labelledby="onglet-proposition" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-proposition">
+                        <div class="card-header sv-card-header"><span id="titre-proposition"><i class="bi bi-file-earmark-lock me-2"></i>Proposition retenue</span><span data-champ="figee"></span></div>
+                        <div class="card-body" data-zone="proposition"></div>
+                    </section>
+                </div>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-validation">
+                        <div class="card-header sv-card-header"><span id="titre-validation"><i class="bi bi-patch-check me-2"></i>Validation commerciale</span></div>
+                        <div class="card-body" data-zone="validation"></div>
+                    </section>
+                    <section class="card" aria-labelledby="titre-versions">
+                        <div class="card-header sv-card-header"><span id="titre-versions"><i class="bi bi-layers me-2"></i>Changer de proposition</span></div>
+                        <div class="card-body" data-zone="versions"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Paiement et financement ---------- *@
+        <div class="tab-pane fade" id="panneau-paiement" role="tabpanel" aria-labelledby="onglet-paiement" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-financement">
+                        <div class="card-header sv-card-header"><span id="titre-financement"><i class="bi bi-bank me-2"></i>Financement</span><span data-champ="statut-financement"></span></div>
+                        <div class="card-body" data-zone="financement"></div>
+                    </section>
+                    <section class="card" aria-labelledby="titre-reprise" data-zone="carte-reprise">
+                        <div class="card-header sv-card-header"><span id="titre-reprise"><i class="bi bi-arrow-left-right me-2"></i>Reprise</span><span data-champ="statut-reprise"></span></div>
+                        <div class="card-body" data-zone="reprise"></div>
+                    </section>
+                </div>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-mode">
+                        <div class="card-header sv-card-header"><span id="titre-mode"><i class="bi bi-signpost-split me-2"></i>Mode d'achat</span></div>
+                        <div class="card-body">
+                            <form id="form-mode" novalidate>
+                                <label class="form-label" for="m-mode">Mode d'achat retenu</label>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" id="m-mode" name="mode">
+                                        @foreach (var (cle, libelle) in ReferentielsTransactions.ModesAchat)
+                                        {
+                                            <option value="@cle">@libelle</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Enregistrer</button>
+                                </div>
+                                <div class="form-text" data-zone="mode-aide"></div>
+                            </form>
+                        </div>
+                    </section>
+                    <section class="card" aria-labelledby="titre-paiements">
+                        <div class="card-header sv-card-header"><span id="titre-paiements"><i class="bi bi-wallet2 me-2"></i>Dépôt et paiements</span><span class="badge-soft sv-fictif">Fictif</span></div>
+                        <div class="card-body" data-zone="paiements"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Véhicule et préparation ---------- *@
+        <div class="tab-pane fade" id="panneau-vehicule" role="tabpanel" aria-labelledby="onglet-vehicule" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-vehicule">
+                        <div class="card-header sv-card-header"><span id="titre-vehicule"><i class="bi bi-car-front me-2"></i>Véhicule</span></div>
+                        <div class="card-body" data-zone="vehicule"></div>
+                    </section>
+                </div>
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-atelier">
+                        <div class="card-header sv-card-header"><span id="titre-atelier"><i class="bi bi-wrench-adjustable me-2"></i>Atelier et préparation</span><span class="pr-sous">Lecture seule</span></div>
+                        <div class="card-body" data-zone="atelier"></div>
+                    </section>
+                    <section class="card" aria-labelledby="titre-statuts">
+                        <div class="card-header sv-card-header"><span id="titre-statuts"><i class="bi bi-clock-history me-2"></i>Historique des statuts du véhicule</span></div>
+                        <div class="card-body" data-zone="statuts-vehicule"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Livraison ---------- *@
+        <div class="tab-pane fade" id="panneau-livraison" role="tabpanel" aria-labelledby="onglet-livraison" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-6 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-checklist-livraison">
+                        <div class="card-header sv-card-header"><span id="titre-checklist-livraison"><i class="bi bi-list-check me-2"></i>Conditions de livraison</span></div>
+                        <div class="card-body" data-zone="pret"></div>
+                    </section>
+                </div>
+                <div class="col-lg-6 d-flex flex-column gap-4">
+                    <section class="card" aria-labelledby="titre-livraison">
+                        <div class="card-header sv-card-header"><span id="titre-livraison"><i class="bi bi-calendar-check me-2"></i>Livraison</span></div>
+                        <div class="card-body" data-zone="livraison"></div>
+                    </section>
+                    <section class="card" aria-labelledby="titre-finalisation">
+                        <div class="card-header sv-card-header"><span id="titre-finalisation"><i class="bi bi-flag me-2"></i>Finalisation</span></div>
+                        <div class="card-body" data-zone="finalisation"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Historique ---------- *@
+        <div class="tab-pane fade" id="panneau-historique" role="tabpanel" aria-labelledby="onglet-historique" tabindex="0">
+            <section class="card">
+                <div class="card-header sv-card-header">
+                    <span><i class="bi bi-clock-history me-2"></i>Historique de la transaction</span>
+                    <label class="visually-hidden" for="h-origine">Filtrer par origine</label>
+                    <select class="form-select form-select-sm pr-select-compact" id="h-origine">
+                        <option value="">Toutes les origines</option>
+                        @foreach (var (cle, libelle) in ReferentielsTransactions.Origines)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                </div>
+                <ol class="pr-timeline" data-zone="historique"></ol>
+                <p class="pr-note mx-3 mb-3"><i class="bi bi-info-circle me-1"></i>Historique commercial de démonstration : il ne remplace pas la piste d'audit de sécurité du système.</p>
+            </section>
+        </div>
+    </div>
+</div>
+
+@* ---------- Annulation ---------- *@
+<div class="modal fade" id="modal-annulation" tabindex="-1" aria-labelledby="modal-annulation-titre" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="form-annulation" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-annulation-titre">Annuler la transaction</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">La transaction restera dans l'historique. L'opportunité n'est pas marquée perdue automatiquement.</p>
+                <div class="mb-3">
+                    <label class="form-label" for="a-motif">Motif <span class="pr-requis">*</span></label>
+                    <select class="form-select" id="a-motif" name="motif" required>
+                        <option value="">Choisir…</option>
+                        @foreach (var (cle, libelle) in ReferentielsTransactions.MotifsAnnulation)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                    <div class="invalid-feedback">Choisissez un motif (« Motif inconnu » est possible).</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="a-auteur">Annulée par <span class="pr-requis">*</span></label>
+                    <select class="form-select" id="a-auteur" name="auteur" required>
+                        @foreach (var (cle, libelle) in ReferentielsTransactions.AuteursAnnulation)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="a-commentaire">Commentaire</label>
+                    <textarea class="form-control" id="a-commentaire" name="commentaire" rows="2" maxlength="500"></textarea>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="a-reprendre" name="reprendre" />
+                    <label class="form-check-label" for="a-reprendre">Le client pourrait reprendre la discussion plus tard</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Retour</button>
+                <button type="submit" class="btn btn-danger">Annuler la transaction</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ---------- Mise en attente ---------- *@
+<div class="modal fade" id="modal-attente" tabindex="-1" aria-labelledby="modal-attente-titre" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="form-attente" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-attente-titre">Mettre la transaction en attente</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label" for="w-motif">Motif <span class="pr-requis">*</span></label>
+                <select class="form-select" id="w-motif" name="motif" required>
+                    <option value="">Choisir…</option>
+                    @foreach (var (cle, libelle) in ReferentielsTransactions.MotifsAttente)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select>
+                <div class="invalid-feedback">Choisissez un motif.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Retour</button>
+                <button type="submit" class="btn btn-primary">Mettre en attente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ---------- Brouillon de message (rien n'est envoyé) ---------- *@
+<div class="modal fade" id="modal-message" tabindex="-1" aria-labelledby="modal-message-titre" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-message-titre">Brouillon</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small d-flex gap-2"><i class="bi bi-info-circle"></i><span>Phineas n'envoie rien : copiez ce texte et transmettez-le vous-même. Vous pourrez ensuite noter la transmission.</span></div>
+                <label class="form-label" for="message-texte">Texte proposé (modifiable)</label>
+                <textarea class="form-control" id="message-texte" rows="9"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-outline-primary" data-copier-message><i class="bi bi-clipboard me-1"></i>Copier</button>
+                <button type="button" class="btn btn-primary" data-noter-message hidden></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-detail.js" asp-append-version="true"></script>
+}

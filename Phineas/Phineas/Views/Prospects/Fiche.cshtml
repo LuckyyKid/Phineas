@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
 }
 
 <a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Prospects et opportunités</a>
@@ -41,6 +42,7 @@
                     <ul class="dropdown-menu dropdown-menu-end sv-menu">
                         <li><a class="dropdown-item" asp-controller="Soumissions" asp-action="Nouvelle" asp-route-prospect="@Model.ProspectId"><i class="bi bi-file-earmark-text"></i>Créer une soumission</a></li>
                         <li><a class="dropdown-item" asp-controller="RendezVous" asp-action="Nouveau" asp-route-prospect="@Model.ProspectId"><i class="bi bi-calendar-plus"></i>Planifier un rendez-vous</a></li>
+                        <li><a class="dropdown-item" asp-controller="Transactions" asp-action="Nouvelle" asp-route-prospect="@Model.ProspectId"><i class="bi bi-cash-coin"></i>Ouvrir une transaction</a></li>
                     </ul>
                 </div>
             </div>
@@ -456,6 +458,10 @@
     @if (Model.RendezVous is not null)
     {
         <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Donnees, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = moi.Nom }" />
+        @if (Model.Transactions is not null)
+        {
+            <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, moi.Nom)" />
+        }
     }
 }
 
@@ -463,6 +469,10 @@
     <script src="~/js/prospects-store.js" asp-append-version="true"></script>
     <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
     <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
     <script src="~/js/prospects-tiroir.js" asp-append-version="true"></script>
     <script src="~/js/prospects-fiche.js" asp-append-version="true"></script>
 }

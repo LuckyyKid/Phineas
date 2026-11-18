@@ -37,7 +37,8 @@ public enum TonIndicateur
     Critique,
 }
 
-public record Indicateur(string Libelle, int Valeur, string Detail, string Icone, TonIndicateur Ton);
+// Valeur nulle : calculée dans le navigateur à partir de l'état local (affichée « — » sans JavaScript).
+public record Indicateur(string Libelle, int? Valeur, string Detail, string Icone, TonIndicateur Ton);
 
 public record ActionPrioritaire(
     int Id,
@@ -81,6 +82,9 @@ public class TableauBordConseillerViewModel
 
     // Données complètes pour l'état local partagé avec l'agenda (rendez-vous confirmés, annulés… dans cet onglet).
     public RendezVousPageViewModel? Agenda { get; set; }
+
+    // Transactions : compteurs, blocages et prochaines livraisons calculés depuis le même état local que le module.
+    public DonneesTransactions? Transactions { get; set; }
 }
 
 public static class FormatVente

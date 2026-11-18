@@ -54,6 +54,28 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
                 45_995, StatutVehicule.Vendu, false, "4x4", "Attelage de remorque"),
             V("v-tucson", "DEMO-1002", "Hyundai", "Tucson Hybride", 2024, "Preferred", 10, "Noir", "VUS", "Hybride",
                 40_495, StatutVehicule.Livre, true, "Traction intégrale", "Sièges chauffants"),
+
+            // Phase 05 : véhicules retenus dans une transaction (statut actuel publié par l'atelier ou la direction).
+            V("v-cx30", "DEMO-0981", "Mazda", "CX-30", 2023, "GS", 21_300, "Gris", "VUS", "Essence",
+                29_995, StatutVehicule.NettoyageEnCours, false, "Traction intégrale", "Sièges chauffants"),
+            V("v-corolla", "DEMO-1055", "Toyota", "Corolla Hybride", 2024, "LE", 12, "Blanc", "Berline", "Hybride",
+                31_490, StatutVehicule.Reserve, true, "Apple CarPlay / Android Auto", "Aides à la conduite"),
+            V("v-escape", "DEMO-0969", "Ford", "Escape", 2022, "SE", 46_800, "Bleu", "VUS", "Essence",
+                27_495, StatutVehicule.Reserve, false, "Traction intégrale", "Caméra de recul"),
+            V("v-kona", "DEMO-0993", "Hyundai", "Kona", 2023, "Preferred", 24_100, "Rouge", "VUS", "Essence",
+                26_995, StatutVehicule.Reserve, false, "Sièges chauffants", "Aides à la conduite"),
+            V("v-tundra", "DEMO-0943", "Toyota", "Tundra", 2021, "SR5", 68_500, "Gris", "Camionnette", "Essence",
+                47_995, StatutVehicule.EnInspection, false, "4x4", "Attelage de remorque"),
+            V("v-rogue", "DEMO-1058", "Nissan", "Rogue", 2022, "SV", 39_200, "Noir", "VUS", "Essence",
+                29_495, StatutVehicule.Recu, false, "Traction intégrale", "Sièges chauffants"),
+            V("v-seltos", "DEMO-0987", "Kia", "Seltos", 2023, "EX", 18_900, "Blanc", "VUS", "Essence",
+                28_495, StatutVehicule.Vendu, false, "Traction intégrale"),
+            V("v-crosstrek", "DEMO-0984", "Subaru", "Crosstrek", 2023, "Touring", 22_400, "Vert", "VUS", "Essence",
+                30_995, StatutVehicule.Vendu, false, "Traction intégrale", "Sièges chauffants"),
+            V("v-tiguan", "DEMO-0961", "Volkswagen", "Tiguan", 2022, "Comfortline", 37_600, "Gris", "VUS", "Essence",
+                31_995, StatutVehicule.Livre, false, "Traction intégrale"),
+            V("v-santafe", "DEMO-0975", "Hyundai", "Santa Fe", 2022, "Preferred", 41_300, "Bleu", "VUS", "Essence",
+                33_995, StatutVehicule.EnInspection, false, "Traction intégrale", "Démarreur à distance"),
         };
 
         // Emplacements fictifs sur le terrain (même champ que Vehicule.Emplacement). Absent = non renseigné.
@@ -67,6 +89,15 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
             ["v-sorento"] = "Terrain A · rangée 4",
             ["v-equinox"] = "Terrain A · rangée 1",
             ["v-cx5"] = "Terrain B · rangée 3",
+            ["v-cx30"] = "Atelier d'esthétique",
+            ["v-corolla"] = "Salle de livraison",
+            ["v-escape"] = "Terrain A · rangée 3",
+            ["v-kona"] = "Terrain A · rangée 3",
+            ["v-tundra"] = "Atelier mécanique · baie 4",
+            ["v-rogue"] = "Zone de réception",
+            ["v-seltos"] = "Salle de livraison",
+            ["v-crosstrek"] = "Salle de livraison",
+            ["v-santafe"] = "Atelier mécanique · baie 2",
         };
         inventaire = inventaire.Select(v => emplacements.TryGetValue(v.Id, out var e) ? v with { Emplacement = e } : v).ToList();
 
@@ -245,6 +276,167 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
                         PrixAnnonce = 47_995, Options = [O("pneus-hiver")], MiseDeFonds = 10_000,
                         ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 5.99m, DateValidite = j.AddDays(7),
                         Commentaires = "Autonomie hivernale : prévoir un essai routier pour en discuter.",
+                    },
+                },
+            ]),
+
+            // Phase 05 : versions acceptées retenues dans une transaction (Transactions ▸ proposition figée).
+            new("s-gabriel-cx30", "SOU-2026-0034", IdsProspectsDemo.GabrielRoy, "o-gabriel-cx30", Moi, n.AddDays(-7),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-6), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-cx30") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 29_995, Options = [O("tapis")], AcompteVerse = 1_000, ModeAchat = "comptant", DateValidite = j.AddDays(-1),
+                    },
+                },
+            ]),
+
+            new("s-emilie-corolla", "SOU-2026-0035", IdsProspectsDemo.EmilieFournier, "o-emilie-corolla", Moi, n.AddDays(-12),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-12), Auteur = moi, Statut = StatutSoumission.Envoyee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-corolla") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 31_490, MiseDeFonds = 4_000, ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 5.49m, DateValidite = j.AddDays(-5),
+                    },
+                },
+                new()
+                {
+                    Numero = 2, Date = n.AddDays(-8), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Remise de fin d'année modèle",
+                    Vehicule = Inv("v-corolla") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 31_490, Remise = 750, MotifRemise = "Fin d'année modèle (exemple)", MiseDeFonds = 4_000, ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 5.49m, DateValidite = j.AddDays(-1),
+                    },
+                },
+                new()
+                {
+                    Numero = 3, Date = n.AddHours(-20), Auteur = moi, Statut = StatutSoumission.Brouillon,
+                    Note = "Ajout des pneus d'hiver demandé par la cliente",
+                    Vehicule = Inv("v-corolla") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 31_490, Remise = 750, MotifRemise = "Fin d'année modèle (exemple)", Options = [O("pneus-hiver")], MiseDeFonds = 4_000, ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 5.49m, DateValidite = j.AddDays(6),
+                    },
+                },
+            ]),
+
+            new("s-marc-escape", "SOU-2026-0036", IdsProspectsDemo.MarcDupuis, "o-marc-escape", Moi, n.AddDays(-9),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-9), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-escape") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 27_495, MiseDeFonds = 1_500, ModeAchat = "financement", DureeMois = 72, TauxAnnuel = 8.99m, DateValidite = j.AddDays(-2),
+                    },
+                },
+            ]),
+
+            new("s-lea-kona", "SOU-2026-0037", IdsProspectsDemo.LeaMartin, "o-lea-kona", Moi, n.AddDays(-7),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-7), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-kona") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 26_995, Options = [O("protection")], MiseDeFonds = 3_000, ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 6.99m, DateValidite = j.AddDays(-1),
+                    },
+                },
+            ]),
+
+            new("s-patrick-tundra", "SOU-2026-0030", IdsProspectsDemo.PatrickLeblanc, "o-patrick-tundra", Moi, n.AddDays(-8),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-6), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-tundra") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 47_995, Options = [O("garantie")], MiseDeFonds = 15_000, ModeAchat = "financement", DureeMois = 72, TauxAnnuel = 7.49m, DateValidite = j.AddDays(-1), Commentaires = "Financement partiel : une part importante payée comptant.",
+                    },
+                },
+            ]),
+
+            new("s-melanie-rogue", "SOU-2026-0042", IdsProspectsDemo.MelanieCaron, "o-melanie-rogue", Moi, n.AddDays(-6),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-5), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-rogue") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 29_495, Remise = 1_000, MotifRemise = "Ajustement négocié", Reprise = new("Honda Civic 2014", 4_500, null), MiseDeFonds = 2_000, ModeAchat = "financement", DureeMois = 72, TauxAnnuel = 7.99m, DateValidite = j.AddDays(2),
+                    },
+                },
+            ]),
+
+            new("s-francois-seltos", "SOU-2026-0027", IdsProspectsDemo.FrancoisBelanger, "o-francois-seltos", Moi, n.AddDays(-16),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-15), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-seltos") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 28_495, Options = [O("tapis")], AcompteVerse = 2_000, ModeAchat = "comptant", DateValidite = j.AddDays(-8),
+                    },
+                },
+            ]),
+
+            new("s-amelie-crosstrek", "SOU-2026-0026", IdsProspectsDemo.AmelieGirard, "o-amelie-crosstrek", Moi, n.AddDays(-19),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-18), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-crosstrek") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 30_995, Options = [O("pneus-hiver")], MiseDeFonds = 5_000, ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 6.49m, DateValidite = j.AddDays(-11),
+                    },
+                },
+            ]),
+
+            new("s-nicolas-tiguan", "SOU-2026-0024", IdsProspectsDemo.NicolasBergeron, "o-nicolas-tiguan", Moi, n.AddDays(-21),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-20), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-tiguan") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 31_995, AcompteVerse = 1_500, ModeAchat = "comptant", DateValidite = j.AddDays(-13),
+                    },
+                },
+            ]),
+
+            new("s-rachel-santafe", "SOU-2026-0032", IdsProspectsDemo.RachelDion, "o-rachel-santafe", Moi, n.AddDays(-11),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-10), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-santafe") with { StatutActuel = StatutVehicule.PretPourVente },
+                    Offre = new()
+                    {
+                        PrixAnnonce = 33_995, Options = [O("protection")], MiseDeFonds = 6_000, ModeAchat = "financement", DureeMois = 60, TauxAnnuel = 6.99m, DateValidite = j.AddDays(-3),
                     },
                 },
             ]),

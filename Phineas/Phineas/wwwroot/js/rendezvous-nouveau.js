@@ -187,13 +187,13 @@
       return !qr || normaliser([v.marque, v.modele, v.version, v.annee, v.numeroStock].join(" ")).indexOf(qr) >= 0;
     }).sort(function (a, b) {
       var pa = a.id === deSoumission ? 0 : 1, pb = b.id === deSoumission ? 0 : 1;
-      var sa = R.etatVehicule(a).selectionnable ? 0 : 1, sb = R.etatVehicule(b).selectionnable ? 0 : 1;
+      var sa = R.etatVehicule(a, etat.type, vehiculeSoumission()).selectionnable ? 0 : 1, sb = R.etatVehicule(b, etat.type, vehiculeSoumission()).selectionnable ? 0 : 1;
       return pa - pb || sa - sb || a.prixDemande - b.prixDemande;
     });
     var aucun = exigeVehicule() ? "" : '<button type="button" role="radio" aria-checked="' + !etat.vehiculeId + '" class="so-vehicule rv-sans-vehicule' + (!etat.vehiculeId ? " is-active" : "") + '" data-vehicule="">' +
       '<span class="so-photo"><i class="bi bi-slash-circle"></i></span><span class="so-vehicule-corps"><strong>Aucun véhicule</strong><span class="pr-sous d-block">Le rendez-vous ne porte pas sur un véhicule précis.</span></span></button>';
     zone("vehicules").innerHTML = aucun + liste.map(function (v) {
-      var ev = R.etatVehicule(v);
+      var ev = R.etatVehicule(v, etat.type, vehiculeSoumission());
       var conflitsV = c ? R.conflits({ exclure: ancien ? ancien.id : null, debut: c.debut, dureeMinutes: c.dureeMinutes, conseillerId: "__aucun", vehiculeId: v.id }).vehicule : [];
       var bloque = !ev.selectionnable || conflitsV.length > 0;
       var choisi = v.id === etat.vehiculeId;
@@ -218,7 +218,7 @@
     var cons = P.conseiller(form.elements.conseiller.value);
     var alertes = [];
     if (v) {
-      var ev = R.etatVehicule(v);
+      var ev = R.etatVehicule(v, etat.type, vehiculeSoumission());
       if (ev.niveau !== "ok") alertes.push({ niveau: ev.niveau === "bloque" ? "critique" : "attention", texte: ev.message });
     } else if (exigeVehicule()) alertes.push({ niveau: "critique", texte: "Choisissez le véhicule de l'essai." });
     var verif = verification();
@@ -261,7 +261,7 @@
       if (exigeVehicule() && !etat.vehiculeId) return "Un essai routier exige un véhicule.";
       if (etat.vehiculeId) {
         var ve = S.vehicule(etat.vehiculeId);
-        if (!R.etatVehicule(ve).selectionnable) return "Ce véhicule n'est pas disponible.";
+        if (!R.etatVehicule(ve, etat.type, vehiculeSoumission()).selectionnable) return "Ce véhicule n'est pas disponible.";
         var vv = verification();
         if (vv && vv.vehicule.length) return "Ce véhicule est déjà prévu sur ce créneau.";
       }
@@ -326,7 +326,7 @@
     } else if (b.dataset.soumission !== undefined) {
       etat.soumissionId = b.dataset.soumission || null;
       var vs = vehiculeSoumission();
-      if (vs && R.etatVehicule(S.vehicule(vs)).selectionnable) etat.vehiculeId = vs;
+      if (vs && R.etatVehicule(S.vehicule(vs), etat.type, vehiculeSoumission()).selectionnable) etat.vehiculeId = vs;
       rendre();
     } else if (b.dataset.type) {
       etat.type = b.dataset.type;
@@ -397,6 +397,8 @@
   form.elements.date.min = P.aujourdhuiChamp();
   definirMode("concession");
 
+  var typeDemande = racine.dataset.type && R.ref.types.some(function (x) { return x.cle === racine.dataset.type; }) ? racine.dataset.type : null;
+  if (typeDemande && !racine.dataset.replanifier) etat.type = typeDemande;
   var dsS = racine.dataset.soumission && S.soumission(racine.dataset.soumission);
   var dsO = racine.dataset.opportunite && P.opportunite(racine.dataset.opportunite);
   if (ancien) {
@@ -405,7 +407,7 @@
     etat.oppId = ancien.opportuniteId;
     etat.soumissionId = ancien.soumissionId;
     etat.type = ancien.type;
-    etat.vehiculeId = ancien.vehiculeId && R.etatVehicule(S.vehicule(ancien.vehiculeId)).selectionnable ? ancien.vehiculeId : null;
+    etat.vehiculeId = ancien.vehiculeId && R.etatVehicule(S.vehicule(ancien.vehiculeId), ancien.type, R.vehiculeAttendu(ancien.soumissionId)).selectionnable ? ancien.vehiculeId : null;
     form.elements.duree.value = String(ancien.dureeMinutes);
     form.elements.conseiller.value = ancien.conseillerId;
     definirMode(ancien.mode);
@@ -424,7 +426,7 @@
     if (oS && P.estActive(oS)) etat.oppId = oS.id;
     etat.soumissionId = dsS.id;
     var vS = S.versionCourante(dsS).vehicule.id;
-    if (R.etatVehicule(S.vehicule(vS)).selectionnable) etat.vehiculeId = vS;
+    if (R.etatVehicule(S.vehicule(vS), etat.type, vehiculeSoumission()).selectionnable) etat.vehiculeId = vS;
   } else if (dsO) {
     etat.prospectId = dsO.prospectId;
     if (P.estActive(dsO)) etat.oppId = dsO.id;

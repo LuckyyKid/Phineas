@@ -109,6 +109,10 @@ public class SoumissionsPageViewModel
     public string? SoumissionId { get; init; }
     public string? OpportuniteId { get; init; }
     public string? ProspectId { get; init; }
+
+    // Fournis sur le détail pour relier la soumission à sa transaction.
+    public DonneesRendezVous? RendezVous { get; init; }
+    public DonneesTransactions? Transactions { get; init; }
 }
 
 // Contenu injecté en JSON dans les pages qui utilisent le module Soumissions (liste, parcours, détail, fiche prospect).

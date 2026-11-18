@@ -18,6 +18,18 @@ public static class IdsProspectsDemo
     public const string MathieuGauthier = "mathieu-gauthier";
     public const string SarahNguyen = "sarah-nguyen";
     public const string AlexandreDube = "alexandre-dube";
+
+    // Phase 05 : clients dont le dossier d'achat est en cours de finalisation (transactions).
+    public const string GabrielRoy = "gabriel-roy";
+    public const string EmilieFournier = "emilie-fournier";
+    public const string MarcDupuis = "marc-dupuis";
+    public const string LeaMartin = "lea-martin";
+    public const string PatrickLeblanc = "patrick-leblanc";
+    public const string MelanieCaron = "melanie-caron";
+    public const string FrancoisBelanger = "francois-belanger";
+    public const string AmelieGirard = "amelie-girard";
+    public const string NicolasBergeron = "nicolas-bergeron";
+    public const string RachelDion = "rachel-dion";
 }
 
 // DONNÉES FICTIVES — phase frontend uniquement.
@@ -70,6 +82,27 @@ public class ServiceProspectsDemo : IServiceProspects
                 "courriel", "soir", "google", null, MarieEve, n.AddDays(-30)),
             new(IdsProspectsDemo.AlexandreDube, "Alexandre", "Dubé", null, "514-555-0137",
                 "telephone", null, "appel", null, Antoine, n.AddDays(-1)),
+
+            new(IdsProspectsDemo.GabrielRoy, "Gabriel", "Roy", "gabriel.roy@exemple.test", "450-555-0102",
+                "texto", "midi", "site-web", null, Moi, n.AddDays(-18)),
+            new(IdsProspectsDemo.EmilieFournier, "Émilie", "Fournier", "emilie.fournier@exemple.test", "514-555-0174",
+                "courriel", "soir", "google", null, Moi, n.AddDays(-21)),
+            new(IdsProspectsDemo.MarcDupuis, "Marc", "Dupuis", "marc.dupuis@exemple.test", "438-555-0181",
+                "telephone", "apres-midi", "visite", null, Moi, n.AddDays(-16)),
+            new(IdsProspectsDemo.LeaMartin, "Léa", "Martin", "lea.martin@exemple.test", "514-555-0156",
+                "courriel", "indifferent", "meta", null, Moi, n.AddDays(-14)),
+            new(IdsProspectsDemo.PatrickLeblanc, "Patrick", "Leblanc", null, "819-555-0149",
+                "telephone", "matin", "recommandation", "Client de l'atelier depuis 2018", Moi, n.AddDays(-12)),
+            new(IdsProspectsDemo.MelanieCaron, "Mélanie", "Caron", "melanie.caron@exemple.test", "450-555-0168",
+                "telephone", "soir", "kijiji", "Annonce Nissan Rogue 2022", Moi, n.AddDays(-11)),
+            new(IdsProspectsDemo.FrancoisBelanger, "François", "Bélanger", "francois.belanger@exemple.test", "514-555-0193",
+                "courriel", "matin", "site-web", null, Moi, n.AddDays(-25)),
+            new(IdsProspectsDemo.AmelieGirard, "Amélie", "Girard", "amelie.girard@exemple.test", "438-555-0127",
+                "texto", "apres-midi", "recommandation", "Recommandée par François Bélanger", Moi, n.AddDays(-28)),
+            new(IdsProspectsDemo.NicolasBergeron, "Nicolas", "Bergeron", "nicolas.bergeron@exemple.test", "450-555-0115",
+                "telephone", "soir", "visite", null, Moi, n.AddDays(-35)),
+            new(IdsProspectsDemo.RachelDion, "Rachel", "Dion", "rachel.dion@exemple.test", "514-555-0162",
+                "courriel", "midi", "google", null, Moi, n.AddDays(-19)),
         };
 
         var opportunites = new List<Opportunite>
@@ -181,6 +214,48 @@ public class ServiceProspectsDemo : IServiceProspects
                 n.AddDays(-1), n.AddDays(-1), "Rappeler pour préciser son besoin", j.AddDays(2),
                 [],
                 new()),
+
+            // Phase 05 : opportunités dont la transaction est ouverte (voir ServiceTransactionsDemo).
+            new("o-gabriel-cx30", IdsProspectsDemo.GabrielRoy, "VUS compact", EtapeVente.Finalisation,
+                n.AddDays(-18), n.AddDays(-2), "Confirmer la date de livraison quand le véhicule sera prêt", j.AddDays(1),
+                ["Mazda CX-30 GS 2023"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Mazda"], Modeles = ["CX-30"], Places = 5, Utilisation = "quotidien", BudgetTotal = 32_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat", ElementsDecision = ["prix", "fiabilite"] }),
+            new("o-emilie-corolla", IdsProspectsDemo.EmilieFournier, "Berline hybride neuve", EtapeVente.Finalisation,
+                n.AddDays(-21), n.AddHours(-20), "Répondre à la demande d'ajout de pneus d'hiver", j,
+                ["Toyota Corolla Hybride LE 2024"],
+                new() { Categorie = "berline", Etat = "neuf", Marques = ["Toyota"], Modeles = ["Corolla"], Places = 5, Caracteristiques = ["hybride"], Utilisation = "quotidien", BudgetTotal = 33_000, BudgetMensuel = 520, ModeAchat = "financement", MiseDeFonds = 4_000, Reprise = "non", Horizon = "30j", ElementsDecision = ["consommation", "mensualite"] }),
+            new("o-marc-escape", IdsProspectsDemo.MarcDupuis, "VUS compact d'occasion", EtapeVente.Finalisation,
+                n.AddDays(-16), n.AddDays(-1), "Revoir les options avec le client après le refus du financement", j,
+                ["Ford Escape SE 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Ford"], Modeles = ["Escape"], Places = 5, Utilisation = "famille", BudgetMensuel = 450, ModeAchat = "financement", MiseDeFonds = 1_500, Reprise = "non", Horizon = "30j", ElementsDecision = ["mensualite"] }),
+            new("o-lea-kona", IdsProspectsDemo.LeaMartin, "VUS urbain", EtapeVente.Finalisation,
+                n.AddDays(-14), n.AddHours(-26), "Rappeler les conditions de financement à la cliente", j.AddDays(1),
+                ["Hyundai Kona Preferred 2023"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Hyundai"], Modeles = ["Kona"], Places = 5, Utilisation = "urbain", BudgetMensuel = 480, ModeAchat = "financement", MiseDeFonds = 3_000, Reprise = "non", Horizon = "immediat", ElementsDecision = ["mensualite", "securite"] }),
+            new("o-patrick-tundra", IdsProspectsDemo.PatrickLeblanc, "Camionnette pleine grandeur", EtapeVente.Finalisation,
+                n.AddDays(-12), n.AddDays(-2), "Tenir le client informé de la réparation", j,
+                ["Toyota Tundra SR5 2021"],
+                new() { Categorie = "camionnette", Etat = "occasion", Marques = ["Toyota"], Modeles = ["Tundra"], Places = 5, Caracteristiques = ["remorquage", "ti"], Utilisation = "travail", BudgetTotal = 50_000, ModeAchat = "financement", MiseDeFonds = 15_000, Reprise = "non", Horizon = "immediat", ElementsDecision = ["fiabilite", "garantie"] }),
+            new("o-melanie-rogue", IdsProspectsDemo.MelanieCaron, "VUS familial", EtapeVente.Finalisation,
+                n.AddDays(-11), n.AddDays(-2), "Compléter les informations de la reprise", j,
+                ["Nissan Rogue SV 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Nissan"], Modeles = ["Rogue"], Places = 5, Caracteristiques = ["ti", "sieges-chauffants"], Utilisation = "famille", BudgetMensuel = 500, ModeAchat = "financement", MiseDeFonds = 2_000, Reprise = "oui", RepriseDetail = "Honda Civic 2014", Horizon = "30j", ElementsDecision = ["mensualite", "reprise"] }),
+            new("o-francois-seltos", IdsProspectsDemo.FrancoisBelanger, "VUS sous-compact", EtapeVente.Finalisation,
+                n.AddDays(-25), n.AddDays(-1), "Planifier la livraison", j,
+                ["Kia Seltos EX 2023"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Kia"], Modeles = ["Seltos"], Places = 5, Caracteristiques = ["ti"], Utilisation = "quotidien", BudgetTotal = 30_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat", ElementsDecision = ["prix"] }),
+            new("o-amelie-crosstrek", IdsProspectsDemo.AmelieGirard, "VUS compact à traction intégrale", EtapeVente.Finalisation,
+                n.AddDays(-28), n.AddDays(-1), "Livraison prévue demain", j.AddDays(1),
+                ["Subaru Crosstrek 2023"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Subaru"], Modeles = ["Crosstrek"], Places = 5, Caracteristiques = ["ti"], Utilisation = "loisirs", BudgetMensuel = 520, ModeAchat = "financement", MiseDeFonds = 5_000, Reprise = "non", Horizon = "immediat", ElementsDecision = ["securite", "fiabilite"] }),
+            new("o-nicolas-tiguan", IdsProspectsDemo.NicolasBergeron, "VUS compact", EtapeVente.Finalisation,
+                n.AddDays(-35), n.AddDays(-1), "Clôturer le dossier et faire le suivi après livraison", j.AddDays(2),
+                ["Volkswagen Tiguan Comfortline 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Volkswagen"], Modeles = ["Tiguan"], Places = 5, Utilisation = "famille", BudgetTotal = 34_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat", ElementsDecision = ["confort"] }),
+            new("o-rachel-santafe", IdsProspectsDemo.RachelDion, "VUS intermédiaire", EtapeVente.Finalisation,
+                n.AddDays(-19), n.AddHours(-3), "Informer la cliente du nouveau diagnostic", j,
+                ["Hyundai Santa Fe Preferred 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Hyundai"], Modeles = ["Santa Fe"], Places = 5, Caracteristiques = ["ti"], Utilisation = "famille", BudgetMensuel = 600, ModeAchat = "financement", MiseDeFonds = 6_000, Reprise = "non", Horizon = "immediat", ElementsDecision = ["securite", "confort"] }),
         };
 
         var i = 0;
@@ -272,6 +347,49 @@ public class ServiceProspectsDemo : IServiceProspects
                 "Appel entrant, besoin encore flou. Consultation fixée à 14 h."),
             new(Id(), IdsProspectsDemo.AlexandreDube, "o-alexandre", j.AddDays(-1).AddHours(14).AddMinutes(25), "rendezvous", "Antoine Lefebvre",
                 "Client absent à la consultation de 14 h.", "Rappeler pour préciser son besoin"),
+
+            new(Id(), IdsProspectsDemo.GabrielRoy, "o-gabriel-cx30", n.AddDays(-18), "creation", Systeme,
+                "Prospect créé à partir du formulaire du site Web."),
+            new(Id(), IdsProspectsDemo.GabrielRoy, "o-gabriel-cx30", n.AddDays(-4), "transaction", moi,
+                "TRX-2026-0018 · Transaction ouverte : Mazda CX-30 GS 2023 (achat comptant)."),
+            new(Id(), IdsProspectsDemo.EmilieFournier, "o-emilie-corolla", n.AddDays(-21), "creation", Systeme,
+                "Prospect saisi à partir d'une demande reçue par la publicité Google."),
+            new(Id(), IdsProspectsDemo.EmilieFournier, "o-emilie-corolla", n.AddDays(-2), "transaction", moi,
+                "TRX-2026-0021 · Financement approuvé par le service F&A."),
+            new(Id(), IdsProspectsDemo.EmilieFournier, "o-emilie-corolla", n.AddHours(-20), "courriel", moi,
+                "La cliente souhaite ajouter des pneus d'hiver : version 3 de la soumission préparée en brouillon.", "Répondre à la demande"),
+            new(Id(), IdsProspectsDemo.MarcDupuis, "o-marc-escape", n.AddDays(-16), "visite", moi,
+                "Visite en concession, intéressé par l'Escape SE 2022."),
+            new(Id(), IdsProspectsDemo.MarcDupuis, "o-marc-escape", n.AddDays(-1), "transaction", moi,
+                "TRX-2026-0022 · Financement refusé par le service F&A."),
+            new(Id(), IdsProspectsDemo.LeaMartin, "o-lea-kona", n.AddDays(-14), "creation", moi,
+                "Prospect saisi à partir d'une réponse à la publicité Meta."),
+            new(Id(), IdsProspectsDemo.LeaMartin, "o-lea-kona", n.AddHours(-26), "transaction", moi,
+                "TRX-2026-0023 · Financement approuvé sous conditions par le service F&A."),
+            new(Id(), IdsProspectsDemo.PatrickLeblanc, "o-patrick-tundra", n.AddDays(-12), "appel", moi,
+                "Appel entrant : recommandé par l'atelier, cherche un Tundra pour son entreprise."),
+            new(Id(), IdsProspectsDemo.PatrickLeblanc, "o-patrick-tundra", n.AddDays(-2), "transaction", Systeme,
+                "TRX-2026-0024 · L'atelier signale une réparation en attente de pièce."),
+            new(Id(), IdsProspectsDemo.MelanieCaron, "o-melanie-rogue", n.AddDays(-11), "appel", moi,
+                "A vu l'annonce Kijiji du Rogue. Souhaite faire reprendre sa Civic 2014."),
+            new(Id(), IdsProspectsDemo.MelanieCaron, "o-melanie-rogue", n.AddDays(-2), "transaction", Systeme,
+                "TRX-2026-0025 · Dossier de financement jugé incomplet par le service F&A."),
+            new(Id(), IdsProspectsDemo.FrancoisBelanger, "o-francois-seltos", n.AddDays(-25), "creation", Systeme,
+                "Prospect créé à partir du formulaire du site Web."),
+            new(Id(), IdsProspectsDemo.FrancoisBelanger, "o-francois-seltos", n.AddDays(-1), "transaction", moi,
+                "TRX-2026-0019 · Paiement et éléments administratifs confirmés.", "Planifier la livraison"),
+            new(Id(), IdsProspectsDemo.AmelieGirard, "o-amelie-crosstrek", n.AddDays(-28), "creation", moi,
+                "Prospect créé : recommandée par François Bélanger."),
+            new(Id(), IdsProspectsDemo.AmelieGirard, "o-amelie-crosstrek", n.AddDays(-1), "rendezvous", moi,
+                "Livraison du véhicule planifiée demain à 16 h."),
+            new(Id(), IdsProspectsDemo.NicolasBergeron, "o-nicolas-tiguan", n.AddDays(-35), "visite", moi,
+                "Visite spontanée, intéressé par le Tiguan."),
+            new(Id(), IdsProspectsDemo.NicolasBergeron, "o-nicolas-tiguan", n.AddDays(-1), "transaction", moi,
+                "TRX-2026-0016 · Véhicule livré : Volkswagen Tiguan Comfortline 2022."),
+            new(Id(), IdsProspectsDemo.RachelDion, "o-rachel-santafe", n.AddDays(-19), "creation", moi,
+                "Prospect saisi à partir d'une demande reçue par la publicité Google."),
+            new(Id(), IdsProspectsDemo.RachelDion, "o-rachel-santafe", n.AddHours(-3), "transaction", Systeme,
+                "TRX-2026-0020 · Le véhicule est retourné en inspection (témoin de moteur allumé lors de la préparation finale)."),
         };
 
         return Task.FromResult(new DonneesProspects(Moi, conseillers, contacts, opportunites, interactions));

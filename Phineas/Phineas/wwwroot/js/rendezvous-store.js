@@ -143,8 +143,18 @@
   }
 
   // Disponibilité d'un véhicule pour un rendez-vous (lecture seule de l'inventaire de démonstration).
-  function etatVehicule(v) {
+  // Un véhicule vendu n'est proposé que pour sa livraison, et seulement s'il s'agit du véhicule de la soumission du client.
+  function vehiculeAttendu(soumissionId) {
+    var s = soumissionId && S ? S.soumission(soumissionId) : null;
+    return s ? S.versionCourante(s).vehicule.id : null;
+  }
+  function etatVehicule(v, typeRdv, attendu) {
     if (!v) return { selectionnable: false, niveau: "bloque", message: "Véhicule introuvable dans l'inventaire de démonstration." };
+    if (typeRdv === "Livraison" && v.statutActuel === "Vendu") {
+      return v.id === attendu
+        ? { selectionnable: true, niveau: "ok", message: "Véhicule vendu : livraison au client acheteur." }
+        : { selectionnable: false, niveau: "bloque", message: "Véhicule vendu : seule la livraison du véhicule de la soumission du client est possible." };
+    }
     if (VEHICULE_INDISPONIBLE.indexOf(v.statutActuel) >= 0) return { selectionnable: false, niveau: "bloque", message: "Véhicule « " + S.libelleStatutVehicule(v.statutActuel).toLowerCase() + " » : indisponible pour un rendez-vous." };
     if (VEHICULE_A_PREPARER.indexOf(v.statutActuel) >= 0) return { selectionnable: true, niveau: "attention", message: "Préparation à vérifier : « " + S.libelleStatutVehicule(v.statutActuel).toLowerCase() + " »." };
     if (v.statutActuel === "Reserve") return { selectionnable: true, niveau: "attention", message: "Véhicule réservé : vérifier qu'il peut être présenté." };
@@ -175,7 +185,7 @@
     if (estActif(r)) {
       if (estEssai(r) && !r.vehiculeId) a.push({ code: "essai-sans-vehicule", niveau: "critique", texte: "Essai routier sans véhicule." });
       if (r.vehiculeId) {
-        var ev = etatVehicule(v);
+        var ev = etatVehicule(v, r.type, vehiculeAttendu(r.soumissionId));
         if (ev.niveau === "bloque") a.push({ code: "vehicule-indisponible", niveau: "critique", texte: ev.message });
         else if (ev.niveau === "attention") a.push({ code: "vehicule-preparation", niveau: "attention", texte: ev.message });
       }
@@ -257,7 +267,7 @@
   function invalide(x) {
     if (!x.prospectId || !x.opportuniteId || !x.type || !x.debut || !(x.dureeMinutes > 0)) return "Rendez-vous incomplet.";
     if (x.type === "EssaiRoutier" && !x.vehiculeId) return "Un essai routier exige un véhicule.";
-    if (x.vehiculeId && !etatVehicule(vehicule(x.vehiculeId)).selectionnable) return "Véhicule indisponible.";
+    if (x.vehiculeId && !etatVehicule(vehicule(x.vehiculeId), x.type, vehiculeAttendu(x.soumissionId)).selectionnable) return "Véhicule indisponible.";
     if (new Date(x.debut) < maintenant()) return "Le créneau est dans le passé.";
     var c = conflits({ exclure: x.replanifieDepuis, debut: x.debut, dureeMinutes: x.dureeMinutes, conseillerId: x.conseillerId, vehiculeId: x.vehiculeId });
     if (c.vehicule.length) return "Véhicule déjà prévu sur ce créneau.";
@@ -467,6 +477,7 @@
     vehicule: vehicule,
     nomVehicule: nomVehicule,
     etatVehicule: etatVehicule,
+    vehiculeAttendu: vehiculeAttendu,
     conflits: conflits,
     chevauche: chevauche,
     actionsRequises: actionsRequises,
