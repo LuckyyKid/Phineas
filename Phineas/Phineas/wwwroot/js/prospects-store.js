@@ -355,6 +355,17 @@
     changer();
   }
 
+  // Ajoute un véhicule aux options envisagées d'une opportunité (ex. depuis les recommandations de véhicules).
+  function ajouterVehiculeEnvisage(oppId, libelle) {
+    var o = opportunite(oppId);
+    if (!o || !libelle || (o.vehiculesEnvisages || []).indexOf(libelle) >= 0) return false;
+    o.vehiculesEnvisages = (o.vehiculesEnvisages || []).concat([libelle]);
+    o.derniereActivite = iso(maintenant());
+    journaliser(o.prospectId, o.id, "note", "Véhicule ajouté aux options envisagées : " + libelle + ".");
+    changer();
+    return true;
+  }
+
   function planifierSuivi(oppId, action, date) {
     var o = opportunite(oppId);
     if (!o) return;
@@ -458,6 +469,7 @@
     ajouterOpportunite: ajouterOpportunite,
     enregistrerQualification: enregistrerQualification,
     planifierSuivi: planifierSuivi,
+    ajouterVehiculeEnvisage: ajouterVehiculeEnvisage,
     ajouterNote: ajouterNote,
     retirerDerniereInteraction: retirerDerniereInteraction,
     // outils

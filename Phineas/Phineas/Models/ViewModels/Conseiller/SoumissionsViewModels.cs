@@ -110,9 +110,15 @@ public class SoumissionsPageViewModel
     public string? OpportuniteId { get; init; }
     public string? ProspectId { get; init; }
 
+    // Véhicule présélectionné dans le parcours de création (ex. depuis les recommandations de véhicules).
+    public string? VehiculeId { get; init; }
+
     // Fournis sur le détail pour relier la soumission à sa transaction.
     public DonneesRendezVous? RendezVous { get; init; }
     public DonneesTransactions? Transactions { get; init; }
+
+    // Phase 06 : données du moteur d'intelligence commerciale (actions liées au dossier affiché).
+    public DonneesIntelligence? Intelligence { get; init; }
 }
 
 // Contenu injecté en JSON dans les pages qui utilisent le module Soumissions (liste, parcours, détail, fiche prospect).

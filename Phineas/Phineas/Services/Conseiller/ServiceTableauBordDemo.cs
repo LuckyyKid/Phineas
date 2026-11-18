@@ -30,33 +30,9 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
         var soumissions = await _soumissions.ObtenirAsync(conseiller);
         var agenda = await _rendezVous.ObtenirAsync(conseiller);
 
-        var actions = new List<ActionPrioritaire>
-        {
-            new(1, IdsProspectsDemo.ChloeBouchard, "Chloé Bouchard", "Toyota RAV4 Hybride XLE 2024",
-                "Soumission envoyée, sans réponse", maintenant.AddDays(-3),
-                "La soumission expire demain", "Relancer par téléphone", "bi-telephone",
-                EtapeVente.Soumission, Urgence.Critique, true),
-            new(2, IdsProspectsDemo.VincentMorin, "Vincent Morin", "Honda Civic Touring 2023",
-                "Financement : preuve de revenu manquante", maintenant.AddDays(-2),
-                "Dossier bloqué depuis 2 jours, rencontre de financement prévue demain", "Demander la pièce manquante", "bi-file-earmark-arrow-up",
-                EtapeVente.Finalisation, Urgence.Critique, true),
-            new(3, IdsProspectsDemo.InesBenali, "Inès Benali", "Mazda CX-5 GT 2022",
-                "Nouvelle demande reçue par le site Web", maintenant.AddMinutes(-40),
-                "Objectif de première réponse : moins d'une heure", "Appeler la prospecte", "bi-telephone",
-                EtapeVente.Nouveau, Urgence.Haute, true),
-            new(4, IdsProspectsDemo.KarimBenjelloun, "Karim Benjelloun", "Subaru Outback Touring 2022",
-                "Contre-offre reçue", maintenant.AddHours(-5),
-                "Écart de 1 200 $ avec le prix affiché", "Préparer une réponse", "bi-chat-left-text",
-                EtapeVente.Negociation, Urgence.Haute, true),
-            new(5, IdsProspectsDemo.JulienCote, "Julien Côté", "Ford F-150 XLT 2021",
-                "Essai routier effectué", maintenant.AddDays(-1),
-                "Deuxième essai (Ram 1500) prévu demain, comparatif attendu", "Préparer le comparatif", "bi-file-earmark-text",
-                EtapeVente.EssaiRoutier, Urgence.Haute, false),
-            new(6, IdsProspectsDemo.CamilleLavoie, "Camille Lavoie", "Hyundai Ioniq 5 Preferred 2024",
-                "Véhicule recherché maintenant disponible", maintenant.AddHours(-1),
-                "Essai routier prévu aujourd'hui (VÉ, TI, moins de 50 000 $)", "Préparer l'essai routier", "bi-speedometer",
-                EtapeVente.Qualifie, Urgence.Normale, false),
-        };
+        // Les actions prioritaires sont calculées dans le navigateur par le moteur d'intelligence commerciale
+        // (intelligence-tableau.js), la même source que le Centre d'actions.
+        var actions = new List<ActionPrioritaire>();
 
         // Mes rendez-vous actifs qui ne sont pas encore terminés : même source que l'agenda.
         var rendezVous = agenda.RendezVous
@@ -111,7 +87,7 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
             [
                 new("Opportunités en cours", pipeline.Sum(e => e.Nombre),
                     FormatVente.Argent(pipeline.Sum(e => e.Valeur)) + " en jeu", "bi-briefcase", TonIndicateur.Neutre),
-                new("Prospects à recontacter", 3, "dont 1 nouveau aujourd'hui", "bi-chat-dots", TonIndicateur.Attention),
+                new("Prospects à recontacter", null, "relances proposées par le moteur", "bi-chat-dots", TonIndicateur.Attention),
                 new("Rendez-vous à venir", rdvAVenir.Count, $"{rdvAujourdhui} aujourd'hui", "bi-calendar-event", TonIndicateur.Neutre),
                 new("Transactions bloquées", null, "calculé à partir de vos transactions", "bi-sign-stop", TonIndicateur.Critique),
             ],

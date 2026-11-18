@@ -266,6 +266,12 @@
   if (oppDemandee) {
     etat.prospectId = oppDemandee.prospectId;
     if (P.estActive(oppDemandee)) etat.oppId = oppDemandee.id;
+    // Véhicule présélectionné (recommandations de véhicules), seulement s'il est disponible.
+    var vDemande = racine.dataset.vehicule && S.vehicule(racine.dataset.vehicule);
+    if (etat.oppId && vDemande && S.disponible(vDemande)) {
+      etat.vehiculeId = vDemande.id;
+      etat.etapeMax = 2;
+    }
   } else if (racine.dataset.prospect && P.contact(racine.dataset.prospect)) {
     etat.prospectId = racine.dataset.prospect;
     var actives = P.opportunitesDe(etat.prospectId).filter(P.estActive);

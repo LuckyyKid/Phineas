@@ -430,6 +430,9 @@
   } else if (dsO) {
     etat.prospectId = dsO.prospectId;
     if (P.estActive(dsO)) etat.oppId = dsO.id;
+    // Véhicule présélectionné (ex. essai depuis les recommandations de véhicules), s'il est sélectionnable.
+    var vD = racine.dataset.vehicule && S.vehicule(racine.dataset.vehicule);
+    if (vD && R.etatVehicule(vD, etat.type).selectionnable) etat.vehiculeId = vD.id;
   } else if (racine.dataset.prospect && P.contact(racine.dataset.prospect)) {
     etat.prospectId = racine.dataset.prospect;
     var act = P.opportunitesDe(etat.prospectId).filter(P.estActive);

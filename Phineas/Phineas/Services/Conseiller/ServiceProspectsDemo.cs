@@ -30,6 +30,13 @@ public static class IdsProspectsDemo
     public const string AmelieGirard = "amelie-girard";
     public const string NicolasBergeron = "nicolas-bergeron";
     public const string RachelDion = "rachel-dion";
+
+    // Phase 06 : scénarios du moteur d'intelligence commerciale.
+    public const string EricGendron = "eric-gendron";
+    public const string HugoLambert = "hugo-lambert";
+    public const string NadiaCloutier = "nadia-cloutier";
+    public const string KevinOuimet = "kevin-ouimet";
+    public const string SimonThibault = "simon-thibault";
 }
 
 // DONNÉES FICTIVES — phase frontend uniquement.
@@ -103,6 +110,17 @@ public class ServiceProspectsDemo : IServiceProspects
                 "telephone", "soir", "visite", null, Moi, n.AddDays(-35)),
             new(IdsProspectsDemo.RachelDion, "Rachel", "Dion", "rachel.dion@exemple.test", "514-555-0162",
                 "courriel", "midi", "google", null, Moi, n.AddDays(-19)),
+
+            new(IdsProspectsDemo.EricGendron, "Éric", "Gendron", "eric.gendron@exemple.test", "438-555-0171",
+                "courriel", "soir", "site-web", null, Moi, n.AddDays(-10)),
+            new(IdsProspectsDemo.HugoLambert, "Hugo", "Lambert", "hugo.lambert@exemple.test", "514-555-0108",
+                "telephone", "matin", "visite", null, Moi, n.AddDays(-20)),
+            new(IdsProspectsDemo.NadiaCloutier, "Nadia", "Cloutier", "nadia.cloutier@exemple.test", "450-555-0185",
+                "texto", "apres-midi", "google", null, Moi, n.AddDays(-40)),
+            new(IdsProspectsDemo.KevinOuimet, "Kevin", "Ouimet", "kevin.ouimet@exemple.test", "819-555-0133",
+                "telephone", "soir", "meta", null, Moi, n.AddDays(-16)),
+            new(IdsProspectsDemo.SimonThibault, "Simon", "Thibault", "simon.thibault@exemple.test", "514-555-0129",
+                "courriel", "indifferent", "recommandation", "Recommandé par Gabriel Roy", Moi, n.AddDays(-12)),
         };
 
         var opportunites = new List<Opportunite>
@@ -256,6 +274,40 @@ public class ServiceProspectsDemo : IServiceProspects
                 n.AddDays(-19), n.AddHours(-3), "Informer la cliente du nouveau diagnostic", j,
                 ["Hyundai Santa Fe Preferred 2022"],
                 new() { Categorie = "vus", Etat = "occasion", Marques = ["Hyundai"], Modeles = ["Santa Fe"], Places = 5, Caracteristiques = ["ti"], Utilisation = "famille", BudgetMensuel = 600, ModeAchat = "financement", MiseDeFonds = 6_000, Reprise = "non", Horizon = "immediat", ElementsDecision = ["securite", "confort"] }),
+
+            // Phase 06 : soumission envoyée sans réponse, puis client absent à l'essai.
+            new("o-eric-cx5", IdsProspectsDemo.EricGendron, "VUS compact d'occasion", EtapeVente.Soumission,
+                n.AddDays(-10), n.AddDays(-1), "Attendre la réponse sur la soumission", j.AddDays(2),
+                ["Mazda CX-5 GT 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Mazda"], Modeles = ["CX-5"], Places = 5,
+                    Caracteristiques = ["ti", "sieges-chauffants"], Utilisation = "quotidien", BudgetTotal = 34_000,
+                    ModeAchat = "financement", MiseDeFonds = 4_000, Reprise = "non", Horizon = "30j", ElementsDecision = ["prix", "securite"] }),
+            // Ne souhaite plus être sollicité : ses relances commerciales sont suspendues.
+            new("o-hugo-equinox", IdsProspectsDemo.HugoLambert, "VUS compact", EtapeVente.Soumission,
+                n.AddDays(-20), n.AddDays(-2), null, null,
+                ["Chevrolet Equinox LT 2022"],
+                new() { Categorie = "vus", Etat = "occasion", Places = 5, Caracteristiques = ["ti"], Utilisation = "quotidien",
+                    BudgetTotal = 30_000, ModeAchat = "comptant", Reprise = "non", Horizon = "1-3-mois" }),
+            // Achat reporté (pause jusqu'à hier) et demande de recherche non satisfaite.
+            new("o-nadia-hybride", IdsProspectsDemo.NadiaCloutier, "VUS hybride abordable", EtapeVente.Qualifie,
+                n.AddDays(-40), n.AddDays(-30), null, null,
+                [],
+                new() { Categorie = "vus", Etat = "occasion", Places = 5, Caracteristiques = ["hybride", "ti"], Utilisation = "quotidien",
+                    BudgetTotal = 32_000, ModeAchat = "financement", MiseDeFonds = 3_000, Reprise = "non", Horizon = "1-3-mois",
+                    ElementsDecision = ["consommation", "prix"] }),
+            // Opportunité qualifiée qui stagne : aucune action, aucun véhicule proposé, achat prévu sous 30 jours.
+            new("o-kevin-vus", IdsProspectsDemo.KevinOuimet, "VUS à traction intégrale", EtapeVente.Qualifie,
+                n.AddDays(-16), n.AddDays(-9), null, null,
+                [],
+                new() { Categorie = "vus", Etat = "occasion", Marques = ["Mazda", "Subaru"], Places = 5, Caracteristiques = ["ti", "demarreur"],
+                    Utilisation = "famille", BudgetTotal = 35_000, ModeAchat = "financement", MiseDeFonds = 5_000, Reprise = "non",
+                    Horizon = "30j", ElementsDecision = ["securite", "prix"] }),
+            // Soumission acceptée hier, aucune transaction ouverte.
+            new("o-simon-crv", IdsProspectsDemo.SimonThibault, "VUS hybride neuf", EtapeVente.Negociation,
+                n.AddDays(-12), n.AddDays(-1), "Ouvrir le dossier d'achat", j,
+                ["Honda CR-V Hybride EX-L 2024"],
+                new() { Categorie = "vus", Etat = "neuf", Marques = ["Honda"], Modeles = ["CR-V"], Places = 5, Caracteristiques = ["hybride", "ti"],
+                    Utilisation = "famille", BudgetTotal = 48_000, ModeAchat = "comptant", Reprise = "non", Horizon = "immediat" }),
         };
 
         var i = 0;
@@ -390,6 +442,33 @@ public class ServiceProspectsDemo : IServiceProspects
                 "Prospect saisi à partir d'une demande reçue par la publicité Google."),
             new(Id(), IdsProspectsDemo.RachelDion, "o-rachel-santafe", n.AddHours(-3), "transaction", Systeme,
                 "TRX-2026-0020 · Le véhicule est retourné en inspection (témoin de moteur allumé lors de la préparation finale)."),
+
+            new(Id(), IdsProspectsDemo.EricGendron, "o-eric-cx5", n.AddDays(-10), "creation", Systeme,
+                "Prospect créé à partir du formulaire du site Web (Mazda CX-5)."),
+            new(Id(), IdsProspectsDemo.EricGendron, "o-eric-cx5", n.AddDays(-8), "appel", moi,
+                "Premier appel : cherche un VUS à traction intégrale, budget d'environ 34 000 $."),
+            new(Id(), IdsProspectsDemo.EricGendron, "o-eric-cx5", n.AddDays(-4), "courriel", moi,
+                "Soumission SOU-2026-0047 envoyée par courriel."),
+            new(Id(), IdsProspectsDemo.EricGendron, "o-eric-cx5", j.AddDays(-1).AddHours(18).AddMinutes(20), "rendezvous", moi,
+                "Client absent à l'essai routier du CX-5 prévu à 18 h.", "Proposer une autre date"),
+            new(Id(), IdsProspectsDemo.HugoLambert, "o-hugo-equinox", n.AddDays(-20), "creation", moi,
+                "Prospect créé à la suite d'une visite en concession."),
+            new(Id(), IdsProspectsDemo.HugoLambert, "o-hugo-equinox", n.AddDays(-6), "courriel", moi,
+                "Soumission SOU-2026-0043 envoyée par courriel."),
+            new(Id(), IdsProspectsDemo.HugoLambert, "o-hugo-equinox", n.AddDays(-2), "appel", moi,
+                "Appel entrant : le client demande à ne plus recevoir de sollicitations commerciales. Il reviendra s'il décide d'acheter."),
+            new(Id(), IdsProspectsDemo.NadiaCloutier, "o-nadia-hybride", n.AddDays(-40), "creation", moi,
+                "Prospect saisi à partir d'une demande reçue par la publicité Google."),
+            new(Id(), IdsProspectsDemo.NadiaCloutier, "o-nadia-hybride", n.AddDays(-30), "appel", moi,
+                "Aucun VUS hybride dans son budget en inventaire. Demande d'être recontactée après son retour de voyage."),
+            new(Id(), IdsProspectsDemo.KevinOuimet, "o-kevin-vus", n.AddDays(-16), "creation", moi,
+                "Prospect saisi à partir d'une réponse à la publicité Meta."),
+            new(Id(), IdsProspectsDemo.KevinOuimet, "o-kevin-vus", n.AddDays(-9), "appel", moi,
+                "Qualification complète : VUS à traction intégrale d'occasion, 35 000 $ maximum, achat d'ici un mois."),
+            new(Id(), IdsProspectsDemo.SimonThibault, "o-simon-crv", n.AddDays(-12), "creation", moi,
+                "Prospect créé : recommandé par Gabriel Roy."),
+            new(Id(), IdsProspectsDemo.SimonThibault, "o-simon-crv", n.AddDays(-1), "visite", moi,
+                "Le client accepte la soumission SOU-2026-0048 (CR-V hybride)."),
         };
 
         return Task.FromResult(new DonneesProspects(Moi, conseillers, contacts, opportunites, interactions));

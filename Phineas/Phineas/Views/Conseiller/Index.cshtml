@@ -5,8 +5,11 @@
     Layout = "_LayoutConseiller";
     var maintenant = Model.Maintenant;
     var maxPipeline = Model.Pipeline.Count == 0 ? 1 : Math.Max(1, Model.Pipeline.Max(e => e.Nombre));
-    var nbAujourdhui = Model.Actions.Count(a => a.EcheanceAujourdhui);
-    var nbCritiques = Model.Actions.Count(a => a.Urgence == Urgence.Critique);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
 }
 
 <header class="sv-head">
@@ -57,49 +60,19 @@
 <div class="row g-4">
     <div class="col-lg-8 d-flex flex-column gap-4">
 
-        <section class="card" id="sv-priorites" aria-labelledby="titre-priorites">
+        @* Rendu par intelligence-tableau.js à partir du moteur d'intelligence commerciale (même source que le Centre d'actions). *@
+        <section class="card" id="ia-priorites" aria-labelledby="titre-priorites">
             <div class="card-header sv-card-header">
                 <span id="titre-priorites"><i class="bi bi-lightning-charge me-2"></i>Mes actions prioritaires</span>
-                <span class="badge-soft sv-fictif">Fictif</span>
+                <a class="btn btn-sm btn-link p-0" asp-controller="Intelligence" asp-action="Index">Centre d'actions</a>
             </div>
             <div class="sv-filtres" role="group" aria-label="Filtrer les actions">
-                <button type="button" class="sv-chip is-active" data-filtre="toutes" aria-pressed="true">Toutes <span>@Model.Actions.Count</span></button>
-                <button type="button" class="sv-chip" data-filtre="aujourdhui" aria-pressed="false">À faire aujourd'hui <span>@nbAujourdhui</span></button>
-                <button type="button" class="sv-chip" data-filtre="critique" aria-pressed="false">Critiques <span>@nbCritiques</span></button>
+                <button type="button" class="sv-chip is-active" data-ia-filtre="toutes" aria-pressed="true">Toutes <span>—</span></button>
+                <button type="button" class="sv-chip" data-ia-filtre="aujourdhui" aria-pressed="false">À faire aujourd'hui <span>—</span></button>
+                <button type="button" class="sv-chip" data-ia-filtre="urgentes" aria-pressed="false">Urgentes <span>—</span></button>
             </div>
-
-            <ul class="sv-prio-list">
-                @foreach (var a in Model.Actions)
-                {
-                    var (urgLibelle, urgIcone) = FormatVente.Libelle(a.Urgence);
-                    <li class="sv-prio sv-urg-@a.Urgence.ToString().ToLowerInvariant()"
-                        data-id="@a.Id" data-urgence="@a.Urgence.ToString().ToLowerInvariant()" data-aujourdhui="@(a.EcheanceAujourdhui ? "1" : "0")">
-                        <div class="sv-prio-top">
-                            <div class="sv-prio-who">
-                                <a class="sv-lien-fiche" asp-controller="Prospects" asp-action="Fiche" asp-route-id="@a.ProspectId"><strong>@a.Prospect</strong></a>
-                                <span class="sv-prio-vehicule"><i class="bi bi-car-front"></i>@a.Vehicule</span>
-                            </div>
-                            <div class="sv-prio-tags">
-                                <span class="sv-urg-label"><i class="bi @urgIcone"></i>@urgLibelle</span>
-                                <span class="status-pill sv-et-@a.Etape">@FormatVente.Libelle(a.Etape)</span>
-                            </div>
-                        </div>
-                        <dl class="sv-prio-body">
-                            <div><dt>Événement</dt><dd>@a.Evenement <span class="text-muted">· @FormatVente.Relatif(a.DateEvenement, maintenant)</span></dd></div>
-                            <div><dt>Pourquoi maintenant</dt><dd>@a.Motif</dd></div>
-                        </dl>
-                        <div class="sv-prio-actions">
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-bientot="Cette action sera disponible avec la gestion des prospects.">
-                                <i class="bi @a.IconeAction me-1"></i>@a.ProchaineAction
-                            </button>
-                            <button type="button" class="btn btn-sm btn-ghost" data-traiter><i class="bi bi-check2 me-1"></i>Marquer comme traité</button>
-                        </div>
-                    </li>
-                }
-            </ul>
-            <div class="sv-empty d-none" data-vide>
-                <i class="bi bi-check2-circle"></i>
-                <span>Aucune action dans ce filtre.</span>
+            <div data-ia-zone>
+                <div class="sv-empty"><i class="bi bi-hourglass"></i><span>Chargement des actions…</span></div>
             </div>
         </section>
     </div>
@@ -233,6 +206,10 @@
     @if (Model.Transactions is not null)
     {
         <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.Agenda.ConseillerNom)" />
+        @if (Model.Intelligence is not null)
+        {
+            <partial name="~/Views/Intelligence/_DonneesIntelligence.cshtml" model="new ChargeIntelligence(Model.Intelligence, Model.Agenda.ConseillerNom)" />
+        }
     }
 }
 
@@ -251,6 +228,14 @@
             <script src="~/js/transactions-store.js" asp-append-version="true"></script>
             <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
             <script src="~/js/transactions-tableau.js" asp-append-version="true"></script>
+            @if (Model.Intelligence is not null)
+            {
+                <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-tableau.js" asp-append-version="true"></script>
+            }
         }
     }
 }

@@ -302,6 +302,23 @@ public class ServiceRendezVousDemo : IServiceRendezVous
                 ],
             },
 
+            // Phase 06 : client absent à un essai routier ; une autre date doit lui être proposée.
+            new()
+            {
+                Id = "r-eric-essai", ProspectId = IdsProspectsDemo.EricGendron, OpportuniteId = "o-eric-cx5",
+                SoumissionId = "s-eric-cx5", VehiculeId = "v-cx5", ConseillerId = Moi,
+                Type = TypeRendezVous.EssaiRoutier, Statut = StatutRendezVous.ClientAbsent,
+                Debut = j.AddDays(-1).AddHours(18), DureeMinutes = 45, Mode = "concession",
+                Objectif = "Essai routier du CX-5 proposé dans la soumission.",
+                DateCreation = n.AddDays(-3),
+                Absence = new(j.AddDays(-1).AddHours(18).AddMinutes(20), "autre-date", "Aucune réponse au téléphone."),
+                Historique =
+                [
+                    E(n.AddDays(-3), "creation", "Rendez-vous créé."),
+                    E(j.AddDays(-1).AddHours(18).AddMinutes(20), "absence", "Client absent. Prochaine action : proposer une autre date."),
+                ],
+            },
+
             // Rencontre de finalisation : revoir les conditions de financement avec la cliente.
             new()
             {

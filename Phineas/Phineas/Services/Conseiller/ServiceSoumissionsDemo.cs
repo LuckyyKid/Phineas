@@ -427,6 +427,42 @@ public class ServiceSoumissionsDemo : IServiceSoumissions
                 },
             ]),
 
+            // Phase 06 : soumission envoyée sans réponse, soumission d'un client qui refuse les sollicitations, soumission acceptée sans transaction.
+            new("s-eric-cx5", "SOU-2026-0047", IdsProspectsDemo.EricGendron, "o-eric-cx5", Moi, n.AddDays(-4),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-4), Auteur = moi, Statut = StatutSoumission.Envoyee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-cx5"),
+                    Offre = new()
+                    {
+                        PrixAnnonce = 32_995, Options = [O("pneus-hiver")], MiseDeFonds = 4_000, ModeAchat = "financement",
+                        DureeMois = 60, TauxAnnuel = 6.99m, DateValidite = j.AddDays(6),
+                    },
+                },
+            ]),
+            new("s-hugo-equinox", "SOU-2026-0043", IdsProspectsDemo.HugoLambert, "o-hugo-equinox", Moi, n.AddDays(-6),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-6), Auteur = moi, Statut = StatutSoumission.Envoyee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-equinox"),
+                    Offre = new() { PrixAnnonce = 28_995, ModeAchat = "comptant", DateValidite = j.AddDays(8) },
+                },
+            ]),
+            new("s-simon-crv", "SOU-2026-0048", IdsProspectsDemo.SimonThibault, "o-simon-crv", Moi, n.AddDays(-3),
+            [
+                new()
+                {
+                    Numero = 1, Date = n.AddDays(-1), Auteur = moi, Statut = StatutSoumission.Acceptee,
+                    Note = "Proposition initiale",
+                    Vehicule = Inv("v-crv"),
+                    Offre = new() { PrixAnnonce = 46_290, Options = [O("tapis")], ModeAchat = "comptant", DateValidite = j.AddDays(6) },
+                },
+            ]),
+
             new("s-rachel-santafe", "SOU-2026-0032", IdsProspectsDemo.RachelDion, "o-rachel-santafe", Moi, n.AddDays(-11),
             [
                 new()

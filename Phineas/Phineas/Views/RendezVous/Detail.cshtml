@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
 }
 
 <a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Agenda</a>
@@ -47,6 +48,7 @@
 
     @* Transaction liée (livraison, financement, finalisation) ou ouverture depuis le résultat : transactions-liens.js. *@
     <div data-trx-lien="rendezvous" data-id="@Model.RendezVousId"></div>
+    <div data-ia-lien="rendezvous" data-id="@Model.RendezVousId"></div>
 
     <ul class="nav pr-onglets" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-apercu" data-bs-toggle="tab" data-bs-target="#panneau-apercu" type="button" role="tab" aria-controls="panneau-apercu" aria-selected="true">Vue d'ensemble</button></li>
@@ -412,5 +414,10 @@
         <script src="~/js/transactions-store.js" asp-append-version="true"></script>
         <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
         <script src="~/js/transactions-liens.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-liens.js" asp-append-version="true"></script>
     }
 }

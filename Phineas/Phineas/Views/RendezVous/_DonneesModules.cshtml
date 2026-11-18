@@ -7,4 +7,5 @@
 @if (Model.Transactions is not null)
 {
     <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />
+    <partial name="~/Views/Intelligence/_DonneesIntelligence.cshtml" model="new ChargeIntelligence(Model.Intelligence!, Model.ConseillerNom)" />
 }

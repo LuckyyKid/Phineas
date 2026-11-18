@@ -85,6 +85,9 @@ public class TableauBordConseillerViewModel
 
     // Transactions : compteurs, blocages et prochaines livraisons calculés depuis le même état local que le module.
     public DonneesTransactions? Transactions { get; set; }
+
+    // Phase 06 : actions prioritaires calculées par le moteur (même source que le Centre d'actions).
+    public DonneesIntelligence? Intelligence { get; set; }
 }
 
 public static class FormatVente

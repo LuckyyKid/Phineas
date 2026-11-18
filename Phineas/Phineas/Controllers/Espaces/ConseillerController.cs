@@ -16,6 +16,7 @@ public class ConseillerController : Controller
     private readonly IServiceSoumissions _soumissions;
     private readonly IServiceRendezVous _rendezVous;
     private readonly IServiceTransactions _transactions;
+    private readonly IServiceIntelligenceCommerciale _intelligence;
 
     public ConseillerController(
         IAccountService account,
@@ -23,7 +24,8 @@ public class ConseillerController : Controller
         IServiceProspects prospects,
         IServiceSoumissions soumissions,
         IServiceRendezVous rendezVous,
-        IServiceTransactions transactions
+        IServiceTransactions transactions,
+        IServiceIntelligenceCommerciale intelligence
     )
     {
         _account = account;
@@ -32,6 +34,7 @@ public class ConseillerController : Controller
         _soumissions = soumissions;
         _rendezVous = rendezVous;
         _transactions = transactions;
+        _intelligence = intelligence;
     }
 
     public async Task<IActionResult> Index()
@@ -53,6 +56,7 @@ public class ConseillerController : Controller
             ConseillerCourriel = me.Email,
         };
         modele.Transactions = await _transactions.ObtenirAsync(me);
+        modele.Intelligence = await _intelligence.ObtenirAsync(me);
         return View(modele);
     }
 }

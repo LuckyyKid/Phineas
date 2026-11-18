@@ -17,13 +17,15 @@ public class SoumissionsController : Controller
     private readonly IServiceSoumissions _soumissions;
     private readonly IServiceRendezVous _rendezVous;
     private readonly IServiceTransactions _transactions;
+    private readonly IServiceIntelligenceCommerciale _intelligence;
 
     public SoumissionsController(
         IAccountService account,
         IServiceProspects prospects,
         IServiceSoumissions soumissions,
         IServiceRendezVous rendezVous,
-        IServiceTransactions transactions
+        IServiceTransactions transactions,
+        IServiceIntelligenceCommerciale intelligence
     )
     {
         _account = account;
@@ -31,6 +33,7 @@ public class SoumissionsController : Controller
         _soumissions = soumissions;
         _rendezVous = rendezVous;
         _transactions = transactions;
+        _intelligence = intelligence;
     }
 
     public async Task<IActionResult> Index()
@@ -39,9 +42,9 @@ public class SoumissionsController : Controller
         return modele is null ? Challenge() : View(modele);
     }
 
-    public async Task<IActionResult> Nouvelle(string? opportunite, string? prospect)
+    public async Task<IActionResult> Nouvelle(string? opportunite, string? prospect, string? vehicule)
     {
-        var modele = await ConstruireAsync(opportuniteId: opportunite, prospectId: prospect);
+        var modele = await ConstruireAsync(opportuniteId: opportunite, prospectId: prospect, vehiculeId: vehicule);
         return modele is null ? Challenge() : View(modele);
     }
 
@@ -58,7 +61,8 @@ public class SoumissionsController : Controller
         string? soumissionId = null,
         string? opportuniteId = null,
         string? prospectId = null,
-        bool avecTransactions = false
+        bool avecTransactions = false,
+        string? vehiculeId = null
     )
     {
         var me = await _account.GetSummaryAsync(User);
@@ -78,6 +82,8 @@ public class SoumissionsController : Controller
             ProspectId = prospectId,
             RendezVous = avecTransactions ? await _rendezVous.ObtenirAsync(me) : null,
             Transactions = avecTransactions ? await _transactions.ObtenirAsync(me) : null,
+            Intelligence = avecTransactions ? await _intelligence.ObtenirAsync(me) : null,
+            VehiculeId = vehiculeId,
         };
     }
 }

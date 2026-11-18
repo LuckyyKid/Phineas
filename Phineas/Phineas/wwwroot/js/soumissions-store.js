@@ -101,11 +101,18 @@
     var v = versionCourante(s);
     return v.dateModification || v.date;
   }
+  // Inventaire partagé : données du serveur, plus les arrivées fictives simulées dans cet onglet (phase 06).
   function inventaire() {
-    return d.inventaire;
+    return d.inventaire.concat(etat.vehiculesSimules || []);
   }
   function vehicule(id) {
-    return d.inventaire.filter(function (v) { return v.id === id; })[0] || null;
+    return inventaire().filter(function (v) { return v.id === id; })[0] || null;
+  }
+  function ajouterVehiculeSimule(v) {
+    if (!v || !v.id || vehicule(v.id)) return false;
+    etat.vehiculesSimules = (etat.vehiculesSimules || []).concat([v]);
+    changer();
+    return true;
   }
   function disponible(v) {
     return v && v.statutActuel === "PretPourVente";
@@ -328,6 +335,7 @@
     dateModification: dateModification,
     inventaire: inventaire,
     vehicule: vehicule,
+    ajouterVehiculeSimule: ajouterVehiculeSimule,
     disponible: disponible,
     ecartInventaire: ecartInventaire,
     validiteDepassee: validiteDepassee,

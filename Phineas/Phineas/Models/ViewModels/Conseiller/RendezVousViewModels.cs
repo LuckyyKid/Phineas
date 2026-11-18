@@ -105,6 +105,12 @@ public class RendezVousPageViewModel
 
     // Fourni pour relier un rendez-vous de livraison, de financement ou de finalisation à sa transaction.
     public DonneesTransactions? Transactions { get; init; }
+
+    // Véhicule présélectionné (ex. essai routier depuis les recommandations de véhicules).
+    public string? VehiculeId { get; init; }
+
+    // Phase 06 : données du moteur d'intelligence commerciale (actions liées au dossier affiché).
+    public DonneesIntelligence? Intelligence { get; init; }
 }
 
 // Libellés métier : une seule source pour Razor et le JavaScript (prépare la future localisation FR / EN / ES).

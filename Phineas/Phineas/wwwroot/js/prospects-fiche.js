@@ -25,6 +25,9 @@
     soumission: { libelle: "Soumission", icone: "bi-file-earmark-text" },
     rendezvous: { libelle: "Rendez-vous", icone: "bi-calendar-event" },
     transaction: { libelle: "Transaction", icone: "bi-cash-coin" },
+    action: { libelle: "Action réalisée", icone: "bi-check2-square" },
+    brouillon: { libelle: "Brouillon (non envoyé)", icone: "bi-pencil-square" },
+    texto: { libelle: "Texto", icone: "bi-chat-dots" },
   };
 
   function zone(nom) {

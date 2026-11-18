@@ -17,13 +17,15 @@ public class TransactionsController : Controller
     private readonly IServiceSoumissions _soumissions;
     private readonly IServiceRendezVous _rendezVous;
     private readonly IServiceTransactions _transactions;
+    private readonly IServiceIntelligenceCommerciale _intelligence;
 
     public TransactionsController(
         IAccountService account,
         IServiceProspects prospects,
         IServiceSoumissions soumissions,
         IServiceRendezVous rendezVous,
-        IServiceTransactions transactions
+        IServiceTransactions transactions,
+        IServiceIntelligenceCommerciale intelligence
     )
     {
         _account = account;
@@ -31,6 +33,7 @@ public class TransactionsController : Controller
         _soumissions = soumissions;
         _rendezVous = rendezVous;
         _transactions = transactions;
+        _intelligence = intelligence;
     }
 
     public async Task<IActionResult> Index()
@@ -79,6 +82,7 @@ public class TransactionsController : Controller
             Soumissions = await _soumissions.ObtenirAsync(me),
             RendezVous = await _rendezVous.ObtenirAsync(me),
             Transactions = await _transactions.ObtenirAsync(me),
+            Intelligence = await _intelligence.ObtenirAsync(me),
             DonneesFictives = true,
             Concession = me.DealershipName,
             ConseillerNom = me.FullName,

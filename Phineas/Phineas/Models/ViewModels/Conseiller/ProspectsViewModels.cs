@@ -86,6 +86,9 @@ public class ProspectsPageViewModel
 
     // Fourni sur la fiche pour afficher les transactions de chaque opportunité.
     public DonneesTransactions? Transactions { get; init; }
+
+    // Phase 06 : données du moteur d'intelligence commerciale (actions liées au dossier affiché).
+    public DonneesIntelligence? Intelligence { get; init; }
 }
 
 // Libellés métier : une seule source pour les vues Razor et le JavaScript.

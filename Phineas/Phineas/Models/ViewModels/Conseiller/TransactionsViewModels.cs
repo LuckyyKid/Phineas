@@ -219,6 +219,9 @@ public class TransactionsPageViewModel
     public string? SoumissionId { get; init; }
     public int? Version { get; init; }
     public string? RendezVousId { get; init; }
+
+    // Phase 06 : données du moteur d'intelligence commerciale (actions liées au dossier affiché).
+    public DonneesIntelligence? Intelligence { get; init; }
 }
 
 // Contenu injecté en JSON dans les pages qui utilisent le module Transactions.
