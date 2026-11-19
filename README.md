@@ -1,5 +1,19 @@
 # PHINEAS
 
+## Où trouver quoi : espace vendeur
+
+Tous les chemins partent de `Phineas/Phineas/`.
+
+- `Views/Shared/_Layout.cshtml` : squelette commun à tous les rôles. Un espace peut y remplacer la barre latérale par sa section `Barre`.
+- `Views/Conseiller/_LayoutConseiller.cshtml` : coque des pages vendeur (barre latérale en verre, notification, scripts communs).
+- `Models/ViewModels/Conseiller/NavigationVendeur.cs` : entrées du menu vendeur. Une entrée sans contrôleur s'affiche sans être cliquable.
+- `Views/Conseiller/Index.cshtml` : page d'accueil du conseiller.
+- `Services/Conseiller/ServiceTableauBordDemo.cs` : données fictives de la page d'accueil (à remplacer par la base de données).
+- `wwwroot/js/conseiller.js` : interactions de l'accueil (carte « À faire en premier », notifications).
+- `wwwroot/css/conseiller.css` : styles de l'espace vendeur et de l'accueil.
+
+Trajet d'un affichage : `/Conseiller` → `ConseillerController.Index` → `ServiceTableauBordDemo.ObtenirAsync` → `Views/Conseiller/Index.cshtml` → `conseiller.js` pour les clics.
+
 
 
 ## Getting started

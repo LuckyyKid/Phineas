@@ -3,7 +3,7 @@ using Phineas.Models.ViewModels.Conseiller;
 
 namespace Phineas.Services.Conseiller;
 
-// DONNÉES FICTIVES — phase frontend uniquement.
+// DONNÉES FICTIVES : phase frontend uniquement.
 // Personnes, véhicules et montants sont inventés et datés par rapport à « maintenant ».
 // À remplacer par une implémentation de IServiceTableauBordConseiller branchée sur la base de données.
 public class ServiceTableauBordDemo : IServiceTableauBordConseiller

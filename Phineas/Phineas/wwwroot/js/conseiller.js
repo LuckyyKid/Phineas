@@ -57,20 +57,30 @@
       p.hidden = true;
       fermerDossier(p);
     });
+    // La priorité affichée est toujours la première de la file ; file vide = tout est réglé.
     var courante = file[0];
-    if (courante) courante.hidden = false;
-    fin.hidden = !!courante;
+    var resteAFaire = file.length > 0;
+    if (resteAFaire) courante.hidden = false;
+    fin.hidden = resteAFaire;
 
-    etapes.forEach(function (e, i) {
-      e.classList.toggle("is-done", i < faites);
-      e.classList.toggle("is-current", !!courante && i === faites);
+    // Points de progression : faits en menthe, courant en blanc.
+    etapes.forEach(function (etape, index) {
+      etape.classList.toggle("is-done", index < faites);
+      etape.classList.toggle("is-current", resteAFaire && index === faites);
     });
-    if (position) position.textContent = (courante ? faites + 1 : total) + "/" + total;
+
+    // « 2/3 » pendant le travail, « 3/3 » quand tout est fait.
+    var numero = total;
+    if (resteAFaire) numero = faites + 1;
+    if (position) position.textContent = numero + "/" + total;
 
     if (focusDedans) {
-      var cible = courante ? courante.querySelector("[data-valider]") : fin;
-      if (!courante) fin.setAttribute("tabindex", "-1");
-      cible.focus();
+      if (resteAFaire) {
+        courante.querySelector("[data-valider]").focus();
+      } else {
+        fin.setAttribute("tabindex", "-1");
+        fin.focus();
+      }
     }
   }
 

@@ -1,3 +1,5 @@
+@* Page d'accueil du conseiller : en-tête, 4 chiffres, carte « À faire en premier » et rendez-vous du jour.
+   Données : ServiceTableauBordDemo (via ConseillerController.Index). Interactions : wwwroot/js/conseiller.js. Styles : conseiller.css. *@
 @using Phineas.Models.ViewModels.Conseiller
 @model TableauBordConseillerViewModel
 @{
@@ -6,27 +8,82 @@
     Layout = "_LayoutConseiller";
     var maintenant = Model.Maintenant;
 
-    // Une seule priorité à la fois : les trois échéances du jour les plus urgentes, dans l'ordre du service.
-    var priorites = Model.Actions.Where(a => a.EcheanceAujourdhui && a.Urgence != Urgence.Normale).Take(3).ToList();
+    // Nombre de priorités montrées dans la carte focus (une seule visible à la fois).
+    const int NbPrioritesMax = 3;
+    // À partir de cette heure, les rendez-vous restants sont annoncés « ce soir ».
+    const int HeureDuSoir = 17;
 
-    var rdvDuJour = Model.RendezVous
-        .Where(r => r.Debut >= maintenant && r.Debut.Date == maintenant.Date)
-        .OrderBy(r => r.Debut)
-        .ToList();
-    var moment = rdvDuJour.Count > 0 && rdvDuJour.All(r => r.Debut.Hour >= 17) ? "ce soir" : "aujourd'hui";
+    // Priorités : échéances du jour qui ne sont pas d'urgence normale, dans l'ordre fourni par le service.
+    var priorites = new List<ActionPrioritaire>();
+    foreach (var action in Model.Actions)
+    {
+        if (priorites.Count == NbPrioritesMax)
+        {
+            break;
+        }
+        bool urgente = action.Urgence != Urgence.Normale;
+        if (action.EcheanceAujourdhui && urgente)
+        {
+            priorites.Add(action);
+        }
+    }
 
-    var resume = priorites.Count switch
+    // Rendez-vous encore à venir aujourd'hui, du plus tôt au plus tard.
+    var rdvDuJour = new List<RendezVousResume>();
+    foreach (var rdv in Model.RendezVous)
     {
-        0 => "Aucune priorité urgente aujourd'hui",
-        1 => "1 priorité aujourd'hui",
-        _ => $"{priorites.Count} priorités aujourd'hui",
-    };
-    resume += rdvDuJour.Count switch
+        bool aVenir = rdv.Debut >= maintenant;
+        bool aujourdhui = rdv.Debut.Date == maintenant.Date;
+        if (aVenir && aujourdhui)
+        {
+            rdvDuJour.Add(rdv);
+        }
+    }
+    rdvDuJour = rdvDuJour.OrderBy(rdv => rdv.Debut).ToList();
+
+    // « ce soir » seulement si tous les rendez-vous restants commencent après HeureDuSoir.
+    bool tousLeSoir = rdvDuJour.Count > 0;
+    foreach (var rdv in rdvDuJour)
     {
-        0 => " et aucun rendez-vous à venir.",
-        1 => $" et 1 rendez-vous {moment}.",
-        _ => $" et {rdvDuJour.Count} rendez-vous {moment}.",
-    };
+        if (rdv.Debut.Hour < HeureDuSoir)
+        {
+            tousLeSoir = false;
+        }
+    }
+    string moment = "aujourd'hui";
+    if (tousLeSoir)
+    {
+        moment = "ce soir";
+    }
+
+    // Phrase de résumé sous le titre, ex. « 3 priorités aujourd'hui et 4 rendez-vous ce soir. »
+    string resume;
+    if (priorites.Count == 0)
+    {
+        resume = "Aucune priorité urgente aujourd'hui";
+    }
+    else if (priorites.Count == 1)
+    {
+        resume = "1 priorité aujourd'hui";
+    }
+    else
+    {
+        resume = $"{priorites.Count} priorités aujourd'hui";
+    }
+
+    if (rdvDuJour.Count == 0)
+    {
+        resume += " et aucun rendez-vous à venir.";
+    }
+    else if (rdvDuJour.Count == 1)
+    {
+        resume += $" et 1 rendez-vous {moment}.";
+    }
+    else
+    {
+        resume += $" et {rdvDuJour.Count} rendez-vous {moment}.";
+    }
+
     if (priorites.Count > 0)
     {
         resume += " On commence par la plus urgente.";
