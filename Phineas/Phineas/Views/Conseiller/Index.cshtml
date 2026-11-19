@@ -1,214 +1,154 @@
 @using Phineas.Models.ViewModels.Conseiller
 @model TableauBordConseillerViewModel
 @{
-    ViewData["Title"] = "Tableau de bord";
+    ViewData["Title"] = "Accueil";
+    ViewData["NbActions"] = Model.Actions.Count;
     Layout = "_LayoutConseiller";
     var maintenant = Model.Maintenant;
-    var maxPipeline = Model.Pipeline.Count == 0 ? 1 : Math.Max(1, Model.Pipeline.Max(e => e.Nombre));
-    var nbAujourdhui = Model.Actions.Count(a => a.EcheanceAujourdhui);
-    var nbCritiques = Model.Actions.Count(a => a.Urgence == Urgence.Critique);
+
+    // Une seule priorité à la fois : les trois échéances du jour les plus urgentes, dans l'ordre du service.
+    var priorites = Model.Actions.Where(a => a.EcheanceAujourdhui && a.Urgence != Urgence.Normale).Take(3).ToList();
+
+    var rdvDuJour = Model.RendezVous
+        .Where(r => r.Debut >= maintenant && r.Debut.Date == maintenant.Date)
+        .OrderBy(r => r.Debut)
+        .ToList();
+    var moment = rdvDuJour.Count > 0 && rdvDuJour.All(r => r.Debut.Hour >= 17) ? "ce soir" : "aujourd'hui";
+
+    var resume = priorites.Count switch
+    {
+        0 => "Aucune priorité urgente aujourd'hui",
+        1 => "1 priorité aujourd'hui",
+        _ => $"{priorites.Count} priorités aujourd'hui",
+    };
+    resume += rdvDuJour.Count switch
+    {
+        0 => " et aucun rendez-vous à venir.",
+        1 => $" et 1 rendez-vous {moment}.",
+        _ => $" et {rdvDuJour.Count} rendez-vous {moment}.",
+    };
+    if (priorites.Count > 0)
+    {
+        resume += " On commence par la plus urgente.";
+    }
 }
 
-<header class="sv-head">
+<header class="ph-head">
     <div>
-        <h1>Bonjour @Model.Prenom</h1>
-        <div class="sv-head-meta">
-            <span><i class="bi bi-person"></i>@Model.NomComplet</span>
-            @if (Model.Concession is not null)
-            {
-                <span><i class="bi bi-buildings"></i>@Model.Concession</span>
-            }
-            <span><i class="bi bi-calendar3"></i>@FormatVente.DateLongue(maintenant)</span>
-        </div>
+        <p class="ph-label">@FormatVente.DateDuJour(maintenant)</p>
+        <h1 class="ph-hello">Bonjour @Model.Prenom</h1>
+        <p class="ph-resume">@resume</p>
     </div>
-    <div class="sv-quick" role="group" aria-label="Actions rapides">
-        <button type="button" class="btn btn-primary btn-sm" data-bientot="La création de prospects arrive dans une prochaine version."><i class="bi bi-person-plus me-1"></i>Nouveau prospect</button>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-bientot="La planification des rendez-vous arrive dans une prochaine version."><i class="bi bi-calendar-plus me-1"></i>Rendez-vous</button>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-bientot="Les soumissions arrivent dans une prochaine version."><i class="bi bi-file-earmark-plus me-1"></i>Soumission</button>
+    <div class="dropdown">
+        <button type="button" class="ph-pill" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i>Créer</button>
+        <ul class="dropdown-menu dropdown-menu-end ph-menu">
+            <li><button type="button" class="dropdown-item" data-bientot="La création de prospects arrive avec le module Prospects."><i class="bi bi-person-plus"></i>Prospect</button></li>
+            <li><button type="button" class="dropdown-item" data-bientot="La planification arrive avec le module Rendez-vous."><i class="bi bi-calendar-plus"></i>Rendez-vous</button></li>
+            <li><button type="button" class="dropdown-item" data-bientot="Les soumissions arrivent avec le module Ventes."><i class="bi bi-file-earmark-plus"></i>Soumission</button></li>
+        </ul>
     </div>
 </header>
 
-@if (Model.DonneesFictives)
-{
-    <div class="sv-demo" role="note">
-        <i class="bi bi-cone-striped"></i>
-        <div><strong>Données de démonstration.</strong> Les prospects, véhicules, rendez-vous et montants affichés sont fictifs. Les actions ne sont pas enregistrées.</div>
-    </div>
-}
-
-<section class="card sv-kpis" aria-label="Indicateurs">
+<section class="ph-stats" aria-label="Indicateurs">
     @foreach (var i in Model.Indicateurs)
     {
-        <div class="sv-kpi sv-ton-@i.Ton.ToString().ToLowerInvariant()">
-            <div class="sv-kpi-label"><i class="bi @i.Icone"></i>@i.Libelle</div>
-            <div class="sv-kpi-value">@i.Valeur</div>
-            <div class="sv-kpi-detail">
-                @if (i.Ton != TonIndicateur.Neutre)
+        <div class="ph-glass ph-stat" title="@i.Detail">
+            <span class="ph-stat-value">@i.Valeur</span>
+            <span class="ph-stat-label">
+                @i.Libelle
+                @if (i.Ton == TonIndicateur.Critique && i.Valeur > 0)
                 {
-                    <i class="bi @(i.Ton == TonIndicateur.Critique ? "bi-exclamation-octagon-fill" : "bi-exclamation-triangle-fill")"></i>
+                    <span class="ph-dot ph-dot-alerte" role="img" aria-label="à traiter"></span>
                 }
-                @i.Detail
-            </div>
+            </span>
         </div>
     }
 </section>
 
-<div class="row g-4">
-    <div class="col-lg-8 d-flex flex-column gap-4">
-
-        <section class="card" id="sv-priorites" aria-labelledby="titre-priorites">
-            <div class="card-header sv-card-header">
-                <span id="titre-priorites"><i class="bi bi-lightning-charge me-2"></i>Mes actions prioritaires</span>
-                <span class="badge-soft sv-fictif">Fictif</span>
-            </div>
-            <div class="sv-filtres" role="group" aria-label="Filtrer les actions">
-                <button type="button" class="sv-chip is-active" data-filtre="toutes" aria-pressed="true">Toutes <span>@Model.Actions.Count</span></button>
-                <button type="button" class="sv-chip" data-filtre="aujourdhui" aria-pressed="false">À faire aujourd'hui <span>@nbAujourdhui</span></button>
-                <button type="button" class="sv-chip" data-filtre="critique" aria-pressed="false">Critiques <span>@nbCritiques</span></button>
-            </div>
-
-            <ul class="sv-prio-list">
-                @foreach (var a in Model.Actions)
-                {
-                    var (urgLibelle, urgIcone) = FormatVente.Libelle(a.Urgence);
-                    <li class="sv-prio sv-urg-@a.Urgence.ToString().ToLowerInvariant()"
-                        data-id="@a.Id" data-urgence="@a.Urgence.ToString().ToLowerInvariant()" data-aujourdhui="@(a.EcheanceAujourdhui ? "1" : "0")">
-                        <div class="sv-prio-top">
-                            <div class="sv-prio-who">
-                                <strong>@a.Prospect</strong>
-                                <span class="sv-prio-vehicule"><i class="bi bi-car-front"></i>@a.Vehicule</span>
-                            </div>
-                            <div class="sv-prio-tags">
-                                <span class="sv-urg-label"><i class="bi @urgIcone"></i>@urgLibelle</span>
-                                <span class="status-pill sv-et-@a.Etape">@FormatVente.Libelle(a.Etape)</span>
-                            </div>
-                        </div>
-                        <dl class="sv-prio-body">
-                            <div><dt>Événement</dt><dd>@a.Evenement <span class="text-muted">· @FormatVente.Relatif(a.DateEvenement, maintenant)</span></dd></div>
-                            <div><dt>Pourquoi maintenant</dt><dd>@a.Motif</dd></div>
-                        </dl>
-                        <div class="sv-prio-actions">
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-bientot="Cette action sera disponible avec la gestion des prospects.">
-                                <i class="bi @a.IconeAction me-1"></i>@a.ProchaineAction
-                            </button>
-                            <button type="button" class="btn btn-sm btn-ghost" data-traiter><i class="bi bi-check2 me-1"></i>Marquer comme traité</button>
-                        </div>
-                    </li>
-                }
-            </ul>
-            <div class="sv-empty d-none" data-vide>
-                <i class="bi bi-check2-circle"></i>
-                <span>Aucune action dans ce filtre.</span>
-            </div>
-        </section>
-    </div>
-
-    <div class="col-lg-4 d-flex flex-column gap-4">
-        <section class="card" aria-labelledby="titre-rdv">
-            <div class="card-header sv-card-header">
-                <span id="titre-rdv"><i class="bi bi-calendar-event me-2"></i>Rendez-vous à venir</span>
-                <span class="badge-soft sv-fictif">Fictif</span>
-            </div>
-            @if (Model.RendezVous.Count == 0)
+<div class="ph-grid">
+    <section class="ph-focus" id="ph-focus" aria-labelledby="titre-focus" aria-live="polite">
+        <div class="ph-focus-top">
+            <h2 class="ph-label" id="titre-focus">À faire en premier</h2>
+            @if (priorites.Count > 1)
             {
-                <div class="sv-empty"><i class="bi bi-calendar"></i><span>Aucun rendez-vous prévu.</span></div>
-            }
-            else
-            {
-                <div class="sv-rdv-list">
-                    @foreach (var jour in Model.RendezVous.OrderBy(r => r.Debut).GroupBy(r => r.Debut.Date))
+                <span class="ph-steps" aria-hidden="true">
+                    @for (var n = 0; n < priorites.Count; n++)
                     {
-                        <div class="sv-rdv-day">@FormatVente.Jour(jour.Key, maintenant)</div>
-                        @foreach (var r in jour)
-                        {
-                            var passe = r.Debut < maintenant;
-                            <div class="sv-rdv @(passe ? "is-past" : "")">
-                                <time class="sv-rdv-time" datetime="@r.Debut.ToString("s")">@FormatVente.Heure(r.Debut)</time>
-                                <div class="sv-rdv-info">
-                                    <strong>@r.Client</strong>
-                                    <span>@r.Vehicule</span>
-                                    <span class="sv-rdv-meta">
-                                        <span class="badge-soft">@FormatVente.Libelle(r.Type)</span>
-                                        @if (passe)
-                                        {
-                                            <span class="text-muted small">Passé</span>
-                                        }
-                                        else if (r.Confirme)
-                                        {
-                                            <span class="sv-ok"><i class="bi bi-check-circle-fill"></i>Confirmé</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="sv-warn"><i class="bi bi-question-circle-fill"></i>À confirmer</span>
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        }
+                        <i data-etape></i>
                     }
-                </div>
+                    <span data-position>1/@priorites.Count</span>
+                </span>
             }
-        </section>
+        </div>
 
-        <section class="card" id="sv-alertes" aria-labelledby="titre-alertes">
-            <div class="card-header sv-card-header">
-                <span id="titre-alertes"><i class="bi bi-bell me-2"></i>Ce qui bloque mes ventes</span>
-                <span class="badge-soft sv-fictif">Fictif</span>
-            </div>
-            <ul class="sv-alert-list">
-                @foreach (var al in Model.Alertes)
+        @for (var n = 0; n < priorites.Count; n++)
+        {
+            var p = priorites[n];
+            <article class="ph-focus-item" data-priorite hidden="@(n > 0)">
+                <p class="ph-focus-type">
+                    @p.Evenement
+                    @if (p.Urgence == Urgence.Critique)
+                    {
+                        <span class="ph-tag-retard">En retard</span>
+                    }
+                </p>
+                <h3 class="ph-focus-nom">@p.Prospect</h3>
+                <p class="ph-focus-texte">@p.Motif</p>
+                <p class="ph-focus-dossier" data-dossier hidden>
+                    <span>@p.Vehicule</span>
+                    <span>@FormatVente.Libelle(p.Etape)</span>
+                    <span>@FormatVente.Relatif(p.DateEvenement, maintenant)</span>
+                </p>
+                <div class="ph-focus-actions">
+                    <button type="button" class="ph-btn ph-btn-blanc" data-valider>@p.ProchaineAction<i class="bi bi-arrow-right"></i></button>
+                    <button type="button" class="ph-btn ph-btn-verre" data-voir-dossier aria-expanded="false">Voir le dossier</button>
+                    <button type="button" class="ph-btn-discret" data-plus-tard>Plus tard</button>
+                </div>
+            </article>
+        }
+
+        <div class="ph-focus-fin" data-fin hidden="@(priorites.Count > 0)">
+            <h3 class="ph-focus-nom">Tout est réglé</h3>
+            <p class="ph-focus-texte">Vos priorités du jour sont traitées. Prenez de l'avance sur vos relances.</p>
+        </div>
+    </section>
+
+    <section class="ph-glass ph-soir" aria-labelledby="titre-soir">
+        <div class="ph-soir-top">
+            <h2 class="ph-label" id="titre-soir">@(moment == "ce soir" ? "Ce soir" : "Aujourd'hui")</h2>
+            <span class="ph-lien-off" title="Disponible avec le module Rendez-vous">Agenda</span>
+        </div>
+        @if (rdvDuJour.Count == 0)
+        {
+            <p class="ph-vide">Plus aucun rendez-vous aujourd'hui.</p>
+        }
+        else
+        {
+            <ul class="ph-rdv-liste">
+                @foreach (var r in rdvDuJour)
                 {
-                    var (typeLibelle, typeIcone) = FormatVente.Libelle(al.Type);
-                    <li class="sv-alert sv-al-@al.Type" data-alerte="@al.Id">
-                        <span class="sv-alert-icon"><i class="bi @typeIcone"></i></span>
-                        <div class="sv-alert-body">
-                            <span class="sv-alert-type">@typeLibelle · @FormatVente.Relatif(al.Date, maintenant)</span>
-                            <strong>@al.Titre</strong>
-                            <span>@al.Detail</span>
+                    <li class="ph-rdv">
+                        <time class="ph-rdv-heure" datetime="@r.Debut.ToString("s")">@FormatVente.HeureCourte(r.Debut)</time>
+                        <div class="ph-rdv-info">
+                            <strong>@r.Client</strong>
+                            <span>@FormatVente.Libelle(r.Type)@(r.Vehicule is null ? "" : " · " + r.Vehicule)</span>
                         </div>
-                        <button type="button" class="btn-close sv-alert-close" data-ignorer aria-label="Masquer l'alerte : @al.Titre"></button>
+                        @if (r.Confirme)
+                        {
+                            <span class="ph-dot ph-dot-ok" role="img" aria-label="Confirmé" title="Confirmé"></span>
+                        }
+                        else
+                        {
+                            <span class="ph-a-confirmer">À confirmer</span>
+                        }
                     </li>
                 }
             </ul>
-            <div class="sv-empty d-none" data-vide>
-                <i class="bi bi-check2-circle"></i>
-                <span>Aucun blocage pour le moment.</span>
-            </div>
-        </section>
-    </div>
-
-    <div class="col-12">
-        <section class="card" aria-labelledby="titre-pipeline">
-            <div class="card-header sv-card-header">
-                <span id="titre-pipeline"><i class="bi bi-funnel me-2"></i>Mon pipeline</span>
-                <span class="badge-soft sv-fictif">Fictif</span>
-            </div>
-            <div class="card-body">
-                <table class="sv-pipeline">
-                    <caption class="visually-hidden">Opportunités en cours par étape, nombre et valeur</caption>
-                    <thead class="visually-hidden">
-                        <tr><th scope="col">Étape</th><th scope="col">Répartition</th><th scope="col">Opportunités</th><th scope="col">Valeur</th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var e in Model.Pipeline)
-                        {
-                            var pct = e.Nombre * 100 / maxPipeline;
-                            <tr title="@FormatVente.Libelle(e.Etape) : @e.Nombre opportunité(s), @FormatVente.Argent(e.Valeur)">
-                                <th scope="row">@FormatVente.Libelle(e.Etape)</th>
-                                <td class="sv-bar-cell"><span class="sv-bar" style="width:@(pct)%"></span></td>
-                                <td class="sv-num">@e.Nombre</td>
-                                <td class="sv-money">@FormatVente.Argent(e.Valeur)</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                <div class="sv-closed">
-                    <span class="text-muted">Clôturés ce mois-ci</span>
-                    <span class="sv-closed-item"><i class="bi bi-trophy"></i>@Model.Gagnes gagnés</span>
-                    <span class="sv-closed-item is-lost"><i class="bi bi-x-circle"></i>@Model.Perdus perdus</span>
-                </div>
-            </div>
-        </section>
-    </div>
-
+        }
+    </section>
 </div>
+
+@if (Model.DonneesFictives)
+{
+    <p class="ph-note">Données de démonstration · rien n'est enregistré</p>
+}
