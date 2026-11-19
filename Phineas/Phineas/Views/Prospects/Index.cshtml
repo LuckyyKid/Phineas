@@ -9,132 +9,135 @@
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
 }
 
-<header class="sv-head">
-    <div>
-        <h1>Prospects et opportunités</h1>
-        <p class="text-muted mb-0">Vos contacts, leurs projets d'achat et le prochain suivi à effectuer.</p>
-    </div>
-    <div class="sv-quick">
-        <button type="button" class="btn btn-primary btn-sm" data-ouvrir-creation @(Model.OuvrirCreation ? "data-auto" : "")><i class="bi bi-plus-lg me-1"></i>Nouveau prospect</button>
-    </div>
-</header>
-
-<partial name="_BandeauDemo" />
-
-<section class="card sv-kpis" aria-label="Résumé des prospects">
-    <div class="sv-kpi">
-        <div class="sv-kpi-label"><i class="bi bi-people"></i>Prospects</div>
-        <div class="sv-kpi-value" data-compteur="prospects">—</div>
-        <div class="sv-kpi-detail">contacts au total</div>
-    </div>
-    <div class="sv-kpi">
-        <div class="sv-kpi-label"><i class="bi bi-briefcase"></i>Opportunités actives</div>
-        <div class="sv-kpi-value" data-compteur="actives">—</div>
-        <div class="sv-kpi-detail">hors gagnées et perdues</div>
-    </div>
-    <div class="sv-kpi">
-        <div class="sv-kpi-label"><i class="bi bi-stars"></i>Nouveaux prospects</div>
-        <div class="sv-kpi-value" data-compteur="nouveaux">—</div>
-        <div class="sv-kpi-detail">ajoutés depuis 7 jours</div>
-    </div>
-    <div class="sv-kpi sv-ton-attention">
-        <div class="sv-kpi-label"><i class="bi bi-alarm"></i>Suivi requis</div>
-        <div class="sv-kpi-value" data-compteur="suivis">—</div>
-        <div class="sv-kpi-detail">suivi dû ou non planifié</div>
-    </div>
-</section>
-
-<section class="card pr-module" aria-label="Liste des prospects">
-    <div class="pr-toolbar">
-        <div class="pr-search">
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <input type="search" class="form-control" id="f-recherche" placeholder="Rechercher par nom, courriel ou téléphone" aria-label="Rechercher un prospect" autocomplete="off" />
-        </div>
-        <div class="pr-vues btn-group" role="group" aria-label="Mode d'affichage">
-            <input type="radio" class="btn-check" name="vue" id="vue-liste" value="liste" checked />
-            <label class="btn btn-sm" for="vue-liste"><i class="bi bi-list-ul me-1"></i>Liste</label>
-            <input type="radio" class="btn-check" name="vue" id="vue-pipeline" value="pipeline" />
-            <label class="btn btn-sm" for="vue-pipeline"><i class="bi bi-kanban me-1"></i>Pipeline</label>
+<div class="pr-page">
+    <div class="pr-haut">
+        <nav class="pr-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Prospects</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici. *@
+        <div class="pr-demo-puce" role="note" title="Prospects fictifs. Vos modifications restent dans cet onglet et ne sont jamais enregistrées.">
+            <span class="pr-chip-demo">Démo</span>
+            <span class="pr-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="pr-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="pr-en-ligne"><span class="pr-point-vert" aria-hidden="true"></span>En ligne</span>
         </div>
     </div>
 
-    <div class="pr-filtres">
-        <select class="form-select form-select-sm" id="f-etape" aria-label="Filtrer par étape">
-            <option value="">Toutes les étapes</option>
-            @foreach (var e in ReferentielsVente.Etapes)
-            {
-                <option value="@e">@FormatVente.Libelle(e)</option>
-            }
-        </select>
-        <select class="form-select form-select-sm" id="f-source" aria-label="Filtrer par source">
-            <option value="">Toutes les sources</option>
-            @foreach (var (cle, libelle) in ReferentielsVente.Sources)
-            {
-                <option value="@cle">@libelle</option>
-            }
-        </select>
-        <select class="form-select form-select-sm" id="f-conseiller" aria-label="Filtrer par conseiller">
-            <option value="">Tous les conseillers</option>
-            @foreach (var c in Model.Donnees.Conseillers)
-            {
-                <option value="@c.Id">@(c.Id == Model.Donnees.ConseillerConnecteId ? "Mes prospects" : c.Nom + " (fictif)")</option>
-            }
-        </select>
-        <select class="form-select form-select-sm" id="f-tri" aria-label="Trier">
-            <option value="activite">Activité la plus récente</option>
-            <option value="creation">Ajoutés récemment</option>
-            <option value="suivi">Prochain suivi</option>
-            <option value="nom">Nom (A à Z)</option>
-        </select>
-        <div class="form-check form-switch pr-switch">
-            <input class="form-check-input" type="checkbox" role="switch" id="f-suivi" />
-            <label class="form-check-label" for="f-suivi">Suivi requis</label>
+    <header class="pr-entete">
+        <div>
+            <p class="pr-label">Prospects</p>
+            <h1 class="pr-titre">Prospects et opportunités</h1>
+            <p class="pr-intro">Vos contacts, leurs projets d'achat et le prochain suivi à effectuer.</p>
         </div>
-        <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
-    </div>
+        <button type="button" class="pr-btn-sapin" data-ouvrir-creation @(Model.OuvrirCreation ? "data-auto" : "")><i class="bi bi-plus-lg"></i>Nouveau prospect</button>
+    </header>
 
-    <div class="pr-resultat" id="resultat" aria-live="polite"></div>
+    <section class="pr-chiffres" aria-label="Résumé des prospects">
+        <div class="pr-verre pr-chiffre">
+            <span class="pr-chiffre-valeur" data-compteur="prospects">—</span>
+            <span class="pr-chiffre-libelle">contacts au total</span>
+        </div>
+        <div class="pr-verre pr-chiffre">
+            <span class="pr-chiffre-valeur" data-compteur="actives">—</span>
+            <span class="pr-chiffre-libelle">opportunités actives</span>
+        </div>
+        <div class="pr-verre pr-chiffre">
+            <span class="pr-chiffre-valeur" data-compteur="nouveaux">—</span>
+            <span class="pr-chiffre-libelle">nouveaux depuis 7 jours</span>
+        </div>
+        <div class="pr-verre pr-chiffre">
+            <span class="pr-chiffre-valeur" data-compteur="suivis">—</span>
+            <span class="pr-chiffre-libelle">suivi requis<span class="pr-point" data-point-suivis role="img" aria-label="à traiter" hidden></span></span>
+        </div>
+    </section>
 
-    <div id="vue-liste-contenu" class="table-responsive">
-        <table class="table pr-table mb-0">
-            <thead>
-                <tr>
-                    <th scope="col">Prospect</th>
-                    <th scope="col">Source et conseiller</th>
-                    <th scope="col">Recherche</th>
-                    <th scope="col">Étape</th>
-                    <th scope="col">Dernière interaction</th>
-                    <th scope="col">Prochaine action</th>
-                </tr>
-            </thead>
-            <tbody id="liste-corps"></tbody>
-        </table>
-    </div>
-
-    <div id="vue-pipeline-contenu" hidden>
-        <div class="pr-pipeline-options">
-            <div class="form-check form-switch pr-switch">
-                <input class="form-check-input" type="checkbox" role="switch" id="f-clotures" checked />
-                <label class="form-check-label" for="f-clotures">Afficher Gagné et Perdu</label>
+    <section class="pr-verre pr-module" aria-label="Liste des prospects">
+        <div class="pr-outils">
+            <div class="pr-recherche">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" id="f-recherche" placeholder="Nom, courriel ou téléphone" aria-label="Rechercher un prospect" autocomplete="off" />
             </div>
-            <span class="small text-muted">Une carte = une opportunité. Faites défiler horizontalement pour voir toutes les étapes.</span>
+            <div class="pr-bascule" role="group" aria-label="Mode d'affichage">
+                <input type="radio" class="btn-check" name="vue" id="vue-liste" value="liste" checked />
+                <label for="vue-liste"><i class="bi bi-list-ul"></i>Liste</label>
+                <input type="radio" class="btn-check" name="vue" id="vue-pipeline" value="pipeline" />
+                <label for="vue-pipeline"><i class="bi bi-kanban"></i>Pipeline</label>
+            </div>
+            @* Les étapes sont regroupées en cinq colonnes (voir GROUPES dans prospects-liste.js). *@
+            <select class="pr-filtre" id="f-etape" aria-label="Filtrer par étape">
+                <option value="">Étapes</option>
+                <option value="nouveau">Nouveau</option>
+                <option value="contacte">Contacté</option>
+                <option value="rencontre">Rencontre</option>
+                <option value="proposition">Proposition</option>
+                <option value="negociation">Négociation</option>
+                <option value="gagne">Gagné</option>
+                <option value="perdu">Perdu</option>
+            </select>
+            <select class="pr-filtre" id="f-source" aria-label="Filtrer par source">
+                <option value="">Sources</option>
+                @foreach (var (cle, libelle) in ReferentielsVente.Sources)
+                {
+                    <option value="@cle">@libelle</option>
+                }
+            </select>
+            <select class="pr-filtre" id="f-conseiller" aria-label="Filtrer par conseiller">
+                <option value="">Conseillers</option>
+                @foreach (var c in Model.Donnees.Conseillers)
+                {
+                    <option value="@c.Id">@(c.Id == Model.Donnees.ConseillerConnecteId ? "Mes prospects" : c.Nom + " (fictif)")</option>
+                }
+            </select>
+            <select class="pr-filtre" id="f-tri" aria-label="Trier">
+                <option value="activite">Plus récents</option>
+                <option value="creation">Ajoutés récemment</option>
+                <option value="suivi">Prochain suivi</option>
+                <option value="nom">Nom (A à Z)</option>
+            </select>
+            <div class="form-check form-switch pr-interrupteur">
+                <input class="form-check-input" type="checkbox" role="switch" id="f-suivi" />
+                <label class="form-check-label" for="f-suivi">Suivi requis</label>
+            </div>
         </div>
-        <div class="pr-board" id="pipeline" role="list" aria-label="Pipeline des opportunités"></div>
-    </div>
 
-    <div class="pr-etat-vide" id="etat-vide" hidden>
-        <i class="bi bi-search"></i>
-        <strong>Aucun résultat</strong>
-        <span>Aucun prospect ne correspond à ces critères.</span>
-        <button type="button" class="btn btn-sm btn-outline-primary" data-effacer-filtres>Effacer les filtres</button>
-    </div>
-    <div class="pr-etat-vide" id="etat-aucun" hidden>
-        <i class="bi bi-person-plus"></i>
-        <strong>Aucun prospect pour l'instant</strong>
-        <span>Ajoutez votre premier prospect pour commencer le suivi commercial.</span>
-        <button type="button" class="btn btn-sm btn-primary" data-ouvrir-creation>Nouveau prospect</button>
-    </div>
-</section>
+        <div class="pr-resultat-ligne">
+            <span class="pr-resultat" id="resultat" aria-live="polite"></span>
+            <button type="button" class="pr-lien" data-effacer-filtres hidden>Effacer les filtres</button>
+        </div>
+
+        <div id="vue-liste-contenu" class="pr-tableau-zone">
+            <table class="pr-tableau">
+                <thead>
+                    <tr>
+                        <th scope="col">Prospect</th>
+                        <th scope="col">Source et conseiller</th>
+                        <th scope="col">Recherche</th>
+                        <th scope="col">Étape</th>
+                        <th scope="col">Dernière interaction</th>
+                        <th scope="col">Prochaine action</th>
+                    </tr>
+                </thead>
+                <tbody id="liste-corps"></tbody>
+            </table>
+            <nav class="pr-pagination" id="pagination-liste" aria-label="Pagination des prospects" hidden></nav>
+        </div>
+
+        <div id="vue-pipeline-contenu" hidden>
+            <div class="pr-colonnes" id="pipeline" role="list" aria-label="Pipeline des opportunités"></div>
+        </div>
+
+        <div class="pr-etat-vide" id="etat-vide" hidden>
+            <strong>Aucun prospect ne correspond.</strong>
+            <span>Modifiez la recherche ou les filtres.</span>
+            <button type="button" class="pr-lien" data-effacer-filtres>Effacer les filtres</button>
+        </div>
+        <div class="pr-etat-vide" id="etat-aucun" hidden>
+            <strong>Aucun prospect pour l'instant</strong>
+            <span>Ajoutez votre premier prospect pour commencer le suivi commercial.</span>
+            <button type="button" class="pr-btn-sapin" data-ouvrir-creation>Nouveau prospect</button>
+        </div>
+    </section>
+</div>
 
 <partial name="_TiroirProspect" model="Model" />
 <partial name="_DonneesProspects" model="Model" />

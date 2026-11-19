@@ -1,6 +1,7 @@
 namespace Phineas.Models.ViewModels.Conseiller;
 
-// Une entrée sans Controleur est affichée comme « Bientôt » : la page n'existe pas encore.
+// Une entrée sans Controleur n'est pas encore cliquable : sa page arrive avec un prochain module.
+// Une entrée avec Enfants s'affiche comme un groupe dépliable.
 public record EntreeNavigation(
     string Libelle,
     string Icone,
@@ -9,35 +10,24 @@ public record EntreeNavigation(
     IReadOnlyList<EntreeNavigation>? Enfants = null
 )
 {
-    public bool Disponible => Controleur is not null || (Enfants?.Any(e => e.Disponible) ?? false);
+    public bool Disponible => Controleur is not null;
 }
 
 public static class NavigationVendeur
 {
     public static readonly IReadOnlyList<EntreeNavigation> Menu =
     [
-        new("Tableau de bord", "bi-speedometer2", "Conseiller", "Index"),
-        new("Prospects", "bi-person-lines-fill", "Prospects", "Index"),
-        new("Rendez-vous", "bi-calendar-event"),
+        new("Accueil", "bi-house", "Conseiller", "Index"),
+        new("Centre d'actions", "bi-lightning-charge"),
+        new("Prospects", "bi-people", "Prospects", "Index"),
+        new("Rendez-vous", "bi-calendar4"),
         new(
             "Ventes",
             "bi-receipt",
             Enfants:
             [
-                new("Soumissions", "bi-file-earmark-text"),
-                new("Transactions", "bi-cash-coin"),
-            ]
-        ),
-        new("Inventaire", "bi-car-front"),
-        new(
-            "Outils",
-            "bi-grid",
-            Enfants:
-            [
-                new("Suivis", "bi-arrow-repeat"),
-                new("Assistant vendeur", "bi-stars"),
-                new("Référencement", "bi-share"),
-                new("Statistiques", "bi-bar-chart-line"),
+                new("Nouvelle soumission", "bi-file-earmark-plus"),
+                new("Nouvelle transaction", "bi-cash-coin"),
             ]
         ),
     ];
