@@ -24,6 +24,8 @@
   var resultat = document.getElementById("resultat");
   var periode = document.getElementById("agenda-periode");
   var panneau = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("selection"));
+  var boutonFiltres = document.querySelector("[data-basculer-filtres]");
+  var panneauFiltres = document.getElementById("ag-filtres");
 
   // ---------- Dates ----------
   function debutJour(d) {
@@ -63,7 +65,7 @@
   // ---------- État de la page ----------
   var hash = window.location.hash.replace("#", "");
   var etat = {
-    vue: VUES.indexOf(hash) >= 0 ? hash : window.matchMedia("(max-width: 767.98px)").matches ? "liste" : "semaine",
+    vue: VUES.indexOf(hash) >= 0 ? hash : window.matchMedia("(max-width: 767.98px)").matches ? "liste" : "jour",
     date: depuisChamp(racine.dataset.date) || debutJour(new Date()),
     selection: null,
   };
@@ -268,6 +270,65 @@
     return html;
   }
 
+  // ---------- Vue jour : une ligne par rendez-vous (maquette 04) ----------
+  // « 09:30 » : heure sur deux chiffres, comme dans la maquette.
+  function heureCourte(date) {
+    var heures = String(date.getHours()).padStart(2, "0");
+    var minutes = String(date.getMinutes()).padStart(2, "0");
+    return heures + ":" + minutes;
+  }
+
+  function aConfirmerPourClient(r) {
+    var actions = R.actionsRequises(r);
+    for (var i = 0; i < actions.length; i++) {
+      if (actions[i].code === "a-confirmer") return true;
+    }
+    return false;
+  }
+
+  // Statut affiché à droite : « À confirmer » passe avant le statut enregistré.
+  function statutJour(r) {
+    if (aConfirmerPourClient(r)) return { texte: "À confirmer", classe: "is-aconfirmer" };
+    if (r.statut === "Confirme") return { texte: "Confirmé", classe: "is-confirme" };
+    return { texte: R.statut(r.statut).libelle, classe: "" };
+  }
+
+  // Points à vérifier autres que la confirmation (conflit, véhicule indisponible, résultat à saisir…).
+  function autresPoints(r) {
+    var nombre = 0;
+    R.actionsRequises(r).forEach(function (action) {
+      if (action.code !== "a-confirmer") nombre++;
+    });
+    return nombre;
+  }
+
+  function vueJour(liste) {
+    var tries = liste.slice().sort(function (a, b) { return R.debut(a) - R.debut(b); });
+    if (tries.length === 0) return '<p class="ag-jour-vide">Aucun rendez-vous ce jour-là.</p>';
+
+    var html = '<ol class="ag-jour">';
+    tries.forEach(function (r) {
+      var vehicule = R.vehicule(r.vehiculeId);
+      var details = R.type(r.type).libelle;
+      if (vehicule) details += " · " + R.nomVehicule(vehicule);
+      var statut = statutJour(r);
+      var points = autresPoints(r);
+      var choisi = r.id === etat.selection;
+
+      html += '<li class="ag-jour-ligne' + (R.estActif(r) ? "" : " is-clos") + '">' +
+        '<div class="ag-jour-heure"><span>' + heureCourte(R.debut(r)) + "</span><small>" + heureCourte(R.fin(r)) + "</small></div>" +
+        '<button type="button" class="ag-jour-carte' + (choisi ? " is-selection" : "") + '" data-rdv="' + esc(r.id) + '" aria-pressed="' + choisi + '" aria-label="' + esc(description(r)) + '">' +
+        '<span class="ag-jour-id"><strong>' + esc(UI.nomClient(r)) + "</strong><span>" + esc(details) + "</span>";
+      if (points > 0) {
+        html += '<span class="ag-jour-alerte"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>' + points + " point" + (points > 1 ? "s" : "") + " à vérifier</span>";
+      }
+      html += "</span>" +
+        '<span class="ag-statut ' + statut.classe + '"><span class="ag-point" aria-hidden="true"></span>' + esc(statut.texte) + "</span>" +
+        "</button></li>";
+    });
+    return html + "</ol>";
+  }
+
   // ---------- Panneau de sélection ----------
   function rendreSelection() {
     var z = document.querySelector('[data-zone="selection"]');
@@ -300,18 +361,30 @@
 
   // ---------- Rendez-vous à confirmer ----------
   function rendreAConfirmer() {
-    var l = aConfirmer();
-    document.querySelector('[data-zone="nb-aconfirmer"]').textContent = String(l.length);
-    document.querySelector('[data-zone="aconfirmer"]').innerHTML = l.length ? l.map(function (r) {
-      var c = P.contact(r.prospectId);
+    var liste = aConfirmer();
+    document.querySelector('[data-zone="nb-aconfirmer"]').textContent = "(" + liste.length + ")";
+    var cible = document.querySelector('[data-zone="aconfirmer"]');
+    if (liste.length === 0) {
+      cible.innerHTML = '<li class="ag-ac-vide">Aucun rendez-vous à confirmer.</li>';
+      return;
+    }
+
+    var html = "";
+    liste.forEach(function (r) {
+      // « 11:00 » aujourd'hui, « Demain 10:00 » sinon.
+      var quand = heureCourte(R.debut(r));
+      if (!R.memeJour(r.debut, new Date())) quand = R.jourTexte(r.debut) + " " + quand;
       var confirmable = !R.refus(r, "Confirme");
-      return '<li><div class="rv-ac-tete"><strong>' + esc(UI.nomClient(r)) + "</strong>" + UI.pastilleStatut(r.statut) + "</div>" +
-        '<span class="pr-sous d-block">' + esc(R.creneauTexte(r)) + " · " + esc(R.type(r.type).libelle) + "</span>" +
-        '<span class="pr-sous d-block"><i class="bi bi-chat-dots me-1"></i>Préfère : ' + esc(UI.moyenPrefere(c) || "non précisé") + (UI.coordonnee(c) ? " · " + esc(UI.coordonnee(c)) : "") + "</span>" +
-        '<div class="d-flex flex-wrap align-items-center gap-2 mt-2">' +
-        (confirmable ? '<button type="button" class="btn btn-sm btn-outline-primary py-0" data-confirmer="' + esc(r.id) + '"><i class="bi bi-check2 me-1"></i>Marquer comme confirmé</button>' : '<span class="pr-sous">' + esc(R.refus(r, "Confirme")) + "</span>") +
-        '<button type="button" class="btn btn-sm btn-link p-0" data-rappel="' + esc(r.id) + '">Préparer un rappel</button></div></li>';
-    }).join("") : '<li class="sv-empty"><i class="bi bi-check2-circle"></i><span>Aucun rendez-vous à confirmer.</span></li>';
+
+      html += '<li><div class="ag-ac-id"><strong>' + esc(UI.nomClient(r)) + "</strong>" +
+        "<span>" + esc(quand + " · " + R.type(r.type).libelle) + "</span></div>" +
+        '<div class="ag-ac-actions"><button type="button" class="ag-btn-blanc" data-rappel="' + esc(r.id) + '">Préparer le rappel</button>';
+      if (confirmable) {
+        html += '<button type="button" class="ag-ac-confirmer" data-confirmer="' + esc(r.id) + '">Marquer comme confirmé</button>';
+      }
+      html += "</div></li>";
+    });
+    cible.innerHTML = html;
   }
 
   // ---------- Rendu global ----------
@@ -325,15 +398,18 @@
     f.date.value = champDate(etat.date);
     periode.textContent = libellePeriode(p);
     document.querySelector("[data-effacer-filtres]").hidden = !filtresActifs();
+    // Le bouton « Filtres » signale qu'un filtre replié est actif.
+    boutonFiltres.classList.toggle("is-actif", filtresActifs() && !f.action.checked);
 
     var filtres = R.liste().filter(correspond);
     var visibles = filtres.filter(function (r) { return dansPeriode(r, p); });
     resultat.textContent = visibles.length + " rendez-vous sur la période" + (filtresActifs() ? " (filtres actifs)" : "");
-    if (etat.vue === "jour") calendrier.innerHTML = grille([debutJour(etat.date)], visibles);
+    if (etat.vue === "jour") calendrier.innerHTML = vueJour(visibles);
     else if (etat.vue === "semaine") calendrier.innerHTML = grille([0, 1, 2, 3, 4, 5, 6].map(function (i) { return ajouterJours(p.debut, i); }), visibles);
     else if (etat.vue === "mois") calendrier.innerHTML = mois(filtres.filter(function (r) { return dansPeriode(r, { debut: debutSemaine(p.debut), fin: ajouterJours(debutSemaine(p.debut), 42) }); }));
     else calendrier.innerHTML = vueListe(visibles, p);
     calendrier.dataset.vue = etat.vue;
+    racine.dataset.vue = etat.vue;
     vide.hidden = !(etat.vue === "liste" && !visibles.length);
     history.replaceState(null, "", window.location.pathname + "?date=" + champDate(etat.date) + "#" + etat.vue);
   }
@@ -345,9 +421,12 @@
     P.notifier("Rendez-vous marqué comme confirmé (déclaration locale, aucun message envoyé).", annuler);
   }
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-rdv], [data-aller-jour], [data-naviguer], [data-aujourdhui], [data-confirmer], [data-rappel], [data-effacer-filtres]");
+    var b = e.target.closest("[data-rdv], [data-aller-jour], [data-naviguer], [data-aujourdhui], [data-confirmer], [data-rappel], [data-effacer-filtres], [data-basculer-filtres]");
     if (!b) return;
-    if (b.dataset.rdv) {
+    if (b.hasAttribute("data-basculer-filtres")) {
+      panneauFiltres.hidden = !panneauFiltres.hidden;
+      b.setAttribute("aria-expanded", String(!panneauFiltres.hidden));
+    } else if (b.dataset.rdv) {
       etat.selection = b.dataset.rdv;
       rendre();
       panneau.show();

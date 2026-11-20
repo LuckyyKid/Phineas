@@ -56,3 +56,6 @@ Desktop.ini
 .env
 .env.*
 *.pfx
+
+# Maquettes et captures de référence (locales, non versionnées)
+Phineas/Views/image/
