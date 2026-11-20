@@ -28,7 +28,7 @@ public static class NavigationVendeur
             [
                 new("Soumissions", "bi-file-earmark-text", "Soumissions", "Index"),
                 new("Nouvelle soumission", "bi-file-earmark-plus", "Soumissions", "Nouvelle"),
-                new("Transactions", "bi-cash-coin", "Transactions", "Index"),
+                new("Transactions", "bi-cash-stack", "Transactions", "Index"),
                 new("Nouvelle transaction", "bi-cash-coin", "Transactions", "Nouvelle"),
             ]
         ),

@@ -86,19 +86,6 @@
   color: var(--tx-critique);
   font-weight: 700;
 }
-.tx-ok {
-  display: inline-flex;
-  gap: 0.3rem;
-  color: var(--tx-ok);
-  font-size: 0.78rem;
-  font-weight: 500;
-}
-.tx-erreur {
-  color: var(--tx-critique);
-}
-.tx-erreur[hidden] {
-  display: none;
-}
 .tx-titre-ref {
   margin-left: 0.4rem;
   color: var(--ph-muted);
@@ -449,16 +436,14 @@
 }
 .tx-conditions,
 .tx-pieces,
-.tx-taches,
-.tx-verif {
+.tx-taches {
   list-style: none;
   margin: 0 0 0.75rem;
   padding: 0;
 }
 .tx-conditions li,
 .tx-pieces li,
-.tx-taches li,
-.tx-verif li {
+.tx-taches li {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -609,17 +594,82 @@
   color: #0f766e;
 }
 
-/* ---------- Parcours de création ---------- */
-.tx-modes {
-  display: grid;
-  gap: 0.35rem;
+/* ---------- Nouvelle transaction (maquette 08) ----------
+   Complète assistant-verre.css : seulement ce qui est propre aux transactions (origine, alertes,
+   champs de l'étape 3, listes de vérification). Limité à .nt-page. */
+.nt-page .nt-origine { display: inline-flex; align-items: center; gap: 10px; margin: -12px 0 28px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--ns-line-2); background: rgba(255, 255, 255, .7); font-size: 14.5px; color: var(--ns-text); }
+.nt-page .nt-origine[hidden] { display: none; }
+.nt-page .nt-origine i { color: var(--ns-sapin-texte); }
+.nt-carte-suite { margin-top: 20px; }
+.nt-bloc { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--ns-line-2); }
+.nt-bloc[hidden] { display: none; }
+.nt-label-note { margin-left: 8px; letter-spacing: .06em; text-transform: none; color: var(--ns-ambre-ink); }
+
+/* Petits textes dans les listes ns-details et les tuiles */
+.nt-sous { display: block; margin-top: 2px; font-size: 13.5px; color: var(--ns-muted); }
+.nt-a-verifier { color: var(--ns-ambre-ink); font-weight: 500; }
+.nt-etiquette-brouillon { padding: 2px 10px; border-radius: 999px; background: #FBF1DE; color: var(--ns-ambre-ink); font-size: 13px; white-space: nowrap; }
+.nt-client-info { font-size: 13px; }
+.ns-client-id .nt-client-info.is-acceptee { color: var(--ns-sapin-texte); }
+.ns-fin .nt-sous, .ns-fin .ns-attenue { color: rgba(255, 255, 255, .66); }
+.nt-historique { margin: 0; padding: 0; list-style: none; }
+.nt-historique li + li { margin-top: 8px; }
+.ns-tuile:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Alertes : texte et icône seulement, sans bandeau coloré */
+.nt-alerte { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 14px; font-size: 14.5px; color: var(--ns-ambre-ink); }
+.nt-alerte i { margin-top: 2px; }
+.nt-alerte a { color: inherit; font-weight: 500; }
+.nt-alerte.is-bloquant { color: #B42318; }
+.nt-erreur { margin: 14px 0 0; font-size: 14px; color: #B42318; }
+.nt-erreur[hidden] { display: none; }
+
+/* Étape 3 : champs en pilule */
+.nt-etiquette { display: block; margin: 0 0 8px; font-size: 14.5px; color: var(--ns-text); }
+.nt-champ {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--ns-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ns-ink);
 }
-.tx-verif li > i {
-  margin-top: 0.15rem;
-}
-.tx-verif li > span {
-  flex: 1;
-  min-width: 0;
+.nt-champ:focus { outline: none; border-color: var(--ns-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.nt-champ.is-invalid { border-color: #B42318; }
+.nt-zone-texte { height: auto; min-height: 76px; padding: 12px 18px; border-radius: 22px; resize: vertical; }
+.nt-montant { position: relative; }
+.nt-montant .nt-champ { padding-right: 40px; }
+.nt-suffixe { position: absolute; right: 18px; top: 22px; transform: translateY(-50%); color: var(--ns-muted); pointer-events: none; }
+.nt-aide-champ { margin: 8px 0 20px; font-size: 13.5px; color: var(--ns-muted); }
+.nt-page fieldset { min-width: 0; margin: 0; }
+/* Bootstrap fait flotter la légende : elle reste ainsi dans la carte au lieu de se poser sur la bordure. */
+.nt-page legend.ns-label { float: left; width: 100%; }
+.nt-interrupteur { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; padding-left: 0; }
+.nt-interrupteur .form-check-input { float: none; width: 42px; height: 24px; margin: 0; cursor: pointer; }
+.nt-interrupteur .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.nt-interrupteur .form-check-input:focus { border-color: var(--ns-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.nt-interrupteur .form-check-label { font-size: 15px; color: var(--ns-ink); cursor: pointer; }
+.nt-grille-reprise { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; }
+.nt-grille-reprise[hidden] { display: none; }
+.nt-pleine-largeur { grid-column: 1 / -1; }
+.nt-grille-reprise .nt-aide-champ { margin: 0; }
+
+/* Étape 4 : listes de vérification */
+.nt-sous-titre { margin: 22px 0 10px; font-family: var(--ns-mono); font-size: 11.5px; font-weight: 400; letter-spacing: .14em; text-transform: uppercase; color: var(--ns-muted); }
+[data-zone="verification"] > .nt-sous-titre:first-child,
+[data-zone="verification"] > .nt-alerte + .nt-sous-titre { margin-top: 4px; }
+.nt-liste { margin: 0; padding: 0; list-style: none; }
+.nt-liste li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--ns-line-2); font-size: 15px; color: var(--ns-ink); }
+.nt-liste li > i { margin-top: 2px; color: var(--ns-muted); }
+.nt-liste li > i.is-ok { color: var(--ns-sapin-texte); }
+.nt-liste li > i.is-attention { color: var(--ns-ambre-ink); }
+.nt-liste li > span { flex: 1; min-width: 0; }
+
+@media (max-width: 575.98px) {
+  .nt-grille-reprise { grid-template-columns: 1fr; }
 }
 
 /* ---------- Tableau de bord ---------- */

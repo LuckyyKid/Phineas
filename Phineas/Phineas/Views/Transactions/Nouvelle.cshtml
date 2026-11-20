@@ -1,168 +1,204 @@
+@* Assistant « Nouvelle transaction » en 4 étapes (client et opportunité, véhicule et proposition, mode d'achat, vérification),
+   puis écran de confirmation. Design : maquette 08-nouvelle-transaction.
+   Données : TransactionsController.Nouvelle (point de départ éventuel : opportunité, soumission, rendez-vous).
+   Interactions : wwwroot/js/transactions-nouvelle.js. Styles : assistant-verre.css (commun) et bloc « Nouvelle transaction » de transactions.css. *@
 @using Phineas.Models.ViewModels.Conseiller
 @model TransactionsPageViewModel
 @{
     ViewData["Title"] = "Nouvelle transaction";
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+
+    // Phrase affichée sous chaque mode d'achat (les clés viennent de ReferentielsTransactions.ModesAchat).
+    var aideModes = new Dictionary<string, string>
+    {
+        ["comptant"] = "Le client paie le solde, sans financement.",
+        ["financement"] = "Dossier F&A ouvert automatiquement",
+        ["partiel"] = "Une part comptant, le reste financé. Dossier F&A ouvert automatiquement",
+        ["indetermine"] = "À préciser avec le client avant la livraison.",
+    };
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/assistant-verre.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
 }
 
-<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Transactions</a>
-
-<header class="sv-head">
-    <div>
-        <h1>Nouvelle transaction</h1>
-        <p class="text-muted mb-0">Ouvrir le dossier d'achat d'un client à partir d'une proposition acceptée.</p>
+<div class="ns-page nt-page" id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId" data-soumission="@Model.SoumissionId"
+     data-version="@Model.Version" data-rendezvous="@Model.RendezVousId" data-url-liste="@Url.Action("Index")">
+    <div class="ns-haut">
+        <nav class="ns-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Nouvelle transaction</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
+        <div class="ns-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
+            <span class="ns-chip-demo">Démo</span>
+            <span class="ns-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="ns-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="ns-en-ligne"><span class="ns-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
     </div>
-</header>
 
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+    <a class="ns-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Transactions</a>
+    <h1 class="ns-titre">Nouvelle transaction</h1>
+    <p class="ns-intro">Ouvrir le dossier d'achat d'un client à partir d'une proposition acceptée.</p>
+    <p class="nt-origine" data-zone="origine" hidden></p>
 
-<div id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId" data-soumission="@Model.SoumissionId"
-     data-version="@Model.Version" data-rendezvous="@Model.RendezVousId">
-    <div class="alert alert-info small tx-origine-parcours" data-zone="origine" hidden></div>
+    <div data-assistant>
+        <ol class="ns-etapes" aria-label="Étapes de création">
+            <li><button type="button" data-aller="1"><span class="ns-num">1</span>Client et opportunité</button></li>
+            <li><button type="button" data-aller="2"><span class="ns-num">2</span>Véhicule et proposition</button></li>
+            <li><button type="button" data-aller="3"><span class="ns-num">3</span>Mode d'achat</button></li>
+            <li><button type="button" data-aller="4"><span class="ns-num">4</span>Vérification</button></li>
+        </ol>
 
-    <ol class="so-etapes" aria-label="Étapes de création">
-        <li><button type="button" data-aller="1"><span>1</span>Client et opportunité</button></li>
-        <li><button type="button" data-aller="2"><span>2</span>Véhicule et proposition</button></li>
-        <li><button type="button" data-aller="3"><span>3</span>Mode d'achat</button></li>
-        <li><button type="button" data-aller="4"><span>4</span>Vérification</button></li>
-    </ol>
+        @* ---------- Étape 1 : client et opportunité ---------- *@
+        <section class="ns-etape ns-deux-cartes" data-etape="1" aria-labelledby="titre-etape-1">
+            <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et opportunité</h2>
+            <div class="ns-verre ns-carte">
+                <p class="ns-label">Client</p>
+                <div class="ns-recherche">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
+                </div>
+                <div class="ns-clients" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+            </div>
+            <div class="ns-verre ns-carte">
+                <p class="ns-label">Opportunité</p>
+                <div data-zone="opportunite">
+                    <div class="ns-vide"><i class="bi bi-person"></i><span>Choisissez d'abord un prospect.</span></div>
+                </div>
+            </div>
+        </section>
 
-    @* ---------- Étape 1 ---------- *@
-    <section class="so-etape" data-etape="1" aria-labelledby="titre-etape-1">
-        <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et opportunité</h2>
-        <div class="row g-4">
-            <div class="col-lg-5">
-                <div class="card">
-                    <div class="card-header sv-card-header"><span><i class="bi bi-person me-2"></i>Client</span></div>
-                    <div class="card-body pb-2">
-                        <div class="pr-search mw-100">
-                            <i class="bi bi-search" aria-hidden="true"></i>
-                            <input type="search" class="form-control" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
-                        </div>
+        @* ---------- Étape 2 : véhicule et proposition ---------- *@
+        <section class="ns-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
+            <div class="ns-verre ns-carte">
+                <div class="ns-question">
+                    <h2 id="titre-etape-2">Quelle proposition a été acceptée ?</h2>
+                    <span data-zone="pour-client-2"></span>
+                </div>
+                <div class="ns-tuiles" role="radiogroup" aria-label="Version de soumission" data-zone="versions"></div>
+
+                <div class="nt-bloc" data-zone="bloc-vehicules" hidden>
+                    <p class="ns-label">Véhicule envisagé <span class="nt-label-note">Brouillon sans soumission</span></p>
+                    <div class="ns-tuiles" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
+                </div>
+            </div>
+
+            <section class="ns-verre ns-carte nt-carte-suite" aria-labelledby="titre-resume-proposition">
+                <p class="ns-label" id="titre-resume-proposition">Résumé de la proposition</p>
+                <div data-zone="resume-proposition" aria-live="polite"></div>
+            </section>
+        </section>
+
+        @* ---------- Étape 3 : mode d'achat ---------- *@
+        <section class="ns-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
+            <form id="form-mode-achat" novalidate>
+                <div class="ns-verre ns-carte">
+                    <div class="ns-question">
+                        <h2 id="titre-etape-3">Comment le client achète-t-il ?</h2>
+                        <span data-zone="pour-client-3"></span>
                     </div>
-                    <div class="so-choix-liste" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+                    <div class="ns-tuiles" role="radiogroup" aria-labelledby="titre-etape-3">
+                        @foreach (var (cle, libelle) in ReferentielsTransactions.ModesAchat)
+                        {
+                            <button type="button" role="radio" aria-checked="false" class="ns-tuile" data-mode="@cle">
+                                <strong>@libelle</strong>
+                                <span>@aideModes.GetValueOrDefault(cle, "")</span>
+                            </button>
+                        }
+                    </div>
+                    <p class="nt-erreur" data-erreur-mode hidden>Choisissez un mode d'achat (« à déterminer » est possible).</p>
                 </div>
-            </div>
-            <div class="col-lg-7 d-flex flex-column gap-4">
-                <div class="card">
-                    <div class="card-header sv-card-header"><span><i class="bi bi-briefcase me-2"></i>Opportunité</span></div>
-                    <div class="card-body" data-zone="opportunites"><p class="text-muted mb-0">Choisissez d'abord un prospect.</p></div>
-                </div>
-                <div class="card" data-zone="contexte" hidden></div>
-            </div>
-        </div>
-    </section>
 
-    @* ---------- Étape 2 ---------- *@
-    <section class="so-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
-        <h2 class="visually-hidden" id="titre-etape-2">Étape 2 : véhicule et proposition</h2>
-        <div class="row g-4">
-            <div class="col-lg-7">
-                <div class="card">
-                    <div class="card-header sv-card-header"><span><i class="bi bi-file-earmark-text me-2"></i>Version de soumission retenue</span></div>
-                    <div class="card-body" data-zone="versions"></div>
-                </div>
-                <div class="card mt-4" data-zone="carte-vehicules" hidden>
-                    <div class="card-header sv-card-header"><span><i class="bi bi-car-front me-2"></i>Véhicule envisagé</span><span class="pr-sous">Brouillon sans soumission</span></div>
-                    <div class="so-vehicules rv-vehicules" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
-                </div>
-            </div>
-            <div class="col-lg-5">
-                <section class="card pr-resume-collant" aria-labelledby="titre-resume-proposition">
-                    <div class="card-header sv-card-header"><span id="titre-resume-proposition"><i class="bi bi-card-checklist me-2"></i>Résumé de la proposition</span></div>
-                    <div class="card-body" data-zone="resume-proposition" aria-live="polite"></div>
-                </section>
-            </div>
-        </div>
-    </section>
-
-    @* ---------- Étape 3 ---------- *@
-    <section class="so-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
-        <h2 class="visually-hidden" id="titre-etape-3">Étape 3 : mode d'achat</h2>
-        <form class="card" id="form-mode-achat" novalidate>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-lg-6">
-                        <span class="form-label d-block" id="n-mode-titre">Mode d'achat <span class="pr-requis">*</span></span>
-                        <div class="tx-modes" role="radiogroup" aria-labelledby="n-mode-titre">
-                            @foreach (var (cle, libelle) in ReferentielsTransactions.ModesAchat)
-                            {
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="mode" id="n-mode-@cle" value="@cle" />
-                                    <label class="form-check-label" for="n-mode-@cle">@libelle</label>
-                                </div>
-                            }
-                        </div>
-                        <div class="tx-erreur small" data-erreur-mode hidden>Choisissez un mode d'achat (« à déterminer » est possible).</div>
-                        <div class="mt-3">
-                            <label class="form-label" for="n-depot">Dépôt envisagé <span class="text-muted">(facultatif)</span></label>
-                            <div class="input-group input-group-sm">
-                                <input type="number" class="form-control" id="n-depot" name="depot" min="0" max="100000" step="50" />
-                                <span class="input-group-text">$</span>
-                            </div>
+                <div class="ns-deux-cartes nt-carte-suite">
+                    <div class="ns-verre ns-carte">
+                        <p class="ns-label">Dépôt et précisions</p>
+                        <label class="nt-etiquette" for="n-depot">Dépôt envisagé <span class="ns-attenue">(facultatif)</span></label>
+                        <div class="nt-montant">
+                            <input type="number" class="nt-champ" id="n-depot" name="depot" min="0" max="100000" step="50" />
+                            <span class="nt-suffixe" aria-hidden="true">$</span>
                             <div class="invalid-feedback">Montant invalide.</div>
-                            <div class="form-text" data-zone="aide-depot"></div>
                         </div>
-                        <div class="mt-3">
-                            <label class="form-label" for="n-confirmer">Informations à confirmer <span class="text-muted">(facultatif)</span></label>
-                            <textarea class="form-control" id="n-confirmer" name="aConfirmer" rows="2" maxlength="300" placeholder="Ex. : date de livraison souhaitée par le client"></textarea>
-                        </div>
-                        <p class="pr-note mt-3 mb-0"><i class="bi bi-shield-lock me-1"></i>Aucune donnée bancaire ni financière n'est saisie ici : le dossier de financement est traité par le service F&amp;A.</p>
-                    </div>
-                    <div class="col-lg-6">
-                        <fieldset data-zone="reprise">
-                            <legend class="form-label">Reprise</legend>
-                            <div class="form-check form-switch pr-switch mb-2">
-                                <input class="form-check-input" type="checkbox" role="switch" id="n-reprise" name="avecReprise" />
-                                <label class="form-check-label" for="n-reprise">Le client fait reprendre un véhicule</label>
-                            </div>
-                            <div class="row g-2" data-zone="champs-reprise" hidden>
-                                <div class="col-12"><label class="form-label" for="n-rp-description">Description</label><input class="form-control form-control-sm" id="n-rp-description" name="description" maxlength="80" /></div>
-                                <div class="col-sm-6"><label class="form-label" for="n-rp-marque">Marque</label><input class="form-control form-control-sm" id="n-rp-marque" name="marque" maxlength="40" /></div>
-                                <div class="col-sm-6"><label class="form-label" for="n-rp-modele">Modèle</label><input class="form-control form-control-sm" id="n-rp-modele" name="modele" maxlength="40" /></div>
-                                <div class="col-sm-6"><label class="form-label" for="n-rp-annee">Année</label><input class="form-control form-control-sm" id="n-rp-annee" name="annee" type="number" min="1980" max="2030" /><div class="invalid-feedback">Année invalide.</div></div>
-                                <div class="col-sm-6"><label class="form-label" for="n-rp-km">Kilométrage</label><input class="form-control form-control-sm" id="n-rp-km" name="kilometrage" type="number" min="0" max="1000000" /><div class="invalid-feedback">Kilométrage invalide.</div></div>
-                                <div class="col-12 form-text">Les champs vides seront signalés « à compléter ». La valeur est confirmée par l'évaluateur autorisé : aucune évaluation automatique.</div>
-                            </div>
-                        </fieldset>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </section>
+                        <p class="nt-aide-champ" data-zone="aide-depot"></p>
 
-    @* ---------- Étape 4 ---------- *@
-    <section class="so-etape" data-etape="4" aria-labelledby="titre-etape-4" hidden>
-        <h2 class="visually-hidden" id="titre-etape-4">Étape 4 : vérification initiale</h2>
-        <div class="row g-4">
-            <div class="col-lg-7">
-                <section class="card" aria-labelledby="titre-verification">
-                    <div class="card-header sv-card-header"><span id="titre-verification"><i class="bi bi-shield-check me-2"></i>Vérification initiale</span><span class="badge-soft sv-fictif">Démonstration</span></div>
-                    <div class="card-body" data-zone="verification" aria-live="polite"></div>
-                </section>
+                        <label class="nt-etiquette" for="n-confirmer">Informations à confirmer <span class="ns-attenue">(facultatif)</span></label>
+                        <textarea class="nt-champ nt-zone-texte" id="n-confirmer" name="aConfirmer" rows="2" maxlength="300" placeholder="Ex. : date de livraison souhaitée par le client"></textarea>
+
+                        <p class="ns-note"><i class="bi bi-shield-lock"></i> Aucune donnée bancaire ni financière n'est saisie ici : le dossier de financement est traité par le service F&amp;A.</p>
+                    </div>
+
+                    <fieldset class="ns-verre ns-carte" data-zone="reprise">
+                        <legend class="ns-label">Reprise</legend>
+                        <div class="form-check form-switch nt-interrupteur">
+                            <input class="form-check-input" type="checkbox" role="switch" id="n-reprise" name="avecReprise" />
+                            <label class="form-check-label" for="n-reprise">Le client fait reprendre un véhicule</label>
+                        </div>
+                        <div class="nt-grille-reprise" data-zone="champs-reprise" hidden>
+                            <div class="nt-pleine-largeur">
+                                <label class="nt-etiquette" for="n-rp-description">Description</label>
+                                <input class="nt-champ" id="n-rp-description" name="description" maxlength="80" />
+                            </div>
+                            <div>
+                                <label class="nt-etiquette" for="n-rp-marque">Marque</label>
+                                <input class="nt-champ" id="n-rp-marque" name="marque" maxlength="40" />
+                            </div>
+                            <div>
+                                <label class="nt-etiquette" for="n-rp-modele">Modèle</label>
+                                <input class="nt-champ" id="n-rp-modele" name="modele" maxlength="40" />
+                            </div>
+                            <div>
+                                <label class="nt-etiquette" for="n-rp-annee">Année</label>
+                                <input class="nt-champ" id="n-rp-annee" name="annee" type="number" min="1980" max="2030" />
+                                <div class="invalid-feedback">Année invalide.</div>
+                            </div>
+                            <div>
+                                <label class="nt-etiquette" for="n-rp-km">Kilométrage</label>
+                                <input class="nt-champ" id="n-rp-km" name="kilometrage" type="number" min="0" max="1000000" />
+                                <div class="invalid-feedback">Kilométrage invalide.</div>
+                            </div>
+                            <p class="nt-aide-champ nt-pleine-largeur">Les champs vides seront signalés « à compléter ». La valeur est confirmée par l'évaluateur autorisé : aucune évaluation automatique.</p>
+                        </div>
+                    </fieldset>
+                </div>
+            </form>
+        </section>
+
+        @* ---------- Étape 4 : vérification ---------- *@
+        <section class="ns-etape" data-etape="4" aria-labelledby="titre-etape-4" hidden>
+            <div class="ns-verre ns-carte">
+                <div class="ns-question">
+                    <h2 id="titre-etape-4">Vérifiez avant d'ouvrir le dossier</h2>
+                </div>
+                <dl class="ns-details" data-zone="recapitulatif"></dl>
+                <p class="ns-note">Enregistrement local dans cet onglet uniquement : aucune vente, aucun paiement, aucune réservation réelle du véhicule.</p>
             </div>
-            <div class="col-lg-5">
-                <section class="card pr-resume-collant" aria-labelledby="titre-recap">
-                    <div class="card-header sv-card-header"><span id="titre-recap"><i class="bi bi-card-checklist me-2"></i>Récapitulatif</span></div>
-                    <div class="card-body" data-zone="recapitulatif"></div>
-                </section>
-            </div>
+
+            <section class="ns-verre ns-carte nt-carte-suite" aria-labelledby="titre-verification">
+                <p class="ns-label" id="titre-verification">Vérification initiale</p>
+                <div data-zone="verification" aria-live="polite"></div>
+            </section>
+        </section>
+
+        <div class="ns-boutons">
+            <button type="button" class="ns-btn ns-btn-verre" data-precedent>Précédent</button>
+            <button type="button" class="ns-btn ns-btn-sapin" data-suivant disabled>Suivant<i class="bi bi-arrow-right"></i></button>
+            <button type="button" class="ns-btn ns-btn-sapin" data-creer hidden>Ouvrir la transaction</button>
+            <span class="ns-aide" data-aide aria-live="polite"></span>
+        </div>
+    </div>
+
+    @* ---------- Écran final ---------- *@
+    <section class="ns-fin" data-fin hidden aria-labelledby="titre-fin" tabindex="-1">
+        <span class="ns-fin-icone" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+        <h2 class="ns-fin-titre" id="titre-fin">Transaction ouverte</h2>
+        <dl class="ns-fin-recap" data-zone="recap-fin"></dl>
+        <div class="ns-fin-boutons">
+            <a class="ns-btn ns-btn-blanc" asp-action="Index">Retour : Transactions</a>
+            <a class="ns-btn ns-btn-translucide" href="#" data-ouvrir>Ouvrir la transaction</a>
+            <a class="ns-btn ns-btn-translucide" asp-action="Nouvelle">Recommencer</a>
         </div>
     </section>
-
-    <div class="so-navigation">
-        <button type="button" class="btn btn-outline-secondary" data-precedent>Précédent</button>
-        <span class="so-navigation-aide text-muted small" data-aide aria-live="polite"></span>
-        <button type="button" class="btn btn-primary" data-suivant>Suivant</button>
-        <button type="button" class="btn btn-primary" data-creer hidden><i class="bi bi-check2 me-1"></i>Ouvrir la transaction</button>
-    </div>
 </div>
 
 <partial name="_DonneesModules" model="Model" />
