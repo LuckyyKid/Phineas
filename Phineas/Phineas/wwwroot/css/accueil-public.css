@@ -55,7 +55,9 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 .acc-page *, .acc-page *::before, .acc-page *::after { box-sizing: border-box; }
 .acc-page h1, .acc-page h2, .acc-page h3, .acc-page p, .acc-page ul, .acc-page ol { margin: 0; }
 .acc-page ul, .acc-page ol { padding: 0; list-style: none; }
-.acc-page a { color: inherit; }
+/* :where() garde cette règle à la plus faible priorité : la couleur propre des boutons-liens
+   (.acc-btn-sapin, .acc-btn-blanc…) l'emporte toujours. Sans lui, un bouton prenait la couleur du texte autour. */
+:where(.acc-page) a { color: inherit; }
 .acc-page :focus-visible { outline: 2px solid var(--acc-vert-vif); outline-offset: 3px; border-radius: 6px; }
 
 .acc-conteneur { width: 100%; max-width: calc(var(--acc-largeur) + 40px); margin: 0 auto; padding: 0 20px; }
@@ -92,14 +94,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 
 /* ---------- Logo : rond menthe en dégradé avec un point blanc ---------- */
 .acc-logo { display: inline-flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 500; letter-spacing: -0.02em; text-decoration: none; color: var(--acc-encre); }
-.acc-logo-rond {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: radial-gradient(circle, #FFFFFF 0 20%, transparent 23%), linear-gradient(145deg, var(--acc-menthe), var(--acc-vert-vif));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 6px 14px -4px rgba(29, 154, 130, .55);
-}
+.acc-logo svg { flex-shrink: 0; }
 
 /* ---------- Barre de navigation collante, en pilule de verre ---------- */
 .acc-nav-zone { position: sticky; top: 14px; z-index: 30; padding: 0 20px; }
@@ -373,6 +368,10 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
   background: #0C3B32;
   box-shadow: 0 16px 30px -12px rgba(0, 0, 0, .45);
 }
+/* Logo Phineas (_Logo.cshtml) sur la tuile vert foncé : ses traits foncés passent en blanc et menthe pour rester visibles. */
+.acc-a-propos-tuile svg path { stroke: #FFFFFF; }
+.acc-a-propos-tuile svg path:last-of-type { stroke: var(--acc-menthe); }
+.acc-a-propos-tuile svg circle { fill: #FFFFFF; }
 .acc-a-propos-titre { position: relative; font-size: 34px; font-weight: 300; letter-spacing: -0.03em; line-height: 1.15; }
 .acc-a-propos-texte { position: relative; margin-top: 12px; font-size: 15px; color: rgba(255, 255, 255, .88); }
 
