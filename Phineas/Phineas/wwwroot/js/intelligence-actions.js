@@ -39,8 +39,69 @@
   function lignes(actions) {
     return actions.map(function (a) { return UI.ligne(a); }).join("");
   }
+
+  // ---------- Pagination ----------
+  // Au-delà de ACTIONS_PAR_PAGE, chaque liste se découpe en pages : la page reste courte, sans défilement sans fin.
+  var ACTIONS_PAR_PAGE = 6;
+  // Page affichée de chaque liste, rangée par id de liste (ex. pages.file = 2). Absente = page 1.
+  var pages = {};
+
+  // Numéros affichés : toutes les pages jusqu'à 7, sinon la première, la dernière et les voisines de la page courante.
+  // Un null marque un trou entre deux numéros (affiché « … »). Exemple pour 10 pages, page 5 : 1 … 4 5 6 … 10.
+  // Même règle que la liste des prospects (prospects-liste.js).
+  function numerosPages(nbPages, pageCourante) {
+    var numeros = [];
+    var precedent = 0;
+    for (var page = 1; page <= nbPages; page++) {
+      var estAuBord = page === 1 || page === nbPages;
+      var estVoisine = Math.abs(page - pageCourante) <= 1;
+      if (nbPages <= 7 || estAuBord || estVoisine) {
+        if (page - precedent > 1) numeros.push(null);
+        numeros.push(page);
+        precedent = page;
+      }
+    }
+    return numeros;
+  }
+
+  function boutonPage(idListe, numero, libelle, contenu, desactive, courant) {
+    var classe = "iv-page-btn";
+    if (courant) classe += " is-active";
+    return '<button type="button" class="' + classe + '" data-liste="' + idListe + '" data-aller-page="' + numero + '"' +
+      (desactive ? " disabled" : "") + (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
+  }
+
+  function htmlPagination(idListe, total, page) {
+    var nbPages = Math.ceil(total / ACTIONS_PAR_PAGE);
+    if (nbPages <= 1) return "";
+    var debut = (page - 1) * ACTIONS_PAR_PAGE + 1;
+    var fin = Math.min(total, page * ACTIONS_PAR_PAGE);
+    var html = '<nav class="iv-pagination" aria-label="Pagination des actions">' +
+      '<span class="iv-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
+      '<div class="iv-pages">' +
+      boutonPage(idListe, page - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', page === 1, false);
+    numerosPages(nbPages, page).forEach(function (numero) {
+      if (numero === null) html += '<span class="iv-pages-trou" aria-hidden="true">…</span>';
+      else html += boutonPage(idListe, numero, "Page " + numero, String(numero), false, numero === page);
+    });
+    html += boutonPage(idListe, page + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', page === nbPages, false) +
+      "</div></nav>";
+    return html;
+  }
+
+  // Lignes de la page courante de la liste, suivies de la pagination si la liste dépasse une page.
+  function lignesPaginees(idListe, actions) {
+    var nbPages = Math.max(1, Math.ceil(actions.length / ACTIONS_PAR_PAGE));
+    // La liste a pu raccourcir (action traitée, filtre) : on reste sur une page qui existe.
+    var page = Math.min(pages[idListe] || 1, nbPages);
+    pages[idListe] = page;
+    var debut = (page - 1) * ACTIONS_PAR_PAGE;
+    var actionsDeLaPage = actions.slice(debut, debut + ACTIONS_PAR_PAGE);
+    return lignes(actionsDeLaPage) + htmlPagination(idListe, actions.length, page);
+  }
+
   function liste(el, actions, vide) {
-    document.getElementById(el).innerHTML = actions.length ? lignes(actions) : '<p class="iv-vide-texte">' + esc(vide) + "</p>";
+    document.getElementById(el).innerHTML = actions.length ? lignesPaginees(el, actions) : '<p class="iv-vide-texte">' + esc(vide) + "</p>";
   }
 
   function rendre() {
@@ -53,7 +114,7 @@
     // File active, dans l'ordre du store ; la catégorie est rappelée sur chaque ligne.
     var actives = I.actives();
     var visibles = actives.filter(correspond);
-    document.getElementById("file").innerHTML = lignes(visibles);
+    document.getElementById("file").innerHTML = lignesPaginees("file", visibles);
     var vide = !visibles.length;
     document.getElementById("file-vide").hidden = !vide;
     var toutEstTraite = I.actives({ conseiller: P.moiId }).length === 0;
@@ -90,18 +151,42 @@
     var couvrir = date ? I.aCouvrirAvant(date) : [];
     var htmlContinuite = "";
     if (date) htmlContinuite += '<p class="iv-intro-panneau"><strong>' + couvrir.length + "</strong> action(s) à couvrir avant votre retour le " + esc(P.dateCourte(date)) + ".</p>";
-    htmlContinuite += couvrir.length ? lignes(couvrir) : '<p class="iv-vide-texte">Aucune action urgente avant cette date.</p>';
+    htmlContinuite += couvrir.length ? lignesPaginees("continuite", couvrir) : '<p class="iv-vide-texte">Aucune action urgente avant cette date.</p>';
     document.getElementById("continuite").innerHTML = htmlContinuite;
     racine.querySelector('[data-champ="nb-continuite"]').textContent = String(couvrir.length);
     liste("confiees", I.actives().filter(function (a) { return a.assignation; }), "Aucune action confiée.");
   }
 
-  Object.keys(f).forEach(function (k) { f[k].addEventListener(k === "recherche" ? "input" : "change", rendre); });
-  document.getElementById("f-traitees").addEventListener("change", rendre);
-  retour.addEventListener("change", rendre);
+  // Un nouveau filtre ou une nouvelle date repart de la première page de la liste concernée.
+  function relancerFile() {
+    pages.file = 1;
+    rendre();
+  }
+  Object.keys(f).forEach(function (k) { f[k].addEventListener(k === "recherche" ? "input" : "change", relancerFile); });
+  document.getElementById("f-traitees").addEventListener("change", function () {
+    pages.traitees = 1;
+    rendre();
+  });
+  retour.addEventListener("change", function () {
+    pages.continuite = 1;
+    rendre();
+  });
   racine.querySelector("[data-effacer-filtres]").addEventListener("click", function () {
     f.recherche.value = ""; f.categorie.value = ""; f.priorite.value = ""; f.responsable.value = "moi"; f.retard.checked = false;
+    relancerFile();
+  });
+
+  // Clic sur un bouton de pagination : change de page, garde le focus sur la page choisie et remonte en haut de la liste.
+  racine.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-aller-page]");
+    if (!bouton || bouton.disabled) return;
+    var idListe = bouton.dataset.liste;
+    pages[idListe] = Number(bouton.dataset.allerPage);
     rendre();
+    var zoneListe = document.getElementById(idListe);
+    var pageCourante = zoneListe.querySelector('[aria-current="page"]');
+    if (pageCourante) pageCourante.focus();
+    zoneListe.scrollIntoView({ block: "start", behavior: "smooth" });
   });
   // Les filtres ne concernent que l'onglet « À traiter » : on les masque sur les autres onglets.
   var zoneFiltres = racine.querySelector("[data-filtres]");
