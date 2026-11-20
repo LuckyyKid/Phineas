@@ -205,9 +205,85 @@
 .rp-retour { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--rcp-sapin-texte); text-decoration: none; }
 .rp-retour:hover { text-decoration: underline; }
 
+/* ---------- Fiche d'analyse d'une vente perdue (?opportunite=…) ---------- */
+/* En mode fiche, le haut et l'en-tête de la liste sont masqués (la fiche a les siens). */
+[data-entete-liste][hidden] { display: none; }
+.rp-ariane a { color: var(--rcp-muted); text-decoration: none; }
+.rp-ariane a:hover { color: var(--rcp-ink); text-decoration: underline; }
+.rp-fiche-retour { margin: -16px 0 18px; }
+
+/* Quatre cartes clés sur une rangée */
+.rp-cles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rp-cle { gap: 8px; }
+.rp-cle-valeur { font-size: 18px; font-weight: 500; line-height: 1.3; color: var(--rcp-ink); }
+.rp-cle-valeur .rp-etat { margin-top: 0; font-size: 15px; }
+
+/* Cartes en verre de la fiche, côte à côte */
+.rp-fiche-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; align-items: start; }
+.rp-fiche-grille-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.rp-carte { padding: 24px 26px; border-radius: 28px; margin-bottom: 16px; }
+.rp-fiche-grille > .rp-carte { margin-bottom: 0; }
+.rp-carte-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.rp-page .rp-carte-titre { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 500; letter-spacing: 0; color: var(--rcp-ink); }
+.rp-carte-titre i { color: var(--rcp-sapin-texte); }
+.rp-chip-neutre { padding: 3px 10px; border-radius: 999px; background: rgba(11, 13, 13, .05); font-family: var(--rcp-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--rcp-muted); }
+
+.rp-motif-grand { margin: 0 0 4px; font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--rcp-ink); }
+.rp-raison { margin: 10px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--rcp-text); }
+.rp-remarque { display: flex; gap: 8px; margin: 14px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--rcp-muted); }
+.rp-remarque i { margin-top: 2px; color: var(--rcp-muted); }
+.rp-remarque .rp-lien { padding: 0; }
+.rp-commentaire { display: flex; flex-direction: column; gap: 4px; margin: 14px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--rcp-text); }
+.rp-fiche-vide { margin: 0; font-size: 14px; color: var(--rcp-muted); }
+
+/* Tableau de définitions : libellé gris à gauche, valeur à droite, filets fins */
+.rp-def { margin: 16px 0 0; }
+.rp-def > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 0; border-top: 1px solid var(--rcp-line); }
+.rp-def dt { flex-shrink: 0; max-width: 55%; font-size: 14px; font-weight: 400; color: var(--rcp-muted); }
+.rp-def dd { margin: 0; font-size: 14px; font-weight: 500; text-align: right; color: var(--rcp-ink); }
+.rp-def dd .rp-sous { font-weight: 400; }
+
+/* Encart neutre (alternatives de financement) */
+.rp-encart { margin-top: 16px; padding: 16px 18px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 14px; line-height: 1.5; color: var(--rcp-text); }
+.rp-encart ul { margin: 8px 0; padding-left: 18px; }
+.rp-encart p { margin: 0; font-size: 13px; color: var(--rcp-muted); }
+
+/* Listes : une ligne par élément, séparées par des filets fins (pas de puces) */
+.rp-lignes { margin: 0; padding: 0; list-style: none; }
+.rp-lignes > li { padding: 10px 0; border-top: 1px solid var(--rcp-line); font-size: 14.5px; line-height: 1.5; color: var(--rcp-ink); }
+.rp-lignes > li:first-child { padding-top: 0; border-top: 0; }
+.rp-ligne-datee { display: flex; gap: 14px; }
+.rp-date { flex-shrink: 0; min-width: 64px; font-family: var(--rcp-mono); font-size: 12px; line-height: 1.9; color: var(--rcp-muted); }
+.rp-pagination-fiche { justify-content: flex-end; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rcp-line); }
+
+/* Actions : boutons blancs, un seul vert plein (Réactiver) */
+.rp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.rp-actions .rp-btn-blanc, .rp-btn-vert { display: inline-flex; align-items: center; gap: 8px; }
+.rp-actions .rp-btn-blanc i { color: var(--rcp-sapin-texte); }
+.rp-btn-vert {
+  height: 40px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 12px 24px -12px rgba(12, 59, 50, .7);
+}
+.rp-btn-vert:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 14px 28px -12px rgba(12, 59, 50, .8); }
+.rp-actions-moteur { display: flex; flex-direction: column; gap: 12px; }
+
+/* Fiche introuvable */
+.rp-fiche-absente { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 24px; text-align: center; font-size: 14.5px; color: var(--rcp-muted); }
+.rp-fiche-absente i { font-size: 24px; color: var(--rcp-muted); }
+.rp-fiche-absente strong { font-weight: 500; color: var(--rcp-ink); }
+
 /* ---------- Écrans plus étroits ---------- */
 @media (max-width: 991.98px) {
   .rp-entete { flex-direction: column; align-items: flex-start; }
+  .rp-cles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-fiche-grille { grid-template-columns: 1fr; }
   .rp-chiffres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 575.98px) {

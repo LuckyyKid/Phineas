@@ -135,24 +135,31 @@
     }
     return numeros;
   }
-  function boutonPage(numero, libelle, contenu, desactive, courant) {
-    return '<button type="button" class="rp-page-btn' + (courant ? " is-active" : "") + '" data-aller-page="' + numero + '"' +
+  // Un bouton de pagination porte l'id de sa liste (data-liste) : la liste principale est « liste »,
+  // les listes de la fiche d'analyse ont chacune le leur (ex. « interactions »).
+  function boutonPage(idListe, numero, libelle, contenu, desactive, courant) {
+    return '<button type="button" class="rp-page-btn' + (courant ? " is-active" : "") + '" data-liste="' + idListe + '" data-aller-page="' + numero + '"' +
       (desactive ? " disabled" : "") + (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
+  }
+  // Barre « 1 à 6 sur 14 », flèches et numéros, ou "" si tout tient sur une page.
+  function htmlPagination(idListe, total, pageCourante) {
+    var nbPages = Math.ceil(total / LIGNES_PAR_PAGE);
+    if (nbPages <= 1) return "";
+    var debut = (pageCourante - 1) * LIGNES_PAR_PAGE + 1;
+    var fin = Math.min(total, pageCourante * LIGNES_PAR_PAGE);
+    var html = '<span class="rp-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
+      boutonPage(idListe, pageCourante - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', pageCourante === 1, false);
+    numerosPages(nbPages, pageCourante).forEach(function (n) {
+      if (n === null) html += '<span class="rp-pages-trou" aria-hidden="true">…</span>';
+      else html += boutonPage(idListe, n, "Page " + n, String(n), false, n === pageCourante);
+    });
+    html += boutonPage(idListe, pageCourante + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', pageCourante === nbPages, false);
+    return html;
   }
   function rendrePagination(total) {
     var zone = racine.querySelector('[data-zone="pagination"]');
-    var nbPages = Math.ceil(total / LIGNES_PAR_PAGE);
-    zone.hidden = nbPages <= 1;
-    if (nbPages <= 1) { zone.innerHTML = ""; return; }
-    var debut = (page - 1) * LIGNES_PAR_PAGE + 1;
-    var fin = Math.min(total, page * LIGNES_PAR_PAGE);
-    var html = '<span class="rp-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
-      boutonPage(page - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', page === 1, false);
-    numerosPages(nbPages, page).forEach(function (n) {
-      if (n === null) html += '<span class="rp-pages-trou" aria-hidden="true">…</span>';
-      else html += boutonPage(n, "Page " + n, String(n), false, n === page);
-    });
-    html += boutonPage(page + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', page === nbPages, false);
+    var html = htmlPagination("liste", total, page);
+    zone.hidden = !html;
     zone.innerHTML = html;
   }
 
@@ -194,83 +201,231 @@
     zoneSans.hidden = !texteSans;
   }
 
-  // ---------- Fiche d'analyse ----------
-  function liste(titre, l, vide) {
-    return '<section class="card rc-bloc"><div class="card-header sv-card-header"><span>' + titre + "</span></div><div class=\"card-body\">" +
-      (l.length ? '<ul class="ia-liste-simple">' + l.join("") + "</ul>" : '<p class="text-muted small mb-0">' + esc(vide) + "</p>") + "</div></section>";
+  // ---------- Fiche d'analyse (?opportunite=…) ----------
+  // Même style verre que la liste : haut propre, phrase en mots, quatre cartes clés sur une rangée, puis des cartes
+  // regroupées par thème. Toutes les informations de l'ancienne fiche sont gardées ; seules la forme et l'ordre changent.
+  // Les boutons data-rc (préciser, futur suivi, événement, réactiver, retour) ouvrent les fenêtres de relations-composants.js.
+
+  // Page affichée de chaque liste de la fiche, rangée par id de liste. Absente = page 1.
+  var pagesFiche = {};
+
+  // Éléments de la page courante d'une liste de la fiche, et sa barre de pagination.
+  function paginerFiche(idListe, elements) {
+    var nbPages = Math.max(1, Math.ceil(elements.length / LIGNES_PAR_PAGE));
+    var pageCourante = Math.min(pagesFiche[idListe] || 1, nbPages);
+    pagesFiche[idListe] = pageCourante;
+    var debut = (pageCourante - 1) * LIGNES_PAR_PAGE;
+    return {
+      elements: elements.slice(debut, debut + LIGNES_PAR_PAGE),
+      pagination: htmlPagination(idListe, elements.length, pageCourante),
+    };
   }
+
+  // Carte en verre avec un titre et un contenu déjà construit.
+  function carteFiche(titre, contenu, droite) {
+    return '<section class="rp-verre rp-carte"><header class="rp-carte-tete"><h2 class="rp-carte-titre">' + titre + "</h2>" + (droite || "") + "</header>" + contenu + "</section>";
+  }
+
+  // Liste de lignes séparées par des filets, paginée à 6, ou un texte gris si elle est vide.
+  function lignesFiche(idListe, lignes, vide) {
+    if (!lignes.length) return vide ? '<p class="rp-fiche-vide">' + esc(vide) + "</p>" : "";
+    var morceau = paginerFiche(idListe, lignes);
+    var pagination = morceau.pagination ? '<nav class="rp-pagination rp-pagination-fiche" aria-label="Pagination">' + morceau.pagination + "</nav>" : "";
+    return '<ul class="rp-lignes">' + morceau.elements.join("") + "</ul>" + pagination;
+  }
+
+  // Ligne libellé et valeur (tableau de définitions).
+  function definition(libelle, valeur) {
+    return "<div><dt>" + esc(libelle) + "</dt><dd>" + valeur + "</dd></div>";
+  }
+
+  // Ligne datée : date en mono à gauche, texte à droite.
+  function ligneDatee(date, texteHtml) {
+    return '<li class="rp-ligne-datee"><span class="rp-date">' + esc(P.dateCourte(date)) + "</span><span>" + texteHtml + "</span></li>";
+  }
+
+  // Une petite carte clé : libellé, valeur, précision grise.
+  function carteCle(libelle, valeurHtml, precisionHtml) {
+    return '<div class="rp-verre rp-chiffre rp-cle"><span class="rp-chiffre-libelle">' + esc(libelle) + "</span>" +
+      '<span class="rp-cle-valeur">' + valeurHtml + "</span>" + (precisionHtml ? '<span class="rp-chiffre-detail">' + precisionHtml + "</span>" : "") + "</div>";
+  }
+
+  // Phrase qui dit en mots ce qu'il faut retenir sur cette perte.
+  function phraseFiche(dsr) {
+    var cl = dsr.cloture, c = dsr.contact;
+    var motif = String(ref.motifsPerte[cl.motif] || cl.motif).toLowerCase();
+    var origine = String((ORIGINES[cl.origine] || ORIGINES.inconnu).libelle).toLowerCase();
+    var phrase = c.prenom + " n'a pas conclu à l'étape « " + P.libelleEtape(cl.etapeAtteinte) + " », le " + P.dateCourte(cl.date) + ".";
+    if (cl.motif === "inconnu") phrase += " Le motif n'est pas connu : il ne faut pas le deviner.";
+    else phrase += " Motif : " + motif + " (" + origine + ").";
+    if (dsr.etat.raison) phrase += " " + dsr.etat.raison;
+    return phrase;
+  }
+
   function rendreFiche() {
     var dsr = RC.dossierPerte(oppId);
     var zone = racine.querySelector('[data-zone="fiche"]');
+    var retour = '<a href="' + esc(ref.urls.pertes) + '" class="rp-retour"><i class="bi bi-arrow-left" aria-hidden="true"></i>Toutes les ventes perdues</a>';
     if (!dsr) {
-      zone.innerHTML = '<div class="pr-etat-vide"><i class="bi bi-question-circle"></i><strong>Aucune clôture enregistrée</strong><span>Cette opportunité n\'a pas été clôturée comme perdue dans Phineas.</span></div>';
+      zone.innerHTML = '<p class="rp-fiche-retour">' + retour + "</p>" +
+        '<div class="rp-verre rp-carte rp-fiche-absente"><i class="bi bi-question-circle" aria-hidden="true"></i><strong>Aucune clôture enregistrée</strong>' +
+        "<span>Cette opportunité n'a pas été clôturée comme perdue dans Phineas.</span></div>";
       return;
     }
     var cl = dsr.cloture, o = dsr.opportunite, c = dsr.contact, q = o.qualification || {}, an = dsr.analyse, e = dsr.etat;
     var actif = !cl.reactivation && o.etape === "Perdu";
-    var boutons = actif ? [
-      '<button type="button" class="btn btn-sm btn-outline-primary" data-rc="preciser" data-opp="' + esc(o.id) + '"><i class="bi bi-pencil me-1"></i>Préciser le motif</button>',
-      '<button type="button" class="btn btn-sm btn-outline-primary" data-rc="suivi" data-opp="' + esc(o.id) + '"><i class="bi bi-calendar-check me-1"></i>Futur suivi</button>',
-      e.cle !== "aucune" ? '<button type="button" class="btn btn-sm btn-outline-primary" data-rc="evenement" data-opp="' + esc(o.id) + '"><i class="bi bi-lightning me-1"></i>Déclarer un événement</button>' : "",
-      dsr.refusReactivation ? "" : '<button type="button" class="btn btn-sm btn-primary" data-rc="reactiver" data-opp="' + esc(o.id) + '"><i class="bi bi-arrow-counterclockwise me-1"></i>Réactiver l\'opportunité</button>',
-    ].join(" ") : "";
+    var nomClient = c.prenom + " " + c.nom;
     var recommandees = I ? I.actives().filter(function (a) { return a.opportuniteId === o.id; }) : [];
-    var html =
-      '<header class="rc-fiche-tete"><div><h2 class="h4 mb-1"><a href="' + esc(P.urlFiche(c.id)) + '">' + esc(c.prenom + " " + c.nom) + "</a></h2>" +
-      '<p class="text-muted mb-0">' + esc(o.titre) + " · " + esc(P.libelleEtape(o.etape)) + "</p></div>" + RUI.pastilleRecuperation(e) + "</header>" +
-      '<div class="rc-grille">' +
-      '<section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-x-octagon me-2"></i>Motif de perte</span>' + RUI.pastilleOrigine(cl.origine) + '</div><div class="card-body">' +
-      '<p class="rc-motif-grand">' + esc(ref.motifsPerte[cl.motif]) + "</p>" +
-      (cl.origine === "hypothese" ? '<p class="ia-avertissement"><i class="bi bi-lightbulb me-1"></i>Hypothèse du conseiller : elle n\'est pas une raison confirmée.</p>' : "") +
-      '<dl class="rc-def"><div><dt>Clôturée le</dt><dd>' + esc(P.dateComplete(cl.date)) + "</dd></div><div><dt>Par</dt><dd>" + esc(cl.auteur) + "</dd></div><div><dt>Dernière étape atteinte</dt><dd>" + esc(P.libelleEtape(cl.etapeAtteinte)) + "</dd></div>" +
-      "<div><dt>Restrictions de communication</dt><dd>" + esc(ref.restrictions[cl.restriction] || "—") + "</dd></div></dl>" +
-      (cl.commentaire ? '<p class="small mb-0"><strong>Commentaire :</strong> ' + esc(cl.commentaire) + "</p>" : "") + "</div></section>" +
-      '<section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-arrow-counterclockwise me-2"></i>Récupération</span></div><div class="card-body">' +
-      "<p>" + esc(e.raison) + "</p>" +
-      '<dl class="rc-def"><div><dt>Futur suivi</dt><dd>' + (cl.suiviPossible ? "Possible" : "Non envisagé") + "</dd></div><div><dt>Date de reprise</dt><dd>" + esc(cl.dateReprise ? P.dateCourte(cl.dateReprise) : "Non connue") + "</dd></div>" +
-      "<div><dt>Conditions de réactivation</dt><dd>" + esc(cl.conditions || "Non précisées") + "</dd></div>" + (cl.evenement ? "<div><dt>Événement déclaré</dt><dd>" + esc(cl.evenement.texte) + "</dd></div>" : "") +
-      (cl.reactivation ? "<div><dt>Réactivée le</dt><dd>" + esc(P.dateComplete(cl.reactivation.le)) + " — " + esc(cl.reactivation.evenement) + "</dd></div>" : "") + "</dl>" +
-      (cl.motif === "financement-refuse" && actif ? '<div class="rc-alternatives"><strong>Alternatives commerciales autorisées à examiner avec le client</strong><ul>' + ref.alternativesFinancement.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") +
-        '</ul><p class="small mb-0">Aucune approbation de crédit n\'est recommandée ni promise ; aucun contact automatique n\'est fait.</p></div>' : "") +
-      (actif && ["vehicule-indisponible", "budget-incompatible", "caracteristiques-absentes"].indexOf(cl.motif) >= 0 ? '<p class="small"><a href="' + esc((I && I.ref.urlVehicules || "#") + "?opportunite=" + encodeURIComponent(o.id)) + '"><i class="bi bi-car-front me-1"></i>Voir les véhicules compatibles avec l\'ancienne recherche</a></p>' : "") +
-      (actif && cl.motif === "achat-ailleurs" && RC.regles.estConfirme(cl) ? '<p class="small text-muted">Aucune relance commerciale. Si le client manifeste un nouveau projet, créez une nouvelle opportunité distincte depuis sa fiche.</p>' : "") +
-      (dsr.refusReactivation && actif ? '<p class="small text-muted mb-2"><i class="bi bi-lock me-1"></i>Réactivation impossible : ' + esc(dsr.refusReactivation) + "</p>" : "") +
-      '<div class="d-flex flex-wrap gap-2">' + boutons + "</div></div></section></div>" +
-      '<div class="rc-grille">' + liste('<i class="bi bi-check2-square me-2"></i>Ce que nous savons', an.faits.map(function (x) { return "<li>" + esc(x) + "</li>"; }), "Aucun fait enregistré.") +
-      liste('<i class="bi bi-question-diamond me-2"></i>Ce qui reste inconnu', an.inconnus.map(function (x) { return "<li>" + esc(x) + "</li>"; }), "Rien d'important ne semble manquer.") + "</div>" +
-      (an.interpretations.length ? liste('<i class="bi bi-lightbulb me-2"></i>Interprétations (non confirmées)', an.interpretations.map(function (x) { return "<li>" + esc(x) + "</li>"; }), "") : "") +
-      (recommandees.length ? '<section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-lightning-charge me-2"></i>Actions recommandées</span><a class="btn btn-sm btn-link p-0" href="' + esc(I.ref.urlActions) + '">Centre d\'actions</a></div><div class="card-body"><div class="ia-file">' +
-        recommandees.map(function (a) { return UI.carte(a, { compacte: true }); }).join("") + "</div></div></section>" : "") +
-      '<div class="rc-grille">' +
-      liste('<i class="bi bi-clipboard-check me-2"></i>Besoins initiaux', [
-        "<li>Recherche : " + esc(P.resumeVehicule(o) || o.titre) + "</li>",
-        "<li>Budget : " + esc(P.resumeBudget(q) || "non renseigné") + "</li>",
-        "<li>Horizon d'achat : " + esc(P.libelle("horizons", q.horizon) || "non renseigné") + "</li>",
-        "<li>Qualification : " + dsr.completude.remplis + " / " + dsr.completude.total + " informations</li>",
-      ], "") +
-      liste('<i class="bi bi-car-front me-2"></i>Véhicules proposés', (o.vehiculesEnvisages || []).map(function (v) { return "<li>" + esc(v) + "</li>"; })
-        .concat(dsr.soumissions.map(function (s) { return '<li><a href="' + esc(s.url) + '">' + esc(s.reference) + "</a> — " + esc(s.vehicule) + " (" + s.versions + " version(s), " + esc(s.statutLibelle.toLowerCase()) + ")</li>"; })), "Aucun véhicule proposé.") +
-      liste('<i class="bi bi-calendar-event me-2"></i>Rendez-vous', dsr.rendezVous.map(function (r) { return '<li><a href="' + esc(r.url) + '">' + esc(r.typeLibelle) + "</a> — " + esc(r.creneau.toLowerCase()) + " (" + esc(r.statutLibelle.toLowerCase()) + ")" + (r.resultat && r.resultat.objections ? '<span class="pr-sous d-block">Objections : ' + esc(r.resultat.objections) + "</span>" : "") + "</li>"; }), "Aucun rendez-vous.") +
-      liste('<i class="bi bi-sign-stop me-2"></i>Blocages rencontrés', dsr.blocages.map(function (x) { return "<li>" + esc(x) + "</li>"; }), "Aucune transaction ouverte : aucun blocage enregistré.") + "</div>" +
-      liste('<i class="bi bi-clock-history me-2"></i>Dernières interactions', dsr.interactions.slice(0, 6).map(function (i) { return "<li><strong>" + esc(P.dateCourte(i.date)) + "</strong> — " + esc(i.resume) + "</li>"; }), "Aucune interaction.") +
-      '<section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-chat-square-text me-2"></i>Retour volontaire du client</span><span class="badge-soft">Facultatif</span></div><div class="card-body">' +
-      (dsr.retour ? '<dl class="rc-def"><div><dt>Reçu le</dt><dd>' + esc(P.dateComplete(dsr.retour.recuLe)) + (dsr.retour.simule ? " (simulation)" : "") + "</dd></div>" +
-        "<div><dt>" + esc(RUI.questionsRetour[0]) + "</dt><dd>" + esc({ oui: "Oui", non: "Non", "en-partie": "En partie" }[dsr.retour.vehiculeTrouve] || "Sans réponse") + "</dd></div>" +
-        "<div><dt>" + esc(RUI.questionsRetour[1]) + "</dt><dd>" + esc(dsr.retour.raison || "Sans réponse") + "</dd></div>" +
-        "<div><dt>" + esc(RUI.questionsRetour[2]) + "</dt><dd>" + esc(dsr.retour.amelioration || "Sans réponse") + "</dd></div>" +
-        "<div><dt>" + esc(RUI.questionsRetour[3]) + "</dt><dd>" + esc(dsr.retour.informerSiDisponible == null ? "Sans réponse" : dsr.retour.informerSiDisponible ? "Oui" : "Non") + "</dd></div></dl>"
-        : '<p class="small">Aucun retour reçu. Le client peut, s\'il le souhaite, répondre à un formulaire court (aucun envoi réel dans ce prototype).</p>') +
-      '<div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-outline-primary" data-rc="apercu-retour"><i class="bi bi-eye me-1"></i>Prévisualiser le formulaire client</button>' +
-      (actif || cl.reactivation ? '<button type="button" class="btn btn-sm btn-ghost" data-rc="retour" data-opp="' + esc(o.id) + '"><i class="bi bi-cone-striped me-1"></i>Simuler la réception d\'un retour</button>' : "") + "</div></div></section>" +
-      liste('<i class="bi bi-journal-text me-2"></i>Historique de la clôture', dsr.historique.map(function (h) {
-        return "<li><strong>" + esc(P.dateCourte(h.date)) + "</strong> — clôture : " + esc(ref.motifsPerte[h.motif]) + " (" + esc(ref.originesMotif[h.origine].toLowerCase()) + ")" + (h.reactivation ? " ; réactivée le " + esc(P.dateCourte(h.reactivation.le)) : "") + "</li>";
-      }).concat((cl.historique || []).map(function (h) { return "<li><strong>" + esc(P.dateCourte(h.date)) + "</strong> — " + esc(h.texte) + "</li>"; })), "");
-    zone.innerHTML = html;
+
+    // ----- Haut de page et en-tête -----
+    var haut =
+      '<div class="rp-haut"><nav class="rp-ariane" aria-label="Fil d\'Ariane"><span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i>' +
+      '<a href="' + esc(ref.urls.pertes) + '">Ventes perdues</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">' + esc(nomClient) + "</span></nav>" +
+      '<div class="rp-puces" role="note" title="Clients, ventes et recommandations fictifs. Rien n\'est enregistré en base.">' +
+      '<span class="rp-chip-demo">Démo</span><span class="rp-en-ligne"><span class="rp-point-vert" aria-hidden="true"></span>En ligne</span></div></div>';
+    var entete =
+      '<p class="rp-fiche-retour">' + retour + "</p>" +
+      '<header class="rp-entete"><div><p class="rp-label">Vente perdue</p><h1 class="rp-titre">' + esc(nomClient) + "</h1>" +
+      '<p class="rp-intro">' + esc(o.titre) + " · étape actuelle : " + esc(P.libelleEtape(o.etape)) + "</p></div>" +
+      '<div class="rp-boutons"><a class="rp-btn-verre" href="' + esc(P.urlFiche(c.id)) + '"><i class="bi bi-person" aria-hidden="true"></i>Fiche du prospect</a></div></header>';
+
+    // ----- Phrase et quatre cartes clés -----
+    var origineMotif = ORIGINES[cl.origine] || ORIGINES.inconnu;
+    var recuperation = RECUPERATIONS[e.cle] || { point: "gris-creux", libelle: e.cle };
+    var cles =
+      '<section class="rp-chiffres rp-cles" aria-label="L\'essentiel de cette perte">' +
+      carteCle("Motif de perte", esc(ref.motifsPerte[cl.motif] || cl.motif), etat(origineMotif)) +
+      carteCle("Récupération", etat(recuperation, "", e.raison), esc(cl.dateReprise ? "Reprise souhaitée le " + P.dateCourte(cl.dateReprise) : "Date de reprise non connue")) +
+      carteCle("Clôturée le", esc(P.dateCourte(cl.date)), esc("Par " + cl.auteur)) +
+      carteCle("Dernière étape atteinte", esc(P.libelleEtape(cl.etapeAtteinte)), esc("Qualification : " + dsr.completude.remplis + " sur " + dsr.completude.total + " informations")) +
+      "</section>";
+
+    // ----- Motif et clôture -----
+    var motifContenu =
+      '<p class="rp-motif-grand">' + esc(ref.motifsPerte[cl.motif] || cl.motif) + "</p>" + etat(origineMotif) +
+      (cl.origine === "hypothese" ? '<p class="rp-remarque"><i class="bi bi-lightbulb" aria-hidden="true"></i>Hypothèse du conseiller : ce n\'est pas une raison confirmée.</p>' : "") +
+      '<dl class="rp-def">' +
+      definition("Clôturée le", esc(P.dateComplete(cl.date))) +
+      definition("Par", esc(cl.auteur)) +
+      definition("Dernière étape atteinte", esc(P.libelleEtape(cl.etapeAtteinte))) +
+      definition("Restrictions de communication", esc(ref.restrictions[cl.restriction] || "Aucune")) +
+      "</dl>" +
+      (cl.commentaire ? '<p class="rp-commentaire"><span class="rp-chiffre-libelle">Commentaire</span>' + esc(cl.commentaire) + "</p>" : "");
+
+    // ----- Récupération et actions -----
+    var boutons = "";
+    if (actif) {
+      boutons += '<button type="button" class="rp-btn-blanc" data-rc="preciser" data-opp="' + esc(o.id) + '"><i class="bi bi-pencil" aria-hidden="true"></i>Préciser le motif</button>';
+      boutons += '<button type="button" class="rp-btn-blanc" data-rc="suivi" data-opp="' + esc(o.id) + '"><i class="bi bi-calendar-check" aria-hidden="true"></i>Futur suivi</button>';
+      if (e.cle !== "aucune") boutons += '<button type="button" class="rp-btn-blanc" data-rc="evenement" data-opp="' + esc(o.id) + '"><i class="bi bi-lightning" aria-hidden="true"></i>Déclarer un événement</button>';
+      // Seul bouton vert plein de la fiche.
+      if (!dsr.refusReactivation) boutons += '<button type="button" class="rp-btn-vert" data-rc="reactiver" data-opp="' + esc(o.id) + '"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Réactiver l\'opportunité</button>';
+    }
+    var recuperationContenu =
+      etat(recuperation) + '<p class="rp-raison">' + esc(e.raison) + "</p>" +
+      '<dl class="rp-def">' +
+      definition("Futur suivi", cl.suiviPossible ? "Possible" : "Non envisagé") +
+      definition("Date de reprise", esc(cl.dateReprise ? P.dateCourte(cl.dateReprise) : "Non connue")) +
+      definition("Conditions de réactivation", esc(cl.conditions || "Non précisées")) +
+      (cl.evenement ? definition("Événement déclaré", esc(cl.evenement.texte)) : "") +
+      (cl.reactivation ? definition("Réactivée le", esc(P.dateComplete(cl.reactivation.le)) + '<span class="rp-sous">' + esc(cl.reactivation.evenement) + "</span>") : "") +
+      "</dl>" +
+      (cl.motif === "financement-refuse" && actif
+        ? '<div class="rp-encart"><strong>Alternatives commerciales autorisées à examiner avec le client</strong><ul>' +
+          ref.alternativesFinancement.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") +
+          "</ul><p>Aucune approbation de crédit n'est recommandée ni promise ; aucun contact automatique n'est fait.</p></div>"
+        : "") +
+      (actif && ["vehicule-indisponible", "budget-incompatible", "caracteristiques-absentes"].indexOf(cl.motif) >= 0
+        ? '<p class="rp-remarque"><a class="rp-lien" href="' + esc((I && I.ref.urlVehicules || "#") + "?opportunite=" + encodeURIComponent(o.id)) + '"><i class="bi bi-car-front" aria-hidden="true"></i>Voir les véhicules compatibles avec l\'ancienne recherche</a></p>'
+        : "") +
+      (actif && cl.motif === "achat-ailleurs" && RC.regles.estConfirme(cl)
+        ? '<p class="rp-remarque">Aucune relance commerciale. Si le client manifeste un nouveau projet, créez une nouvelle opportunité distincte depuis sa fiche.</p>'
+        : "") +
+      (dsr.refusReactivation && actif ? '<p class="rp-remarque"><i class="bi bi-lock" aria-hidden="true"></i>Réactivation impossible : ' + esc(dsr.refusReactivation) + "</p>" : "") +
+      (boutons ? '<div class="rp-actions">' + boutons + "</div>" : "");
+
+    var deuxColonnes = '<div class="rp-fiche-grille">' +
+      carteFiche('<i class="bi bi-x-octagon" aria-hidden="true"></i>Motif et clôture', motifContenu) +
+      carteFiche('<i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Récupération', recuperationContenu) + "</div>";
+
+    // ----- Analyse : faits, inconnus, interprétations -----
+    function puces(l) { return l.map(function (x) { return "<li>" + esc(x) + "</li>"; }); }
+    var analyse = '<div class="rp-fiche-grille rp-fiche-grille-3">' +
+      carteFiche('<i class="bi bi-check2-square" aria-hidden="true"></i>Ce que nous savons', lignesFiche("faits", puces(an.faits), "Aucun fait enregistré.")) +
+      carteFiche('<i class="bi bi-question-diamond" aria-hidden="true"></i>Ce qui reste inconnu', lignesFiche("inconnus", puces(an.inconnus), "Rien d'important ne semble manquer.")) +
+      (an.interpretations.length ? carteFiche('<i class="bi bi-lightbulb" aria-hidden="true"></i>Interprétations, non confirmées', lignesFiche("interpretations", puces(an.interpretations), "")) : "") +
+      "</div>";
+
+    // ----- Actions recommandées (mêmes cartes que le Centre d'actions) -----
+    var actions = recommandees.length
+      ? carteFiche('<i class="bi bi-lightning-charge" aria-hidden="true"></i>Actions recommandées',
+          '<div class="ia-file rp-actions-moteur">' + recommandees.map(function (a) { return UI.carte(a, { compacte: true }); }).join("") + "</div>",
+          '<a class="rp-lien" href="' + esc(I.ref.urlActions) + '">Centre d\'actions</a>')
+      : "";
+
+    // ----- Le dossier : besoins, véhicules, rendez-vous, blocages -----
+    var besoins = '<dl class="rp-def">' +
+      definition("Recherche", esc(P.resumeVehicule(o) || o.titre)) +
+      definition("Budget", esc(P.resumeBudget(q) || "Non renseigné")) +
+      definition("Horizon d'achat", esc(P.libelle("horizons", q.horizon) || "Non renseigné")) +
+      definition("Qualification", esc(dsr.completude.remplis + " sur " + dsr.completude.total + " informations")) +
+      "</dl>";
+    var vehicules = (o.vehiculesEnvisages || []).map(function (v) { return "<li>" + esc(v) + '<span class="rp-sous">Véhicule envisagé</span></li>'; })
+      .concat(dsr.soumissions.map(function (s) {
+        var versions = s.versions > 1 ? s.versions + " versions" : "1 version";
+        return '<li><a class="rp-nom" href="' + esc(s.url) + '">' + esc(s.reference) + "</a>, " + esc(s.vehicule) +
+          '<span class="rp-sous">' + esc(versions + ", " + s.statutLibelle.toLowerCase()) + "</span></li>";
+      }));
+    var rendezVous = dsr.rendezVous.map(function (r) {
+      return '<li><a class="rp-nom" href="' + esc(r.url) + '">' + esc(r.typeLibelle) + "</a>, " + esc(r.creneau.toLowerCase()) +
+        '<span class="rp-sous">' + esc(r.statutLibelle) + "</span>" +
+        (r.resultat && r.resultat.objections ? '<span class="rp-sous">Objections : ' + esc(r.resultat.objections) + "</span>" : "") + "</li>";
+    });
+    var dossier = '<div class="rp-fiche-grille">' +
+      carteFiche('<i class="bi bi-clipboard-check" aria-hidden="true"></i>Besoins initiaux', besoins) +
+      carteFiche('<i class="bi bi-car-front" aria-hidden="true"></i>Véhicules proposés', lignesFiche("vehicules", vehicules, "Aucun véhicule proposé.")) +
+      carteFiche('<i class="bi bi-calendar-event" aria-hidden="true"></i>Rendez-vous', lignesFiche("rendez-vous", rendezVous, "Aucun rendez-vous.")) +
+      carteFiche('<i class="bi bi-sign-stop" aria-hidden="true"></i>Blocages rencontrés', lignesFiche("blocages", puces(dsr.blocages), "Aucune transaction ouverte : aucun blocage enregistré.")) +
+      "</div>";
+
+    // ----- Interactions : toutes, dans l'ordre du store, paginées à 6 (l'ancienne fiche n'en montrait que 6) -----
+    var interactions = carteFiche('<i class="bi bi-clock-history" aria-hidden="true"></i>Dernières interactions',
+      lignesFiche("interactions", dsr.interactions.map(function (i) { return ligneDatee(i.date, esc(i.resume)); }), "Aucune interaction."));
+
+    // ----- Retour volontaire du client -----
+    var reponses = { oui: "Oui", non: "Non", "en-partie": "En partie" };
+    var retourContenu = dsr.retour
+      ? '<dl class="rp-def">' +
+        definition("Reçu le", esc(P.dateComplete(dsr.retour.recuLe) + (dsr.retour.simule ? " (simulation)" : ""))) +
+        definition(RUI.questionsRetour[0], esc(reponses[dsr.retour.vehiculeTrouve] || "Sans réponse")) +
+        definition(RUI.questionsRetour[1], esc(dsr.retour.raison || "Sans réponse")) +
+        definition(RUI.questionsRetour[2], esc(dsr.retour.amelioration || "Sans réponse")) +
+        definition(RUI.questionsRetour[3], esc(dsr.retour.informerSiDisponible == null ? "Sans réponse" : dsr.retour.informerSiDisponible ? "Oui" : "Non")) +
+        "</dl>"
+      : '<p class="rp-fiche-vide">Aucun retour reçu. Le client peut, s\'il le souhaite, répondre à un formulaire court (aucun envoi réel dans ce prototype).</p>';
+    retourContenu += '<div class="rp-actions"><button type="button" class="rp-btn-blanc" data-rc="apercu-retour"><i class="bi bi-eye" aria-hidden="true"></i>Prévisualiser le formulaire client</button>' +
+      (actif || cl.reactivation ? '<button type="button" class="rp-btn-blanc" data-rc="retour" data-opp="' + esc(o.id) + '"><i class="bi bi-cone-striped" aria-hidden="true"></i>Simuler la réception d\'un retour</button>' : "") + "</div>";
+    var retourClient = carteFiche('<i class="bi bi-chat-square-text" aria-hidden="true"></i>Retour volontaire du client', retourContenu, '<span class="rp-chip-neutre">Facultatif</span>');
+
+    // ----- Historique de la clôture -----
+    var historique = dsr.historique.map(function (h) {
+      var texte = "Clôture : " + esc(ref.motifsPerte[h.motif]) + " (" + esc(ref.originesMotif[h.origine].toLowerCase()) + ")" +
+        (h.reactivation ? ", réactivée le " + esc(P.dateCourte(h.reactivation.le)) : "");
+      return ligneDatee(h.date, texte);
+    }).concat((cl.historique || []).map(function (h) { return ligneDatee(h.date, esc(h.texte)); }));
+    var historiqueCarte = historique.length ? carteFiche('<i class="bi bi-journal-text" aria-hidden="true"></i>Historique de la clôture', lignesFiche("historique", historique, "")) : "";
+
+    zone.innerHTML = haut + entete +
+      '<p class="rp-resume">' + esc(phraseFiche(dsr)) + "</p>" +
+      cles + deuxColonnes + analyse + actions + dossier +
+      '<div class="rp-fiche-grille">' + interactions + retourClient + "</div>" +
+      historiqueCarte;
   }
 
   function rendre() {
     racine.querySelector('[data-mode="liste"]').hidden = !!oppId;
     racine.querySelector('[data-mode="fiche"]').hidden = !oppId;
+    document.querySelectorAll("[data-entete-liste]").forEach(function (bloc) { bloc.hidden = !!oppId; });
     if (oppId) rendreFiche(); else rendreListe();
   }
 
@@ -284,11 +439,15 @@
   racine.addEventListener("click", function (e) {
     var pagination = e.target.closest("[data-aller-page]");
     if (pagination && !pagination.disabled) {
-      page = Number(pagination.dataset.allerPage);
+      var idListe = pagination.dataset.liste;
+      var numero = Number(pagination.dataset.allerPage);
+      if (idListe === "liste") page = numero;
+      else pagesFiche[idListe] = numero;
       rendre();
-      var courante = racine.querySelector('[data-zone="pagination"] [aria-current="page"]');
+      // Le focus reste sur le numéro choisi de la même liste.
+      var courante = racine.querySelector('[data-liste="' + idListe + '"][aria-current="page"]');
       if (courante) courante.focus();
-      racine.querySelector(".rp-module").scrollIntoView({ block: "start", behavior: "smooth" });
+      if (idListe === "liste") racine.querySelector(".rp-module").scrollIntoView({ block: "start", behavior: "smooth" });
       return;
     }
     if (!e.target.closest("[data-effacer-filtres]")) return;
