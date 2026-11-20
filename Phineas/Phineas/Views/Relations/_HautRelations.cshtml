@@ -1,0 +1,13 @@
+@* Haut commun aux pages « Relations clients » : fil d'Ariane et pastilles DÉMO / En ligne (remplace le bandeau permanent).
+   Le titre de la page vient de ViewData["Title"]. La réinitialisation des données de démonstration est branchée par prospects-store.js. *@
+<div class="rc-haut">
+    <nav class="rc-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span>Relations clients</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">@ViewData["Title"]</span>
+    </nav>
+    <div class="rc-puces" role="note" title="Clients, ventes et recommandations fictifs. Rien n'est enregistré en base.">
+        <span class="rc-chip-demo">Démo</span>
+        <span class="rc-demo-etat" data-etat-demo hidden>Modifiée</span>
+        <button type="button" class="rc-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+        <span class="rc-en-ligne"><span class="rc-point-vert" aria-hidden="true"></span>En ligne</span>
+    </div>
+</div>

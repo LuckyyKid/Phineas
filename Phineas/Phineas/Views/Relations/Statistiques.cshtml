@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
 }
 
+<div class="rc-page">
+<partial name="_HautRelations" />
+
 <header class="sv-head">
     <div>
         <h1>Statistiques relationnelles</h1>
@@ -27,8 +30,6 @@
     </div>
 </header>
 
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
-
 <div id="statistiques">
     <p class="rc-legende" role="note">
         <span><span class="rc-tag rc-tag-observe">Observé</span> calculé à partir des données enregistrées</span>
@@ -40,6 +41,8 @@
     <section class="card rc-bloc" aria-labelledby="st-satisfaction"><div class="card-header sv-card-header"><span id="st-satisfaction"><i class="bi bi-emoji-smile me-2"></i>Satisfaction après-vente</span><span data-echantillon="satisfaction"></span></div><div class="card-body" data-zone="satisfaction"></div></section>
     <section class="card rc-bloc" aria-labelledby="st-reseau"><div class="card-header sv-card-header"><span id="st-reseau"><i class="bi bi-share me-2"></i>Recommandations</span><span data-echantillon="reseau"></span></div><div class="card-body" data-zone="reseau"></div></section>
     <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>Aucun score prédictif de satisfaction, de fidélité ou de recommandation n'est calculé. Avec peu d'observations, ces chiffres décrivent des cas, pas une tendance.</p>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
