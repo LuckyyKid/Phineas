@@ -54,6 +54,15 @@
   }
   var etat = lire(CLE) || initial();
   var modifie = !!lire(CLE);
+
+  // Profil enregistré dans l'onglet par une version précédente, sans forme du rôle, année d'arrivée ni ville :
+  // on complète seulement les champs absents avec les valeurs de démonstration (jamais d'erreur, rien n'est écrasé).
+  var CHAMPS_PROFIL_AJOUTES = ["formeRole", "anneeArrivee", "villeConcession"];
+  CHAMPS_PROFIL_AJOUTES.forEach(function (cle) {
+    if (!(cle in etat.profil)) {
+      etat.profil[cle] = d.profil[cle] === undefined ? null : d.profil[cle];
+    }
+  });
   var abonnes = [];
 
   function changer() {
@@ -451,12 +460,17 @@
     Object.keys(patch).forEach(function (k) { if (k !== "codeRecommandation") etat.profil[k] = patch[k]; });
     changer();
   }
+  // Textes accordés selon la forme du rôle (« Conseillère aux ventes »…) ; forme absente ou inconnue : formulation neutre.
+  function textesRole(formeRole) {
+    return (ref.formesRole && ref.formesRole[formeRole]) || ref.formeRoleNeutre;
+  }
   // Seules les informations publiques autorisées sont exposées au parcours de démonstration.
   function profilPublic() {
     var p = etat.profil;
-    return { nom: charge.conseillerNom, role: "Conseiller aux ventes", concession: ref.concession || "Concession de démonstration", presentation: p.presentation,
+    return { nom: charge.conseillerNom, role: textesRole(p.formeRole).role, concession: ref.concession || "Concession de démonstration", presentation: p.presentation,
       telephone: p.afficherTelephone ? p.telephonePro : null, courriel: p.afficherCourriel ? p.courrielPro : null,
-      langues: p.afficherLangues ? p.langues.map(function (l) { return ref.langues[l] || l; }) : [], photo: null, code: p.codeRecommandation };
+      langues: p.afficherLangues ? p.langues.map(function (l) { return ref.langues[l] || l; }) : [], photo: null, code: p.codeRecommandation,
+      formeRole: p.formeRole || null, anneeArrivee: p.anneeArrivee || null, ville: p.villeConcession || null };
   }
   function publierProfil() {
     ecrireCle(CLE_PROFIL_PUBLIC, profilPublic());
@@ -752,6 +766,7 @@
     // référencement
     profil: profil,
     profilPublic: profilPublic,
+    textesRole: textesRole,
     modifierProfil: modifierProfil,
     lienDemo: lienDemo,
     urlApercu: urlApercu,

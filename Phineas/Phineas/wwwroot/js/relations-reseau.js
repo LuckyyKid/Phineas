@@ -266,6 +266,10 @@
     f.elements.afficherCourriel.checked = p.afficherCourriel;
     f.elements.afficherLangues.checked = p.afficherLangues;
     f.querySelectorAll('[name="langue"]').forEach(function (c) { c.checked = p.langues.indexOf(c.value) >= 0; });
+    // Forme du rôle : « » (vide) correspond à « Ne pas préciser ».
+    f.querySelectorAll('[name="formeRole"]').forEach(function (r) { r.checked = r.value === (p.formeRole || ""); });
+    f.elements.anneeArrivee.value = p.anneeArrivee || "";
+    f.elements.villeConcession.value = p.villeConcession || "";
     f.dataset.rempli = "1";
   }
 
@@ -281,7 +285,7 @@
     var pp = RC.profilPublic();
     var langues = languesCochees(f).map(function (cle) { return ref.langues[cle] || cle; });
     return {
-      nom: pp.nom, role: pp.role, concession: pp.concession,
+      nom: pp.nom, role: RC.textesRole(f.elements.formeRole.value).role, concession: pp.concession,
       message: f.elements.messageCarte.value.trim() || RC.profil().messageCarte,
       telephone: f.elements.afficherTelephone.checked ? f.elements.telephonePro.value.trim() : "",
       courriel: f.elements.afficherCourriel.checked ? f.elements.courrielPro.value.trim() : "",
@@ -321,12 +325,22 @@
       "</article>";
   }
 
+  // « Conseillère aux ventes · Auto Prestige Brossard, Brossard (Québec) · À la concession depuis 2019 » :
+  // la ville et l'ancienneté ne s'affichent que si elles sont connues.
+  function sousTitreProfil(pp) {
+    var lieu = pp.concession;
+    if (pp.ville) lieu += ", " + pp.ville;
+    var morceaux = [pp.role, lieu];
+    if (pp.anneeArrivee) morceaux.push("À la concession depuis " + pp.anneeArrivee);
+    return morceaux.join(" · ");
+  }
+
   // Aperçu du profil public : ce que la personne recommandée verrait, d'après le profil ENREGISTRÉ.
   function rendreProfilPublic() {
     var pp = RC.profilPublic();
     var contacts = contactsCarte({ telephone: pp.telephone, courriel: pp.courriel, langues: pp.langues });
     champ("profil-apercu").innerHTML = '<div class="rr-profil-public"><span class="rr-avatar rr-avatar-grand" aria-hidden="true">' + esc(initialesNom(pp.nom)) + "</span>" +
-      '<div><p class="rr-profil-nom">' + esc(pp.nom) + '</p><p class="rr-sous">' + esc(pp.role + " · " + pp.concession) + "</p>" +
+      '<div><p class="rr-profil-nom">' + esc(pp.nom) + '</p><p class="rr-sous">' + esc(sousTitreProfil(pp)) + "</p>" +
       '<p class="rr-profil-presentation">' + esc(pp.presentation) + "</p>" +
       (contacts ? '<ul class="rr-profil-contacts">' + contacts + "</ul>" : "") +
       '<div class="rr-boutons"><span class="rr-btn-blanc rr-btn-petit is-inactif" aria-disabled="true">Prendre contact</span><span class="rr-btn-blanc rr-btn-petit is-inactif" aria-disabled="true">Demander un rendez-vous</span></div>' +
@@ -391,10 +405,28 @@
   var formulaire = champ("form-profil");
   formulaire.addEventListener("input", function () { majBascules(); rendreCarte(); });
   formulaire.addEventListener("change", function () { majBascules(); rendreCarte(); });
+  // Année d'arrivée saisie : null si le champ est vide, NaN si elle est hors bornes ou mal écrite.
+  function anneeSaisie(f) {
+    var texte = f.elements.anneeArrivee.value.trim();
+    if (texte === "") return null;
+    var annee = Number(texte);
+    var anneeValide = /^\d{4}$/.test(texte) && annee >= ref.anneeArriveeMin && annee <= new Date().getFullYear();
+    return anneeValide ? annee : NaN;
+  }
+
   formulaire.addEventListener("submit", function (e) {
     e.preventDefault();
     var f = e.target;
+    var annee = anneeSaisie(f);
+    var anneeInvalide = Number.isNaN(annee);
+    f.elements.anneeArrivee.setAttribute("aria-invalid", anneeInvalide ? "true" : "false");
+    champ("pf-annee-erreur").hidden = !anneeInvalide;
+    if (anneeInvalide) {
+      f.elements.anneeArrivee.focus();
+      return;
+    }
     RC.modifierProfil({
+      formeRole: f.elements.formeRole.value || null, anneeArrivee: annee, villeConcession: f.elements.villeConcession.value.trim() || null,
       presentation: f.elements.presentation.value.trim(), telephonePro: f.elements.telephonePro.value.trim() || null, courrielPro: f.elements.courrielPro.value.trim() || null,
       messageCarte: f.elements.messageCarte.value.trim() || RC.profil().messageCarte, afficherTelephone: f.elements.afficherTelephone.checked, afficherCourriel: f.elements.afficherCourriel.checked,
       afficherLangues: f.elements.afficherLangues.checked, langues: languesCochees(f),

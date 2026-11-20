@@ -187,6 +187,30 @@
                             </div>
 
                             <fieldset class="rr-groupe">
+                                <legend class="rr-champ-label">Forme du rôle <span class="rr-facultatif">(accorde « Conseillère / Conseiller aux ventes »)</span></legend>
+                                <div class="rr-bascules">
+                                    @foreach (var forme in ReferentielsRelations.FormesRole)
+                                    {
+                                        <label class="rr-bascule"><input type="radio" name="formeRole" value="@forme.Cle" /><i class="bi bi-check2" aria-hidden="true"></i>@forme.Choix</label>
+                                    }
+                                    <label class="rr-bascule"><input type="radio" name="formeRole" value="" /><i class="bi bi-check2" aria-hidden="true"></i>@ReferentielsRelations.FormeRoleNeutre.Choix</label>
+                                </div>
+                            </fieldset>
+
+                            <div class="rr-champs-deux">
+                                <div>
+                                    <label class="rr-champ-label" for="pf-annee">Arrivée à la concession <span class="rr-facultatif">(facultatif)</span></label>
+                                    <input type="number" class="rr-champ" id="pf-annee" name="anneeArrivee" inputmode="numeric" placeholder="Ex. : 2019"
+                                           min="@ReferentielsRelations.AnneeArriveeMin" max="@DateTime.Now.Year" step="1" aria-describedby="pf-annee-erreur" />
+                                    <p class="rr-erreur" id="pf-annee-erreur" hidden>Indiquez une année entre @ReferentielsRelations.AnneeArriveeMin et @DateTime.Now.Year, ou laissez vide.</p>
+                                </div>
+                                <div>
+                                    <label class="rr-champ-label" for="pf-ville">Ville de la concession <span class="rr-facultatif">(facultatif)</span></label>
+                                    <input type="text" class="rr-champ" id="pf-ville" name="villeConcession" maxlength="80" placeholder="Ex. : Brossard (Québec)" />
+                                </div>
+                            </div>
+
+                            <fieldset class="rr-groupe">
                                 <legend class="rr-champ-label">Informations présentées sur la carte</legend>
                                 <div class="rr-bascules">
                                     <label class="rr-bascule"><input type="checkbox" name="afficherTelephone" /><i class="bi bi-check2" aria-hidden="true"></i>Téléphone</label>

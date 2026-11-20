@@ -214,6 +214,9 @@
 .rr-editeur-client { margin-bottom: 16px !important; font-size: 14.5px; color: var(--rr-text); }
 .rr-champ-label { display: block; margin: 0 0 8px; padding: 0; font-size: 13.5px; font-weight: 500; color: var(--rr-ink); }
 .rr-facultatif { font-weight: 400; color: var(--rr-muted); }
+/* Message sous un champ invalide (année d'arrivée hors bornes) : texte foncé, pas de rouge vif */
+.rr-erreur { margin: 6px 0 0; font-size: 12.5px; color: var(--rr-ambre-ink); }
+.rr-champ[aria-invalid="true"] { border-color: var(--rr-ambre); }
 .rr-zone-texte, .rr-champ {
   width: 100%; border: 1px solid var(--rr-line-2); background: rgba(255, 255, 255, .9);
   font-size: 15px; color: var(--rr-ink); font-family: var(--rr-font);
