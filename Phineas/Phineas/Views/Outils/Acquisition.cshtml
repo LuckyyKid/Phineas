@@ -1,3 +1,6 @@
+@* Page « Acquisition commerciale » (maquettes 15 à 20) : six onglets, de la provenance des prospects à la performance publicitaire.
+   Comportement : wwwroot/js/acquisition-page.js (données : outils-store.js et prospects-store.js ; pagination : outils-pagination.js).
+   Styles : outils.css (jetons og-) et acquisition-verre.css (préfixe acq-). *@
 @using Phineas.Models.ViewModels.Conseiller
 @model OutilsPageViewModel
 @{
@@ -9,28 +12,33 @@
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/acquisition-verre.css" asp-append-version="true" />
 }
 
-<div class="og-page">
-<partial name="_HautOutils" />
+<div class="og-page acq-page">
 
-<header class="sv-head">
-    <div>
-        <h1>Acquisition commerciale</h1>
-        <p class="text-muted mb-0">D'où viennent vos prospects, et comment vos annonces et votre prospection contribuent à créer des opportunités.</p>
+@* Haut propre à cette page : la maquette ne montre ni « Modifiée » ni « Réinitialiser » (ils restent sur les autres pages Outils). *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Acquisition commerciale</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
     </div>
-    <div class="sv-quick">
-        <a class="btn btn-outline-primary btn-sm" asp-action="Annonces"><i class="bi bi-megaphone me-1"></i>Studio d'annonces</a>
-    </div>
-</header>
-
-<div class="ov-simulation" role="note">
-    <i class="bi bi-plug" aria-hidden="true"></i>
-    <span><strong>Aucune plateforme publicitaire n'est connectée.</strong> Les liens sont fictifs, les publications sont déclarées par vous, et l'attribution d'un prospect ne prouve pas qu'une annonce a causé une vente.</span>
 </div>
 
+<header class="acq-entete">
+    <div>
+        <p class="acq-label">Outils</p>
+        <h1 class="acq-titre">Acquisition commerciale</h1>
+        <p class="acq-intro">D'où viennent vos prospects, et comment vos annonces et votre prospection contribuent à créer des opportunités.</p>
+    </div>
+    <a class="acq-btn-verre" asp-action="Annonces"><i class="bi bi-megaphone" aria-hidden="true"></i>Studio d'annonces</a>
+</header>
+
 <div id="acquisition" data-onglet="@Model.Onglet">
-    <ul class="nav pr-onglets" role="tablist">
+    <ul class="nav acq-onglets" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-sources" data-bs-toggle="tab" data-bs-target="#panneau-sources" type="button" role="tab" aria-controls="panneau-sources" aria-selected="true">Sources</button></li>
         <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-liens" data-bs-toggle="tab" data-bs-target="#panneau-liens" type="button" role="tab" aria-controls="panneau-liens" aria-selected="false">Liens de provenance</button></li>
         <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-publications" data-bs-toggle="tab" data-bs-target="#panneau-publications" type="button" role="tab" aria-controls="panneau-publications" aria-selected="false">Publications</button></li>
@@ -40,142 +48,203 @@
     </ul>
 
     <div class="tab-content">
+        @* ---------- Onglet 1 : Sources (maquette 15) ---------- *@
         <div class="tab-pane fade show active" id="panneau-sources" role="tabpanel" aria-labelledby="onglet-sources" tabindex="0">
-            <div class="rc-grille">
-                <section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-pie-chart me-2"></i>Mes prospects par source</span><span class="badge-soft">Démonstration</span></div><div class="card-body" data-zone="sources"></div></section>
-                <section class="card rc-bloc"><div class="card-header sv-card-header"><span><i class="bi bi-person-badge me-2"></i>Origine des prospects</span></div><div class="card-body" data-zone="origines"></div></section>
+            <div class="acq-deux">
+                <section class="acq-verre acq-carte" aria-labelledby="titre-sources">
+                    <div class="acq-carte-tete">
+                        <h2 class="acq-label" id="titre-sources">Mes prospects par source</h2>
+                        <span class="acq-compte" data-zone="nb-prospects"></span>
+                    </div>
+                    <div data-zone="sources"></div>
+                    <p class="acq-pied">Prospects dont vous êtes responsable, toutes périodes. La source est celle déclarée dans la fiche : une source inconnue n'est jamais devinée.</p>
+                </section>
+                <section class="acq-verre acq-carte" aria-labelledby="titre-origines">
+                    <div class="acq-carte-tete">
+                        <h2 class="acq-label" id="titre-origines">Origine des prospects</h2>
+                    </div>
+                    <div data-zone="origines"></div>
+                </section>
             </div>
-            <section class="card pr-module">
-                <div class="card-header sv-card-header"><span><i class="bi bi-link-45deg me-2"></i>Provenance de mes prospects</span></div>
-                <div class="pr-filtres"><select class="form-select form-select-sm" id="f-origine" aria-label="Filtrer par origine"><option value="">Toutes les origines</option>
-                    @foreach (var (cle, libelle) in ReferentielsOutils.Origines)
-                    {
-                        <option value="@cle">@libelle</option>
-                    }
-                </select></div>
-                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Prospect</th><th scope="col">Source déclarée</th><th scope="col">Origine</th><th scope="col">Provenance établie</th><th scope="col">Opportunité</th></tr></thead><tbody id="provenances-corps"></tbody></table></div><div class="og-pagination-zone" data-pagination="provenances-corps"></div>
+
+            <section class="acq-verre acq-module" aria-labelledby="titre-provenance">
+                <div class="acq-module-tete">
+                    <h2 class="acq-label" id="titre-provenance">Provenance de mes prospects</h2>
+                    <select class="acq-select acq-select-filtre" id="f-origine" aria-label="Filtrer par origine">
+                        <option value="">Toutes les origines</option>
+                        @foreach (var (cle, libelle) in ReferentielsOutils.Origines)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                </div>
+                <div class="acq-defile">
+                    <table class="acq-table">
+                        <thead><tr><th scope="col">Prospect</th><th scope="col">Source déclarée</th><th scope="col">Origine</th><th scope="col">Provenance établie</th><th scope="col">Opportunité</th></tr></thead>
+                        <tbody id="provenances-corps"></tbody>
+                    </table>
+                </div>
+                <div class="og-pagination-zone" data-pagination="provenances-corps"></div>
             </section>
         </div>
 
+        @* ---------- Onglet 2 : Liens de provenance (maquette 16) ---------- *@
         <div class="tab-pane fade" id="panneau-liens" role="tabpanel" aria-labelledby="onglet-liens" tabindex="0">
-            <section class="card rc-bloc">
-                <div class="card-header sv-card-header"><span><i class="bi bi-link me-2"></i>Préparer un lien de provenance</span><span class="badge-soft">Fictif</span></div>
-                <div class="card-body">
-                    <form id="form-lien" novalidate class="row g-3">
-                        <div class="col-md-4"><label class="form-label" for="lk-annonce">Annonce</label><select class="form-select" id="lk-annonce" name="annonceId"><option value="">Aucune annonce</option></select></div>
-                        <div class="col-md-4"><label class="form-label" for="lk-vehicule">Véhicule</label><select class="form-select" id="lk-vehicule" name="vehiculeId"><option value="">Choisir</option></select><div class="invalid-feedback" data-erreur="vehicule"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="lk-source">Source</label><select class="form-select" id="lk-source" name="source"><option value="">Choisir</option>
+            <section class="acq-verre acq-formulaire" aria-labelledby="titre-form-lien">
+                <div class="acq-form-tete"><h2 class="acq-label" id="titre-form-lien">Préparer un lien de provenance</h2><span class="acq-pastille">Fictif</span></div>
+                <form id="form-lien" novalidate class="acq-form-corps">
+                    <div class="acq-grille">
+                        <div><label class="acq-champ-label" for="lk-annonce">Annonce</label><select class="acq-select" id="lk-annonce" name="annonceId"><option value="">Aucune annonce</option></select></div>
+                        <div><label class="acq-champ-label" for="lk-vehicule">Véhicule</label><select class="acq-select" id="lk-vehicule" name="vehiculeId"><option value="">Choisir</option></select><div class="invalid-feedback" data-erreur="vehicule"></div></div>
+                        <div><label class="acq-champ-label" for="lk-source">Source</label><select class="acq-select" id="lk-source" name="source"><option value="">Choisir</option>
                             @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
                             {
                                 <option value="@cle">@libelle</option>
                             }
                         </select><div class="invalid-feedback" data-erreur="source"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="lk-support">Support</label><select class="form-select" id="lk-support" name="support"><option value="">Choisir</option>
+                        <div><label class="acq-champ-label" for="lk-support">Support</label><select class="acq-select" id="lk-support" name="support"><option value="">Choisir</option>
                             @foreach (var (cle, libelle) in ReferentielsOutils.Supports)
                             {
                                 <option value="@cle">@libelle</option>
                             }
                         </select><div class="invalid-feedback" data-erreur="support"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="lk-campagne">Campagne <span class="pr-sous">(facultatif)</span></label><input class="form-control" id="lk-campagne" name="campagne" placeholder="Ex. : vus-hybrides-novembre" /><div class="invalid-feedback" data-erreur="campagne"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="lk-conseiller">Conseiller</label><select class="form-select" id="lk-conseiller" name="conseillerId">
+                        <div><label class="acq-champ-label" for="lk-campagne">Campagne <span class="acq-facultatif">(facultatif)</span></label><input class="acq-input" id="lk-campagne" name="campagne" placeholder="Ex. : vus-hybrides-novembre" /><div class="invalid-feedback" data-erreur="campagne"></div></div>
+                        <div><label class="acq-champ-label" for="lk-conseiller">Conseiller</label><select class="acq-select" id="lk-conseiller" name="conseillerId">
                             @foreach (var c in Model.Prospects.Conseillers)
                             {
                                 <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Moi" : c.Nom + " (fictif)")</option>
                             }
                         </select></div>
-                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Préparer le lien</button></div>
-                    </form>
-                    <div class="mt-3" data-zone="lien-apercu"></div>
-                    <p class="pr-note mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Structure illustrative : la page publique de destination n'existe pas, et chaque plateforme suit les visites à sa manière. Aucun renseignement personnel n'est placé dans les paramètres.</p>
-                </div>
+                    </div>
+                    <div class="acq-actions">
+                        <button type="submit" class="acq-btn-sapin">Préparer le lien</button>
+                        <p class="acq-aide"><i class="bi bi-info-circle" aria-hidden="true"></i>Structure illustrative : la page publique de destination n'existe pas, et chaque plateforme suit les visites à sa manière. Aucun renseignement personnel n'est placé dans les paramètres.</p>
+                    </div>
+                    <div class="acq-apercu" data-zone="lien-apercu"></div>
+                </form>
             </section>
-            <section class="card pr-module">
-                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Référence de suivi</th><th scope="col">Source et support</th><th scope="col">Campagne</th><th scope="col">Annonce et véhicule</th><th scope="col">Conseiller</th><th scope="col">Créé le</th><th scope="col">Prospects rattachés</th></tr></thead><tbody id="liens-corps"></tbody></table></div><div class="og-pagination-zone" data-pagination="liens-corps"></div>
+
+            <section class="acq-verre acq-module" aria-label="Liens de provenance préparés">
+                <div class="acq-defile">
+                    <table class="acq-table">
+                        <thead><tr><th scope="col">Référence de suivi</th><th scope="col">Source et support</th><th scope="col">Campagne</th><th scope="col">Annonce et véhicule</th><th scope="col">Créé le</th><th scope="col" class="acq-droite">Prospects</th></tr></thead>
+                        <tbody id="liens-corps"></tbody>
+                    </table>
+                </div>
+                <div class="og-pagination-zone" data-pagination="liens-corps"></div>
             </section>
         </div>
 
+        @* ---------- Onglet 3 : Publications (maquette 17) ---------- *@
         <div class="tab-pane fade" id="panneau-publications" role="tabpanel" aria-labelledby="onglet-publications" tabindex="0">
-            <section class="card rc-bloc">
-                <div class="card-header sv-card-header"><span><i class="bi bi-calendar-plus me-2"></i>Prévoir une publication</span></div>
-                <div class="card-body">
-                    <form id="form-publication" novalidate class="row g-3 align-items-end">
-                        <div class="col-md-5"><label class="form-label" for="pb-annonce">Annonce approuvée</label><select class="form-select" id="pb-annonce" name="annonceId"></select></div>
-                        <div class="col-md-3"><label class="form-label" for="pb-plateforme">Plateforme</label><select class="form-select" id="pb-plateforme" name="plateforme">
+            <section class="acq-verre acq-formulaire" aria-labelledby="titre-form-publication">
+                <div class="acq-form-tete"><h2 class="acq-label" id="titre-form-publication">Prévoir une publication</h2></div>
+                <form id="form-publication" novalidate class="acq-form-corps">
+                    <div class="acq-grille">
+                        <div><label class="acq-champ-label" for="pb-annonce">Annonce approuvée</label><select class="acq-select" id="pb-annonce" name="annonceId"></select></div>
+                        <div><label class="acq-champ-label" for="pb-plateforme">Plateforme</label><select class="acq-select" id="pb-plateforme" name="plateforme">
                             @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
                             {
                                 <option value="@cle">@libelle</option>
                             }
                         </select></div>
-                        <div class="col-md-2"><label class="form-label" for="pb-date">Date envisagée</label><input type="date" class="form-control" id="pb-date" name="date" /></div>
-                        <div class="col-md-2"><button type="submit" class="btn btn-primary btn-sm w-100">Ajouter</button></div>
-                    </form>
-                </div>
+                        <div><label class="acq-champ-label" for="pb-date">Date envisagée</label><input type="date" class="acq-input" id="pb-date" name="date" /></div>
+                    </div>
+                    <div class="acq-actions">
+                        <button type="submit" class="acq-btn-sapin">Ajouter</button>
+                        <p class="acq-aide"><i class="bi bi-info-circle" aria-hidden="true"></i>Phineas ne publie rien : vous publiez vous-même, puis vous déclarez la publication ici. Aucun identifiant de plateforme n'est créé.</p>
+                    </div>
+                </form>
             </section>
-            <section class="card pr-module">
-                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Plateforme</th><th scope="col">Annonce</th><th scope="col">Véhicule</th><th scope="col">Statut</th><th scope="col">Date</th><th scope="col">Conseiller</th><th scope="col">Adresse</th><th scope="col">Actions</th></tr></thead><tbody id="publications-corps"></tbody></table></div><div class="og-pagination-zone" data-pagination="publications-corps"></div>
-                <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-lock me-1"></i>Phineas ne publie rien sur Meta, Google ou Kijiji : « Publiée » signifie que vous déclarez l'avoir fait vous-même. Aucun identifiant de plateforme n'est créé.</p>
+
+            <section class="acq-verre acq-module" aria-label="Publications suivies">
+                <div class="acq-defile">
+                    <table class="acq-table">
+                        <thead><tr><th scope="col">Plateforme</th><th scope="col">Annonce et véhicule</th><th scope="col">Statut</th><th scope="col">Adresse</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+                        <tbody id="publications-corps"></tbody>
+                    </table>
+                </div>
+                <div class="og-pagination-zone" data-pagination="publications-corps"></div>
             </section>
         </div>
 
+        @* ---------- Onglet 4 : Prospects entrants (maquette 18) ---------- *@
         <div class="tab-pane fade" id="panneau-entrants" role="tabpanel" aria-labelledby="onglet-entrants" tabindex="0">
-            <section class="card rc-bloc">
-                <div class="card-header sv-card-header"><span><i class="bi bi-inbox me-2"></i>Enregistrer un prospect entrant (démonstration)</span></div>
-                <div class="card-body">
-                    <form id="form-entrant" novalidate class="row g-3">
-                        <div class="col-md-3"><label class="form-label" for="en-prenom">Prénom</label><input class="form-control" id="en-prenom" name="prenom" /><div class="invalid-feedback" data-erreur="prenom"></div></div>
-                        <div class="col-md-3"><label class="form-label" for="en-nom">Nom</label><input class="form-control" id="en-nom" name="nom" /><div class="invalid-feedback" data-erreur="nom"></div></div>
-                        <div class="col-md-3"><label class="form-label" for="en-courriel">Courriel</label><input type="email" class="form-control" id="en-courriel" name="courriel" /><div class="invalid-feedback" data-erreur="contact"></div></div>
-                        <div class="col-md-3"><label class="form-label" for="en-tel">Téléphone</label><input type="tel" class="form-control" id="en-tel" name="telephone" /></div>
-                        <div class="col-md-4"><label class="form-label" for="en-source">Source déclarée</label><select class="form-select" id="en-source" name="source"><option value="">Choisir</option>
+            <section class="acq-verre acq-formulaire" aria-labelledby="titre-form-entrant">
+                <div class="acq-form-tete"><h2 class="acq-label" id="titre-form-entrant">Enregistrer un prospect entrant</h2><span class="acq-pastille">Démonstration</span></div>
+                <form id="form-entrant" novalidate class="acq-form-corps">
+                    <div class="acq-grille acq-grille-4">
+                        <div><label class="acq-champ-label" for="en-prenom">Prénom</label><input class="acq-input" id="en-prenom" name="prenom" /><div class="invalid-feedback" data-erreur="prenom"></div></div>
+                        <div><label class="acq-champ-label" for="en-nom">Nom</label><input class="acq-input" id="en-nom" name="nom" /><div class="invalid-feedback" data-erreur="nom"></div></div>
+                        <div><label class="acq-champ-label" for="en-courriel">Courriel</label><input type="email" class="acq-input" id="en-courriel" name="courriel" /><div class="invalid-feedback" data-erreur="contact"></div></div>
+                        <div><label class="acq-champ-label" for="en-tel">Téléphone</label><input type="tel" class="acq-input" id="en-tel" name="telephone" /></div>
+                    </div>
+                    <div class="acq-grille">
+                        <div><label class="acq-champ-label" for="en-source">Source déclarée</label><select class="acq-select" id="en-source" name="source"><option value="">Choisir</option>
                             @foreach (var (cle, libelle) in ReferentielsVente.Sources)
                             {
                                 <option value="@cle">@libelle</option>
                             }
                         </select><div class="invalid-feedback" data-erreur="source"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="en-lien">Lien de provenance <span class="pr-sous">(si établi)</span></label><select class="form-select" id="en-lien" name="lienId"><option value="">Aucun lien établi</option></select></div>
-                        <div class="col-md-4"><label class="form-label" for="en-campagne">Campagne déclarée <span class="pr-sous">(facultatif)</span></label><input class="form-control" id="en-campagne" name="campagne" /></div>
-                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Enregistrer</button></div>
-                    </form>
-                    <p class="pr-note mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Un contact déjà connu (même courriel ou téléphone) est rattaché, jamais dupliqué. Une campagne déclarée sans lien établi n'est pas créditée des ventes.</p>
-                </div>
+                        <div><label class="acq-champ-label" for="en-lien">Lien de provenance <span class="acq-facultatif">(si établi)</span></label><select class="acq-select" id="en-lien" name="lienId"><option value="">Aucun lien établi</option></select></div>
+                        <div><label class="acq-champ-label" for="en-campagne">Campagne déclarée <span class="acq-facultatif">(facultatif)</span></label><input class="acq-input" id="en-campagne" name="campagne" /></div>
+                    </div>
+                    <div class="acq-actions">
+                        <button type="submit" class="acq-btn-sapin">Enregistrer</button>
+                        <p class="acq-aide"><i class="bi bi-info-circle" aria-hidden="true"></i>Un contact déjà connu (même courriel ou téléphone) est rattaché, jamais dupliqué. Une campagne déclarée sans lien établi n'est pas créditée des ventes.</p>
+                    </div>
+                </form>
             </section>
         </div>
 
+        @* ---------- Onglet 5 : Prospection personnelle (maquette 19) ---------- *@
         <div class="tab-pane fade" id="panneau-prospection" role="tabpanel" aria-labelledby="onglet-prospection" tabindex="0">
-            <section class="card rc-bloc">
-                <div class="card-header sv-card-header"><span><i class="bi bi-person-plus me-2"></i>Ajouter un contact de prospection</span></div>
-                <div class="card-body">
-                    <form id="form-prospection" novalidate class="row g-3">
-                        <div class="col-md-4"><label class="form-label" for="pp-nom">Personne contactée</label><input class="form-control" id="pp-nom" name="nom" /><div class="invalid-feedback" data-erreur="nom"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="pp-entreprise">Entreprise <span class="pr-sous">(facultatif)</span></label><input class="form-control" id="pp-entreprise" name="entreprise" /></div>
-                        <div class="col-md-4"><label class="form-label" for="pp-type">Source</label><select class="form-select" id="pp-type" name="type"><option value="">Choisir</option>
+            <section class="acq-verre acq-formulaire" aria-labelledby="titre-form-prospection">
+                <div class="acq-form-tete"><h2 class="acq-label" id="titre-form-prospection">Ajouter un contact de prospection</h2></div>
+                <form id="form-prospection" novalidate class="acq-form-corps">
+                    <div class="acq-grille">
+                        <div><label class="acq-champ-label" for="pp-nom">Personne contactée</label><input class="acq-input" id="pp-nom" name="nom" /><div class="invalid-feedback" data-erreur="nom"></div></div>
+                        <div><label class="acq-champ-label" for="pp-entreprise">Entreprise <span class="acq-facultatif">(facultatif)</span></label><input class="acq-input" id="pp-entreprise" name="entreprise" /></div>
+                        <div><label class="acq-champ-label" for="pp-type">Source</label><select class="acq-select" id="pp-type" name="type"><option value="">Choisir</option>
                             @foreach (var (cle, libelle) in ReferentielsOutils.TypesProspection)
                             {
                                 <option value="@cle">@libelle</option>
                             }
                         </select><div class="invalid-feedback" data-erreur="type"></div></div>
-                        <div class="col-md-4"><label class="form-label" for="pp-vehicule">Véhicule d'intérêt</label><input class="form-control" id="pp-vehicule" name="vehiculeInteret" /></div>
-                        <div class="col-md-4"><label class="form-label" for="pp-moyen">Moyen de contact autorisé</label><input class="form-control" id="pp-moyen" name="moyenContactAutorise" placeholder="Ex. : téléphone, accordé lors de la rencontre" /></div>
-                        <div class="col-md-4"><label class="form-label" for="pp-action">Prochaine action</label><input class="form-control" id="pp-action" name="prochaineAction" /></div>
-                        <div class="col-12"><label class="form-label" for="pp-contexte">Contexte commercial</label><textarea class="form-control" id="pp-contexte" name="contexte" rows="2"></textarea></div>
-                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Ajouter</button></div>
-                    </form>
-                    <p class="pr-note mt-3 mb-0"><i class="bi bi-shield-check me-1"></i>Saisie manuelle seulement : aucune collecte automatique de coordonnées, aucun envoi de messages en masse.</p>
-                </div>
+                        <div><label class="acq-champ-label" for="pp-vehicule">Véhicule d'intérêt</label><input class="acq-input" id="pp-vehicule" name="vehiculeInteret" /></div>
+                        <div><label class="acq-champ-label" for="pp-moyen">Moyen de contact autorisé</label><input class="acq-input" id="pp-moyen" name="moyenContactAutorise" placeholder="Ex. : téléphone, accordé lors de la rencontre" /></div>
+                        <div><label class="acq-champ-label" for="pp-action">Prochaine action</label><input class="acq-input" id="pp-action" name="prochaineAction" /></div>
+                        <div class="acq-pleine"><label class="acq-champ-label" for="pp-contexte">Contexte commercial</label><textarea class="acq-texte" id="pp-contexte" name="contexte" rows="3"></textarea></div>
+                    </div>
+                    <div class="acq-actions">
+                        <button type="submit" class="acq-btn-sapin">Ajouter</button>
+                        <p class="acq-aide"><i class="bi bi-shield-check" aria-hidden="true"></i>Saisie manuelle seulement : aucune collecte automatique de coordonnées, aucun envoi de messages en masse.</p>
+                    </div>
+                </form>
             </section>
-            <section class="card rc-bloc"><div class="card-body"><ul class="ov-prospection" data-zone="prospection"></ul><div class="og-pagination-zone" data-pagination="prospection"></div></div></section>
+
+            <section class="acq-verre acq-carte" aria-labelledby="titre-contacts">
+                <h2 class="acq-label acq-titre-liste" id="titre-contacts">Contacts de prospection · <span data-zone="nb-prospection">0</span></h2>
+                <ul class="acq-contacts" data-zone="prospection"></ul>
+                <div class="og-pagination-zone" data-pagination="prospection"></div>
+            </section>
         </div>
 
+        @* ---------- Onglet 6 : Performance publicitaire (maquette 20) ---------- *@
         <div class="tab-pane fade" id="panneau-publicite" role="tabpanel" aria-labelledby="onglet-publicite" tabindex="0">
-            <section class="card rc-bloc">
-                <div class="card-header sv-card-header"><span><i class="bi bi-plug me-2"></i>Indicateurs publicitaires</span><span class="ov-non-connecte">Données non connectées</span></div>
-                <div class="card-body">
-                    <div class="rc-chiffres" data-zone="publicite"></div>
-                    <p class="small mb-0">Ces indicateurs exigent une intégration réelle des plateformes (dépenses, conversions). Aucune dépense n'est inventée. Même avec ces données, une attribution indique d'où vient un prospect, pas que la publicité a causé la vente (l'incrémentalité est une autre mesure).</p>
+            <section class="acq-verre acq-carte" aria-labelledby="titre-publicite">
+                <div class="acq-carte-tete acq-carte-tete-gauche">
+                    <h2 class="acq-label" id="titre-publicite">Indicateurs publicitaires</h2>
+                    <span class="acq-pastille">Données non connectées</span>
                 </div>
+                <div class="acq-tuiles" data-zone="publicite"></div>
+                <p class="acq-pied">Ces indicateurs exigent une intégration réelle des plateformes (dépenses, conversions). Aucune dépense n'est inventée. Même avec ces données, une attribution indique d'où vient un prospect, pas que la publicité a causé la vente : l'incrémentalité est une autre mesure.</p>
             </section>
         </div>
     </div>
+
+    @* Note commune aux six onglets : remplace le bandeau d'avertissement du haut de page. *@
+    <p class="acq-note" role="note"><i class="bi bi-plug" aria-hidden="true"></i><span>Aucune plateforme publicitaire n'est connectée. Les liens sont fictifs, les publications sont déclarées par vous, et l'attribution d'un prospect ne prouve pas qu'une annonce a causé une vente.</span></p>
 </div>
 
 </div>
