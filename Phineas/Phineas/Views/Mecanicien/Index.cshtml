@@ -3,11 +3,16 @@
 
 <partial name="_LoginConfirmation" model="Model" />
 
-<div class="card mt-4">
-    <div class="card-header"><span><i class="bi bi-hourglass-split me-2"></i>Bientôt dans cet espace</span></div>
-    <ul class="soon-list">
-        <li>Scanner le code QR d'un véhicule</li>
-        <li>Changer son étape : inspection, nettoyage, prêt pour la vente</li>
-        <li>Voir mes derniers scans</li>
-    </ul>
+<div class="lm-section-title"><h2>À l’atelier</h2><span>Scannez l’étiquette QR d’un véhicule pour ouvrir sa fiche</span></div>
+<div class="lm-tiles">
+    <div class="lm-tile" data-tilt>
+        <span class="ico"><i class="bi bi-qr-code-scan"></i></span>
+        <h3>Scanner un véhicule</h3>
+        <p>Avec l’appareil photo du téléphone, scannez l’étiquette sur le pare-brise : la fiche s’ouvre et vous pouvez changer le statut.</p>
+        <span class="go"><i class="bi bi-check-circle"></i>Disponible</span>
+    </div>
+    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-list-check"></i></span><h3>Ma file de travail</h3><p>Les véhicules qui attendent une inspection ou un nettoyage.</p></div>
+    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-clock-history"></i></span><h3>Mes derniers scans</h3><p>Ce que vous avez fait aujourd’hui, avec l’heure.</p></div>
 </div>
+
+<partial name="_TesterAcces" model="Model" />
