@@ -26,6 +26,7 @@ public static class NavigationVendeur
             "bi-receipt",
             Enfants:
             [
+                new("Soumissions", "bi-file-earmark-text", "Soumissions", "Index"),
                 new("Nouvelle soumission", "bi-file-earmark-plus", "Soumissions", "Nouvelle"),
                 new("Nouvelle transaction", "bi-cash-coin"),
             ]
