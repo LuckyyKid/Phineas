@@ -1,5 +1,6 @@
-// Page « Ventes perdues » : liste filtrable et fiche d'analyse d'une vente perdue.
-// Les indicateurs sont calculés à partir des clôtures enregistrées ; aucune statistique codée à la main.
+// Page « Ventes perdues » (Views/Relations/Pertes.cshtml) : phrase de résumé, chiffres, liste filtrable et paginée,
+// et fiche d'analyse d'une vente perdue (?opportunite=…). Les données viennent de window.RelationsClients (relations-store.js) :
+// les indicateurs sont calculés à partir des clôtures enregistrées, aucune statistique n'est codée à la main.
 (function () {
   "use strict";
 
@@ -9,11 +10,19 @@
   var esc = P.esc, ref = RC.ref;
   var oppId = racine.dataset.opportunite || null;
   var JOUR = 86400000;
+  // Au-delà de LIGNES_PAR_PAGE, le tableau se découpe en pages : la page reste courte.
+  var LIGNES_PAR_PAGE = 6;
+  var page = 1;
 
   function champ(id) { return document.getElementById(id); }
   var F = ["f-recherche", "f-periode", "f-motif", "f-origine", "f-vehicule", "f-conseiller", "f-recuperable", "f-reactivees", "f-manquantes"];
   function valeur(id) { var e = champ(id); return e.type === "checkbox" ? e.checked : e.value; }
   function norm(s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+
+  // Accorde un nom selon le nombre, ex. accord(2, "opportunité", "opportunités") → « 2 opportunités ».
+  function accord(nombre, singulier, pluriel) {
+    return nombre + " " + (nombre > 1 ? pluriel : singulier);
+  }
 
   function filtrer(l) {
     var q = norm(valeur("f-recherche")), per = Number(valeur("f-periode")) || 0, m = new Date();
@@ -36,16 +45,115 @@
     return F.some(function (id) { return id !== "f-conseiller" && valeur(id); }) || valeur("f-conseiller") !== P.moiId;
   }
 
+  // ---------- États : un point de 8 px et un libellé (sans pastille à fond) ----------
+  // Origine de l'information sur le motif : plein vert = déclaré, plein gris foncé = confirmé, creux ambre = hypothèse, creux gris = rien.
+  var ORIGINES = {
+    client: { point: "vert-plein", libelle: "Déclaré par le client" },
+    "vendeur-confirme": { point: "gris-plein", libelle: "Confirmé par le conseiller" },
+    hypothese: { point: "ambre-creux", libelle: "Hypothèse du conseiller, non confirmée" },
+    inconnu: { point: "gris-creux", libelle: "Non renseigné" },
+  };
+  // Récupération : creux ambre = à vérifier, plein ambre = en attente, creux gris = aucune, creux vert = à faire ou reprise, plein vert = réussie.
+  var RECUPERATIONS = {
+    "a-verifier": { point: "ambre-creux", libelle: "Récupération à vérifier" },
+    "attente-evenement": { point: "ambre-plein", libelle: "En attente d'un événement" },
+    aucune: { point: "gris-creux", libelle: "Aucune récupération envisagée" },
+    "suivi-planifie": { point: "vert-creux", libelle: "Suivi planifié" },
+    reactivee: { point: "vert-creux", libelle: "Réactivée" },
+    recuperee: { point: "vert-plein", libelle: "Récupérée avec succès" },
+  };
+
+  function etat(definition, precision, infobulle) {
+    var d = definition || { point: "gris-creux", libelle: "Non renseigné" };
+    return '<span class="rp-etat rp-etat-' + d.point + '"' + (infobulle ? ' title="' + esc(infobulle) + '"' : "") + ">" +
+      '<span class="rp-point" aria-hidden="true"></span>' + esc(d.libelle) + "</span>" +
+      (precision ? '<span class="rp-sous">' + esc(precision) + "</span>" : "");
+  }
+
+  // Précision sous l'état de récupération : ce qui manque, sinon le détail utile (condition, événement, vente).
+  function precisionRecuperation(x) {
+    var cl = x.cloture, cle = x.etat.cle;
+    if (x.informationsManquantes.length) {
+      var texte = x.informationsManquantes.join(", ").toLowerCase();
+      return texte.charAt(0).toUpperCase() + texte.slice(1);
+    }
+    if (cle === "reactivee" && cl.reactivation) return cl.reactivation.evenement;
+    if (cle === "recuperee" || cle === "suivi-planifie") return x.etat.raison;
+    if (cle === "attente-evenement" && cl.conditions) return cl.conditions;
+    return "";
+  }
+
   function ligne(x) {
     var cl = x.cloture, a = x.prochaineAction;
+    var vehicule = x.soumission
+      ? x.soumission.reference + ", " + x.soumission.statutLibelle.toLowerCase()
+      : "Aucune soumission";
+    // Le conseiller n'est nommé que si le dossier appartient à un collègue.
+    var conseiller = x.conseillerId === P.moiId ? "" : '<span class="rp-sous">Conseiller : ' + esc(x.conseiller) + " (fictif)</span>";
     return '<tr data-opp="' + esc(x.opportunite.id) + '">' +
-      '<td data-label="Client et opportunité"><a class="pr-nom" href="' + esc(RC.urlAnalyse(x.opportunite.id)) + '">' + esc(x.client) + '</a><span class="pr-sous d-block">' + esc(x.opportunite.titre) + "</span>" +
-      '<span class="pr-sous d-block">Conseiller : ' + esc(x.conseillerId === P.moiId ? "Vous" : x.conseiller + " (fictif)") + "</span></td>" +
-      '<td data-label="Véhicule recherché">' + esc(x.vehicule) + (x.soumission ? '<span class="pr-sous d-block">' + esc(x.soumission.reference + " v" + x.soumission.numero + " · " + x.soumission.statutLibelle.toLowerCase()) + "</span>" : '<span class="pr-sous d-block">Aucune soumission</span>') + "</td>" +
-      '<td data-label="Clôture">' + esc(P.dateCourte(cl.date)) + '<span class="pr-sous d-block">Étape : ' + esc(P.libelleEtape(cl.etapeAtteinte)) + "</span></td>" +
-      '<td data-label="Motif de perte"><span class="rc-motif">' + esc(ref.motifsPerte[cl.motif]) + "</span>" + RUI.pastilleOrigine(cl.origine) + "</td>" +
-      '<td data-label="Récupération">' + RUI.pastilleRecuperation(x.etat) + (x.informationsManquantes.length ? '<span class="pr-sous d-block"><i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>' + esc(x.informationsManquantes.join(", ")) + "</span>" : "") + "</td>" +
-      '<td data-label="Prochaine action">' + (a ? '<span class="rc-action">' + UI.pastillePriorite(a.priorite) + " " + esc(a.actionProposee) + "</span>" : '<span class="text-muted">Aucune</span>') + "</td></tr>";
+      '<td><a class="rp-nom" href="' + esc(RC.urlAnalyse(x.opportunite.id)) + '">' + esc(x.client) + '</a><span class="rp-sous">' + esc(x.opportunite.titre) + "</span>" + conseiller + "</td>" +
+      "<td>" + esc(x.vehicule) + '<span class="rp-sous">' + esc(vehicule) + "</span></td>" +
+      "<td>" + esc(P.dateCourte(cl.date)) + '<span class="rp-sous">Étape : ' + esc(P.libelleEtape(cl.etapeAtteinte)) + "</span></td>" +
+      '<td><span class="rp-motif">' + esc(ref.motifsPerte[cl.motif]) + "</span>" + etat(ORIGINES[cl.origine]) + "</td>" +
+      "<td>" + etat(RECUPERATIONS[x.etat.cle], precisionRecuperation(x), x.etat.raison) + "</td>" +
+      "<td>" + (a ? esc(a.actionProposee) : '<span class="rp-attenue">Aucune</span>') + "</td></tr>";
+  }
+
+  // ---------- Phrase de résumé, en mots ----------
+  function phraseResume(k) {
+    var phrase;
+    if (k.perdues === 0) phrase = "Aucune opportunité n'est perdue.";
+    else if (k.perdues === 1) phrase = "1 opportunité est perdue.";
+    else phrase = k.perdues + " opportunités sont perdues.";
+
+    var reprise;
+    if (k.recuperables === 0) reprise = " Aucune ne semble pouvoir être reprise pour l'instant";
+    else if (k.recuperables === 1) reprise = " 1 pourrait être reprise si la situation change";
+    else reprise = " " + k.recuperables + " pourraient être reprises si la situation change";
+
+    var reactivees = "";
+    if (k.reactivees === 1) reactivees = ", et 1 autre a déjà été réactivée";
+    else if (k.reactivees > 1) reactivees = ", et " + k.reactivees + " autres ont déjà été réactivées";
+
+    return phrase + reprise + reactivees + ".";
+  }
+
+  // ---------- Pagination ----------
+  // Numéros affichés : toutes les pages jusqu'à 7, sinon la première, la dernière et les voisines de la page courante.
+  // Un null marque un trou entre deux numéros (affiché « … »). Même règle que les autres listes en verre.
+  function numerosPages(nbPages, pageCourante) {
+    var numeros = [];
+    var precedent = 0;
+    for (var n = 1; n <= nbPages; n++) {
+      var estAuBord = n === 1 || n === nbPages;
+      var estVoisine = Math.abs(n - pageCourante) <= 1;
+      if (nbPages <= 7 || estAuBord || estVoisine) {
+        if (n - precedent > 1) numeros.push(null);
+        numeros.push(n);
+        precedent = n;
+      }
+    }
+    return numeros;
+  }
+  function boutonPage(numero, libelle, contenu, desactive, courant) {
+    return '<button type="button" class="rp-page-btn' + (courant ? " is-active" : "") + '" data-aller-page="' + numero + '"' +
+      (desactive ? " disabled" : "") + (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
+  }
+  function rendrePagination(total) {
+    var zone = racine.querySelector('[data-zone="pagination"]');
+    var nbPages = Math.ceil(total / LIGNES_PAR_PAGE);
+    zone.hidden = nbPages <= 1;
+    if (nbPages <= 1) { zone.innerHTML = ""; return; }
+    var debut = (page - 1) * LIGNES_PAR_PAGE + 1;
+    var fin = Math.min(total, page * LIGNES_PAR_PAGE);
+    var html = '<span class="rp-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
+      boutonPage(page - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', page === 1, false);
+    numerosPages(nbPages, page).forEach(function (n) {
+      if (n === null) html += '<span class="rp-pages-trou" aria-hidden="true">…</span>';
+      else html += boutonPage(n, "Page " + n, String(n), false, n === page);
+    });
+    html += boutonPage(page + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', page === nbPages, false);
+    zone.innerHTML = html;
   }
 
   function rendreListe() {
@@ -53,20 +161,37 @@
     var mes = tout.filter(function (x) { return !valeur("f-conseiller") || x.conseillerId === valeur("f-conseiller"); });
     var k = RC.compteursPertes(mes);
     Object.keys(k).forEach(function (c) { var e = racine.querySelector('[data-compteur="' + c + '"]'); if (e) e.textContent = String(k[c]); });
-    racine.querySelector('[data-detail="hypotheses"]').textContent = "confirmés" + (k.hypotheses ? " · " + k.hypotheses + " hypothèse(s) à part" : "");
+    racine.querySelector('[data-zone="resume"]').textContent = phraseResume(k);
+    var detailConnus = "Confirmés";
+    if (k.hypotheses) detailConnus += ", " + accord(k.hypotheses, "hypothèse", "hypothèses") + " à part";
+    racine.querySelector('[data-detail="hypotheses"]').textContent = detailConnus;
+    racine.querySelector('[data-libelle="recuperees"]').textContent = k.recuperees > 1 ? "Récupérées" : "Récupérée";
+
     // Liste des véhicules recherchés (filtre), recalculée à partir des données.
     var sel = champ("f-vehicule"), choisi = sel.value;
     var vehicules = tout.map(function (x) { return x.vehicule; }).filter(function (v, i, t) { return v && t.indexOf(v) === i; }).sort();
     sel.innerHTML = '<option value="">Tous les véhicules</option>' + vehicules.map(function (v) { return '<option value="' + esc(v) + '"' + (v === choisi ? " selected" : "") + ">" + esc(v) + "</option>"; }).join("");
+
     var l = filtrer(tout);
-    champ("liste-corps").innerHTML = l.map(ligne).join("");
+    // La liste a pu raccourcir (filtre, réactivation) : on reste sur une page qui existe.
+    var nbPages = Math.max(1, Math.ceil(l.length / LIGNES_PAR_PAGE));
+    if (page > nbPages) page = nbPages;
+    var debut = (page - 1) * LIGNES_PAR_PAGE;
+    champ("liste-corps").innerHTML = l.slice(debut, debut + LIGNES_PAR_PAGE).map(ligne).join("");
     champ("etat-vide").hidden = l.length > 0;
-    racine.querySelector(".rc-table").hidden = !l.length;
-    champ("resultat").textContent = l.length + " opportunité(s) perdue(s) ou réactivée(s)";
-    racine.querySelectorAll("[data-effacer-filtres]").forEach(function (b) { if (b.classList.contains("pr-effacer")) b.hidden = !filtresActifs(); });
+    racine.querySelector(".rp-defile").hidden = !l.length;
+    champ("resultat").textContent = accord(l.length, "opportunité perdue ou réactivée", "opportunités perdues ou réactivées");
+    rendrePagination(l.length);
+    racine.querySelectorAll("[data-effacer-filtres]").forEach(function (b) { if (b.closest(".rp-plus")) b.hidden = !filtresActifs(); });
+
     var sans = RC.pertesSansCloture();
-    racine.querySelector('[data-zone="sans-cloture"]').innerHTML = sans.length ? '<i class="bi bi-exclamation-circle me-1"></i>' + sans.length + " opportunité(s) marquée(s) « Perdu » sans clôture enregistrée : motif inconnu (" +
-      esc(sans.map(function (o) { var c = P.contact(o.prospectId); return c ? c.prenom + " " + c.nom : o.titre; }).join(", ")) + ")." : "";
+    var noms = sans.map(function (o) { var c = P.contact(o.prospectId); return c ? c.prenom + " " + c.nom : o.titre; }).join(", ");
+    var texteSans = "";
+    if (sans.length === 1) texteSans = "1 opportunité est marquée « Perdu » sans clôture enregistrée : motif inconnu (" + noms + ").";
+    else if (sans.length > 1) texteSans = sans.length + " opportunités sont marquées « Perdu » sans clôture enregistrée : motif inconnu (" + noms + ").";
+    var zoneSans = racine.querySelector('[data-zone="sans-cloture"]');
+    zoneSans.textContent = texteSans;
+    zoneSans.hidden = !texteSans;
   }
 
   // ---------- Fiche d'analyse ----------
@@ -148,12 +273,38 @@
     racine.querySelector('[data-mode="fiche"]').hidden = !oppId;
     if (oppId) rendreFiche(); else rendreListe();
   }
-  F.forEach(function (id) { var e = champ(id); if (e) e.addEventListener(e.type === "search" ? "input" : "change", rendre); });
+
+  // Un nouveau filtre ou une nouvelle recherche repart de la première page.
+  function relancer() {
+    page = 1;
+    rendre();
+  }
+  F.forEach(function (id) { var e = champ(id); if (e) e.addEventListener(e.type === "search" ? "input" : "change", relancer); });
+
   racine.addEventListener("click", function (e) {
+    var pagination = e.target.closest("[data-aller-page]");
+    if (pagination && !pagination.disabled) {
+      page = Number(pagination.dataset.allerPage);
+      rendre();
+      var courante = racine.querySelector('[data-zone="pagination"] [aria-current="page"]');
+      if (courante) courante.focus();
+      racine.querySelector(".rp-module").scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
     if (!e.target.closest("[data-effacer-filtres]")) return;
     F.forEach(function (id) { var x = champ(id); if (x.type === "checkbox") x.checked = false; else x.value = id === "f-conseiller" ? P.moiId : ""; });
-    rendre();
+    relancer();
   });
+
+  // « Plus de filtres » : période, source du motif, véhicule et conseiller, repliés par défaut.
+  var boutonPlus = racine.querySelector("[data-plus-filtres]");
+  boutonPlus.addEventListener("click", function () {
+    var zone = champ("plus-filtres");
+    zone.hidden = !zone.hidden;
+    boutonPlus.setAttribute("aria-expanded", zone.hidden ? "false" : "true");
+    boutonPlus.textContent = zone.hidden ? "Plus de filtres" : "Moins de filtres";
+  });
+
   champ("f-conseiller").value = P.moiId;
   RC.abonner(rendre);
   P.abonner(rendre);
