@@ -8,6 +8,9 @@
   if (!P || !S || !OV || !A || !racine) return;
   var esc = P.esc, ref = OV.ref;
   var ed = { annonceId: null, etape: 1, vehiculeId: null };
+  // Page affichée de chaque liste (bibliothèque, historique d'une annonce), par id de liste. Absente = page 1.
+  var pages = {};
+  var Pagination = window.OutilsPagination;
 
   function champ(id) { return document.getElementById(id); }
   function zone(n) { return racine.querySelector('[data-zone="' + n + '"]'); }
@@ -30,7 +33,9 @@
   }
   function rendreListe() {
     var l = filtrer(OV.annonces()).slice().sort(function (a, b) { return new Date(b.dateModification) - new Date(a.dateModification); });
-    champ("liste-corps").innerHTML = l.map(function (a) {
+    var morceau = Pagination.decouper(pages, "liste-corps", l);
+    Pagination.afficherBarre(racine, "liste-corps", morceau.pagination);
+    champ("liste-corps").innerHTML = morceau.elements.map(function (a) {
       var v = OV.vehiculeDe(a);
       var liens = OV.liens().filter(function (k) { return k.annonceId === a.id; });
       var dispo = A.disponibilite(v);
@@ -117,7 +122,9 @@
         return '<button type="button" class="btn btn-sm ' + (s === "Approuvee" ? "btn-success" : s === "Archivee" ? "btn-outline-danger" : "btn-outline-primary") + '" data-an="statut" data-statut="' + esc(s) + '">' + esc(lib) + "</button>";
       }).join("") + (["Approuvee", "PretePublication", "Publiee"].indexOf(a.statut) >= 0 ? '<a class="btn btn-sm btn-ghost" href="' + esc(ref.urls.acquisition + "?onglet=publications") + '">Suivre la publication</a>' : "") + "</div>" +
       '<p class="form-text mb-0">Aucune approbation automatique. « Publiée » ne s\'obtient qu\'en déclarant une publication faite hors Phineas.</p>';
-    zone("historique").innerHTML = (a.historique || []).slice().reverse().map(function (h) { return '<li><time datetime="' + esc(h.date) + '">' + esc(P.dateComplete(h.date)) + "</time><span>" + esc(h.texte) + ' <span class="pr-sous">— ' + esc(h.auteur) + "</span></span></li>"; }).join("");
+    var historique = Pagination.decouper(pages, "historique", (a.historique || []).slice().reverse());
+    Pagination.afficherBarre(racine, "historique", historique.pagination);
+    zone("historique").innerHTML = historique.elements.map(function (h) { return '<li><time datetime="' + esc(h.date) + '">' + esc(P.dateComplete(h.date)) + "</time><span>" + esc(h.texte) + ' <span class="pr-sous">— ' + esc(h.auteur) + "</span></span></li>"; }).join("");
   }
   function rendreVariantes(a) {
     if (!a.variantes || !a.variantes.length) { zone("variantes").innerHTML = ""; return; }
@@ -132,6 +139,7 @@
     }).join("") + '</div><p class="small text-muted">Informations communes aux trois versions : ' + esc(cmp.communs.slice(0, 12).join(", ") || "—") + ".</p>";
   }
   function ouvrir(id) {
+    pages.historique = 1;
     ed = { annonceId: id, etape: 4, vehiculeId: (OV.annonce(id) || {}).vehiculeId };
     editeur().hidden = false;
     afficherEtape(4);
@@ -171,7 +179,7 @@
   racine.addEventListener("click", function (e) {
     var b = e.target.closest("[data-an], [data-effacer-filtres]");
     if (!b) return;
-    if (b.hasAttribute("data-effacer-filtres")) { champ("f-recherche").value = ""; champ("f-statut").value = ""; champ("f-canal").value = ""; return rendreListe(); }
+    if (b.hasAttribute("data-effacer-filtres")) { champ("f-recherche").value = ""; champ("f-statut").value = ""; champ("f-canal").value = ""; return relancerListe(); }
     var q = b.dataset.an;
     if (q === "ouvrir") ouvrir(b.dataset.id);
     else if (q === "fermer") { editeur().hidden = true; ed.annonceId = null; }
@@ -190,11 +198,16 @@
   });
   document.querySelector('[data-an="nouvelle"]').addEventListener("click", function () { nouvelle(null); });
   champ("ed-vehicule").addEventListener("change", function () { ed.vehiculeId = this.value || null; rendreFicheVehicule(); });
-  ["f-recherche", "f-statut", "f-canal"].forEach(function (id) { champ(id).addEventListener(id === "f-recherche" ? "input" : "change", rendreListe); });
+  function relancerListe() {
+    pages["liste-corps"] = 1;
+    rendreListe();
+  }
+  ["f-recherche", "f-statut", "f-canal"].forEach(function (id) { champ(id).addEventListener(id === "f-recherche" ? "input" : "change", relancerListe); });
   function rendre() {
     rendreListe();
     if (!editeur().hidden && ed.etape === 4) rendreEdition();
   }
+  Pagination.ecouterClics(racine, pages, rendre);
   OV.abonner(rendre);
   rendre();
   // Ouverture ciblée : ?annonce=… ou ?vehicule=… (depuis l'assistant ou l'inventaire).

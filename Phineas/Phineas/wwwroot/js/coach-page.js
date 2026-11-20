@@ -84,9 +84,15 @@
   }
 
   // ---------- Historique local ----------
+  // Page affichée de l'historique (liste « historique »). Absente = page 1.
+  var pages = {};
+  var Pagination = window.OutilsPagination;
+
   function rendreHistorique() {
     var l = OV.consultations().slice(0, 8);
-    zone("historique").innerHTML = l.length ? l.map(function (c) {
+    var morceau = Pagination.decouper(pages, "historique", l);
+    Pagination.afficherBarre(racine, "historique", morceau.pagination);
+    zone("historique").innerHTML = l.length ? morceau.elements.map(function (c) {
       return "<li><strong>" + esc(c.question) + '</strong><span class="pr-sous d-block">' + esc(P.relatif(c.le)) + " · " + esc(ref.contextes[c.contexteType || "aucun"] || "") + " · simulation</span></li>";
     }).join("") : '<li class="text-muted small">Aucune consultation.</li>';
   }
@@ -114,6 +120,7 @@
     demander(q);
     champ("coach-question").value = "";
   });
+  Pagination.ecouterClics(racine, pages, rendreHistorique);
   OV.abonner(rendreHistorique);
 
   // Ouverture contextualisée (?mode=…&contexte=…&id=…) depuis une fiche du dossier.

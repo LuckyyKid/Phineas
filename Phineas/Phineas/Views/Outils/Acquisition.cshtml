@@ -53,7 +53,7 @@
                         <option value="@cle">@libelle</option>
                     }
                 </select></div>
-                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Prospect</th><th scope="col">Source déclarée</th><th scope="col">Origine</th><th scope="col">Provenance établie</th><th scope="col">Opportunité</th></tr></thead><tbody id="provenances-corps"></tbody></table></div>
+                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Prospect</th><th scope="col">Source déclarée</th><th scope="col">Origine</th><th scope="col">Provenance établie</th><th scope="col">Opportunité</th></tr></thead><tbody id="provenances-corps"></tbody></table></div><div class="og-pagination-zone" data-pagination="provenances-corps"></div>
             </section>
         </div>
 
@@ -90,7 +90,7 @@
                 </div>
             </section>
             <section class="card pr-module">
-                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Référence de suivi</th><th scope="col">Source et support</th><th scope="col">Campagne</th><th scope="col">Annonce et véhicule</th><th scope="col">Conseiller</th><th scope="col">Créé le</th><th scope="col">Prospects rattachés</th></tr></thead><tbody id="liens-corps"></tbody></table></div>
+                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Référence de suivi</th><th scope="col">Source et support</th><th scope="col">Campagne</th><th scope="col">Annonce et véhicule</th><th scope="col">Conseiller</th><th scope="col">Créé le</th><th scope="col">Prospects rattachés</th></tr></thead><tbody id="liens-corps"></tbody></table></div><div class="og-pagination-zone" data-pagination="liens-corps"></div>
             </section>
         </div>
 
@@ -112,7 +112,7 @@
                 </div>
             </section>
             <section class="card pr-module">
-                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Plateforme</th><th scope="col">Annonce</th><th scope="col">Véhicule</th><th scope="col">Statut</th><th scope="col">Date</th><th scope="col">Conseiller</th><th scope="col">Adresse</th><th scope="col">Actions</th></tr></thead><tbody id="publications-corps"></tbody></table></div>
+                <div class="table-responsive"><table class="table pr-table ov-table mb-0"><thead><tr><th scope="col">Plateforme</th><th scope="col">Annonce</th><th scope="col">Véhicule</th><th scope="col">Statut</th><th scope="col">Date</th><th scope="col">Conseiller</th><th scope="col">Adresse</th><th scope="col">Actions</th></tr></thead><tbody id="publications-corps"></tbody></table></div><div class="og-pagination-zone" data-pagination="publications-corps"></div>
                 <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-lock me-1"></i>Phineas ne publie rien sur Meta, Google ou Kijiji : « Publiée » signifie que vous déclarez l'avoir fait vous-même. Aucun identifiant de plateforme n'est créé.</p>
             </section>
         </div>
@@ -163,7 +163,7 @@
                     <p class="pr-note mt-3 mb-0"><i class="bi bi-shield-check me-1"></i>Saisie manuelle seulement : aucune collecte automatique de coordonnées, aucun envoi de messages en masse.</p>
                 </div>
             </section>
-            <section class="card rc-bloc"><div class="card-body"><ul class="ov-prospection" data-zone="prospection"></ul></div></section>
+            <section class="card rc-bloc"><div class="card-body"><ul class="ov-prospection" data-zone="prospection"></ul><div class="og-pagination-zone" data-pagination="prospection"></div></div></section>
         </div>
 
         <div class="tab-pane fade" id="panneau-publicite" role="tabpanel" aria-labelledby="onglet-publicite" tabindex="0">
@@ -193,6 +193,7 @@
     <script src="~/js/relations-store.js" asp-append-version="true"></script>
     <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
     <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/outils-pagination.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-store.js" asp-append-version="true"></script>

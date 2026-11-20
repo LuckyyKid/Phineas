@@ -593,6 +593,27 @@
   .og-page .card-header, .og-page .card-body { padding-left: 18px; padding-right: 18px; }
 }
 
+/* Pagination des listes des Outils (outils-pagination.js) : même rendu que le Centre d'actions */
+.og-page .og-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 8px; border-top: 1px solid var(--ogp-line-2); }
+.og-page .og-pages-info { font-family: var(--ogp-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--ogp-muted); }
+.og-page .og-pages { display: flex; align-items: center; gap: 4px; }
+.og-page .og-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 14px;
+  color: var(--ogp-text);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.og-page .og-page-btn:hover:not(:disabled) { background: rgba(11, 13, 13, .05); color: var(--ogp-ink); }
+.og-page .og-page-btn.is-active { background: #FFFFFF; border-color: var(--ogp-line-2); color: var(--ogp-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+.og-page .og-page-btn:disabled { color: var(--ogp-muted-2); opacity: .45; cursor: default; }
+.og-page .og-pages-trou { padding: 0 4px; color: var(--ogp-muted); }
+
 /* Note « Aucune IA n'est connectée » : gardée, mais discrète plutôt qu'en bandeau jaune. */
 .og-page .ov-simulation {
   margin-bottom: 24px;

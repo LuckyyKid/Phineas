@@ -103,6 +103,7 @@
                 <div class="ov-validation" data-zone="validation"></div>
                 <h2 class="ia-sous-titre">Historique</h2>
                 <ol class="ia-historique" data-zone="historique"></ol>
+                <div class="og-pagination-zone" data-pagination="historique"></div>
             </div>
             <div class="d-flex gap-2 mt-3" data-zone="navigation">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-an="precedent">Précédent</button>
@@ -153,6 +154,7 @@
                 <tbody id="liste-corps"></tbody>
             </table>
         </div>
+        <div class="og-pagination-zone" data-pagination="liste-corps"></div>
         <div class="pr-etat-vide" id="etat-vide" hidden>
             <i class="bi bi-megaphone"></i>
             <strong>Aucune annonce</strong>
@@ -177,6 +179,7 @@
     <script src="~/js/relations-store.js" asp-append-version="true"></script>
     <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
     <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/outils-pagination.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
     <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
