@@ -55,12 +55,14 @@
     //           dans wwwroot/images/equipe/ (ex. "marie-tremblay.png"). null = pas encore de photo.
     // Le fond vert de chaque portrait vient de la feuille de style (acc-portrait-1 à acc-portrait-4).
     // Ne jamais inventer de nom, de visage ni de parcours.
+    // Nom de remplacement affiché tant que le vrai nom n'est pas fourni.
+    const string NomAVenir = "Prénom Nom";
     var equipe = new[]
     {
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)null),
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)null),
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)null),
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)null)
+        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-1.webp"),
+        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-2.webp"),
+        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-3.webp"),
+        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-4.webp")
     };
     const int NombreFondsPortrait = 4;
 
@@ -308,7 +310,9 @@
                             <div class="acc-portrait @fond">
                                 @if (membre.Photo is not null)
                                 {
-                                    <img src="~/images/equipe/@membre.Photo" alt="Portrait de @membre.Nom" loading="lazy" />
+                                    @* Tant que le nom n'est pas renseigné (« Prénom Nom »), le texte alternatif reste neutre. *@
+                                    var textePortrait = membre.Nom == NomAVenir ? "Portrait d'un membre de l'équipe" : "Portrait de " + membre.Nom;
+                                    <img src="~/images/equipe/@membre.Photo" alt="@textePortrait" loading="lazy" />
                                 }
                                 else
                                 {
