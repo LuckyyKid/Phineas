@@ -18,9 +18,11 @@
   var DUREE_PULSATION_MAX = 10000;
   var RAYON_SOURIS = 190;               // les carrés à moins de 190 px de la souris s'allument
   var GROSSISSEMENT_SOURIS = 4;         // pixels ajoutés au carré le plus proche de la souris
-  var COULEUR_LIGNES = "rgba(23, 97, 79, 0.075)";
-  var COULEUR_CARRES = "29, 154, 130";  // vert vif #1D9A82, sans l'opacité
-  var COULEUR_DIAGONALES = "23, 97, 79";
+  // Couleurs du motif selon le thème (rouge, vert, bleu sans l'opacité pour les carrés et les diagonales).
+  // Thème clair : vert sapin sur fond blanc. Thème sombre : menthe très discrète sur fond presque noir.
+  // « intensite » multiplie l'opacité des carrés et des diagonales.
+  var COULEURS_CLAIR = { lignes: "rgba(23, 97, 79, 0.075)", carres: "29, 154, 130", diagonales: "23, 97, 79", intensite: 1 };
+  var COULEURS_SOMBRE = { lignes: "rgba(255, 255, 255, 0.045)", carres: "95, 224, 192", diagonales: "95, 224, 192", intensite: 0.62 };
   // Ellipse presque effacée derrière le titre, pour la lisibilité (proportions de la largeur et de la hauteur).
   var ELLIPSE_CENTRE_Y = 0.36;
   var ELLIPSE_RAYON_X = 0.36;
@@ -35,6 +37,12 @@
   var groupeStatuts = document.querySelector("[data-demo-statuts]");
   if (groupeStatuts) {
     brancherDemoStatuts(groupeStatuts);
+  }
+
+  // Thème actif, lu dans le contrat commun (wwwroot/js/theme.js) ; sans ce script : thème clair.
+  function couleursDuTheme() {
+    var sombre = window.PhineasTheme && window.PhineasTheme.obtenir() === "sombre";
+    return sombre ? COULEURS_SOMBRE : COULEURS_CLAIR;
   }
 
   // ---------- 1. Fond animé ----------
@@ -96,7 +104,7 @@
     }
 
     function dessinerGrille() {
-      contexte.strokeStyle = COULEUR_LIGNES;
+      contexte.strokeStyle = couleurs.lignes;
       contexte.lineWidth = 1;
       contexte.beginPath();
       for (var x = 0; x <= largeur; x += TAILLE_CASE) {
@@ -116,20 +124,20 @@
         var opacite = opacitePulsee(carre, temps);
         var proximite = proximiteSouris(carre);
         // Près de la souris, le carré s'allume et grossit un peu.
-        var opaciteFinale = opacite + (1 - opacite) * proximite;
+        var opaciteFinale = (opacite + (1 - opacite) * proximite) * couleurs.intensite;
         var taille = carre.taille + GROSSISSEMENT_SOURIS * proximite;
 
         if (carre.diagonale) {
           // La diagonale apparaît puis disparaît, sur le même rythme que son carré.
-          var opaciteDiagonale = Math.max(0, Math.sin((temps / carre.duree) * Math.PI * 2 + carre.decalage)) * 0.45;
-          contexte.strokeStyle = "rgba(" + COULEUR_DIAGONALES + ", " + opaciteDiagonale.toFixed(3) + ")";
+          var opaciteDiagonale = Math.max(0, Math.sin((temps / carre.duree) * Math.PI * 2 + carre.decalage)) * 0.45 * couleurs.intensite;
+          contexte.strokeStyle = "rgba(" + couleurs.diagonales + ", " + opaciteDiagonale.toFixed(3) + ")";
           contexte.beginPath();
           contexte.moveTo(carre.x, carre.y);
           contexte.lineTo(carre.diagonale.x, carre.diagonale.y);
           contexte.stroke();
         }
 
-        contexte.fillStyle = "rgba(" + COULEUR_CARRES + ", " + opaciteFinale.toFixed(3) + ")";
+        contexte.fillStyle = "rgba(" + couleurs.carres + ", " + opaciteFinale.toFixed(3) + ")";
         contexte.fillRect(carre.x - taille / 2, carre.y - taille / 2, taille, taille);
       }
     }
@@ -182,6 +190,13 @@
     }
 
     preparer();
+
+    // Changement de thème : on reprend les couleurs ; une image fixe (ou en pause) est redessinée tout de suite.
+    var couleurs = couleursDuTheme();
+    document.addEventListener("phineas:theme", function () {
+      couleurs = couleursDuTheme();
+      if (!animationEnCours) dessiner(0);
+    });
 
     if (mouvementsReduits) {
       // Image fixe : un seul dessin, sans mouvement ni réaction à la souris.

@@ -619,3 +619,107 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
   .acc-lecture .acc-lecture-rond::after { animation: none; opacity: .6; }
   .acc-portrait, .acc-portrait img, .acc-lecture-rond { transition: none; }
 }
+
+/* =========================================================
+   Thème sombre (contrat : wwwroot/js/theme.js, palette --ps-* : wwwroot/css/theme-sombre.css)
+   Esprit de la maquette 70 : fond presque noir, verre sombre, action principale BLANCHE,
+   la menthe ne sert que d'accent. Les panneaux verts restent verts, un cran plus profonds.
+   Les couleurs du fond animé (canvas) sont choisies dans accueil-public.js (COULEURS_SOMBRE).
+   ========================================================= */
+
+/* ---------- Couleurs de la page ---------- */
+html[data-theme="sombre"] .acc-page {
+  --acc-encre: var(--ps-texte);
+  --acc-texte: var(--ps-texte-courant);
+  --acc-gris: var(--ps-texte-second);
+  --acc-gris-2: var(--ps-texte-discret);
+  --acc-filet: var(--ps-filet-2);
+  --acc-sapin-plein: var(--ps-menthe);          /* accents verts (chiffres, petits carrés) : menthe sur fond sombre */
+  --acc-vert-vif: var(--ps-menthe);
+  --acc-menthe-pale: rgba(95, 224, 192, .05);   /* survol des cases */
+  --acc-case: #101313;                          /* case un cran plus claire que le fond, pour voir les filets */
+  /* Variables de la mascotte (mascot.css), adoucies pour le fond sombre */
+  --ph-ink: var(--ps-texte);
+  --ph-muted: var(--ps-texte-second);
+  --ph-border: var(--ps-contour);
+
+  background: var(--ps-fond);
+  color: var(--ps-texte);
+}
+/* Halos très discrets répartis sur la hauteur de la page */
+html[data-theme="sombre"] .acc-page::before {
+  background:
+    radial-gradient(40% 900px at 8% 0, rgba(255, 255, 255, .07), transparent 70%),
+    radial-gradient(36% 900px at 100% 1400px, rgba(95, 224, 192, .07), transparent 70%),
+    radial-gradient(40% 900px at 0 2800px, rgba(255, 255, 255, .04), transparent 70%),
+    radial-gradient(36% 900px at 100% 4300px, rgba(95, 224, 192, .06), transparent 70%),
+    radial-gradient(40% 900px at 10% 5800px, rgba(255, 255, 255, .04), transparent 70%);
+}
+html[data-theme="sombre"] .acc-page :focus-visible { outline-color: var(--ps-focus); }
+html[data-theme="sombre"] .acc-sauter { background: var(--ps-surface); color: var(--ps-texte); box-shadow: var(--ps-ombre-forte); }
+
+/* ---------- Boutons : principal blanc, secondaire en verre sombre ---------- */
+html[data-theme="sombre"] .acc-btn-sapin,
+html[data-theme="sombre"] .acc-btn-sapin:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .acc-btn-sapin:hover { box-shadow: 0 14px 34px -12px rgba(255, 255, 255, .45); }
+html[data-theme="sombre"] .acc-btn-verre { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .acc-btn-verre:hover { background: var(--ps-actif); border-color: var(--ps-actif-contour); }
+/* Le bouton blanc de l'appel à l'action reste blanc sur le panneau vert : ombre noire au lieu de verte */
+html[data-theme="sombre"] .acc-btn-blanc { box-shadow: 0 16px 30px -14px rgba(0, 0, 0, .6); }
+
+/* ---------- Barre de navigation en verre sombre ---------- */
+html[data-theme="sombre"] .acc-nav { background: rgba(18, 20, 20, .6); border-color: var(--ps-contour); box-shadow: 0 14px 34px -20px rgba(0, 0, 0, .8); }
+html[data-theme="sombre"] .acc-nav-liens a:hover { color: var(--ps-texte); }
+
+/* ---------- Haut de page ---------- */
+html[data-theme="sombre"] .acc-nouveau { background: rgba(255, 255, 255, .04); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .acc-nouveau span { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .acc-titre-principal span { color: #8FE9D1; }
+
+/* Maquette du produit : fenêtre en verre sombre */
+html[data-theme="sombre"] .acc-produit-fenetre { background: rgba(20, 23, 23, .72); border-color: var(--ps-contour); box-shadow: var(--ps-ombre-forte); }
+html[data-theme="sombre"] .acc-produit-barre span { background: rgba(255, 255, 255, .16); }
+html[data-theme="sombre"] .acc-produit-barre em { background: rgba(255, 255, 255, .05); }
+html[data-theme="sombre"] .acc-produit-menu b.is-actif { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .acc-direct { border-color: rgba(95, 224, 192, .3); background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .acc-produit-colonne { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .acc-produit-auto { background: rgba(255, 255, 255, .05); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .acc-produit-auto.is-en-avant { border-color: var(--ps-menthe); box-shadow: 0 0 0 1px rgba(95, 224, 192, .2), 0 8px 20px -12px rgba(95, 224, 192, .5); }
+html[data-theme="sombre"] .acc-point-gris { background: var(--ps-texte-discret); }
+html[data-theme="sombre"] .acc-produit-notif { box-shadow: 0 24px 40px -18px rgba(0, 0, 0, .8); }
+
+/* ---------- En-têtes de section et grilles de cases ---------- */
+html[data-theme="sombre"] .acc-pastille { background: var(--ps-menthe-fond); color: #8FE9D1; }
+html[data-theme="sombre"] .acc-case::after { background: rgba(95, 224, 192, .5); }
+html[data-theme="sombre"] .acc-case:hover::after { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .acc-icone { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .acc-case:hover .acc-icone { background: var(--ps-menthe); color: var(--ps-btn-principal-texte); }
+html[data-theme="sombre"] .acc-route-a-venir li i { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .acc-route-barre i { background: var(--ps-piste); }
+html[data-theme="sombre"] .acc-route-en-cours .acc-route-barre i { background: linear-gradient(90deg, var(--ps-menthe) 0 50%, var(--ps-piste) 50% 100%); }
+
+/* ---------- Panneaux verts : gardés verts, plus profonds pour s'intégrer au fond sombre ---------- */
+html[data-theme="sombre"] .acc-panneau {
+  background:
+    radial-gradient(50% 70% at 30% 85%, rgba(8, 40, 34, .7), transparent 70%),
+    radial-gradient(40% 60% at 80% 30%, rgba(8, 40, 34, .6), transparent 70%),
+    linear-gradient(120deg, #3E9C86 0%, #2A7F6C 30%, #17614F 60%, #1F6F5E 80%, #3E9C86 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), var(--ps-ombre-forte);
+}
+html[data-theme="sombre"] .acc-points { background-image: radial-gradient(rgba(255, 255, 255, .4) 1px, transparent 1.4px); }
+html[data-theme="sombre"] .acc-securite { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), var(--ps-ombre-forte); }
+html[data-theme="sombre"] .acc-securite-case { background: #0B342C; }
+html[data-theme="sombre"] .acc-securite-case:hover { background: #0F4137; }
+
+/* ---------- Équipe : fonds verts conservés, ombre noire au survol ---------- */
+html[data-theme="sombre"] .acc-membre:hover .acc-portrait { box-shadow: 0 24px 44px -22px rgba(0, 0, 0, .85), 0 0 0 1px rgba(95, 224, 192, .18); }
+
+/* ---------- Vidéo de la section À propos ---------- */
+html[data-theme="sombre"] .acc-video-fenetre { box-shadow: 0 0 0 1px var(--ps-contour), 0 50px 100px -30px rgba(0, 0, 0, .9); }
+html[data-theme="sombre"] .acc-video-fenetre::backdrop { background: rgba(5, 7, 7, .7); }
+
+/* ---------- Mascotte Boulon : route en traits clairs très discrets ---------- */
+html[data-theme="sombre"] .acc-page .acc-boulon-route::before { background: rgba(255, 255, 255, .04); }
+html[data-theme="sombre"] .acc-page .acc-boulon-route::after {
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .16) 0 18px, transparent 18px 36px);
+}
