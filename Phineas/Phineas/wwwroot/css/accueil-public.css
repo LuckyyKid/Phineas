@@ -503,3 +503,21 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
   .acc-page *, .acc-page *::before, .acc-page *::after { transition: none !important; animation: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ---------- Mascotte Boulon ----------
+   mascot.css lit les variables de phineas.css, que cette page ne charge pas :
+   on les redonne ici, seulement pour la page d'accueil, avec les mêmes valeurs que phineas.css.
+   La route (pensée pour un fond foncé) prend des traits gris-vert pour rester visible sur le fond blanc. */
+.acc-page {
+  --ph-ink: #0f172a;
+  --ph-muted: #64748b;
+  --ph-border: #e3e8ef;
+  --ph-primary: #2457d6;
+  --ph-primary-50: #eaf0fd;
+  --ph-accent: #f5a524;
+}
+.acc-page .acc-route { margin-top: 28px; }
+.acc-page .acc-route::before { background: rgba(23, 97, 79, .06); }
+.acc-page .acc-route::after {
+  background: repeating-linear-gradient(90deg, rgba(23, 97, 79, .22) 0 18px, transparent 18px 36px);
+}
