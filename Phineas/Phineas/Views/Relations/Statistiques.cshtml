@@ -1,3 +1,7 @@
+@* Page « Statistiques relationnelles » (maquettes 39 à 41) : trois onglets (ventes perdues, satisfaction, recommandations),
+   un seul visible à la fois. Chaque onglet : une phrase de résumé, 3 à 5 chiffres, un ou deux graphiques doux.
+   Les chiffres sont calculés dans le navigateur par RelationsClients.statistiques (relations-store.js) ;
+   le rendu est fait par wwwroot/js/relations-statistiques.js. Styles : wwwroot/css/relations-statistiques-verre.css. *@
 @using Phineas.Models.ViewModels.Conseiller
 @model RelationsPageViewModel
 @{
@@ -6,43 +10,59 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations-statistiques-verre.css" asp-append-version="true" />
 }
 
-<div class="rc-page">
-<partial name="_HautRelations" />
+<div class="rs-page" id="statistiques">
 
-<header class="sv-head">
-    <div>
-        <h1>Statistiques relationnelles</h1>
-        <p class="text-muted mb-0">Comprendre vos ventes perdues, la satisfaction de vos clients et les résultats de votre réseau. Observations, pas prédictions.</p>
+    @* Haut propre à cette page (pas de « Modifiée / Réinitialiser » ici : voir la note du bas). *@
+    <div class="rs-haut">
+        <nav class="rs-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Statistiques relationnelles</span>
+        </nav>
+        <div class="rs-puces" role="note" title="Clients, ventes et recommandations fictifs. Rien n'est enregistré en base.">
+            <span class="rs-chip-demo">Démo</span>
+            <span class="rs-en-ligne"><span class="rs-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
     </div>
-    <div class="sv-quick">
-        <label class="visually-hidden" for="f-periode">Période</label>
-        <select class="form-select form-select-sm" id="f-periode">
-            <option value="30">30 derniers jours</option>
-            <option value="90" selected>90 derniers jours</option>
-            <option value="365">12 derniers mois</option>
-            <option value="">Depuis le début</option>
-        </select>
-    </div>
-</header>
 
-<div id="statistiques">
-    <p class="rc-legende" role="note">
-        <span><span class="rc-tag rc-tag-observe">Observé</span> calculé à partir des données enregistrées</span>
-        <span><span class="rc-tag rc-tag-hypothese">Hypothèse</span> motif supposé, non confirmé</span>
-        <span><span class="rc-tag rc-tag-manquant">Manquant</span> information absente</span>
-        <span><span class="rc-tag rc-tag-demo">Démonstration</span> données fictives</span>
+    <header class="rs-entete">
+        <div>
+            <p class="rs-label">Relations clients</p>
+            <h1 class="rs-titre">Statistiques relationnelles</h1>
+            <p class="rs-intro">Comprendre vos ventes perdues, la satisfaction de vos clients et les résultats de votre réseau.</p>
+        </div>
+        <label class="rs-periode">
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
+            <span class="visually-hidden">Période</span>
+            <select id="f-periode">
+                <option value="30">30 derniers jours</option>
+                <option value="90" selected>90 derniers jours</option>
+                <option value="365">12 derniers mois</option>
+                <option value="">Depuis le début</option>
+            </select>
+        </label>
+    </header>
+
+    <div class="rs-onglets" role="tablist" aria-label="Domaines">
+        <button type="button" class="rs-onglet" role="tab" id="onglet-pertes" aria-controls="panneau-pertes" aria-selected="true" data-onglet="pertes">Ventes perdues</button>
+        <button type="button" class="rs-onglet" role="tab" id="onglet-satisfaction" aria-controls="panneau-satisfaction" aria-selected="false" tabindex="-1" data-onglet="satisfaction">Satisfaction</button>
+        <button type="button" class="rs-onglet" role="tab" id="onglet-recommandations" aria-controls="panneau-recommandations" aria-selected="false" tabindex="-1" data-onglet="recommandations">Recommandations</button>
+    </div>
+
+    <section class="rs-panneau" role="tabpanel" id="panneau-pertes" aria-labelledby="onglet-pertes" data-zone="pertes"></section>
+    <section class="rs-panneau" role="tabpanel" id="panneau-satisfaction" aria-labelledby="onglet-satisfaction" data-zone="satisfaction" hidden></section>
+    <section class="rs-panneau" role="tabpanel" id="panneau-recommandations" aria-labelledby="onglet-recommandations" data-zone="recommandations" hidden></section>
+
+    <p class="rs-note">
+        <i class="bi bi-shield-check" aria-hidden="true"></i>
+        <span>
+            Ce sont des observations, pas des prédictions. Un motif en hypothèse est supposé, pas confirmé, et une information manquante n'est jamais devinée. Données de démonstration.
+            @* Affichés par prospects-store.js seulement quand la démonstration a été modifiée. *@
+            <span class="rs-demo-etat" data-etat-demo hidden>Données de démonstration modifiées.</span>
+            <button type="button" class="rs-demo-reset" data-reinitialiser hidden>Réinitialiser la démo</button>
+        </span>
     </p>
-    <section class="card rc-bloc" aria-labelledby="st-pertes"><div class="card-header sv-card-header"><span id="st-pertes"><i class="bi bi-x-octagon me-2"></i>Ventes perdues</span><span data-echantillon="pertes"></span></div><div class="card-body" data-zone="pertes"></div></section>
-    <section class="card rc-bloc" aria-labelledby="st-satisfaction"><div class="card-header sv-card-header"><span id="st-satisfaction"><i class="bi bi-emoji-smile me-2"></i>Satisfaction après-vente</span><span data-echantillon="satisfaction"></span></div><div class="card-body" data-zone="satisfaction"></div></section>
-    <section class="card rc-bloc" aria-labelledby="st-reseau"><div class="card-header sv-card-header"><span id="st-reseau"><i class="bi bi-share me-2"></i>Recommandations</span><span data-echantillon="reseau"></span></div><div class="card-body" data-zone="reseau"></div></section>
-    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>Aucun score prédictif de satisfaction, de fidélité ou de recommandation n'est calculé. Avec peu d'observations, ces chiffres décrivent des cas, pas une tendance.</p>
-</div>
-
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
