@@ -35,10 +35,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Aperçu : votre conseiller automobile</title>
+    @* Thème clair / sombre : appliqué avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/relations-public.css" asp-append-version="true" />
 </head>
 <body class="pub-corps">
@@ -54,9 +57,12 @@
                 <span class="pub-monogramme" aria-hidden="true" data-pub="monogramme"></span>
                 <span data-pub="concession"></span>
             </div>
-            <a class="pub-lien-profil" href="#accueil" data-aller="accueil" hidden data-lien-profil>
-                <i class="bi bi-arrow-left" aria-hidden="true"></i> Profil de <span data-pub="prenom"></span>
-            </a>
+            <div class="ps-entete-actions">
+                <a class="pub-lien-profil" href="#accueil" data-aller="accueil" hidden data-lien-profil>
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> Profil de <span data-pub="prenom"></span>
+                </a>
+                <button type="button" class="ps-bascule-theme" data-basculer-theme aria-pressed="false" aria-label="Thème sombre" title="Thème sombre"><i class="bi bi-moon" data-theme-icone aria-hidden="true"></i></button>
+            </div>
         </header>
 
         <main id="pub-contenu" tabindex="-1">

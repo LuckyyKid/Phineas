@@ -169,3 +169,108 @@
 @media (prefers-reduced-motion: reduce) {
   .ph-espace .ph-nav a, .ph-espace .ph-groupe summary::after { transition: none; }
 }
+
+/* ---------- Réglages d'affichage (menu « Affichage » de la carte utilisateur) ---------- */
+.ph-reglages { display: inline-flex; }
+.ph-reglages-menu { min-width: 230px; padding: 8px; border-radius: 18px; border: 1px solid var(--ph-line); background: rgba(255, 255, 255, .96); box-shadow: 0 18px 40px -16px rgba(11, 13, 13, .25); }
+.ph-reglages-titre { margin: 4px 10px 6px; font-family: var(--ph-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ph-muted); }
+.ph-reglage { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; margin: 0; padding: 8px 10px; border: 0; border-radius: 12px; background: none; font-size: 14.5px; color: var(--ph-ink); text-align: left; cursor: pointer; }
+.ph-reglage:hover { background: rgba(11, 13, 13, .05); }
+.ph-reglage i { font-size: 16px; color: var(--ph-muted); }
+.ph-reglage span:not(.ph-reglage-interrupteur) { flex: 1; }
+/* Petit interrupteur dessiné : suit aria-pressed du bouton de thème */
+.ph-reglage-interrupteur { position: relative; width: 34px; height: 20px; flex-shrink: 0; border-radius: 999px; background: rgba(11, 13, 13, .14); transition: background-color .15s ease; }
+.ph-reglage-interrupteur::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF; transition: transform .15s ease; }
+.ph-reglage[aria-pressed="true"] .ph-reglage-interrupteur { background: #17614F; }
+.ph-reglage[aria-pressed="true"] .ph-reglage-interrupteur::after { transform: translateX(14px); }
+/* Interrupteur Bootstrap « Chiffres de l'accueil », aligné comme le bouton de thème */
+.ph-reglage-case { padding-left: 10px; flex-direction: row-reverse; justify-content: space-between; }
+.ph-reglage-case .form-check-input { float: none; margin: 0; width: 34px; height: 20px; cursor: pointer; }
+.ph-reglage-case .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.ph-reglage-case .form-check-label { flex: 1; cursor: pointer; }
+
+/* =========================================================
+   Thème sombre de la coque (maquette 70), palette --ps-* de theme-sombre.css.
+   Les variables --ph-* sont redéfinies : tout ce qui les utilise suit le thème.
+   ========================================================= */
+html[data-theme="sombre"] .ph-espace {
+  --ph-ink: var(--ps-texte);
+  --ph-text: var(--ps-texte-courant);
+  --ph-muted: var(--ps-texte-second);
+  --ph-muted-2: var(--ps-texte-discret);
+  --ph-line: var(--ps-filet-2);
+  --ph-line-2: var(--ps-filet);
+  --ph-sapin-ink: var(--ps-menthe);
+  --ph-menthe-ink: var(--ps-menthe);
+  --ph-rouge: var(--ps-rose);
+  --ph-ambre: var(--ps-ambre);
+  --ph-glass-bg: var(--ps-verre);
+  --ph-glass-blur: var(--ps-verre-flou);
+  --ph-glass-shadow: none;
+  background: var(--ps-fond);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .ph-espace::before { background: var(--ps-halos); }
+html[data-theme="sombre"] .ph-espace :focus-visible { outline-color: var(--ps-focus); }
+
+/* Barre latérale en verre sombre */
+html[data-theme="sombre"] .ph-espace .lm-side { background: rgba(18, 20, 20, .5); border-right-color: rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .ph-logo,
+html[data-theme="sombre"] .ph-logo:hover { color: var(--ps-texte); }
+/* Logo « Cycle » : traits clairs et arc menthe, avec une légère lueur verte */
+html[data-theme="sombre"] .ph-logo svg { filter: drop-shadow(0 0 8px rgba(95, 224, 192, .35)); }
+html[data-theme="sombre"] .ph-logo svg path { stroke: var(--ps-texte); }
+html[data-theme="sombre"] .ph-logo svg path:last-of-type { stroke: var(--ps-menthe); }
+html[data-theme="sombre"] .ph-logo svg circle { fill: var(--ps-menthe); }
+
+html[data-theme="sombre"] .ph-nav a,
+html[data-theme="sombre"] .ph-nav .is-off,
+html[data-theme="sombre"] .ph-groupe summary { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ph-nav i { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-nav a:hover,
+html[data-theme="sombre"] .ph-groupe summary:hover { background: var(--ps-survol); color: var(--ps-texte); }
+/* Élément actif : pilule blanche à 10 % avec un contour blanc à 22 % (pas de vert plein) */
+html[data-theme="sombre"] .ph-nav a.is-active,
+html[data-theme="sombre"] .ph-groupe.is-active summary {
+  background: var(--ps-actif);
+  color: var(--ps-texte);
+  box-shadow: inset 0 0 0 1px var(--ps-actif-contour);
+}
+html[data-theme="sombre"] .ph-nav a.is-active i,
+html[data-theme="sombre"] .ph-groupe.is-active summary i,
+html[data-theme="sombre"] .ph-groupe.is-active summary::after { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-nav-count { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .ph-nav a.is-active .ph-nav-count { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ph-sous-nav { border-left-color: var(--ps-filet); }
+html[data-theme="sombre"] .ph-sous-nav a,
+html[data-theme="sombre"] .ph-sous-nav .is-off { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-sous-nav a:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-sous-nav a.is-active { background: var(--ps-actif); color: var(--ps-texte); }
+
+/* Carte utilisateur : avatar blanc à texte noir */
+html[data-theme="sombre"] .ph-user { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .ph-avatar { background: #F4F6F5; color: #0B0D0D; }
+html[data-theme="sombre"] .ph-user-out { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-user-out:hover { background: var(--ps-survol); color: var(--ps-texte); }
+
+/* Menu « Affichage » */
+html[data-theme="sombre"] .ph-reglages-menu { background: var(--ps-surface); border-color: var(--ps-contour); box-shadow: var(--ps-ombre-forte); }
+html[data-theme="sombre"] .ph-reglage { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-reglage:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .ph-reglage i { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-reglage-interrupteur { background: rgba(255, 255, 255, .16); }
+html[data-theme="sombre"] .ph-reglage[aria-pressed="true"] .ph-reglage-interrupteur { background: var(--ps-menthe); }
+html[data-theme="sombre"] .ph-reglage[aria-pressed="true"] .ph-reglage-interrupteur::after { background: #0B0D0D; }
+html[data-theme="sombre"] .ph-reglage-case .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+
+/* Barre du haut (mobile), contenu et notifications */
+html[data-theme="sombre"] .ph-espace .lm-top { background: rgba(11, 13, 13, .72); border-bottom-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .ph-espace #sv-toast { background: rgba(26, 30, 30, .96); color: var(--ps-texte); border: 1px solid var(--ps-contour); }
+html[data-theme="sombre"] .ph-espace .sv-toast-annuler { color: var(--ps-menthe); }
+
+@media (max-width: 991.98px) {
+  html[data-theme="sombre"] .ph-espace .lm-side { background: rgba(18, 20, 20, .97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-reglage-interrupteur, .ph-reglage-interrupteur::after { transition: none; }
+}

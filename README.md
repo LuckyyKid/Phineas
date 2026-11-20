@@ -14,6 +14,34 @@ Tous les chemins partent de `Phineas/Phineas/`.
 
 Trajet d'un affichage : `/Conseiller` → `ConseillerController.Index` → `ServiceTableauBordDemo.ObtenirAsync` → `Views/Conseiller/Index.cshtml` → `conseiller.js` pour les clics.
 
+## Où trouver quoi : thème sombre
+
+- `wwwroot/js/theme.js` : applique le thème avant l'affichage et gère le bouton de bascule. Son en-tête décrit le contrat complet.
+- `wwwroot/css/theme-sombre.css` : palette sombre commune (variables `--ps-*`), composants Bootstrap en sombre, bouton `.ps-bascule-theme`.
+- `wwwroot/css/espace-vendeur.css` et `conseiller.css` : coque vendeur et accueil vendeur en sombre (fin de chaque fichier).
+- Chaque page refaite garde ses règles sombres dans sa propre feuille (ex. `prospects.css`, `accueil-public.css`).
+
+Le contrat en bref :
+- thème actif : `data-theme="sombre"` sur `<html>` (sans cet attribut : thème clair) ; Bootstrap reçoit aussi `data-bs-theme="dark"` ;
+- préférence : `localStorage`, clé `phineas-theme`, valeur `clair` ou `sombre` (sans préférence : clair) ;
+- `theme.js` se charge de façon synchrone dans le `<head>`, avant les feuilles de style ;
+- API : `PhineasTheme.obtenir()`, `PhineasTheme.appliquer("sombre")`, `PhineasTheme.basculer()` ; événement `phineas:theme` sur `document` ;
+- bouton : tout élément `[data-basculer-theme]` (icône `[data-theme-icone]`) ;
+- réglage « Chiffres de l'accueil » : clé `phineas-accueil-chiffres` (`affiches` ou `masques`), case `[data-reglage-chiffres]`.
+
+Où se trouvent les boutons : menu « Affichage » de la carte utilisateur (espace vendeur), barre de navigation de l'accueil public, haut de la page de connexion, en-tête de la page publique du conseiller.
+
+Pour ajouter le thème sombre à une page, dans sa feuille :
+
+```css
+html[data-theme="sombre"] .ma-page {
+  --ma-encre: var(--ps-texte);
+  --ma-filet: var(--ps-filet);
+}
+html[data-theme="sombre"] .ma-carte { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .ma-page .bouton-principal { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); }
+```
+
 
 
 ## Getting started

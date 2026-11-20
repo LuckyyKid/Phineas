@@ -22,10 +22,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · Phineas</title>
+    @* Thème clair / sombre : appliqué avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/connexion.css" asp-append-version="true" />
 </head>
 <body class="cx-page">
@@ -34,7 +37,10 @@
         <main class="cx-gauche">
             <header class="cx-haut">
                 <a class="cx-logo" asp-controller="Home" asp-action="Index"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 32 }' />phineas</a>
-                <a class="cx-lien-accueil" asp-controller="Home" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Accueil</a>
+                <div class="ps-entete-actions">
+                    <button type="button" class="ps-bascule-theme" data-basculer-theme aria-pressed="false" aria-label="Thème sombre" title="Thème sombre"><i class="bi bi-moon" data-theme-icone aria-hidden="true"></i></button>
+                    <a class="cx-lien-accueil" asp-controller="Home" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Accueil</a>
+                </div>
             </header>
 
             <div class="cx-bloc">

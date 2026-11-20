@@ -184,6 +184,8 @@
 
 /* ---------- Chiffres ---------- */
 .ph-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 44px; }
+/* Réglage « Chiffres de l'accueil » (menu Affichage, wwwroot/js/theme.js) : la rangée peut être masquée. */
+html[data-accueil-chiffres="masques"] .ph-stats { display: none; }
 .ph-stat { display: flex; flex-direction: column; gap: 14px; padding: 26px 26px 24px; border-radius: 20px; }
 .ph-stat-value { font-size: 38px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .ph-stat-label { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; color: var(--ph-text); }
@@ -339,4 +341,77 @@
 .sv-lien-fiche:hover {
   color: var(--ph-primary);
   text-decoration: underline;
+}
+
+/* =========================================================
+   Accueil vendeur en thème sombre (maquette 70), palette --ps-* de theme-sombre.css.
+   Ici l'action principale est BLANCHE ; le vert n'est qu'un accent (menthe).
+   ========================================================= */
+html[data-theme="sombre"] .ph-espace .ph-label { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .ph-espace .ph-glass { border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .ph-dot-alerte { background: var(--ps-rose); box-shadow: 0 0 8px rgba(255, 138, 154, .7); }
+html[data-theme="sombre"] .ph-dot-ok { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+
+/* En-tête */
+html[data-theme="sombre"] .ph-hello { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-resume { font-weight: 300; color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ph-pill { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); box-shadow: none; color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-pill:hover { background: var(--ps-actif); border-color: var(--ps-actif-contour); }
+html[data-theme="sombre"] .ph-menu { background: var(--ps-surface); border-color: var(--ps-contour); box-shadow: var(--ps-ombre-forte); }
+html[data-theme="sombre"] .ph-menu .dropdown-item { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-menu .dropdown-item i { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-menu .dropdown-item:hover,
+html[data-theme="sombre"] .ph-menu .dropdown-item:focus { background: var(--ps-survol); }
+
+/* Cartes de chiffres : chiffre en graisse 200, contour qui s'éclaircit au survol */
+html[data-theme="sombre"] .ph-stat { transition: border-color .2s ease; }
+html[data-theme="sombre"] .ph-stat:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .ph-stat-value { font-weight: 200; color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-stat-label { color: var(--ps-texte-second); }
+
+/* Carte « À faire en premier » : verre plus clair, trait lumineux sur le bord haut, ombre noire profonde */
+html[data-theme="sombre"] .ph-focus {
+  border-color: var(--ps-contour-fort);
+  color: var(--ps-texte);
+  background: var(--ps-verre-fort);
+  backdrop-filter: var(--ps-verre-flou);
+  -webkit-backdrop-filter: var(--ps-verre-flou);
+  box-shadow: var(--ps-ombre-forte);
+}
+html[data-theme="sombre"] .ph-focus::before { inset: 0 12% auto 12%; height: 1px; background: var(--ps-trait-lumineux); }
+html[data-theme="sombre"] .ph-focus :focus-visible { outline-color: var(--ps-focus); }
+html[data-theme="sombre"] .ph-focus .ph-label { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ph-steps i { background: rgba(255, 255, 255, .15); }
+html[data-theme="sombre"] .ph-steps i.is-done { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .ph-steps i.is-current { background: #FFFFFF; box-shadow: 0 0 8px rgba(255, 255, 255, .7); }
+html[data-theme="sombre"] .ph-steps span { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .ph-focus-type { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-tag-retard { border-color: var(--ps-rose-contour); background: var(--ps-rose-fond); color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .ph-focus-nom { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-focus-texte { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ph-focus-dossier span { border-color: var(--ps-contour); background: var(--ps-survol); color: var(--ps-texte-courant); }
+
+/* Boutons : principal blanc, secondaire en verre, « Plus tard » en lien gris */
+html[data-theme="sombre"] .ph-btn-blanc { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .ph-btn-blanc:hover { background: #FFFFFF; }
+html[data-theme="sombre"] .ph-btn-verre { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-btn-verre:hover { background: var(--ps-actif); }
+html[data-theme="sombre"] .ph-btn-discret { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-btn-discret:hover { color: var(--ps-texte); }
+
+/* Carte « Ce soir » */
+html[data-theme="sombre"] .ph-soir-top { border-bottom-color: var(--ps-filet); }
+html[data-theme="sombre"] .ph-lien,
+html[data-theme="sombre"] .ph-lien-off { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-rdv { border-bottom-color: var(--ps-filet); }
+html[data-theme="sombre"] .ph-rdv-heure { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-rdv-info strong { color: var(--ps-texte); }
+html[data-theme="sombre"] .ph-rdv-info span { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-a-confirmer { color: var(--ps-ambre); }
+html[data-theme="sombre"] .ph-vide { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ph-note { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .sv-lien-fiche:hover { color: var(--ps-menthe); }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="sombre"] .ph-stat { transition: none; }
 }

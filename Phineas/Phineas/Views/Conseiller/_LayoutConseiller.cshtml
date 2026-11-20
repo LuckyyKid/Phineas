@@ -39,8 +39,11 @@
 }
 
 @section Styles {
+    @* Thème clair / sombre : appliqué ici, dans le <head>, avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/conseiller.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/espace-vendeur.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -110,6 +113,24 @@
             {
                 <small>@concession</small>
             }
+        </div>
+        @* Réglages d'affichage : thème sombre et chiffres de l'accueil (mémorisés par wwwroot/js/theme.js). *@
+        <div class="dropup ph-reglages">
+            <button type="button" class="ph-user-out" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" title="Affichage" aria-label="Affichage">
+                <i class="bi bi-sliders" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu ph-reglages-menu">
+                <p class="ph-reglages-titre">Affichage</p>
+                <button type="button" class="ph-reglage" data-basculer-theme aria-pressed="false">
+                    <i class="bi bi-moon" data-theme-icone aria-hidden="true"></i>
+                    <span>Thème sombre</span>
+                    <span class="ph-reglage-interrupteur" aria-hidden="true"></span>
+                </button>
+                <div class="form-check form-switch ph-reglage ph-reglage-case">
+                    <input class="form-check-input" type="checkbox" role="switch" id="reglage-chiffres-accueil" data-reglage-chiffres checked />
+                    <label class="form-check-label" for="reglage-chiffres-accueil">Chiffres de l'accueil</label>
+                </div>
+            </div>
         </div>
         <form asp-controller="Account" asp-action="Logout" method="post">
             <button type="submit" class="ph-user-out" title="Se déconnecter" aria-label="Se déconnecter"><i class="bi bi-box-arrow-right"></i></button>

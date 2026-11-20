@@ -99,11 +99,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Phineas centralise l'inventaire, le suivi des véhicules par QR, les dossiers de financement et les annonces de votre concession." />
     <title>@ViewData["Title"]</title>
+    @* Thème clair / sombre : appliqué avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     @* Mascotte Boulon (mascot.css / mascot.js, communes à l'application) : la petite voiture qui roule sous l'aperçu du produit. *@
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/mascot.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/accueil-public.css" asp-append-version="true" />
 </head>
@@ -122,6 +125,7 @@
                 <a href="#securite">Sécurité</a>
                 <a href="#feuille-de-route">Feuille de route</a>
             </div>
+            <button type="button" class="ps-bascule-theme" data-basculer-theme aria-pressed="false" aria-label="Thème sombre" title="Thème sombre"><i class="bi bi-moon" data-theme-icone aria-hidden="true"></i></button>
             <a class="acc-btn acc-btn-sapin acc-btn-petit" asp-controller="Account" asp-action="Login">Se connecter</a>
         </nav>
     </header>
