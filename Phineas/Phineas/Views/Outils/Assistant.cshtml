@@ -1,3 +1,6 @@
+@* Page « Assistant vendeur » (maquettes 13 et 14) : contexte et historique à gauche, conversation à droite.
+   Comportement : wwwroot/js/coach-page.js (réponses simulées par coach-service.js, aucune IA).
+   Styles : outils.css (jetons og-) et assistant-vendeur-verre.css (préfixe av-). *@
 @using Phineas.Models.ViewModels.Conseiller
 @model OutilsPageViewModel
 @{
@@ -9,78 +12,112 @@
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/assistant-vendeur-verre.css" asp-append-version="true" />
 }
 
-<div class="og-page">
-<partial name="_HautOutils" />
+<div class="og-page av-page">
 
-<header class="sv-head">
-    <div>
-        <h1>Assistant vendeur</h1>
-        <p class="text-muted mb-0">Préparer un rendez-vous, comprendre un véhicule, une objection ou une procédure, à partir de vos dossiers.</p>
+@* Haut propre à cette page : la maquette ne montre ni « Modifiée » ni « Réinitialiser » (ils restent sur les autres pages Outils). *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Assistant vendeur</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
     </div>
-</header>
-
-<div class="ov-simulation" role="note">
-    <i class="bi bi-cpu" aria-hidden="true"></i>
-    <span><strong>Aucune IA n'est connectée.</strong> Les réponses sont des simulations construites par des modèles déterministes à partir des données de démonstration du dossier choisi. Chaque réponse indique les données utilisées ; ce qui est inconnu reste inconnu.</span>
 </div>
 
-<div id="assistant" class="ov-coach" data-mode="@Model.Mode" data-contexte="@Model.ContexteType" data-id="@Model.ContexteId">
-    <aside class="ov-coach-cote">
-        <section class="card" aria-labelledby="titre-contexte">
-            <div class="card-header sv-card-header"><span id="titre-contexte"><i class="bi bi-folder2-open me-2"></i>Contexte</span></div>
-            <div class="card-body">
-                <label class="form-label" for="ctx-type">Dossier utilisé</label>
-                <select class="form-select form-select-sm" id="ctx-type">
+<header class="av-entete">
+    <p class="av-label">Outils</p>
+    <h1 class="av-titre">Assistant vendeur</h1>
+    <p class="av-intro">Préparer un rendez-vous, comprendre un véhicule, une objection ou une procédure, à partir de vos dossiers.</p>
+</header>
+
+<div id="assistant" class="av-colonnes" data-mode="@Model.Mode" data-contexte="@Model.ContexteType" data-id="@Model.ContexteId">
+    <aside class="av-cote">
+        <section class="av-verre av-carte" aria-labelledby="titre-contexte">
+            <h2 class="av-label" id="titre-contexte">Contexte</h2>
+
+            <label class="av-champ-label" for="ctx-type">Dossier utilisé</label>
+            <div class="av-select-cadre">
+                <select class="av-select" id="ctx-type">
                     @foreach (var (cle, libelle) in ReferentielsOutils.Contextes)
                     {
                         <option value="@cle">@libelle</option>
                     }
                 </select>
-                <label class="form-label mt-2" for="ctx-id">Choix</label>
-                <select class="form-select form-select-sm" id="ctx-id" disabled><option value="">—</option></select>
-                <h2 class="ia-sous-titre">Informations mises à la disposition de l'assistant</h2>
-                <ul class="ia-liste-simple" data-zone="mis-a-disposition"></ul>
             </div>
+
+            @* Choix du dossier : visible seulement quand un type de dossier est choisi. Son libellé suit le type (Prospect, Véhicule…). *@
+            <div class="av-bloc-champ" data-bloc="choix" hidden>
+                <label class="av-champ-label" for="ctx-id" data-libelle-choix>Choix</label>
+                <div class="av-select-cadre">
+                    <select class="av-select" id="ctx-id"></select>
+                </div>
+            </div>
+
+            @* Paramètre du mode : visible seulement pour les modes qui en ont besoin (objection, procédure). *@
+            <div class="av-bloc-champ" data-bloc="objection" hidden>
+                <label class="av-champ-label" for="p-objection">Objection</label>
+                <div class="av-select-cadre">
+                    <select class="av-select" id="p-objection">
+                        <option value="">Choisir l'objection</option>
+                        @foreach (var o in ReferentielsOutils.Objections)
+                        {
+                            <option value="@o.Cle">@o.Libelle</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="av-bloc-champ" data-bloc="procedure" hidden>
+                <label class="av-champ-label" for="p-procedure">Procédure</label>
+                <div class="av-select-cadre">
+                    <select class="av-select" id="p-procedure">
+                        <option value="">Toutes les procédures</option>
+                        @foreach (var p in ReferentielsOutils.Procedures)
+                        {
+                            <option value="@p.Cle">@p.Libelle</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="av-filet"></div>
+            <h3 class="av-sous-titre">Ce que l'assistant peut lire</h3>
+            <div data-zone="mis-a-disposition"></div>
         </section>
-        <section class="card" aria-labelledby="titre-historique">
-            <div class="card-header sv-card-header"><span id="titre-historique"><i class="bi bi-clock-history me-2"></i>Historique local</span></div>
-            <div class="card-body"><ol class="ov-historique" data-zone="historique"></ol><div class="og-pagination-zone" data-pagination="historique"></div></div>
+
+        <section class="av-verre av-carte" aria-labelledby="titre-historique">
+            <h2 class="av-label" id="titre-historique">Historique local</h2>
+            <ol class="av-historique" data-zone="historique"></ol>
+            <div class="og-pagination-zone" data-pagination="historique"></div>
         </section>
     </aside>
 
-    <section class="card ov-conversation" aria-labelledby="titre-conversation">
-        <div class="card-header sv-card-header"><span id="titre-conversation"><i class="bi bi-stars me-2"></i>Conversation</span><span class="badge-soft">Simulation</span></div>
-        <div class="ov-modes" role="group" aria-label="Que voulez-vous faire ?">
-            @foreach (var (cle, libelle, icone) in ReferentielsOutils.ModesCoach)
-            {
-                <button type="button" class="sv-chip" data-mode-coach="@cle" aria-pressed="false"><i class="bi @icone me-1" aria-hidden="true"></i>@libelle</button>
-            }
-        </div>
-        <div class="ov-fil" data-zone="fil" aria-live="polite">
-            <div class="sv-empty" data-vide><i class="bi bi-chat-square-text"></i><span>Choisissez un dossier et un mode, ou posez une question sur une procédure.</span></div>
-        </div>
-        <form class="ov-saisie" id="form-coach" novalidate>
-            <div class="ov-parametres">
-                <select class="form-select form-select-sm" id="p-objection" aria-label="Objection" hidden>
-                    <option value="">Choisir l'objection</option>
-                    @foreach (var o in ReferentielsOutils.Objections)
-                    {
-                        <option value="@o.Cle">@o.Libelle</option>
-                    }
-                </select>
-                <select class="form-select form-select-sm" id="p-procedure" aria-label="Procédure" hidden>
-                    <option value="">Toutes les procédures</option>
-                    @foreach (var p in ReferentielsOutils.Procedures)
-                    {
-                        <option value="@p.Cle">@p.Libelle</option>
-                    }
-                </select>
+    <section class="av-verre av-conversation" aria-labelledby="titre-conversation">
+        <div class="av-zone av-zone-haut">
+            <div class="av-carte-tete">
+                <h2 class="av-label av-label-ligne" id="titre-conversation">Conversation <span class="av-chip-simulation">Simulation</span></h2>
+                <button type="button" class="av-lien" data-effacer hidden>Effacer</button>
             </div>
-            <label class="visually-hidden" for="coach-question">Votre question</label>
-            <textarea class="form-control" id="coach-question" rows="2" placeholder="Ex. : Comment ouvrir une transaction ? Quelles informations manquent pour ce rendez-vous ?"></textarea>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Demander</button>
+            <div class="av-modes" role="group" aria-label="Que voulez-vous faire ?">
+                @foreach (var (cle, libelle, icone) in ReferentielsOutils.ModesCoach)
+                {
+                    <button type="button" class="av-mode" data-mode-coach="@cle" aria-pressed="false"><i class="bi @icone" aria-hidden="true"></i>@libelle</button>
+                }
+            </div>
+        </div>
+
+        <div class="av-zone av-fil" data-zone="fil" aria-live="polite"></div>
+
+        <form class="av-zone av-saisie" id="form-coach" novalidate>
+            <div class="av-saisie-ligne">
+                <label class="visually-hidden" for="coach-question">Votre question</label>
+                <textarea class="av-question" id="coach-question" rows="2" placeholder="Ex. : Comment ouvrir une transaction ?"></textarea>
+                <button type="submit" class="av-demander" disabled><i class="bi bi-send" aria-hidden="true"></i>Demander</button>
+            </div>
+            <p class="av-info"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Aucune IA n'est connectée. Les réponses sont simulées à partir des données de démonstration du dossier choisi ; ce qui est inconnu reste inconnu.</span></p>
         </form>
     </section>
 </div>
