@@ -8,6 +8,22 @@
   if (!I || !P || !UI || !racine) return;
   var esc = P.esc;
 
+  // Au-delà de LIGNES_PAR_PAGE, les listes (relances, relances suspendues) se découpent en pages.
+  var LIGNES_PAR_PAGE = 6;
+  // Page affichée de chaque liste, rangée par id de liste (ex. pages.relances = 2). Absente = page 1.
+  var pages = {};
+
+  // Éléments de la page courante d'une liste, et la barre de pagination à afficher sous la liste.
+  function paginer(idListe, elements) {
+    var page = UI.pageValide(pages[idListe], elements.length, LIGNES_PAR_PAGE);
+    pages[idListe] = page;
+    var debut = (page - 1) * LIGNES_PAR_PAGE;
+    return {
+      elements: elements.slice(debut, debut + LIGNES_PAR_PAGE),
+      pagination: UI.htmlPagination(idListe, elements.length, page, LIGNES_PAR_PAGE),
+    };
+  }
+
   // Icône du canal préféré (clés de ReferentielsProspects.MoyensContact).
   var ICONES_CANAL = { courriel: "bi-envelope", texto: "bi-chat-dots", telephone: "bi-telephone" };
 
@@ -60,16 +76,20 @@
 
   function rendre() {
     var relances = I.actives({ conseiller: P.moiId }).filter(function (a) { return a.relance; });
-    document.getElementById("relances").innerHTML = relances.map(ligneRelance).join("");
+    var pageRelances = paginer("relances", relances);
+    document.getElementById("relances").innerHTML = pageRelances.elements.map(ligneRelance).join("");
+    racine.querySelector('[data-zone="pagination-relances"]').innerHTML = pageRelances.pagination;
     // Pas de tableau avec seulement ses en-têtes : on affiche l'état vide à sa place.
     racine.querySelector('[data-zone="tableau-relances"]').hidden = relances.length === 0;
     document.getElementById("relances-vide").hidden = relances.length > 0;
     racine.querySelector('[data-champ="nb-relances"]').textContent = String(relances.length);
 
     var suspendues = I.suspendues().filter(function (a) { return a.conseillerId === P.moiId; });
+    var pageSuspendues = paginer("suspendues", suspendues);
     document.getElementById("suspendues").innerHTML = suspendues.length
-      ? suspendues.map(ligneSuspendue).join("")
+      ? pageSuspendues.elements.map(ligneSuspendue).join("")
       : '<li><span class="iv-gris">Aucune relance suspendue.</span></li>';
+    racine.querySelector('[data-zone="pagination-suspendues"]').innerHTML = pageSuspendues.pagination;
     racine.querySelector('[data-champ="nb-suspendues"]').textContent = String(suspendues.length);
   }
 
@@ -114,6 +134,17 @@
       P.notifier("Pause levée.");
       if (window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).hide();
     }
+  });
+
+  // Clic sur un bouton de pagination : change de page et garde le focus sur le numéro choisi.
+  racine.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-aller-page]");
+    if (!bouton || bouton.disabled) return;
+    var idListe = bouton.dataset.liste;
+    pages[idListe] = Number(bouton.dataset.allerPage);
+    rendre();
+    var pageCourante = racine.querySelector('[data-liste="' + idListe + '"][aria-current="page"]');
+    if (pageCourante) pageCourante.focus();
   });
 
   I.abonner(rendre);
