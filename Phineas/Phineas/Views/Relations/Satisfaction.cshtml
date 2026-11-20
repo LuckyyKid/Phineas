@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
 }
 
+<div class="rc-page">
+<partial name="_HautRelations" />
+
 <header class="sv-head">
     <div>
         <h1>Satisfaction et après-vente</h1>
@@ -21,8 +24,6 @@
         <button type="button" class="btn btn-outline-primary btn-sm" data-rc="probleme"><i class="bi bi-life-preserver me-1"></i>Enregistrer un problème</button>
     </div>
 </header>
-
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
 
 <div id="satisfaction" data-transaction="@Model.TransactionId" data-rdv-url="@Url.Action("Nouveau", "RendezVous")">
     <section class="card sv-kpis rc-kpis" aria-label="Résumé de l'après-vente">
@@ -97,6 +98,8 @@
             </div></section>
         </div>
     </div>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />

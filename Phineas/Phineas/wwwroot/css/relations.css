@@ -652,3 +652,164 @@
   white-space: normal;
   border-radius: 8px;
 }
+
+/* =========================================================
+   Relations clients · verre clair (même rendu que prospects, soumissions et rendez-vous)
+   Limité à .rc-page : restyle les composants communs (en-tête, chiffres, cartes, filtres, tableaux, onglets)
+   sans toucher au balisage produit par les scripts du module.
+   ========================================================= */
+.rc-page {
+  --rcp-ink: #0B0D0D;
+  --rcp-text: #434B4A;
+  --rcp-muted: #566060;
+  --rcp-muted-2: #6B7473;
+  --rcp-line: rgba(11, 13, 13, .06);
+  --rcp-line-2: rgba(11, 13, 13, .08);
+  --rcp-sapin: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  --rcp-sapin-ink: #0C3B32;
+  --rcp-sapin-texte: #17614F;
+  --rcp-menthe-ink: #1D9A82;
+  --rcp-ambre: #E09A1C;
+  --rcp-ambre-ink: #9A5C00;
+  --rcp-font: 'Geist', 'Inter', system-ui, sans-serif;
+  --rcp-mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --rcp-flou: blur(30px) saturate(180%);
+  --rcp-ombre:
+    inset 0 0 0 1px rgba(255, 255, 255, .95),
+    0 1px 2px rgba(11, 13, 13, .03),
+    0 16px 40px -12px rgba(11, 13, 13, .10);
+
+  max-width: 1080px;
+  margin-inline: auto;
+  font-family: var(--rcp-font);
+  color: var(--rcp-ink);
+}
+.rc-page :focus-visible { outline: 2px solid var(--rcp-menthe-ink); outline-offset: 2px; }
+.rc-page h1, .rc-page h2, .rc-page h3, .rc-page h4 { font-family: var(--rcp-font); letter-spacing: -0.02em; }
+
+/* ---------- Haut de page (_HautRelations) ---------- */
+.rc-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+.rc-ariane { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; color: var(--rcp-muted); }
+.rc-ariane i { font-size: 11px; }
+.rc-ariane [aria-current] { color: var(--rcp-ink); font-weight: 500; }
+.rc-puces { display: flex; align-items: center; gap: 8px; }
+.rc-chip-demo { padding: 4px 10px; border-radius: 999px; background: #FBF1DE; color: var(--rcp-ambre-ink); font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
+.rc-demo-etat { font-size: 13px; color: var(--rcp-muted); }
+.rc-demo-reset { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 0; border-radius: 999px; background: none; font-size: 13px; color: var(--rcp-text); }
+.rc-demo-reset[hidden], .rc-demo-etat[hidden] { display: none; }
+.rc-demo-reset:hover { background: rgba(11, 13, 13, .05); color: var(--rcp-ink); }
+.rc-en-ligne { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--rcp-line-2); background: rgba(255, 255, 255, .7); font-size: 14px; }
+.rc-point-vert { width: 7px; height: 7px; border-radius: 50%; background: var(--rcp-menthe-ink); box-shadow: 0 0 0 3px rgba(95, 224, 192, .28); }
+
+/* ---------- En-tête de page ---------- */
+.rc-page .sv-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; padding: 0; border: 0; background: none; }
+.rc-page .sv-head h1 { margin: 0 0 10px; font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--rcp-ink); }
+.rc-page .sv-head p { max-width: 40em; font-size: 16.5px; line-height: 1.5; color: var(--rcp-text) !important; }
+.rc-page .sv-quick { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ---------- Boutons : pilules ---------- */
+.rc-page .btn { border-radius: 999px; font-weight: 500; box-shadow: none; }
+.rc-page .btn-sm { padding: 8px 16px; font-size: 14px; }
+.rc-page .btn-primary { border: 0; background: var(--rcp-sapin); color: #FFFFFF; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 10px 22px -10px rgba(12, 59, 50, .65); }
+.rc-page .btn-primary:hover, .rc-page .btn-primary:focus { background: var(--rcp-sapin); color: #FFFFFF; filter: brightness(1.08); }
+.rc-page .btn-outline-primary, .rc-page .btn-outline-secondary { border: 1px solid var(--rcp-line-2); background: #FFFFFF; color: var(--rcp-ink); }
+.rc-page .btn-outline-primary:hover, .rc-page .btn-outline-secondary:hover { border-color: rgba(11, 13, 13, .16); background: #FFFFFF; color: var(--rcp-ink); }
+.rc-page .btn-link { color: var(--rcp-sapin-texte); }
+
+/* ---------- Chiffres : une carte en verre par indicateur ---------- */
+.rc-page .sv-kpis { gap: 14px; margin-bottom: 24px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+.rc-page .sv-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--rcp-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rcp-flou);
+  -webkit-backdrop-filter: var(--rcp-flou);
+  box-shadow: var(--rcp-ombre);
+}
+.rc-page .sv-kpi:first-child { border-left: 1px solid var(--rcp-line); }
+.rc-page .sv-kpi-label { order: 2; font-size: 13.5px; font-weight: 400; color: var(--rcp-text); }
+.rc-page .sv-kpi-label i { display: none; }
+.rc-page .sv-kpi-value { order: 1; margin: 0; font-size: 34px; font-weight: 300; letter-spacing: -0.03em; color: var(--rcp-ink); }
+.rc-page .sv-kpi-detail { order: 3; font-size: 12.5px; color: var(--rcp-muted-2); }
+.rc-page .sv-ton-attention .sv-kpi-label::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--rcp-ambre); vertical-align: middle; }
+.rc-page .sv-ton-attention .sv-kpi-detail, .rc-page .sv-ton-critique .sv-kpi-detail { color: var(--rcp-ambre-ink); }
+
+/* ---------- Cartes : verre, grands rayons ---------- */
+.rc-page .card {
+  border: 1px solid var(--rcp-line);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rcp-flou);
+  -webkit-backdrop-filter: var(--rcp-flou);
+  box-shadow: var(--rcp-ombre);
+  overflow: hidden;
+}
+.rc-page .card-header, .rc-page .sv-card-header {
+  padding: 22px 26px 14px;
+  border-bottom: 1px solid var(--rcp-line-2);
+  background: none;
+  font-family: var(--rcp-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--rcp-muted);
+}
+.rc-page .card-header i { display: none; }
+.rc-page .card-body { padding: 20px 26px; }
+
+/* ---------- Recherche, filtres et interrupteurs : pilules ---------- */
+.rc-page .pr-toolbar { padding: 20px 22px 0; border: 0; background: none; }
+.rc-page .pr-search .form-control, .rc-page .form-control {
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background-color: #FFFFFF;
+  font-family: var(--rcp-font);
+}
+.rc-page textarea.form-control { border-radius: 18px; }
+.rc-page .pr-search .form-control { height: 44px; }
+.rc-page .pr-filtres { padding: 14px 22px; gap: 8px; border-bottom: 1px solid var(--rcp-line-2); background: none; }
+.rc-page .form-select { border-radius: 999px; border: 1px solid var(--rcp-line-2); background-color: #FFFFFF; font-family: var(--rcp-font); color: var(--rcp-text); }
+.rc-page .form-select-sm { height: 38px; padding-left: 14px; font-size: 14px; }
+.rc-page .form-control:focus, .rc-page .form-select:focus { border-color: var(--rcp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.rc-page .form-switch .form-check-input { width: 32px; height: 20px; border-color: var(--rcp-line-2); background-color: rgba(11, 13, 13, .06); }
+.rc-page .form-switch .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.rc-page .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.rc-page .pr-resultat { padding: 12px 22px 0; font-size: 13px; color: var(--rcp-muted); }
+
+/* ---------- Tableaux ---------- */
+.rc-page .table { margin-bottom: 0; font-size: 14.5px; color: var(--rcp-ink); }
+.rc-page .table > :not(caption) > * > * { padding: 14px 16px; border-bottom-color: var(--rcp-line-2); background: transparent; }
+.rc-page .table thead th {
+  font-family: var(--rcp-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--rcp-muted);
+}
+.rc-page .table tbody tr:hover > * { background: rgba(255, 255, 255, .7); }
+
+/* ---------- Onglets : sélecteur en pilules ---------- */
+.rc-page .pr-onglets { display: inline-flex; gap: 4px; margin-bottom: 20px; padding: 4px; border: 0; border-radius: 999px; background: rgba(11, 13, 13, .05); }
+.rc-page .pr-onglets .nav-link { margin: 0; padding: 8px 18px; border: 0; border-radius: 999px; font-size: 15px; color: var(--rcp-text); }
+.rc-page .pr-onglets .nav-link.active { background: #FFFFFF; color: var(--rcp-ink); box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+
+/* ---------- Petits éléments ---------- */
+.rc-page .badge-soft { border-radius: 999px; background: rgba(11, 13, 13, .05); color: var(--rcp-text); font-weight: 400; }
+.rc-page .pr-note { font-size: 13.5px; color: var(--rcp-muted); }
+.rc-page .pr-etat-vide { color: var(--rcp-muted); }
+.rc-page .pr-etat-vide strong { font-weight: 500; color: var(--rcp-ink); }
+.rc-page .alert { border-radius: 18px; }
+
+@media (max-width: 991.98px) {
+  .rc-page .sv-head h1 { font-size: 34px; }
+}
+@media (max-width: 575.98px) {
+  .rc-haut { flex-direction: column; align-items: flex-start; }
+  .rc-page .card-header, .rc-page .card-body { padding-left: 18px; padding-right: 18px; }
+}

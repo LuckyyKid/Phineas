@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
 }
 
+<div class="rc-page">
+<partial name="_HautRelations" />
+
 <header class="sv-head">
     <div>
         <h1>Mon réseau et recommandations</h1>
@@ -21,8 +24,6 @@
         <a class="btn btn-outline-primary btn-sm" data-rc-apercu href="@Url.Action("Recommande")"><i class="bi bi-eye me-1"></i>Prévisualiser le parcours du prospect</a>
     </div>
 </header>
-
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
 
 <div id="reseau" data-transaction="@Model.TransactionId" data-onglet="@Model.Onglet">
     <section class="card sv-kpis rc-kpis rc-kpis-7" aria-label="Résultats de mon réseau">
@@ -155,6 +156,8 @@
             </section>
         </div>
     </div>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
