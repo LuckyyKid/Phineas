@@ -330,3 +330,78 @@
 @media (prefers-reduced-motion: reduce) {
   .rr-page * { transition: none !important; }
 }
+
+/* =========================================================
+   Thème sombre : Réseau et recommandations.
+   La carte de recommandation garde son dégradé vert sapin (pièce maîtresse) ; sur le fond sombre,
+   elle reçoit un contour clair fin, une lueur menthe et une ombre noire pour se détacher.
+   ========================================================= */
+html[data-theme="sombre"] .rr-page {
+  --rr-ink: var(--ps-texte);
+  --rr-text: var(--ps-texte-courant);
+  --rr-muted: var(--ps-texte-second);
+  --rr-muted-2: var(--ps-texte-discret);
+  --rr-line: var(--ps-filet);
+  --rr-line-2: var(--ps-filet-2);
+  --rr-sapin-ink: var(--ps-menthe);
+  --rr-sapin-texte: var(--ps-menthe);
+  --rr-menthe-ink: var(--ps-menthe);
+  --rr-ambre: var(--ps-ambre);
+  --rr-ambre-ink: var(--ps-ambre);
+  --rr-fonce: var(--ps-texte-courant);
+  --rr-gris: var(--ps-texte-discret);
+  --rr-flou: var(--ps-verre-flou);
+  --rr-ombre: none;
+}
+html[data-theme="sombre"] .rr-verre { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .rr-chiffre:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .rr-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .rr-en-ligne { background: var(--ps-verre); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .rr-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .rr-chip-gris { background: var(--ps-survol); color: var(--ps-texte-second); }
+
+/* Boutons : principal blanc, secondaires en verre sombre */
+html[data-theme="sombre"] .rr-btn-verre,
+html[data-theme="sombre"] .rr-btn-blanc { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .rr-btn-verre:hover,
+html[data-theme="sombre"] .rr-btn-blanc:hover { background: var(--ps-survol); border-color: var(--ps-contour-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rr-btn-sapin,
+html[data-theme="sombre"] .rr-btn-sapin:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .rr-btn-discret:hover,
+html[data-theme="sombre"] .rr-demo-reset:hover { background: var(--ps-survol); color: var(--ps-texte); }
+
+/* Onglets */
+html[data-theme="sombre"] .rr-page .rr-onglets { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .rr-page .rr-onglets .nav-link:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rr-page .rr-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .rr-page .rr-onglets .nav-link.active .rr-onglet-compte { color: var(--ps-texte-second); }
+
+/* Parcours, tableau, pagination, personnes et invitations */
+html[data-theme="sombre"] .rr-etape:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .rr-etape-barre { background: linear-gradient(90deg, #3FB89B 0%, #1D7A66 100%); }
+html[data-theme="sombre"] .rr-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .rr-page-btn:hover:not(:disabled) { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rr-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .rr-personne.is-focus { background: var(--ps-menthe-fond); }
+html[data-theme="sombre"] .rr-avatar { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .rr-invitation { background: rgba(255, 255, 255, .04); border-color: var(--ps-filet-2); }
+
+/* Formulaire du profil : champs et pilules à bascule */
+html[data-theme="sombre"] .rr-zone-texte,
+html[data-theme="sombre"] .rr-champ { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rr-zone-texte::placeholder,
+html[data-theme="sombre"] .rr-champ::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .rr-zone-texte:focus,
+html[data-theme="sombre"] .rr-champ:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+html[data-theme="sombre"] .rr-bascule { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .rr-bascule.is-active { background: var(--ps-menthe-fond); border-color: rgba(95, 224, 192, .4); color: var(--ps-menthe); }
+
+/* Carte de recommandation : même dégradé vert, détachée du fond sombre */
+html[data-theme="sombre"] .rr-carte-reco {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .14),
+    0 0 60px -18px rgba(95, 224, 192, .35),
+    var(--ps-ombre-forte);
+}
+
+html[data-theme="sombre"] .rr-note { background: rgba(255, 255, 255, .03); }

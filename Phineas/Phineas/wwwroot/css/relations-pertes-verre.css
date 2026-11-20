@@ -291,3 +291,53 @@
   .rp-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rp-pied { flex-direction: column; align-items: flex-start; }
 }
+
+/* =========================================================
+   Thème sombre : Ventes perdues (liste et fiche d'analyse).
+   Les jetons --rcp-* sont déjà passés en sombre dans relations.css ; ici, les couleurs écrites en dur
+   et les points d'état (vert = menthe, ambre = jaune doux, gris = gris clair lisible).
+   ========================================================= */
+html[data-theme="sombre"] .rp-page {
+  --rp-point-vert: var(--ps-menthe);
+  --rp-point-vert-texte: var(--ps-menthe);
+  --rp-point-ambre: var(--ps-ambre);
+  --rp-point-gris: var(--ps-texte-courant);
+  --rp-point-gris-clair: var(--ps-texte-discret);
+}
+html[data-theme="sombre"] .rp-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .rp-en-ligne { background: var(--ps-verre); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .rp-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .rp-etat-vert-plein .rp-point { box-shadow: var(--ps-menthe-lueur); }
+
+/* Verre, boutons secondaires et action principale (blanche en sombre) */
+html[data-theme="sombre"] .rp-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .rp-chiffre:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .rp-btn-verre { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .rp-btn-verre i,
+html[data-theme="sombre"] .rp-actions .rp-btn-blanc i,
+html[data-theme="sombre"] .rp-carte-titre i,
+html[data-theme="sombre"] .rp-note > i { color: var(--ps-menthe); }
+html[data-theme="sombre"] .rp-btn-verre:hover { background: var(--ps-survol); border-color: var(--ps-contour-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-btn-blanc { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-btn-blanc:hover { border-color: var(--ps-contour-survol); background: var(--ps-survol); }
+html[data-theme="sombre"] .rp-btn-vert,
+html[data-theme="sombre"] .rp-btn-vert:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* Barre d'outils, recherche, menus et interrupteurs */
+html[data-theme="sombre"] .rp-plus { background: rgba(255, 255, 255, .02); }
+html[data-theme="sombre"] .rp-recherche input { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-recherche input::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .rp-select { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-recherche input:focus,
+html[data-theme="sombre"] .rp-select:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+html[data-theme="sombre"] .rp-interrupteur .form-check-input { background-color: var(--ps-piste); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .rp-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+
+/* Tableau, pagination, notes et encarts */
+html[data-theme="sombre"] .rp-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .rp-page-btn:hover:not(:disabled) { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .rp-note,
+html[data-theme="sombre"] .rp-encart { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .rp-chip-neutre { background: var(--ps-survol); color: var(--ps-texte-second); }
