@@ -1,0 +1,282 @@
+/* =========================================================
+   Mes performances commerciales en verre clair (maquettes 21 à 27).
+   Chargée par Views/Outils/Performances.cshtml après outils.css (jetons --ogp-*).
+   Tout est rangé sous .pf-page : les autres pages Outils ne sont pas touchées.
+   Graphiques : une seule teinte verte par série ; deux séries seulement pour les semaines
+   (vert Gagnées, bleu doux Perdues). Aucun rouge ni ambre, aucun axe ni quadrillage.
+   ========================================================= */
+.pf-page {
+  --pf-rayon-carte: 28px;
+  --pf-rayon-chiffre: 20px;
+  --pf-piste: rgba(11, 13, 13, .06);
+  --pf-barre-fine: linear-gradient(90deg, #5FE0C0 0%, #17614F 100%);
+  --pf-barre-epaisse: linear-gradient(90deg, #1D7A66 0%, #0C3B32 100%);
+  --pf-gagnees: #16876F;
+  --pf-perdues: #7A94D6;
+  --pf-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+}
+
+/* ---------- Textes communs ---------- */
+.pf-page .pf-label { margin: 0; font-family: var(--ogp-mono); font-size: 11.5px; font-weight: 400; letter-spacing: .14em; text-transform: uppercase; color: var(--ogp-muted); }
+.pf-vide { margin: 8px 0 0; font-size: 14px; color: var(--ogp-muted); }
+.pf-indispo { font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--ogp-muted); }
+.pf-lien { padding: 0; border: 0; background: none; font-size: 14.5px; font-weight: 500; color: var(--ogp-sapin-texte); text-decoration: none; }
+.pf-lien:hover { color: var(--ogp-sapin-ink); text-decoration: underline; }
+
+/* ---------- En-tête ---------- */
+.pf-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.pf-page .pf-titre { margin: 12px 0 10px; font-family: var(--ogp-font); font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--ogp-ink); }
+.pf-intro { max-width: 36em; margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--ogp-text); }
+
+/* Menu de période en pilule de verre, icône de calendrier verte */
+.pf-periode {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.pf-periode i { position: absolute; left: 18px; color: var(--ogp-sapin-texte); pointer-events: none; }
+.pf-periode select {
+  height: 44px;
+  padding: 0 44px 0 46px;
+  border-radius: 999px;
+  border: 1px solid var(--ogp-line-2);
+  background: rgba(255, 255, 255, .7) var(--pf-chevron) no-repeat right 18px center;
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  box-shadow: var(--ogp-ombre);
+  font-size: 15px;
+  color: var(--ogp-ink);
+  appearance: none;
+  cursor: pointer;
+}
+.pf-periode select:focus { outline: none; border-color: var(--ogp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+
+/* ---------- Barre d'onglets en pilule de verre ---------- */
+.pf-page .pf-onglets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 24px;
+  padding: 5px;
+  border: 1px solid var(--ogp-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+}
+.pf-page .pf-onglets .nav-link {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 15px;
+  color: var(--ogp-text);
+}
+.pf-page .pf-onglets .nav-link:hover { color: var(--ogp-ink); background: rgba(11, 13, 13, .04); }
+.pf-page .pf-onglets .nav-link.active {
+  background: var(--ogp-sapin);
+  color: #FFFFFF;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 10px 22px -10px rgba(12, 59, 50, .65);
+}
+
+/* ---------- Cartes en verre ---------- */
+.pf-verre {
+  border-radius: var(--pf-rayon-carte);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  border: 1px solid var(--ogp-line);
+  box-shadow: var(--ogp-ombre);
+}
+.pf-carte { margin-bottom: 20px; padding: 28px 32px 24px; }
+.pf-page .pf-carte-titre { margin: 0 0 6px; font-family: var(--ogp-font); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; color: var(--ogp-ink); }
+.pf-carte-sous { margin: 0 0 22px; font-size: 14px; line-height: 1.5; color: var(--ogp-muted); }
+.pf-pied { margin: 22px 0 0; padding-top: 16px; border-top: 1px solid var(--ogp-line-2); font-size: 12.5px; line-height: 1.6; color: var(--ogp-muted); }
+.pf-graphique { display: flex; flex-direction: column; }
+.pf-graphique .pf-pied { margin-top: auto; }
+/* Espace entre le graphique et sa limite de lecture, même quand la carte voisine est plus haute. */
+.pf-graphique .pf-repartition, .pf-graphique .pf-parcours, .pf-graphique .pf-vide, .pf-graphique [data-zone="constats"] { margin-bottom: 22px; }
+
+/* ---------- Phrase de résumé d'un onglet de domaine ---------- */
+.pf-resume { max-width: 46em; margin: 0 0 22px; font-size: 20px; font-weight: 300; line-height: 1.45; letter-spacing: -0.01em; color: var(--ogp-ink); }
+
+/* ---------- Carte de résumé vert sapin (vue d'ensemble) ---------- */
+.pf-resume-carte {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+  padding: 32px 36px 30px;
+  border-radius: var(--pf-rayon-carte);
+  background: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 24px 48px -24px rgba(12, 59, 50, .6);
+  color: #FFFFFF;
+}
+/* Halo menthe dans le coin haut droit */
+.pf-resume-carte::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 360px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(95, 224, 192, .28), transparent);
+  pointer-events: none;
+}
+.pf-resume-label { position: relative; margin: 0 0 10px; font-family: var(--ogp-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(207, 245, 233, .85); }
+.pf-resume-phrase { position: relative; max-width: 30em; margin: 0 0 26px; font-size: 26px; font-weight: 300; line-height: 1.35; letter-spacing: -0.02em; }
+.pf-resume-chiffres {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, .16);
+}
+.pf-resume-chiffres > div { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: rgba(207, 245, 233, .9); }
+.pf-resume-valeur { font-size: 34px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #FFFFFF; font-variant-numeric: tabular-nums; }
+.pf-resume-valeur .pf-indispo { font-size: 18px; color: rgba(207, 245, 233, .85); }
+
+/* ---------- Cartes de chiffres ---------- */
+.pf-chiffres { display: grid; gap: 14px; margin-bottom: 20px; }
+.pf-chiffres-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pf-chiffres-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pf-chiffres-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.pf-chiffre {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 22px 22px 20px;
+  border-radius: var(--pf-rayon-chiffre);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  border: 1px solid var(--ogp-line);
+  box-shadow: var(--ogp-ombre);
+}
+.pf-chiffre-ligne { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.pf-anneau { flex-shrink: 0; }
+.pf-chiffre-valeur { font-size: 36px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: var(--ogp-ink); font-variant-numeric: tabular-nums; }
+.pf-unite { font-size: .8em; letter-spacing: 0; }
+.pf-chiffre-libelle { font-size: 13.5px; color: var(--ogp-ink); }
+.pf-chiffre-precision { font-size: 12.5px; line-height: 1.45; color: var(--ogp-muted); }
+
+/* ---------- Disposition des graphiques ---------- */
+.pf-graphiques { display: grid; gap: 20px; margin-bottom: 20px; }
+.pf-graphiques-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pf-graphiques .pf-carte { margin-bottom: 0; }
+.pf-ensemble-deux { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; margin-bottom: 20px; }
+.pf-ensemble-deux .pf-carte { margin-bottom: 0; }
+
+/* ---------- Répartition : barres fines de 6 px ---------- */
+.pf-repartition { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.pf-ligne { padding: 8px 10px; margin: 0 -10px; border-radius: 12px; transition: background-color .15s ease; }
+.pf-ligne:hover { background: rgba(255, 255, 255, .75); }
+.pf-ligne-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.pf-ligne-libelle { font-size: 14.5px; color: var(--ogp-ink); }
+.pf-ligne-precision { margin-left: 6px; font-size: 12.5px; color: var(--ogp-muted); }
+.pf-ligne-valeur { font-size: 14.5px; font-weight: 500; color: var(--ogp-ink); font-variant-numeric: tabular-nums; }
+.pf-piste { display: block; height: 6px; border-radius: 999px; background: var(--pf-piste); overflow: hidden; }
+.pf-barre-fine { display: block; height: 100%; min-width: 0; border-radius: 999px; background: var(--pf-barre-fine); }
+
+/* ---------- Parcours : barres épaisses de 24 px ---------- */
+.pf-parcours { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.pf-etape {
+  display: grid;
+  grid-template-columns: minmax(150px, 34%) minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 10px;
+  margin: 0 -10px;
+  border-radius: 12px;
+  transition: background-color .15s ease;
+}
+.pf-etape:hover { background: rgba(255, 255, 255, .75); }
+.pf-etape-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pf-etape-libelle { font-size: 14.5px; color: var(--ogp-ink); }
+.pf-etape-precision { font-size: 12.5px; color: var(--ogp-muted); }
+.pf-etape-piste { display: block; height: 24px; }
+.pf-barre-epaisse { display: block; height: 100%; border-radius: 4px; background: var(--pf-barre-epaisse); }
+.pf-etape-valeur { font-size: 15px; font-weight: 500; text-align: right; color: var(--ogp-ink); font-variant-numeric: tabular-nums; }
+
+/* ---------- Constats « À regarder en premier » ---------- */
+.pf-constats { margin: 0 0 14px; padding: 0; list-style: none; }
+.pf-constats li + li { border-top: 1px solid var(--ogp-line-2); }
+.pf-constats li[hidden] { display: none; }
+.pf-constat {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 10px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  text-align: left;
+  color: inherit;
+}
+button.pf-constat { cursor: pointer; transition: background-color .15s ease; }
+button.pf-constat:hover { background: rgba(255, 255, 255, .75); }
+.pf-constat-nombre { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--ogp-ink); font-variant-numeric: tabular-nums; }
+.pf-constat-texte { font-size: 14.5px; line-height: 1.45; color: var(--ogp-ink); }
+.pf-constat-domaine { display: block; margin-top: 3px; font-size: 12.5px; color: var(--ogp-muted); }
+.pf-constat-fleche { color: var(--ogp-sapin-texte); }
+.pf-deplier { align-self: flex-start; }
+
+/* ---------- Colonnes par semaine ---------- */
+.pf-semaines-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.pf-legende { display: flex; gap: 18px; margin: 4px 0 0; padding: 0; list-style: none; font-size: 13.5px; color: var(--ogp-text); white-space: nowrap; }
+.pf-legende li { display: inline-flex; align-items: center; gap: 8px; }
+.pf-carre { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.pf-seg-gagnees { background: var(--pf-gagnees); }
+.pf-seg-perdues { background: var(--pf-perdues); }
+.pf-colonnes {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  padding-top: 24px;
+  border-bottom: 1px solid var(--ogp-line-2);
+}
+.pf-semaine { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; padding: 6px 0 0; border-radius: 12px 12px 0 0; transition: background-color .15s ease; }
+.pf-semaine:hover { background: rgba(255, 255, 255, .75); }
+.pf-semaine-total { font-size: 14px; font-weight: 500; color: var(--ogp-ink); font-variant-numeric: tabular-nums; }
+/* Pile : 2 px d'écart entre les segments, seul le haut de la colonne est arrondi. */
+.pf-pile { display: flex; flex-direction: column; gap: 2px; width: 44px; max-width: 100%; }
+.pf-pile .pf-seg { display: block; width: 100%; }
+.pf-pile .pf-seg:first-child { border-radius: 4px 4px 0 0; }
+.pf-semaine-date { position: absolute; bottom: -28px; font-size: 13px; color: var(--ogp-muted); white-space: nowrap; }
+.pf-carte-semaines { padding-bottom: 52px; }
+
+/* ---------- Autres chiffres ---------- */
+.pf-autres-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--ogp-line-2); }
+.pf-autres-liste { margin: 0; padding: 0; list-style: none; }
+.pf-autres-liste li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; }
+.pf-autres-liste li + li { border-top: 1px solid var(--ogp-line-2); }
+.pf-autres-libelle { font-size: 15px; color: var(--ogp-ink); }
+.pf-autres-precision { margin-left: 10px; font-size: 13px; color: var(--ogp-muted); }
+.pf-autres-valeur { font-size: 15px; font-weight: 500; color: var(--ogp-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- Note commune en bas ---------- */
+.pf-note { display: flex; gap: 12px; margin: 4px 0 0; padding: 18px 22px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 14px; line-height: 1.55; color: var(--ogp-text); }
+.pf-note i { margin-top: 1px; color: var(--ogp-sapin-texte); }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 991.98px) {
+  .pf-ensemble-deux, .pf-graphiques-2 { grid-template-columns: 1fr; }
+  .pf-chiffres-4, .pf-chiffres-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pf-resume-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pf-page .pf-onglets { border-radius: 24px; }
+}
+@media (max-width: 575.98px) {
+  .pf-entete { flex-direction: column; align-items: flex-start; }
+  .pf-chiffres-3, .pf-chiffres-4, .pf-chiffres-5 { grid-template-columns: 1fr; }
+  .pf-carte { padding: 22px 20px 20px; }
+  .pf-etape { grid-template-columns: minmax(0, 1fr) 40px; }
+  .pf-etape-piste { grid-column: 1 / -1; grid-row: 2; }
+  .pf-colonnes { gap: 4px; }
+  .pf-semaine-date { font-size: 11px; }
+}

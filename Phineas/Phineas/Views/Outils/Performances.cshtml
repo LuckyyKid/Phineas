@@ -1,3 +1,6 @@
+@* Page « Mes performances commerciales » (maquettes 21 à 27) : sept onglets, une vue d'ensemble puis un onglet par domaine.
+   Chiffres : performances-calcul.js (instantané des stores, via outils-store.js) et relations-store.js pour la relation client.
+   Rendu : wwwroot/js/performances-page.js. Styles : outils.css (jetons og-) et performances-verre.css (préfixe pf-). *@
 @using Phineas.Models.ViewModels.Conseiller
 @model OutilsPageViewModel
 @{
@@ -8,21 +11,33 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/performances-verre.css" asp-append-version="true" />
 }
 
-<div class="og-page">
-<partial name="_HautOutils" />
+<div class="og-page pf-page">
 
-<header class="sv-head">
-    <div>
-        <h1>Mes performances commerciales</h1>
-        <p class="text-muted mb-0">Comprendre vos résultats à partir de vos dossiers : des observations, sans notation ni prédiction.</p>
+@* Haut propre à cette page : la maquette ne montre ni « Modifiée » ni « Réinitialiser » (ils restent sur Studio d'annonces). *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Mes performances</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
     </div>
-    <div class="sv-quick">
+</div>
+
+<header class="pf-entete">
+    <div>
+        <p class="pf-label">Outils</p>
+        <h1 class="pf-titre">Mes performances commerciales</h1>
+        <p class="pf-intro">Comprendre vos résultats à partir de vos dossiers : des observations, sans notation ni prédiction.</p>
+    </div>
+    <div class="pf-periode">
+        <i class="bi bi-calendar3" aria-hidden="true"></i>
         <label class="visually-hidden" for="f-periode">Période</label>
-        <select class="form-select form-select-sm" id="f-periode">
+        <select id="f-periode">
             <option value="30">30 derniers jours</option>
             <option value="90" selected>90 derniers jours</option>
             <option value="365">12 derniers mois</option>
@@ -31,20 +46,29 @@
     </div>
 </header>
 
-<div id="performances">
-    <p class="rc-legende" role="note">
-        <span><span class="rc-tag rc-tag-observe">Observé</span> calculé à partir de vos dossiers (y compris un zéro)</span>
-        <span><span class="rc-tag rc-tag-manquant">Non disponible</span> aucune donnée ou dénominateur nul</span>
-        <span><span class="rc-tag rc-tag-demo">Démonstration</span> données fictives</span>
-    </p>
-    <section class="card rc-bloc" aria-labelledby="pf-axes"><div class="card-header sv-card-header"><span id="pf-axes"><i class="bi bi-compass me-2"></i>Mes axes d'amélioration</span><span class="badge-soft">Constats descriptifs</span></div><div class="card-body" data-zone="axes"></div></section>
-    <section class="card rc-bloc" aria-labelledby="pf-acq"><div class="card-header sv-card-header"><span id="pf-acq"><i class="bi bi-diagram-3 me-2"></i>1. Acquisition</span><span data-periode></span></div><div class="card-body" data-zone="acquisition"></div></section>
-    <section class="card rc-bloc" aria-labelledby="pf-pipe"><div class="card-header sv-card-header"><span id="pf-pipe"><i class="bi bi-kanban me-2"></i>2. Pipeline</span><span data-periode></span></div><div class="card-body" data-zone="pipeline"></div></section>
-    <section class="card rc-bloc" aria-labelledby="pf-soum"><div class="card-header sv-card-header"><span id="pf-soum"><i class="bi bi-file-earmark-text me-2"></i>3. Soumissions</span><span data-periode></span></div><div class="card-body" data-zone="soumissions"></div></section>
-    <section class="card rc-bloc" aria-labelledby="pf-rdv"><div class="card-header sv-card-header"><span id="pf-rdv"><i class="bi bi-calendar-event me-2"></i>4. Rendez-vous</span><span data-periode></span></div><div class="card-body" data-zone="rendezvous"></div></section>
-    <section class="card rc-bloc" aria-labelledby="pf-trx"><div class="card-header sv-card-header"><span id="pf-trx"><i class="bi bi-cash-coin me-2"></i>5. Transactions</span><span data-periode></span></div><div class="card-body" data-zone="transactions"></div></section>
-    <section class="card rc-bloc" aria-labelledby="pf-rel"><div class="card-header sv-card-header"><span id="pf-rel"><i class="bi bi-people me-2"></i>6. Relation client</span><a class="btn btn-sm btn-link p-0" asp-controller="Relations" asp-action="Statistiques">Statistiques relationnelles</a></div><div class="card-body" data-zone="relation"></div></section>
-    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>Ces chiffres dépendent des dossiers que vous recevez : ils ne mesurent pas la compétence d'un conseiller et ne servent à aucune notation. Aucune prédiction de performance n'est calculée.</p>
+<div id="performances" data-onglet="@Model.Onglet">
+    <ul class="nav pf-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-ensemble" data-bs-toggle="tab" data-bs-target="#panneau-ensemble" type="button" role="tab" aria-controls="panneau-ensemble" aria-selected="true">Vue d'ensemble</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-acquisition" data-bs-toggle="tab" data-bs-target="#panneau-acquisition" type="button" role="tab" aria-controls="panneau-acquisition" aria-selected="false">Acquisition</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-pipeline" data-bs-toggle="tab" data-bs-target="#panneau-pipeline" type="button" role="tab" aria-controls="panneau-pipeline" aria-selected="false">Pipeline</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-soumissions" data-bs-toggle="tab" data-bs-target="#panneau-soumissions" type="button" role="tab" aria-controls="panneau-soumissions" aria-selected="false">Soumissions</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-rendezvous" data-bs-toggle="tab" data-bs-target="#panneau-rendezvous" type="button" role="tab" aria-controls="panneau-rendezvous" aria-selected="false">Rendez-vous</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-transactions" data-bs-toggle="tab" data-bs-target="#panneau-transactions" type="button" role="tab" aria-controls="panneau-transactions" aria-selected="false">Transactions</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-relation" data-bs-toggle="tab" data-bs-target="#panneau-relation" type="button" role="tab" aria-controls="panneau-relation" aria-selected="false">Relation client</button></li>
+    </ul>
+
+    @* Chaque panneau est rempli par performances-page.js (data-zone = nom du domaine). *@
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-ensemble" role="tabpanel" aria-labelledby="onglet-ensemble" tabindex="0" data-zone="ensemble"></div>
+        <div class="tab-pane fade" id="panneau-acquisition" role="tabpanel" aria-labelledby="onglet-acquisition" tabindex="0" data-zone="acquisition"></div>
+        <div class="tab-pane fade" id="panneau-pipeline" role="tabpanel" aria-labelledby="onglet-pipeline" tabindex="0" data-zone="pipeline"></div>
+        <div class="tab-pane fade" id="panneau-soumissions" role="tabpanel" aria-labelledby="onglet-soumissions" tabindex="0" data-zone="soumissions"></div>
+        <div class="tab-pane fade" id="panneau-rendezvous" role="tabpanel" aria-labelledby="onglet-rendezvous" tabindex="0" data-zone="rendezvous"></div>
+        <div class="tab-pane fade" id="panneau-transactions" role="tabpanel" aria-labelledby="onglet-transactions" tabindex="0" data-zone="transactions"></div>
+        <div class="tab-pane fade" id="panneau-relation" role="tabpanel" aria-labelledby="onglet-relation" tabindex="0" data-zone="relation"></div>
+    </div>
+
+    <p class="pf-note" role="note"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Ces chiffres dépendent des dossiers que vous recevez : ils ne mesurent pas la compétence d'un conseiller et ne servent à aucune notation. Aucune prédiction n'est faite. Données de démonstration, calculées à partir de vos dossiers dans Sales OS.</span></p>
 </div>
 
 </div>
