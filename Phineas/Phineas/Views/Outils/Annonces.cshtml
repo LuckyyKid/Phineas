@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
 }
 
+<div class="og-page">
+<partial name="_HautOutils" />
+
 <header class="sv-head">
     <div>
         <h1>Studio d'annonces</h1>
@@ -21,8 +24,6 @@
         <a class="btn btn-outline-primary btn-sm" asp-action="Acquisition" asp-route-onglet="publications"><i class="bi bi-diagram-3 me-1"></i>Publications</a>
     </div>
 </header>
-
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
 
 <div class="ov-simulation" role="note">
     <i class="bi bi-cpu" aria-hidden="true"></i>
@@ -159,6 +160,8 @@
             <button type="button" class="btn btn-sm btn-outline-primary" data-effacer-filtres>Effacer les filtres</button>
         </div>
     </section>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />

@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
 }
 
+<div class="og-page">
+<partial name="_HautOutils" />
+
 <header class="sv-head">
     <div>
         <h1>Acquisition commerciale</h1>
@@ -20,8 +23,6 @@
         <a class="btn btn-outline-primary btn-sm" asp-action="Annonces"><i class="bi bi-megaphone me-1"></i>Studio d'annonces</a>
     </div>
 </header>
-
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
 
 <div class="ov-simulation" role="note">
     <i class="bi bi-plug" aria-hidden="true"></i>
@@ -175,6 +176,8 @@
             </section>
         </div>
     </div>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />

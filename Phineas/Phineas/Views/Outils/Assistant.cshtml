@@ -11,14 +11,15 @@
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
 }
 
+<div class="og-page">
+<partial name="_HautOutils" />
+
 <header class="sv-head">
     <div>
         <h1>Assistant vendeur</h1>
         <p class="text-muted mb-0">Préparer un rendez-vous, comprendre un véhicule, une objection ou une procédure, à partir de vos dossiers.</p>
     </div>
 </header>
-
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
 
 <div class="ov-simulation" role="note">
     <i class="bi bi-cpu" aria-hidden="true"></i>
@@ -82,6 +83,8 @@
             <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Demander</button>
         </form>
     </section>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />

@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
 }
 
+<div class="og-page">
+<partial name="_HautOutils" />
+
 <header class="sv-head">
     <div>
         <h1>Mes performances commerciales</h1>
@@ -28,8 +31,6 @@
     </div>
 </header>
 
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
-
 <div id="performances">
     <p class="rc-legende" role="note">
         <span><span class="rc-tag rc-tag-observe">Observé</span> calculé à partir de vos dossiers (y compris un zéro)</span>
@@ -44,6 +45,8 @@
     <section class="card rc-bloc" aria-labelledby="pf-trx"><div class="card-header sv-card-header"><span id="pf-trx"><i class="bi bi-cash-coin me-2"></i>5. Transactions</span><span data-periode></span></div><div class="card-body" data-zone="transactions"></div></section>
     <section class="card rc-bloc" aria-labelledby="pf-rel"><div class="card-header sv-card-header"><span id="pf-rel"><i class="bi bi-people me-2"></i>6. Relation client</span><a class="btn btn-sm btn-link p-0" asp-controller="Relations" asp-action="Statistiques">Statistiques relationnelles</a></div><div class="card-body" data-zone="relation"></div></section>
     <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>Ces chiffres dépendent des dossiers que vous recevez : ils ne mesurent pas la compétence d'un conseiller et ne servent à aucune notation. Aucune prédiction de performance n'est calculée.</p>
+</div>
+
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
