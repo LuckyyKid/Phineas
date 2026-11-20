@@ -943,3 +943,147 @@
 @media (prefers-reduced-motion: reduce) {
   .ns-page * { transition: none !important; }
 }
+
+/* =========================================================
+   Thème sombre (html[data-theme="sombre"], voir wwwroot/js/theme.js et theme-sombre.css)
+   1. Assistant Nouvelle soumission (.ns-page) : même bloc que dans assistant-verre.css,
+      gardé en double car cette page ne charge que soumissions.css.
+   2. Fiche, éditeur, comparateur et document client (classes so-, dans la coque .ph-espace).
+   ========================================================= */
+/* ---------- Assistants en verre (.ns-page) ----------
+   Variables de la page remplacées par la palette --ps-* ; l'élément choisi devient une pilule claire
+   translucide (comme le menu de la coque) et l'action principale devient le bouton BLANC. */
+html[data-theme="sombre"] .ns-page {
+  --ns-ink: var(--ps-texte);
+  --ns-text: var(--ps-texte-courant);
+  --ns-muted: var(--ps-texte-second);
+  --ns-muted-2: var(--ps-texte-discret);
+  --ns-line: var(--ps-filet);
+  --ns-line-2: var(--ps-filet-2);
+  --ns-sapin: var(--ps-btn-principal);
+  --ns-sapin-ink: var(--ps-menthe);
+  --ns-sapin-texte: var(--ps-menthe);
+  --ns-menthe: var(--ps-menthe);
+  --ns-menthe-ink: var(--ps-menthe);
+  --ns-ambre-ink: var(--ps-ambre);
+  --ns-ombre: none;
+}
+html[data-theme="sombre"] .ns-page :focus-visible { outline-color: var(--ps-focus); }
+html[data-theme="sombre"] .ns-verre,
+html[data-theme="sombre"] .ns-etapes { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Haut de page */
+html[data-theme="sombre"] .ns-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .ns-demo-reset:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .ns-en-ligne { background: var(--ps-btn-second); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ns-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .ns-retour:hover { color: var(--ps-texte); }
+
+/* Étapes : faite en menthe, en cours en pilule claire translucide */
+html[data-theme="sombre"] .ns-etapes button:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .ns-num { border-color: rgba(255, 255, 255, .2); }
+html[data-theme="sombre"] .ns-etapes .is-faite .ns-num { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .ns-etapes .is-courante button { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .ns-etapes .is-courante .ns-num { background: #FFFFFF; color: var(--ps-btn-principal-texte); }
+
+/* Recherche, prospects, opportunité */
+html[data-theme="sombre"] .ns-recherche input { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .ns-recherche input::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .ns-recherche input:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .ns-client { background: rgba(255, 255, 255, .03); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .ns-client:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .ns-client.is-choisi { background: var(--ps-actif); border-color: rgba(255, 255, 255, .55); box-shadow: none; }
+html[data-theme="sombre"] .ns-avatar { background: rgba(255, 255, 255, .08); color: var(--ps-texte); }
+html[data-theme="sombre"] .ns-client.is-choisi .ns-avatar { background: #FFFFFF; color: var(--ps-btn-principal-texte); }
+html[data-theme="sombre"] .ns-coche { color: var(--ps-menthe); }
+html[data-theme="sombre"] .ns-vide { border-color: rgba(255, 255, 255, .16); }
+html[data-theme="sombre"] .ns-opp-pilule { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .ns-opp-pilule.is-choisi { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); }
+
+/* Tuiles : la tuile choisie prend la pilule claire translucide, pas le bouton blanc */
+html[data-theme="sombre"] .ns-tuile { background: rgba(255, 255, 255, .03); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .ns-tuile:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .ns-tuile.is-choisi { background: var(--ps-actif); border-color: var(--ps-actif-contour); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+html[data-theme="sombre"] .ns-tuile.is-choisi strong { color: var(--ps-texte); }
+html[data-theme="sombre"] .ns-tuile.is-choisi span,
+html[data-theme="sombre"] .ns-tuile.is-choisi small { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ns-tuile.is-choisi .ns-pertinence { color: var(--ps-menthe); }
+
+/* Pagination */
+html[data-theme="sombre"] .ns-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .ns-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); box-shadow: none; }
+
+/* Boutons : principal blanc, secondaire translucide */
+html[data-theme="sombre"] .ns-btn-verre { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .ns-btn-verre:hover { background: rgba(255, 255, 255, .08); color: var(--ps-texte); }
+html[data-theme="sombre"] .ns-btn-sapin,
+html[data-theme="sombre"] .ns-btn-sapin:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .ns-btn-sapin:disabled { opacity: .35; box-shadow: none; }
+html[data-theme="sombre"] .ns-aide { color: var(--ps-rose-texte); }
+
+/* Écran final : carte mise en avant (verre plus clair, trait lumineux), plus de fond vert plein */
+html[data-theme="sombre"] .ns-fin {
+  border-color: var(--ps-contour-fort);
+  background: radial-gradient(55% 60% at 100% 0%, rgba(95, 224, 192, .12), transparent 70%), var(--ps-verre-fort);
+  box-shadow: var(--ps-ombre-forte);
+}
+html[data-theme="sombre"] .ns-fin-icone { background: var(--ps-menthe-fond); color: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .ns-fin-recap div { border-top-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .ns-fin-recap dt { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ns-btn-blanc { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .ns-btn-blanc:hover { background: #FFFFFF; color: var(--ps-btn-principal-texte); }
+
+/* ---------- Fiche, éditeur et comparateur (so-) ----------
+   Les couleurs d'état passent en teintes claires lisibles sur fond sombre ;
+   les fonds clairs codés en dur deviennent du verre sombre. */
+html[data-theme="sombre"] .so-statut { background: color-mix(in srgb, var(--c) 16%, transparent); }
+html[data-theme="sombre"] .so-st-Brouillon,
+html[data-theme="sombre"] .so-st-Expiree,
+html[data-theme="sombre"] .so-st-Annulee,
+html[data-theme="sombre"] .s-Recu { --c: var(--ps-texte-second); }
+html[data-theme="sombre"] .so-st-Envoyee { --c: #B9A7F5; }
+html[data-theme="sombre"] .so-st-EnAttente,
+html[data-theme="sombre"] .s-EnInspection { --c: var(--ps-ambre); }
+html[data-theme="sombre"] .so-st-Acceptee { --c: var(--ps-menthe); }
+html[data-theme="sombre"] .so-st-Refusee { --c: var(--ps-rose-texte); }
+html[data-theme="sombre"] .s-Livre { --c: var(--ps-texte-courant); }
+
+html[data-theme="sombre"] .so-alerte { background: var(--ps-rose-fond); color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .so-texte-alerte { color: var(--ps-rose-texte) !important; }
+html[data-theme="sombre"] .so-erreur { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .so-a-confirmer { color: var(--ps-ambre); }
+
+html[data-theme="sombre"] .so-etapes button { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .so-etapes button span { background: rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .so-etapes .is-active button span { background: var(--ps-menthe); color: var(--ps-btn-principal-texte); }
+html[data-theme="sombre"] .so-etapes .is-fait button span { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .so-navigation { background: var(--ps-surface); border-color: var(--ps-contour); box-shadow: 0 -10px 24px -12px rgba(0, 0, 0, .6); }
+
+html[data-theme="sombre"] .so-besoin-rappel,
+html[data-theme="sombre"] .so-ligne.is-retrait,
+html[data-theme="sombre"] .so-diffs { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .so-vehicule,
+html[data-theme="sombre"] .so-option { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .so-vehicule:hover:not(:disabled) { box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .7); }
+html[data-theme="sombre"] .so-photo { background: linear-gradient(135deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02)); color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .so-pertinence,
+html[data-theme="sombre"] .so-frais i,
+html[data-theme="sombre"] .so-ligne.is-remise > span:last-child,
+html[data-theme="sombre"] .so-min { color: var(--ps-menthe); }
+html[data-theme="sombre"] .so-frais .bi-question-circle { color: var(--ps-ambre); }
+html[data-theme="sombre"] .so-hypotheses { background: rgba(255, 255, 255, .03); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .so-comparateur td.is-min { background: var(--ps-menthe-fond); }
+html[data-theme="sombre"] .so-version + .so-version { border-top-color: var(--ps-filet); }
+
+/* Document client : il reste une feuille de papier blanche (aperçu fidèle de ce que reçoit le client),
+   avec ses propres couleurs claires pour que le texte ne devienne pas blanc sur blanc. */
+html[data-theme="sombre"] .so-document {
+  --ph-ink: #0F172A;
+  --ph-text: #334155;
+  --ph-muted: #64748B;
+  --ph-border: #E3E8EF;
+  color: #0F172A;
+  border-color: rgba(255, 255, 255, .12);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .8);
+  color-scheme: light;
+}
