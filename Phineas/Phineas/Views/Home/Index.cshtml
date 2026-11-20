@@ -105,7 +105,7 @@
     @* ---------- Barre de navigation collante ---------- *@
     <header class="acc-nav-zone">
         <nav class="acc-nav" aria-label="Navigation principale">
-            <a class="acc-logo" asp-controller="Home" asp-action="Index"><span class="acc-logo-rond" aria-hidden="true"></span>phineas</a>
+            <a class="acc-logo" asp-controller="Home" asp-action="Index"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 30 }' />phineas</a>
             <div class="acc-nav-liens">
                 <a href="#fonctionnalites">Fonctionnalités</a>
                 <a href="#a-propos">À propos</a>
@@ -287,7 +287,7 @@
                 <div class="acc-panneau acc-a-propos">
                     <div class="acc-a-propos-motif" aria-hidden="true">
                         <svg class="acc-zigzag" viewBox="0 0 340 260" preserveAspectRatio="none"><polyline points="40,250 150,140 190,140 300,20" /></svg>
-                        <span class="acc-a-propos-tuile"><span class="acc-logo-rond"></span></span>
+                        <span class="acc-a-propos-tuile"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 38 }' /></span>
                     </div>
                     <p class="acc-a-propos-titre">Un seul dossier, de la réception à la livraison.</p>
                     <p class="acc-a-propos-texte">Moins de temps à chercher, plus de temps avec les clients.</p>
