@@ -1,5 +1,5 @@
-// « Mes suivis » (Smart Follow-up Engine) : relances recommandées avec leur contexte, relances suspendues
-// et préférences de contact déclarées par le conseiller. Les recommandations viennent du store.
+// « Mes suivis » (Views/Intelligence/Suivis.cshtml, maquette 06) : relances recommandées avec leur contexte,
+// relances suspendues et préférences de contact déclarées par le conseiller. Les recommandations viennent du store.
 (function () {
   "use strict";
 
@@ -8,32 +8,69 @@
   if (!I || !P || !UI || !racine) return;
   var esc = P.esc;
 
-  function rendre() {
-    var l = I.actives({ conseiller: P.moiId }).filter(function (a) { return a.relance; });
-    document.getElementById("relances").innerHTML = l.map(function (a) {
-      var ctx = I.contexteRelance(a.id);
-      var d = ctx.derniere;
-      var o = ctx.opportunite;
-      return '<tr data-action-id="' + esc(a.id) + '">' +
-        '<td data-label="Client"><a class="pr-nom" href="' + esc(P.urlFiche(a.prospectId)) + '">' + esc(a.client) + "</a>" + (a.vehicule ? '<span class="pr-sous d-block">' + esc(a.vehicule) + "</span>" : "") + UI.pastillePriorite(a.priorite) + "</td>" +
-        '<td data-label="Pourquoi"><strong>' + esc(a.regleLibelle) + "</strong><span class=\"d-block small\">" + esc(a.motif) + "</span>" +
-        (a.avertissement ? '<span class="ia-avertissement d-block">' + esc(a.avertissement) + "</span>" : "") + "</td>" +
-        '<td data-label="Dernier contact">' + (d ? esc(P.relatif(d.date)) + '<span class="pr-sous d-block">' + esc(d.resume) + "</span>" : '<span class="text-muted">Aucun échange enregistré</span>') + "</td>" +
-        '<td data-label="Canal préféré">' + esc(ctx.canal) + (ctx.coordonnee ? '<span class="pr-sous d-block">' + esc(ctx.coordonnee) + "</span>" : "") + "</td>" +
-        '<td data-label="Prochaine action">' + esc(a.actionProposee) + '<span class="pr-sous d-block">' + esc(UI.echeanceTexte(a.echeance)) + (o && o.prochaineAction ? " · prévu : " + esc(o.prochaineAction) : "") + "</span></td>" +
-        '<td data-label="Actions" class="ia-cellule-actions"><button type="button" class="btn btn-sm btn-primary" data-ia="relance" data-id="' + esc(a.id) + '">Préparer la relance</button>' +
-        '<button type="button" class="btn btn-sm btn-ghost" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button></td></tr>';
-    }).join("");
-    document.getElementById("relances-vide").hidden = l.length > 0;
-    racine.querySelector('[data-champ="nb-relances"]').textContent = String(l.length);
+  // Icône du canal préféré (clés de ReferentielsProspects.MoyensContact).
+  var ICONES_CANAL = { courriel: "bi-envelope", texto: "bi-chat-dots", telephone: "bi-telephone" };
 
-    var s = I.suspendues().filter(function (a) { return a.conseillerId === P.moiId; });
-    document.getElementById("suspendues").innerHTML = s.length ? s.map(function (a) {
-      return '<li><span class="ia-suspendue-icone"><i class="bi bi-pause-circle" aria-hidden="true"></i></span><div><strong>' + esc(a.client) + "</strong> — " + esc(a.regleLibelle) +
-        '<span class="d-block small">' + esc(a.raisonSuspension) + '</span><span class="pr-sous d-block">Situation détectée : ' + esc(a.motif) + "</span></div>" +
-        '<button type="button" class="btn btn-sm btn-ghost" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button></li>';
-    }).join("") : '<li class="sv-empty"><span>Aucune relance suspendue.</span></li>';
-    racine.querySelector('[data-champ="nb-suspendues"]').textContent = String(s.length);
+  function ligneRelance(a) {
+    var ctx = I.contexteRelance(a.id);
+    var derniere = ctx.derniere;
+    var o = ctx.opportunite;
+    var icone = ICONES_CANAL[ctx.canalCle] || "bi-chat-left-text";
+
+    var client = '<a class="iv-nom" href="' + esc(P.urlFiche(a.prospectId)) + '">' + esc(a.client) + "</a>";
+    if (a.vehicule) client += '<span class="iv-sous">' + esc(a.vehicule) + "</span>";
+    client += '<span class="iv-sous">Priorité : ' + esc(I.ref.libellesPriorite[a.priorite] || a.priorite) + "</span>";
+
+    var raison = esc(a.regleLibelle) + '<span class="iv-sous">' + esc(a.motif) + "</span>";
+    if (a.avertissement) raison += '<span class="iv-sous iv-a-verifier">' + esc(a.avertissement) + "</span>";
+
+    var contact = '<span class="iv-gris">Aucun échange enregistré</span>';
+    if (derniere) contact = '<span class="iv-gris">' + esc(P.relatif(derniere.date)) + '</span><span class="iv-sous">' + esc(derniere.resume) + "</span>";
+
+    var canal = '<span class="iv-canal"><i class="bi ' + icone + '" aria-hidden="true"></i>' + esc(ctx.canal) + "</span>";
+    if (ctx.coordonnee) canal += '<span class="iv-sous">' + esc(ctx.coordonnee) + "</span>";
+
+    var prevu = a.actionProposee + " · " + UI.echeanceTexte(a.echeance);
+    if (o && o.prochaineAction) prevu += " · prévu : " + o.prochaineAction;
+    var prochaine = '<span class="iv-cellule-boutons">' +
+      '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button>' +
+      '<button type="button" class="iv-btn iv-btn-sapin iv-btn-petit" data-ia="relance" data-id="' + esc(a.id) + '">Préparer le message</button></span>' +
+      '<span class="iv-sous">' + esc(prevu) + "</span>";
+
+    return '<tr data-action-id="' + esc(a.id) + '">' +
+      "<td>" + client + "</td><td>" + raison + "</td><td>" + contact + "</td><td>" + canal + "</td><td>" + prochaine + "</td></tr>";
+  }
+
+  // Date affichée à droite d'une relance suspendue : début de la pause si le suivi est en pause, sinon détection.
+  function dateSuspension(a) {
+    var pause = a.opportuniteId ? I.pause(a.opportuniteId) : null;
+    if (pause && pause.depuis) return "Depuis le " + P.dateCourte(pause.depuis);
+    if (a.detecteLe) return "Détectée " + P.relatif(a.detecteLe);
+    return "";
+  }
+
+  function ligneSuspendue(a) {
+    return '<li><i class="bi bi-pause-circle" aria-hidden="true"></i>' +
+      '<div class="iv-suspendues-texte"><strong>' + esc(a.client) + "</strong>" +
+      "<span>" + esc(a.raisonSuspension) + "</span>" +
+      '<span class="iv-sous">' + esc(a.regleLibelle) + " · situation détectée : " + esc(a.motif) + "</span></div>" +
+      '<span class="iv-suspendues-date">' + esc(dateSuspension(a)) + "</span>" +
+      '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button></li>';
+  }
+
+  function rendre() {
+    var relances = I.actives({ conseiller: P.moiId }).filter(function (a) { return a.relance; });
+    document.getElementById("relances").innerHTML = relances.map(ligneRelance).join("");
+    // Pas de tableau avec seulement ses en-têtes : on affiche l'état vide à sa place.
+    racine.querySelector('[data-zone="tableau-relances"]').hidden = relances.length === 0;
+    document.getElementById("relances-vide").hidden = relances.length > 0;
+    racine.querySelector('[data-champ="nb-relances"]').textContent = String(relances.length);
+
+    var suspendues = I.suspendues().filter(function (a) { return a.conseillerId === P.moiId; });
+    document.getElementById("suspendues").innerHTML = suspendues.length
+      ? suspendues.map(ligneSuspendue).join("")
+      : '<li><span class="iv-gris">Aucune relance suspendue.</span></li>';
+    racine.querySelector('[data-champ="nb-suspendues"]').textContent = String(suspendues.length);
   }
 
   // Préférences de contact : déclarées par le conseiller (ce que le client a demandé), jamais déduites.
@@ -45,12 +82,12 @@
     var o = oppId ? P.opportunite(oppId) : null;
     courant = { pid: pid, oppId: oppId };
     var demain = new Date(); demain.setDate(demain.getDate() + 7);
-    UI.fenetre("Préférences de contact — " + c.prenom + " " + c.nom,
+    UI.fenetre("Préférences de contact : " + c.prenom + " " + c.nom,
       '<p class="small">Moyen préféré : <strong>' + esc(P.libelle("moyensContact", c.contactPrefere) || "non précisé") + "</strong>" + (c.momentContact ? ", " + esc((P.libelle("momentsContact", c.momentContact) || "").toLowerCase()) : "") + ".</p>" +
       '<label class="form-label" for="pf-consentement">Consentement aux communications commerciales</label><select class="form-select" id="pf-consentement">' +
       Object.keys(I.ref.consentements).map(function (k) { return '<option value="' + esc(k) + '"' + (pref.consentement === k ? " selected" : "") + ">" + esc(I.ref.consentements[k]) + "</option>"; }).join("") + "</select>" +
       '<div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="pf-arret"' + (pref.nePlusContacter ? " checked" : "") + ' /><label class="form-check-label" for="pf-arret">Le client a demandé à ne plus être sollicité</label></div>' +
-      (o ? '<hr /><p class="mb-1"><strong>Pause du suivi</strong> — ' + esc(o.titre) + "</p>" + (pause ? '<p class="small">En pause jusqu\'au ' + esc(P.dateCourte(pause.jusqua)) + " : " + esc(pause.motif) + ' <button type="button" class="btn btn-sm btn-link p-0" data-pref="lever">Lever la pause</button></p>' : "") +
+      (o ? '<hr /><p class="mb-1"><strong>Pause du suivi</strong> : ' + esc(o.titre) + "</p>" + (pause ? '<p class="small">En pause jusqu\'au ' + esc(P.dateCourte(pause.jusqua)) + " : " + esc(pause.motif) + ' <button type="button" class="btn btn-sm btn-link p-0" data-pref="lever">Lever la pause</button></p>' : "") +
         '<div class="row g-2"><div class="col-sm-5"><label class="form-label" for="pf-jusqua">Reprendre le</label><input type="date" class="form-control" id="pf-jusqua" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" /></div>' +
         '<div class="col-sm-7"><label class="form-label" for="pf-motif">Motif</label><input class="form-control" id="pf-motif" maxlength="120" placeholder="Ex. : achat reporté au printemps" /></div></div>' +
         '<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-pref="pause">Mettre le suivi en pause</button>' : "") +

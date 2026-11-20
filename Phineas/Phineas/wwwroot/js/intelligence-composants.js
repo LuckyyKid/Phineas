@@ -32,12 +32,19 @@
     return a.echeance && new Date(a.echeance) < new Date();
   }
 
-  // ---------- Carte d'action ----------
-  function carte(a, options) {
-    options = options || {};
-    var cat = CAT[a.categorie] || {};
-    var lien = I.urlObjet(a);
-    var actif = a.statut === "ATraiter" || a.statut === "EnCours";
+  function estActive(a) {
+    return a.statut === "ATraiter" || a.statut === "EnCours";
+  }
+  function libelleResponsable(a) {
+    if (a.departement === "conseiller") return "Vous";
+    var departements = window.Transactions ? window.Transactions.ref.departements : {};
+    var d = departements[a.departement];
+    return d ? d.libelle : a.departement;
+  }
+
+  // Boutons du menu « Plus » (commencer, reporter, ignorer, confier, historique), selon l'état de l'action.
+  function boutonsSecondaires(a) {
+    var actif = estActive(a);
     var secondaires = actif ? [
       a.statut === "ATraiter" ? '<button type="button" class="dropdown-item" data-ia="commencer" data-id="' + esc(a.id) + '"><i class="bi bi-play-circle"></i>Commencer le traitement</button>' : "",
       '<button type="button" class="dropdown-item" data-ia="reporter" data-id="' + esc(a.id) + '"><i class="bi bi-clock"></i>Reporter</button>',
@@ -46,12 +53,33 @@
         : '<button type="button" class="dropdown-item" data-ia="transferer" data-id="' + esc(a.id) + '"><i class="bi bi-people"></i>Confier à un collègue</button>',
     ].join("") : (a.statut === "Reportee" || a.statut === "Ignoree") && !a.horsFile ? '<button type="button" class="dropdown-item" data-ia="reactiver" data-id="' + esc(a.id) + '"><i class="bi bi-arrow-counterclockwise"></i>Remettre dans la file</button>' : "";
     secondaires += '<button type="button" class="dropdown-item" data-ia="historique" data-id="' + esc(a.id) + '"><i class="bi bi-clock-history"></i>Historique de l\'action</button>';
+    return secondaires;
+  }
+
+  // Liste « Pourquoi cette recommandation et cette priorité ? » (règle, raisons, résolution, expiration).
+  function pourquoi(a) {
+    var nature = "action interne";
+    if (a.nature === "commerciale") nature = "sollicitation commerciale";
+    if (a.nature === "dossier") nature = "communication liée au dossier";
+    return "<li>Règle : « " + esc(a.regleLibelle) + " » (" + esc(nature) + ").</li>" +
+      (a.raisonsPriorite || []).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") +
+      "<li>Résolution : " + esc(a.resolution || "non précisée") + "</li><li>Expiration : " + esc(a.expiration || "non précisée") + "</li>" +
+      "<li>Détectée " + esc(a.detecteLe ? P.relatif(a.detecteLe) : "à une date inconnue") + ".</li>";
+  }
+
+  // ---------- Carte d'action (tableau de bord, fiches) ----------
+  function carte(a, options) {
+    options = options || {};
+    var cat = CAT[a.categorie] || {};
+    var lien = I.urlObjet(a);
+    var actif = estActive(a);
+    var secondaires = boutonsSecondaires(a);
     var principale = !actif ? "" : a.relance ? '<button type="button" class="btn btn-sm btn-primary" data-ia="relance" data-id="' + esc(a.id) + '"><i class="bi bi-pencil-square me-1"></i>Préparer la relance</button>'
       : '<a class="btn btn-sm btn-primary" href="' + esc(lien) + '"><i class="bi bi-box-arrow-up-right me-1"></i>' + esc(a.actionProposee) + "</a>";
     return '<article class="ia-carte ia-prio-bord-' + esc(a.priorite) + (enRetard(a) && actif ? " is-retard" : "") + '" data-action-id="' + esc(a.id) + '" aria-labelledby="ia-t-' + esc(cleId(a.id)) + '">' +
       '<header class="ia-carte-tete"><span class="ia-type"><i class="bi ' + esc(cat.icone || "bi-lightning") + '" aria-hidden="true"></i><span id="ia-t-' + esc(cleId(a.id)) + '">' + esc(a.regleLibelle) + "</span></span>" +
       '<span class="ia-carte-pastilles">' + pastillePriorite(a.priorite) + (a.statut !== "ATraiter" ? pastilleEtat(a.statut) : "") + "</span></header>" +
-      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">— ' + esc(a.vehicule) + "</span>" : "") + "</p>" +
+      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">· ' + esc(a.vehicule) + "</span>" : "") + "</p>" +
       (a.declencheur ? '<p class="ia-situation">' + esc(a.declencheur) + "</p>" : "") +
       '<p class="ia-motif"><span class="visually-hidden">Raison : </span>' + esc(a.motif) + "</p>" +
       ((a.contexte || []).length && !options.compacte ? '<ul class="ia-contexte">' + a.contexte.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
@@ -61,11 +89,7 @@
       '<dl class="ia-meta"><div><dt>Action proposée</dt><dd>' + esc(a.actionProposee) + "</dd></div>" +
       '<div><dt>Échéance</dt><dd class="' + (enRetard(a) ? "ia-retard" : "") + '">' + esc(echeanceTexte(a.echeance)) + "</dd></div>" +
       '<div><dt>Responsable</dt><dd>' + esc(a.departement === "conseiller" ? "Vous" : (window.Transactions && window.Transactions.ref.departements[a.departement] || {}).libelle || a.departement) + (a.source ? ' <span class="pr-sous">· ' + esc(a.source) + "</span>" : "") + "</dd></div></dl>" +
-      (options.compacte ? "" : '<details class="ia-pourquoi"><summary>Pourquoi cette recommandation et cette priorité ?</summary><ul>' +
-        "<li>Règle : « " + esc(a.regleLibelle) + " » (" + esc(a.nature === "commerciale" ? "sollicitation commerciale" : a.nature === "dossier" ? "communication liée au dossier" : "action interne") + ").</li>" +
-        (a.raisonsPriorite || []).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") +
-        "<li>Résolution : " + esc(a.resolution || "—") + "</li><li>Expiration : " + esc(a.expiration || "—") + "</li>" +
-        "<li>Détectée " + esc(a.detecteLe ? P.relatif(a.detecteLe) : "—") + ".</li></ul></details>") +
+      (options.compacte ? "" : '<details class="ia-pourquoi"><summary>Pourquoi cette recommandation et cette priorité ?</summary><ul>' + pourquoi(a) + "</ul></details>") +
       '<footer class="ia-carte-actions">' + principale +
       '<a class="btn btn-sm btn-outline-primary" href="' + esc(lien) + '">Consulter le dossier</a>' +
       (actif ? '<button type="button" class="btn btn-sm btn-ghost" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="bi bi-check2 me-1"></i>Marquer comme réalisée</button>' : "") +
@@ -75,6 +99,115 @@
   function cleId(id) {
     return String(id).replace(/[^a-zA-Z0-9-]/g, "_");
   }
+
+  // ---------- Ligne d'action (Centre d'actions, maquette 01) ----------
+  // Ligne compacte : point de priorité, client et type, raison et catégorie, échéance, flèche vers le dossier.
+  // Un clic sur la ligne déplie le détail (contexte, pourquoi, boutons de traitement) ; les lignes ouvertes
+  // le restent quand la liste est redessinée.
+  var lignesOuvertes = {};
+
+  function echeanceCourte(a) {
+    if (enRetard(a)) return "En retard";
+    return echeanceTexte(a.echeance);
+  }
+
+  function detailLigne(a) {
+    var lien = I.urlObjet(a);
+    var actif = estActive(a);
+    var html = "";
+    if (a.declencheur) html += "<p>" + esc(a.declencheur) + "</p>";
+    if ((a.contexte || []).length) {
+      html += '<ul class="iv-contexte">' + a.contexte.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>";
+    }
+    if (a.avertissement) html += '<p class="iv-alerte"><i class="bi bi-shield-exclamation" aria-hidden="true"></i> ' + esc(a.avertissement) + "</p>";
+    if (a.assignation) {
+      html += '<p><i class="bi bi-people" aria-hidden="true"></i> Prise en charge temporaire par <strong>' + esc(a.assignation.collegue) + "</strong> (" + esc((ref.motifsTransfert[a.assignation.motif] || "").toLowerCase()) + ")</p>";
+    }
+    if (a.statut === "Reportee" && a.reporteJusqua) {
+      html += '<p><i class="bi bi-clock" aria-hidden="true"></i> Reportée au ' + esc(P.dateCourte(a.reporteJusqua)) + "</p>";
+    }
+
+    var responsable = esc(libelleResponsable(a));
+    if (a.source) responsable += '<span class="iv-sous">' + esc(a.source) + "</span>";
+    html += '<dl class="iv-meta">' +
+      "<div><dt>Action proposée</dt><dd>" + esc(a.actionProposee) + "</dd></div>" +
+      "<div><dt>Échéance</dt><dd>" + esc(echeanceTexte(a.echeance)) + "</dd></div>" +
+      "<div><dt>Responsable</dt><dd>" + responsable + "</dd></div></dl>";
+    html += '<details class="iv-pourquoi"><summary>Pourquoi cette recommandation et cette priorité ?</summary><ul>' + pourquoi(a) + "</ul></details>";
+
+    var boutons = "";
+    if (actif && a.relance) {
+      boutons += '<button type="button" class="iv-btn iv-btn-sapin iv-btn-petit" data-ia="relance" data-id="' + esc(a.id) + '"><i class="bi bi-pencil-square"></i>Préparer la relance</button>';
+    } else if (actif) {
+      boutons += '<a class="iv-btn iv-btn-sapin iv-btn-petit" href="' + esc(lien) + '">' + esc(a.actionProposee) + "</a>";
+    }
+    boutons += '<a class="iv-btn iv-btn-blanc iv-btn-petit" href="' + esc(lien) + '">Consulter le dossier</a>';
+    if (a.prospectId) boutons += '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(a.prospectId)) + '">Fiche du client</a>';
+    if (actif) boutons += '<button type="button" class="iv-btn iv-btn-discret" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="bi bi-check2"></i>Marquer comme réalisée</button>';
+    boutons += '<div class="dropdown"><button type="button" class="iv-btn iv-btn-discret dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Autres actions">Plus</button>' +
+      '<div class="dropdown-menu dropdown-menu-end">' + boutonsSecondaires(a) + "</div></div>";
+    html += '<div class="iv-action-boutons">' + boutons + "</div>";
+    return html;
+  }
+
+  function ligne(a) {
+    var cat = CAT[a.categorie] || {};
+    var prio = PRIO[a.priorite] || { libelle: a.priorite };
+    var ouverte = !!lignesOuvertes[a.id];
+    var idDetail = "iv-d-" + cleId(a.id);
+    var retard = enRetard(a) && estActive(a);
+    var etatAction = a.statut !== "ATraiter" ? '<span class="iv-etat">' + esc(ref.etatsAction[a.statut] || a.statut) + "</span>" : "";
+    var raison = a.motif + (cat.libelle ? " · " + cat.libelle : "");
+    var lienDossier = I.urlObjet(a);
+
+    return '<article class="iv-action' + (ouverte ? " is-ouverte" : "") + '" data-action-id="' + esc(a.id) + '">' +
+      '<div class="iv-action-ligne">' +
+      '<button type="button" class="iv-action-ouvrir" data-iv-ouvrir="' + esc(a.id) + '" aria-expanded="' + ouverte + '" aria-controls="' + esc(idDetail) + '">' +
+      '<span class="iv-prio iv-prio-' + esc(a.priorite) + '" title="Priorité : ' + esc(prio.libelle) + '"><span class="visually-hidden">Priorité ' + esc(prio.libelle) + "</span></span>" +
+      '<span class="iv-action-texte"><span class="iv-action-nom">' + esc(a.client) + "</span>" +
+      '<span class="iv-action-type">' + esc(a.regleLibelle) + "</span>" + etatAction +
+      (a.vehicule ? '<span class="iv-action-type">' + esc(a.vehicule) + "</span>" : "") +
+      '<span class="iv-action-raison">' + esc(raison) + "</span></span></button>" +
+      '<span class="iv-action-echeance' + (retard ? " is-retard" : "") + '">' + esc(echeanceCourte(a)) + "</span>" +
+      '<a class="iv-btn-rond" href="' + esc(lienDossier) + '" aria-label="Ouvrir le dossier : ' + esc(a.client) + '"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>' +
+      "</div>" +
+      '<div class="iv-action-detail" id="' + esc(idDetail) + '"' + (ouverte ? "" : " hidden") + ">" + detailLigne(a) + "</div>" +
+      "</article>";
+  }
+
+  // Ouvre ou ferme le détail d'une ligne, sans redessiner la liste.
+  document.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-iv-ouvrir]");
+    if (!bouton) return;
+    var id = bouton.dataset.ivOuvrir;
+    var article = bouton.closest(".iv-action");
+    var detail = article.querySelector(".iv-action-detail");
+    var ouvrir = detail.hidden;
+    detail.hidden = !ouvrir;
+    bouton.setAttribute("aria-expanded", String(ouvrir));
+    article.classList.toggle("is-ouverte", ouvrir);
+    if (ouvrir) lignesOuvertes[id] = true;
+    else delete lignesOuvertes[id];
+  });
+
+  // Compteur « à traiter » à côté de « Centre d'actions » dans la barre latérale (calculé dans le navigateur).
+  function majCompteurMenu() {
+    var liens = document.querySelectorAll(".ph-nav a");
+    var lienCentre = null;
+    liens.forEach(function (l) {
+      if (/\/Intelligence\/?$/i.test(l.getAttribute("href") || "")) lienCentre = l;
+    });
+    if (!lienCentre) return;
+    var compteur = lienCentre.querySelector(".ph-nav-count");
+    if (!compteur) {
+      compteur = document.createElement("span");
+      compteur.className = "ph-nav-count";
+      lienCentre.appendChild(compteur);
+    }
+    compteur.textContent = String(I.compteurs(P.moiId).aTraiter);
+  }
+  if (I.abonner) I.abonner(majCompteurMenu);
+  majCompteurMenu();
 
   // ---------- Fenêtre générique ----------
   var modale = null;
@@ -112,7 +245,7 @@
     var a = I.action(id);
     courant = { type: "reporter", id: id };
     var demain = new Date(); demain.setDate(demain.getDate() + 1);
-    fenetre("Reporter l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + "</p>" +
+    fenetre("Reporter l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
       '<label class="form-label" for="ia-date">Revenir dans la file le <span class="pr-requis">*</span></label><input type="date" class="form-control" id="ia-date" min="' + esc(P.versChampDate(demain)) + '" value="' + esc(P.versChampDate(demain)) + '" />' +
       '<div class="invalid-feedback">Choisissez une date à venir.</div>' +
       '<label class="form-label mt-3" for="ia-motif">Motif <span class="text-muted">(facultatif)</span></label><input class="form-control" id="ia-motif" maxlength="200" />' +
@@ -122,7 +255,7 @@
   function ouvrirIgnorer(id) {
     var a = I.action(id);
     courant = { type: "ignorer", id: id };
-    fenetre("Ignorer l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + "</p>" +
+    fenetre("Ignorer l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
       '<label class="form-label" for="ia-motif-ignorer">Motif <span class="text-muted">(facultatif)</span></label><select class="form-select" id="ia-motif-ignorer"><option value="">Sans motif</option>' +
       Object.keys(ref.motifsIgnorer).map(function (k) { return '<option value="' + esc(k) + '">' + esc(ref.motifsIgnorer[k]) + "</option>"; }).join("") + "</select>" +
       '<p class="pr-note mt-2 mb-0">Une action ignorée ne réapparaît que si un nouvel événement crée une nouvelle situation.</p>',
@@ -132,7 +265,7 @@
     var a = I.action(id);
     courant = { type: "transferer", id: id };
     var collegues = P.conseillers().filter(function (c) { return c.id !== P.moiId; });
-    fenetre("Confier l'action à un collègue", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + "</p>" +
+    fenetre("Confier l'action à un collègue", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
       '<label class="form-label" for="ia-collegue">Collègue <span class="pr-requis">*</span></label><select class="form-select" id="ia-collegue">' +
       collegues.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nom) + " (fictif)</option>"; }).join("") + "</select>" +
       '<label class="form-label mt-3" for="ia-motif-transfert">Motif <span class="pr-requis">*</span></label><select class="form-select" id="ia-motif-transfert">' +
@@ -144,7 +277,7 @@
   function ouvrirHistorique(id) {
     var a = I.action(id);
     courant = null;
-    fenetre("Historique de l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + " " + pastilleEtat(a.statut) + "</p>" +
+    fenetre("Historique de l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + " " + pastilleEtat(a.statut) + "</p>" +
       '<ol class="ia-historique">' + (a.historique || []).slice().reverse().map(function (h) {
         return "<li><time>" + esc(P.dateComplete(h.date)) + "</time><span>" + esc(h.texte) + ' <span class="pr-sous">· ' + esc(h.auteur) + (h.de && h.vers && h.de !== h.vers ? " · " + esc(ref.etatsAction[h.de] || h.de) + " → " + esc(ref.etatsAction[h.vers] || h.vers) : "") + "</span></span></li>";
       }).join("") + "</ol>");
@@ -159,7 +292,7 @@
     courant = { type: "relance", id: id };
     var tons = ref.tons.map(function (t) { return '<option value="' + esc(t.cle) + '">' + esc(t.libelle) + "</option>"; }).join("");
     var demain = new Date(); demain.setDate(demain.getDate() + 2);
-    fenetre("Préparer une relance — " + a.client,
+    fenetre("Préparer une relance : " + a.client,
       '<div class="ia-relance">' +
       '<section><h3 class="ia-sous-titre">Motif de la relance</h3><p class="mb-1"><strong>' + esc(a.regleLibelle) + "</strong> : " + esc(a.motif) + "</p>" +
       (a.avertissement ? '<p class="ia-avertissement">' + esc(a.avertissement) + "</p>" : "") +
@@ -267,6 +400,7 @@
 
   window.IntelligenceUI = {
     carte: carte,
+    ligne: ligne,
     pastillePriorite: pastillePriorite,
     pastilleEtat: pastilleEtat,
     pastilleCompatibilite: pastilleCompatibilite,
