@@ -15,6 +15,30 @@
 .ivv-liste .iv-resultat:empty { display: none; }
 .ivv-vehicules { display: flex; flex-direction: column; gap: 12px; }
 
+/* Swipe des véhicules d'un client (intelligence-vehicules.js) : une bande qui défile de gauche à droite,
+   qui s'arrête sur chaque carte. La carte suivante dépasse un peu à droite pour montrer qu'on peut faire glisser. */
+.ivv-swipe { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ivv-swipe-piste {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  padding: 4px 2px 14px;
+  scrollbar-width: thin;
+}
+.ivv-swipe-piste:focus-visible { outline: 2px solid var(--iv-menthe-ink); outline-offset: 4px; border-radius: 22px; }
+.ivv-swipe .ivv-vehicule {
+  flex: 0 0 86%;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 14px;
+  scroll-snap-align: start;
+}
+.ivv-swipe .ivv-score { max-width: 180px; }
+.ivv-swipe .ivv-proposer { justify-self: start; }
+.ivv-swipe-nav { display: flex; align-items: center; justify-content: center; gap: 10px; }
+
 /* Carte « Critères du client » */
 .ivv-criteres .iv-select-carre { margin-bottom: 20px; }
 .ivv-tableau { margin: 0 0 20px; }

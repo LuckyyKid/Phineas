@@ -17,6 +17,22 @@
   function zone(n) {
     return racine.querySelector('[data-zone="' + n + '"]');
   }
+  // Au-delà de LIGNES_PAR_PAGE, les listes (prospects d'un véhicule, demandes, arrivées) se découpent en pages.
+  var LIGNES_PAR_PAGE = 6;
+  // Page affichée de chaque liste, rangée par id de liste (ex. pages.demandes = 2). Absente = page 1.
+  var pages = {};
+
+  // Éléments de la page courante d'une liste, et la barre de pagination à afficher sous la liste.
+  function paginer(idListe, elements) {
+    var page = UI.pageValide(pages[idListe], elements.length, LIGNES_PAR_PAGE);
+    pages[idListe] = page;
+    var debut = (page - 1) * LIGNES_PAR_PAGE;
+    return {
+      elements: elements.slice(debut, debut + LIGNES_PAR_PAGE),
+      pagination: UI.htmlPagination(idListe, elements.length, page, LIGNES_PAR_PAGE),
+    };
+  }
+
   function oppsActives() {
     return P.toutesOpportunites().filter(function (o) { return ["Gagne", "Perdu"].indexOf(o.etape) < 0; }).sort(function (a, b) {
       var ca = P.contact(a.prospectId), cb = P.contact(b.prospectId);
@@ -138,7 +154,7 @@
     var libelleEnvisager = dejaEnvisage ? "Déjà envisagé" : "Ajouter aux options envisagées";
     items += '<li><button type="button" class="dropdown-item" data-envisager="' + esc(v.id) + '"' + (dejaEnvisage ? " disabled" : "") + '><i class="bi bi-bookmark-plus" aria-hidden="true"></i>' + libelleEnvisager + "</button></li>";
     items += '<li><button type="button" class="dropdown-item" data-noter="' + esc(v.id) + '"><i class="bi bi-journal-text" aria-hidden="true"></i>Enregistrer une note</button></li>';
-    return '<div class="dropdown ivv-proposer"><button type="button" class="iv-btn iv-btn-blanc" data-bs-toggle="dropdown" aria-expanded="false">Proposer</button>' +
+    return '<div class="dropdown ivv-proposer"><button type="button" class="iv-btn iv-btn-blanc" data-bs-toggle="dropdown" data-bs-popper-config=\'{"strategy":"fixed"}\' aria-expanded="false">Proposer</button>' +
       '<ul class="dropdown-menu dropdown-menu-end ivv-menu">' + items + "</ul></div>";
   }
   function carteVehicule(o, r) {
@@ -162,7 +178,60 @@
     var avis = tousInsuffisants ? '<p class="ivv-avis"><i class="bi bi-info-circle" aria-hidden="true"></i>Informations insuffisantes : trop peu de critères sont connus pour calculer une compatibilité fiable. Les véhicules sont listés « à vérifier ».</p>' : "";
     var vide = '<div class="iv-verre iv-vide"><i class="bi bi-car-front" aria-hidden="true"></i><strong>Aucun véhicule compatible</strong><span>Aucun véhicule disponible de l\'inventaire ne peut être évalué pour ce client. Vous pouvez enregistrer une demande de recherche.</span></div>';
     var cartes = l.map(function (r) { return carteVehicule(o, r); }).join("");
-    document.getElementById("m-vehicules").innerHTML = avis + (l.length ? cartes : vide);
+
+    // Après une action (note, option envisagée), la bande est redessinée : on garde la position pour le même client.
+    var ancienne = document.querySelector("[data-swipe-piste]");
+    var defilement = 0;
+    if (ancienne && swipeOpportunite === o.id) defilement = ancienne.scrollLeft;
+    swipeOpportunite = o.id;
+
+    document.getElementById("m-vehicules").innerHTML = avis + (l.length ? htmlSwipe(cartes, l.length) : vide);
+    var piste = document.querySelector("[data-swipe-piste]");
+    if (!piste) return;
+    piste.scrollLeft = defilement;
+    piste.addEventListener("scroll", function () { majPositionSwipe(piste); });
+    majPositionSwipe(piste);
+  }
+
+  // ---------- Swipe des véhicules d'un client ----------
+  // Les véhicules défilent de gauche à droite, une carte à la fois (doigt, pavé tactile, flèches ou clavier).
+  // Pas de pagination ici : la bande garde une seule hauteur, quelle que soit la taille de l'inventaire.
+  var swipeOpportunite = null;
+
+  function htmlSwipe(cartes, total) {
+    var navigation = "";
+    if (total > 1) {
+      navigation = '<div class="ivv-swipe-nav">' +
+        '<button type="button" class="iv-page-btn" data-swipe-sens="-1" aria-label="Véhicule précédent"><i class="bi bi-chevron-left"></i></button>' +
+        '<span class="iv-pages-info" data-swipe-position aria-live="polite">1 sur ' + total + "</span>" +
+        '<button type="button" class="iv-page-btn" data-swipe-sens="1" aria-label="Véhicule suivant"><i class="bi bi-chevron-right"></i></button>' +
+        "</div>";
+    }
+    return '<div class="ivv-swipe">' +
+      '<div class="ivv-swipe-piste" data-swipe-piste tabindex="0" role="region" aria-label="Véhicules évalués : faites glisser pour voir les suivants">' + cartes + "</div>" +
+      navigation + "</div>";
+  }
+
+  // Largeur d'un pas de défilement : une carte plus l'espace entre deux cartes.
+  function pasSwipe(piste) {
+    var carte = piste.querySelector(".ivv-vehicule");
+    if (!carte) return piste.clientWidth;
+    var espace = parseFloat(getComputedStyle(piste).columnGap) || 0;
+    return carte.offsetWidth + espace;
+  }
+
+  // Met à jour « 3 sur 9 » et désactive les flèches aux deux bouts de la bande.
+  function majPositionSwipe(piste) {
+    var position = document.querySelector("[data-swipe-position]");
+    if (!position) return;
+    var total = piste.querySelectorAll(".ivv-vehicule").length;
+    var numero = Math.round(piste.scrollLeft / pasSwipe(piste)) + 1;
+    numero = Math.min(Math.max(numero, 1), total);
+    position.textContent = numero + " sur " + total;
+    var auDebut = piste.scrollLeft <= 2;
+    var aLaFin = piste.scrollLeft + piste.clientWidth >= piste.scrollWidth - 2;
+    document.querySelector('[data-swipe-sens="-1"]').disabled = auDebut;
+    document.querySelector('[data-swipe-sens="1"]').disabled = aLaFin;
   }
 
   // ---------- Mode 2 ----------
@@ -202,7 +271,9 @@
     var morceaux = [P.argent(v.prixDemande), v.carrosserie || "", v.carburant || ""];
     zone("fiche-vehicule").innerHTML = '<p class="ivv-fiche-ligne"><strong>' + esc(S.nomVehicule(v)) + "</strong> · " + esc(morceaux.join(" · ")) + " " + pastilleStatut(v) + "</p>";
     var l = I.prospectsPour(v.id).filter(function (r) { return r.niveau !== "incompatible" && (r.score == null || r.score >= 50); });
-    document.getElementById("v-prospects").innerHTML = l.map(ligneProspect).join("");
+    var morceau = paginer("v-prospects", l);
+    document.getElementById("v-prospects").innerHTML = morceau.elements.map(ligneProspect).join("");
+    zone("pagination-prospects").innerHTML = morceau.pagination;
     document.getElementById("v-vide").hidden = l.length > 0;
   }
 
@@ -253,10 +324,14 @@
     var l = I.demandes();
     racine.querySelector('[data-champ="nb-demandes"]').textContent = String(l.filter(function (d) { return d.statut === "Active" || d.statut === "CorrespondanceTrouvee"; }).length);
     var videDemandes = '<div class="iv-vide"><i class="bi bi-car-front" aria-hidden="true"></i><strong>Aucune demande enregistrée</strong><span>Les demandes de recherche créées pour vos clients apparaîtront ici.</span></div>';
-    zone("demandes").innerHTML = l.length ? '<ul class="ivv-demandes">' + l.map(function (dm) { return elementDemande(dm, corr); }).join("") + "</ul>" : videDemandes;
+    var demandes = paginer("demandes", l);
+    var htmlDemandes = '<ul class="ivv-demandes">' + demandes.elements.map(function (dm) { return elementDemande(dm, corr); }).join("") + "</ul>" + demandes.pagination;
+    zone("demandes").innerHTML = l.length ? htmlDemandes : videDemandes;
     var arrivees = I.vehiculesSimules();
     var videArrivees = '<p class="iv-vide-texte">Aucune arrivée simulée disponible.</p>';
-    zone("arrivees").innerHTML = (arrivees.length ? arrivees.map(elementArrivee).join("") : videArrivees) + '<div data-zone="arrivee-resultat" aria-live="polite"></div>';
+    var pageArrivees = paginer("arrivees", arrivees);
+    var htmlArrivees = pageArrivees.elements.map(elementArrivee).join("") + pageArrivees.pagination;
+    zone("arrivees").innerHTML = (arrivees.length ? htmlArrivees : videArrivees) + '<div data-zone="arrivee-resultat" aria-live="polite"></div>';
   }
 
   function rendre() {
@@ -293,7 +368,10 @@
   // ---------- Événements ----------
   selOpp.addEventListener("change", rendre);
   document.getElementById("m-indisponibles").addEventListener("change", rendreVehicules);
-  selVeh.addEventListener("change", rendreProspects);
+  selVeh.addEventListener("change", function () {
+    pages["v-prospects"] = 1;
+    rendreProspects();
+  });
   racine.addEventListener("change", function (e) {
     var ind = e.target.closest("[data-indispensable]");
     if (ind) I.basculerIndispensable(selOpp.value, ind.dataset.indispensable);
@@ -307,7 +385,17 @@
     var b = e.target.closest("button, a[data-voir-action]");
     if (!b || b.disabled) return;
     var o = P.opportunite(selOpp.value);
-    if (b.dataset.voir) {
+    if (b.dataset.allerPage) {
+      // Pagination : change de page et garde le focus sur le numéro choisi.
+      pages[b.dataset.liste] = Number(b.dataset.allerPage);
+      rendre();
+      var pageCourante = racine.querySelector('[data-liste="' + b.dataset.liste + '"][aria-current="page"]');
+      if (pageCourante) pageCourante.focus();
+    } else if (b.dataset.swipeSens) {
+      // Flèches du swipe : avance ou recule d'une carte.
+      var piste = racine.querySelector("[data-swipe-piste]");
+      piste.scrollBy({ left: Number(b.dataset.swipeSens) * pasSwipe(piste), behavior: "smooth" });
+    } else if (b.dataset.voir) {
       ouvrirFicheVehicule(b.dataset.voir);
     } else if (b.dataset.envisager) {
       var ok = P.ajouterVehiculeEnvisage(o.id, S.nomVehicule(S.vehicule(b.dataset.envisager)));
