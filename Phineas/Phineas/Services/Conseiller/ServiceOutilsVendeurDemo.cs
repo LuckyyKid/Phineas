@@ -3,7 +3,7 @@ using Phineas.Models.ViewModels.Conseiller;
 
 namespace Phineas.Services.Conseiller;
 
-// DONNÉES FICTIVES — phase frontend uniquement.
+// DONNÉES FICTIVES : phase frontend uniquement.
 // Annonces, publications, liens de provenance et attributions inventés, datés par rapport à « maintenant » et rattachés à
 // l'inventaire et aux prospects de démonstration. Aucune annonce n'a été publiée sur une vraie plateforme ; aucune donnée
 // publicitaire n'est synchronisée ; aucune IA n'a rédigé ces textes.
@@ -21,20 +21,20 @@ public class ServiceOutilsVendeurDemo : IServiceOutilsVendeur
         var annonces = new List<Annonce>
         {
             // 8. Brouillon.
-            new("an-rav4", "ANN-2026-0011", "v-rav4", "Toyota RAV4 Hybride XLE 2024 — traction intégrale",
+            new("an-rav4", "ANN-2026-0011", "v-rav4", "Toyota RAV4 Hybride XLE 2024, traction intégrale",
                 "Toyota RAV4 Hybride XLE 2024 neuf, gris lunaire. Motorisation hybride, transmission automatique et traction intégrale. Sièges chauffants et Apple CarPlay / Android Auto.",
                 ["Motorisation hybride", "Traction intégrale", "Sièges chauffants", "Apple CarPlay / Android Auto"],
                 "Communiquez avec nous pour planifier un essai.", "presentation", "professionnel", "site-web", "fr", "Brouillon", Moi,
                 n.AddDays(-2), n.AddDays(-2), [], null, null, null, [Ev(n.AddDays(-2), "Brouillon créé à partir de la fiche d'inventaire.")]),
             // 9. En attente de validation.
-            new("an-outback", "ANN-2026-0009", "v-outback", "Subaru Outback Touring 2022 — 41 200 km",
+            new("an-outback", "ANN-2026-0009", "v-outback", "Subaru Outback Touring 2022, 41 200 km",
                 "Subaru Outback Touring 2022 d'occasion, vert, 41 200 km. Traction intégrale, grand espace de chargement et démarreur à distance.",
                 ["Traction intégrale", "Grand espace de chargement", "Démarreur à distance"],
                 "Écrivez-nous pour connaître sa disponibilité.", "en-ligne", "informatif", "kijiji", "fr", "EnRevision", Moi,
                 n.AddDays(-5), n.AddDays(-1), [], null, null, null,
                 [Ev(n.AddDays(-5), "Brouillon créé à partir de la fiche d'inventaire."), Ev(n.AddDays(-1), "Soumise en révision.")]),
             // 10 et 11. Approuvée, avec trois variantes rédactionnelles.
-            new("an-f150", "ANN-2026-0007", "v-f150", "Ford F-150 XLT 2021 4x4 — prêt pour le travail",
+            new("an-f150", "ANN-2026-0007", "v-f150", "Ford F-150 XLT 2021 4x4, prêt pour le travail",
                 "Ford F-150 XLT 2021 d'occasion, noir, 62 000 km. 4x4, attelage de remorque et caméra de recul.",
                 ["4x4", "Attelage de remorque", "Caméra de recul"],
                 "Planifiez un essai routier avec votre conseiller.", "equipements", "professionnel", "meta", "fr", "Approuvee", Moi,
@@ -51,7 +51,7 @@ public class ServiceOutilsVendeurDemo : IServiceOutilsVendeur
                 [Ev(n.AddDays(-8), "Brouillon créé à partir de la fiche d'inventaire."), Ev(n.AddDays(-6), "Trois variantes comparées ; variante A retenue."),
                  Ev(n.AddDays(-4), "Soumise en révision."), Ev(n.AddDays(-3), "Approuvée après relecture humaine des informations.")]),
             // 12. Publication déclarée manuellement (site de la concession).
-            new("an-cx5", "ANN-2026-0005", "v-cx5", "Mazda CX-5 GT 2022 — cuir et affichage tête haute",
+            new("an-cx5", "ANN-2026-0005", "v-cx5", "Mazda CX-5 GT 2022, cuir et affichage tête haute",
                 "Mazda CX-5 GT 2022 d'occasion, rouge, 38 900 km. Traction intégrale, sièges en cuir et affichage tête haute.",
                 ["Traction intégrale", "Cuir", "Affichage tête haute"],
                 "Demandez plus d'information à votre conseiller.", "en-ligne", "professionnel", "site-web", "fr", "Publiee", Moi,
