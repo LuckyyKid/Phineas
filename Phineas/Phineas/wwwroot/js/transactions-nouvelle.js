@@ -1,5 +1,7 @@
-// Parcours « Nouvelle transaction » : 1. client et opportunité, 2. véhicule et proposition, 3. mode d'achat, 4. vérification.
+// Parcours « Nouvelle transaction » : 1. client et opportunité, 2. véhicule et proposition, 3. mode d'achat, 4. vérification,
+// puis écran « Transaction ouverte ». Page : Views/Transactions/Nouvelle.cshtml (maquette 08).
 // Point de départ possible : la page Transactions, une opportunité, une soumission (et sa version) ou un rendez-vous.
+// Les règles (ce qui est permis ou bloquant) sont dans transactions-store.js : T.invalide, T.apercu, T.creer.
 (function () {
   "use strict";
 
@@ -9,12 +11,18 @@
   var esc = P.esc;
   var ref = T.ref;
 
+  var DERNIERE_ETAPE = 4;
+  var A_VERIFIER = '<span class="nt-a-verifier">À vérifier</span>';
+
   var etat = {
     etape: 1, etapeMax: 1,
     prospectId: null, oppId: null, soumissionId: null, versionNumero: null, sansSoumission: false, vehiculeId: null,
+    mode: null,
   };
   var form = document.getElementById("form-mode-achat");
   var aide = racine.querySelector("[data-aide]");
+  var boutonSuivant = racine.querySelector("[data-suivant]");
+  var boutonCreer = racine.querySelector("[data-creer]");
 
   function zone(nom) {
     return racine.querySelector('[data-zone="' + nom + '"]');
@@ -22,275 +30,465 @@
   function normaliser(s) {
     return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   }
+  // Une ligne « libellé à gauche, valeur à droite » des listes ns-details. La valeur est déjà en HTML.
   function ligneDef(terme, valeur) {
     return "<div><dt>" + esc(terme) + "</dt><dd>" + valeur + "</dd></div>";
   }
-  var A_VERIFIER = '<span class="rv-a-verifier">À vérifier</span>';
+  function sousLigne(texte) {
+    return '<span class="nt-sous">' + esc(texte) + "</span>";
+  }
+  function alerte(texte, icone) {
+    return '<p class="nt-alerte"><i class="bi ' + icone + '" aria-hidden="true"></i><span>' + texte + "</span></p>";
+  }
+  function nomDuClient() {
+    var c = etat.prospectId ? P.contact(etat.prospectId) : null;
+    return c ? c.prenom + " " + c.nom : "";
+  }
+  function estVenduOuLivre(statut) {
+    return statut === "Vendu" || statut === "Livre";
+  }
+  // Transaction active qui retient déjà ce véhicule, ou null.
+  function transactionQuiRetient(vehiculeId) {
+    var actives = T.liste().filter(function (t) { return t.vehiculeId === vehiculeId && T.estActive(t); });
+    return actives.length ? actives[0] : null;
+  }
 
   function version() {
     var s = etat.soumissionId ? S.soumission(etat.soumissionId) : null;
     return s ? S.version(s, etat.versionNumero) : null;
   }
-  function modeChoisi() {
-    var r = form.querySelector('input[name="mode"]:checked');
-    return r ? r.value : null;
-  }
-  function brouillonCourant() {
-    var v = version();
-    return !v || v.statut !== "Acceptee";
-  }
 
-  // ---------- Étape 1 ----------
+  // ---------- Étape 1 : client et opportunité ----------
   var rechercheClient = document.getElementById("n-recherche-client");
-  function rendreClients() {
-    var q = normaliser(rechercheClient.value.trim());
-    var contacts = P.contacts().filter(function (c) {
-      return (!q || normaliser(c.prenom + " " + c.nom + " " + (c.courriel || "")).indexOf(q) >= 0) && P.opportunitesDe(c.id).some(P.estActive);
-    }).sort(function (a, b) { return (a.nom + a.prenom).localeCompare(b.nom + b.prenom, "fr-CA"); });
-    zone("clients").innerHTML = contacts.length ? contacts.map(function (c) {
-      var choisi = c.id === etat.prospectId;
-      var acceptees = P.opportunitesDe(c.id).filter(P.estActive).reduce(function (n, o) {
-        return n + S.parOpportunite(o.id).filter(function (s) { return s.versions.some(function (v) { return v.statut === "Acceptee"; }); }).length;
-      }, 0);
-      return '<button type="button" role="radio" aria-checked="' + choisi + '" class="so-choix' + (choisi ? " is-active" : "") + '" data-prospect="' + esc(c.id) + '">' +
-        '<span class="avatar">' + esc(P.initiales(c)) + "</span><span><strong>" + esc(c.prenom + " " + c.nom) + "</strong>" +
-        '<span class="pr-sous d-block">' + (acceptees ? acceptees + " soumission(s) acceptée(s)" : "Aucune soumission acceptée") + "</span></span></button>";
-    }).join("") : '<div class="sv-empty"><span>Aucun prospect avec une opportunité active.</span></div>';
-  }
-  function rendreOpportunites() {
-    var z = zone("opportunites");
-    if (!etat.prospectId) return;
-    var opps = P.opportunitesDe(etat.prospectId).filter(P.estActive);
-    z.innerHTML = opps.length ? '<div class="so-opps" role="radiogroup" aria-label="Opportunité">' + opps.map(function (o) {
-      var choisie = o.id === etat.oppId;
-      var existante = T.enCoursPourOpportunite(o.id);
-      return '<button type="button" role="radio" aria-checked="' + choisie + '" class="so-choix' + (choisie ? " is-active" : "") + '" data-opp="' + esc(o.id) + '">' +
-        "<span><strong>" + esc(o.titre) + '</strong> <span class="status-pill sv-et-' + esc(o.etape) + '">' + esc(P.libelleEtape(o.etape)) + "</span>" +
-        '<span class="pr-sous d-block">' + esc(P.resumeVehicule(o) || "Véhicule à préciser") + "</span>" +
-        (existante ? '<span class="so-alerte"><i class="bi bi-exclamation-triangle"></i>Transaction déjà en cours : ' + esc(existante.reference) + "</span>" : "") +
-        "</span></button>";
-    }).join("") + "</div>" : '<p class="text-muted mb-0">Aucune opportunité active pour ce client.</p>';
-  }
-  function rendreContexte() {
-    var z = zone("contexte");
-    var c = etat.prospectId ? P.contact(etat.prospectId) : null;
-    var o = etat.oppId ? P.opportunite(etat.oppId) : null;
-    z.hidden = !c || !o;
-    if (!c || !o) return;
-    var q = o.qualification || {};
-    var existante = T.enCoursPourOpportunite(o.id);
-    var historique = P.interactionsDe(c.id).filter(function (i) { return i.opportuniteId === o.id; }).slice(0, 3);
-    z.innerHTML = '<div class="card-header sv-card-header"><span><i class="bi bi-person-vcard me-2"></i>Dossier du client</span></div><div class="card-body">' +
-      (existante ? '<div class="alert alert-warning small d-flex gap-2"><i class="bi bi-exclamation-triangle"></i><span>Une transaction est déjà en cours pour cette opportunité : <a href="' + esc(T.urlDetail(existante.id)) + '">' + esc(existante.reference) + "</a>. Une seule transaction active est permise par opportunité.</span></div>" : "") +
-      '<dl class="pr-liste-def pr-liste-def-compacte">' +
-      ligneDef("Coordonnées", esc([c.telephone, c.courriel].filter(Boolean).join(" · ") || "—") + '<span class="pr-sous d-block">Préfère : ' + esc(P.libelle("moyensContact", c.contactPrefere) || "non précisé") + "</span>") +
-      ligneDef("Besoins", esc(P.resumeVehicule(o) || "") ? esc(P.resumeVehicule(o)) + (P.resumeBudget(q) ? '<span class="pr-sous d-block">Budget : ' + esc(P.resumeBudget(q)) + "</span>" : "") : A_VERIFIER) +
-      ligneDef("Mode d'achat envisagé", P.libelle("modesAchat", q.modeAchat) ? esc(P.libelle("modesAchat", q.modeAchat)) : A_VERIFIER) +
-      ligneDef("Reprise", q.reprise === "oui" ? esc(q.repriseDetail || "Oui") : q.reprise === "non" ? "Non" : A_VERIFIER) +
-      ligneDef("Conseiller", esc(P.conseiller(c.conseillerId).nom)) +
-      ligneDef("Historique pertinent", historique.length ? '<ul class="rv-notes">' + historique.map(function (i) { return '<li><span class="pr-sous">' + esc(P.relatif(i.date)) + "</span>" + esc(i.resume) + "</li>"; }).join("") + "</ul>" : '<span class="text-muted">Aucune interaction</span>') +
-      "</dl></div>";
+
+  function nombreSoumissionsAcceptees(prospectId) {
+    var total = 0;
+    P.opportunitesDe(prospectId).filter(P.estActive).forEach(function (o) {
+      S.parOpportunite(o.id).forEach(function (s) {
+        var acceptee = s.versions.some(function (v) { return v.statut === "Acceptee"; });
+        if (acceptee) total++;
+      });
+    });
+    return total;
   }
 
-  // ---------- Étape 2 ----------
-  function rendreVersions() {
-    var liste = etat.oppId ? S.parOpportunite(etat.oppId) : [];
-    var options = [];
-    liste.forEach(function (s) {
-      s.versions.slice().reverse().forEach(function (v) { options.push({ s: s, v: v }); });
+  function rendreClients() {
+    var recherche = normaliser(rechercheClient.value.trim());
+    var contacts = P.contacts().filter(function (c) {
+      var texte = normaliser(c.prenom + " " + c.nom + " " + (c.courriel || "") + " " + (c.telephone || ""));
+      var correspond = !recherche || texte.indexOf(recherche) >= 0;
+      var aUneOpportuniteActive = P.opportunitesDe(c.id).some(P.estActive);
+      return correspond && aUneOpportuniteActive;
     });
-    var html = options.length ? '<div class="so-opps" role="radiogroup" aria-label="Version de soumission">' + options.map(function (x) {
-      var choisie = !etat.sansSoumission && etat.soumissionId === x.s.id && etat.versionNumero === x.v.numero;
-      var calc = C ? C.calculer(x.v.offre, S.parametres) : null;
-      var acceptee = x.v.statut === "Acceptee";
-      return '<button type="button" role="radio" aria-checked="' + choisie + '" class="so-choix' + (choisie ? " is-active" : "") + '" data-version="' + esc(x.s.id + "|" + x.v.numero) + '">' +
-        "<span><strong>" + esc(x.s.reference) + " · version " + x.v.numero + '</strong> <span class="so-statut so-st-' + esc(x.v.statut) + '">' + esc(S.libelleStatut(x.v.statut)) + "</span>" +
-        '<span class="pr-sous d-block">' + esc(S.nomVehicule(x.v.vehicule)) + (calc ? " · " + esc(UI.montant(calc.totalEstime)) : "") + (x.v.note ? " · " + esc(x.v.note) : "") + "</span>" +
-        (acceptee ? '<span class="tx-ok"><i class="bi bi-check-circle-fill"></i>Acceptée : sera figée dans la transaction</span>' : '<span class="tx-brouillon-tag">Non acceptée : brouillon de transaction</span>') +
-        "</span></button>";
-    }).join("") + "</div>" : '<p class="text-muted">Aucune soumission pour cette opportunité.</p>';
-    html += '<button type="button" role="radio" aria-checked="' + etat.sansSoumission + '" class="so-choix mt-2' + (etat.sansSoumission ? " is-active" : "") + '" data-sans-soumission>' +
-      '<span><strong>Sans soumission</strong><span class="pr-sous d-block">Préparer un brouillon de transaction, clairement incomplet, en choisissant le véhicule envisagé.</span></span></button>';
+    contacts.sort(function (a, b) { return (a.nom + a.prenom).localeCompare(b.nom + b.prenom, "fr-CA"); });
+
+    if (!contacts.length) {
+      zone("clients").innerHTML = '<p class="ns-vide-texte">Aucun prospect avec une opportunité active.</p>';
+      return;
+    }
+    var html = "";
+    contacts.forEach(function (c) {
+      var choisi = c.id === etat.prospectId;
+      var acceptees = nombreSoumissionsAcceptees(c.id);
+      var infoSoumissions = acceptees ? acceptees + " soumission(s) acceptée(s)" : "Aucune soumission acceptée";
+      html += '<button type="button" role="radio" aria-checked="' + choisi + '" class="ns-client' + (choisi ? " is-choisi" : "") + '" data-prospect="' + esc(c.id) + '">' +
+        '<span class="ns-avatar">' + esc(P.initiales(c)) + "</span>" +
+        '<span class="ns-client-id"><strong>' + esc(c.prenom + " " + c.nom) + "</strong>" +
+        "<span>" + esc(c.courriel || c.telephone || "Coordonnées à compléter") + "</span>" +
+        '<span class="nt-client-info' + (acceptees ? " is-acceptee" : "") + '">' + esc(infoSoumissions) + "</span></span>" +
+        (choisi ? '<i class="bi bi-check-circle-fill ns-coche" aria-hidden="true"></i>' : "") +
+        "</button>";
+    });
+    zone("clients").innerHTML = html;
+  }
+
+  // Carte de droite : nom du client, choix de l'opportunité s'il y en a plusieurs, puis le dossier ligne par ligne.
+  function rendreOpportunite() {
+    var z = zone("opportunite");
+    var c = etat.prospectId ? P.contact(etat.prospectId) : null;
+    if (!c) {
+      z.innerHTML = '<div class="ns-vide"><i class="bi bi-person"></i><span>Choisissez d\'abord un prospect.</span></div>';
+      return;
+    }
+    var html = '<h3 class="ns-opp-nom">' + esc(c.prenom + " " + c.nom) + "</h3>";
+    var opps = P.opportunitesDe(c.id).filter(P.estActive);
+    if (!opps.length) {
+      z.innerHTML = html + '<p class="ns-vide-texte">Aucune opportunité active pour ce client.</p>';
+      return;
+    }
+    if (opps.length > 1) {
+      html += '<div class="ns-opp-choix" role="radiogroup" aria-label="Opportunité">';
+      opps.forEach(function (o) {
+        var choisie = o.id === etat.oppId;
+        html += '<button type="button" role="radio" aria-checked="' + choisie + '" class="ns-opp-pilule' + (choisie ? " is-choisi" : "") + '" data-opp="' + esc(o.id) + '">' + esc(o.titre) + "</button>";
+      });
+      html += "</div>";
+    }
+    var o = etat.oppId ? P.opportunite(etat.oppId) : null;
+    if (!o) {
+      z.innerHTML = html + '<p class="ns-vide-texte">Choisissez l\'opportunité concernée.</p>';
+      return;
+    }
+
+    var existante = T.enCoursPourOpportunite(o.id);
+    if (existante) {
+      html += alerte('Une transaction est déjà en cours pour cette opportunité : <a href="' + esc(T.urlDetail(existante.id)) + '">' + esc(existante.reference) + "</a>. Une seule transaction active est permise par opportunité.", "bi-exclamation-triangle");
+    }
+
+    var q = o.qualification || {};
+    var recherche = P.resumeVehicule(o);
+    var budget = P.resumeBudget(q);
+    var modeEnvisage = P.libelle("modesAchat", q.modeAchat);
+    var coordonnees = [c.telephone, c.courriel].filter(Boolean).join(" · ");
+    var reprise = A_VERIFIER;
+    if (q.reprise === "oui") reprise = esc(q.repriseDetail || "Oui");
+    if (q.reprise === "non") reprise = "Non";
+
+    var historique = P.interactionsDe(c.id).filter(function (i) { return i.opportuniteId === o.id; }).slice(0, 3);
+    var historiqueHtml = '<span class="ns-attenue">Aucune interaction</span>';
+    if (historique.length) {
+      historiqueHtml = '<ul class="nt-historique">' + historique.map(function (i) {
+        return "<li>" + esc(i.resume) + sousLigne(P.relatif(i.date)) + "</li>";
+      }).join("") + "</ul>";
+    }
+
+    html += '<dl class="ns-details">' +
+      ligneDef("Recherche", recherche ? esc(recherche) : A_VERIFIER) +
+      ligneDef("Étape", esc(P.libelleEtape(o.etape))) +
+      ligneDef("Budget", budget ? esc(budget) : A_VERIFIER) +
+      ligneDef("Conseiller", esc(P.conseiller(c.conseillerId).nom)) +
+      ligneDef("Coordonnées", esc(coordonnees || "Non renseignées") + sousLigne("Préfère : " + (P.libelle("moyensContact", c.contactPrefere) || "non précisé"))) +
+      ligneDef("Mode d'achat envisagé", modeEnvisage ? esc(modeEnvisage) : A_VERIFIER) +
+      ligneDef("Reprise", reprise) +
+      ligneDef("Historique pertinent", historiqueHtml) +
+      "</dl>";
+    z.innerHTML = html;
+  }
+
+  // ---------- Étape 2 : véhicule et proposition ----------
+  function tuileVersion(s, v) {
+    var choisie = !etat.sansSoumission && etat.soumissionId === s.id && etat.versionNumero === v.numero;
+    var calcul = C ? C.calculer(v.offre, S.parametres) : null;
+    var prix = calcul ? UI.montant(calcul.totalEstime) : P.argent(v.offre.prixAnnonce);
+    var acceptee = v.statut === "Acceptee";
+    var etatVersion = acceptee
+      ? '<small class="ns-pertinence"><i class="bi bi-check-circle-fill"></i> Acceptée : sera figée dans la transaction</small>'
+      : '<small class="ns-avertissement">Non acceptée : brouillon de transaction</small>';
+    return '<button type="button" role="radio" aria-checked="' + choisie + '" class="ns-tuile' + (choisie ? " is-choisi" : "") + '" data-version="' + esc(s.id + "|" + v.numero) + '">' +
+      "<strong>" + esc(S.nomVehicule(v.vehicule)) + "</strong>" +
+      "<span>" + esc(prix) + "</span>" +
+      "<small>" + esc(s.reference + " · version " + v.numero + " · " + S.libelleStatut(v.statut)) + (v.note ? " · " + esc(v.note) : "") + "</small>" +
+      etatVersion +
+      "</button>";
+  }
+
+  function rendreVersions() {
+    zone("pour-client-2").textContent = "Pour " + nomDuClient();
+    var soumissions = etat.oppId ? S.parOpportunite(etat.oppId) : [];
+    var html = "";
+    soumissions.forEach(function (s) {
+      // La version la plus récente en premier.
+      s.versions.slice().reverse().forEach(function (v) { html += tuileVersion(s, v); });
+    });
+    html += '<button type="button" role="radio" aria-checked="' + etat.sansSoumission + '" class="ns-tuile' + (etat.sansSoumission ? " is-choisi" : "") + '" data-sans-soumission>' +
+      "<strong>Sans soumission</strong>" +
+      "<span>Brouillon incomplet</span>" +
+      "<small>Choisir le véhicule envisagé, sans prix ni condition retenus.</small>" +
+      "</button>";
     zone("versions").innerHTML = html;
-    zone("carte-vehicules").hidden = !etat.sansSoumission;
+
+    zone("bloc-vehicules").hidden = !etat.sansSoumission;
     if (etat.sansSoumission) rendreVehicules();
     rendreResumeProposition();
   }
-  function rendreVehicules() {
-    zone("vehicules").innerHTML = S.inventaire().slice().sort(function (a, b) { return a.prixDemande - b.prixDemande; }).map(function (v) {
-      var st = T.statutVehicule(v.id);
-      var autre = T.liste().filter(function (t) { return t.vehiculeId === v.id && T.estActive(t); })[0];
-      var bloque = ["Vendu", "Livre"].indexOf(st) >= 0 || !!autre;
-      var choisi = v.id === etat.vehiculeId;
-      var raison = ["Vendu", "Livre"].indexOf(st) >= 0 ? "Déjà vendu ou livré : non sélectionnable." : autre ? "Retenu par la transaction " + autre.reference + "." : st !== "PretPourVente" && st !== "Reserve" ? "Préparation à suivre : « " + ref.statutsVehicule[st].toLowerCase() + " »." : "";
-      return '<button type="button" role="radio" aria-checked="' + choisi + '" class="so-vehicule' + (choisi ? " is-active" : "") + '" data-vehicule="' + esc(v.id) + '"' + (bloque ? ' disabled aria-disabled="true"' : "") + ">" +
-        '<span class="so-photo"><i class="bi bi-car-front"></i><small>Photo non disponible</small></span>' +
-        '<span class="so-vehicule-corps"><span class="so-vehicule-tete"><strong>' + esc(v.annee + " " + v.marque + " " + v.modele) + "</strong>" + UI.pastilleVehicule(st) + "</span>" +
-        '<span class="so-vehicule-prix">' + esc(P.argent(v.prixDemande)) + "<small>N° " + esc(v.numeroStock) + "</small></span>" +
-        (raison ? '<span class="so-alerte"><i class="bi bi-exclamation-triangle"></i>' + esc(raison) + "</span>" : "") + "</span></button>";
-    }).join("");
+
+  // Raison pour laquelle un véhicule ne peut pas (ou pas encore) être vendu, ou "".
+  function raisonVehicule(vehiculeId, statut) {
+    if (estVenduOuLivre(statut)) return "Déjà vendu ou livré : non sélectionnable.";
+    var autre = transactionQuiRetient(vehiculeId);
+    if (autre) return "Retenu par la transaction " + autre.reference + ".";
+    if (statut !== "PretPourVente" && statut !== "Reserve") return "Préparation à suivre : « " + ref.statutsVehicule[statut].toLowerCase() + " ».";
+    return "";
   }
+
+  function rendreVehicules() {
+    var vehicules = S.inventaire().slice().sort(function (a, b) { return a.prixDemande - b.prixDemande; });
+    var html = "";
+    vehicules.forEach(function (v) {
+      var statut = T.statutVehicule(v.id);
+      var bloque = estVenduOuLivre(statut) || !!transactionQuiRetient(v.id);
+      var choisi = v.id === etat.vehiculeId;
+      var raison = raisonVehicule(v.id, statut);
+      html += '<button type="button" role="radio" aria-checked="' + choisi + '" class="ns-tuile' + (choisi ? " is-choisi" : "") + '" data-vehicule="' + esc(v.id) + '"' + (bloque ? ' disabled aria-disabled="true"' : "") + ">" +
+        "<strong>" + esc(v.annee + " " + v.marque + " " + v.modele) + "</strong>" +
+        "<span>" + esc(P.argent(v.prixDemande)) + "</span>" +
+        "<small>N° " + esc(v.numeroStock) + " · " + esc(ref.statutsVehicule[statut] || statut) + "</small>" +
+        (raison ? '<small class="ns-avertissement">' + esc(raison) + "</small>" : "") +
+        "</button>";
+    });
+    zone("vehicules").innerHTML = html;
+  }
+
   function rendreResumeProposition() {
     var z = zone("resume-proposition");
     var v = version();
     if (!v && !(etat.sansSoumission && etat.vehiculeId)) {
-      z.innerHTML = '<p class="text-muted mb-0">Choisissez une version de soumission (ou un véhicule pour un brouillon).</p>';
+      z.innerHTML = '<p class="ns-vide-texte">Choisissez une version de soumission (ou un véhicule pour un brouillon).</p>';
       return;
     }
+
     if (!v) {
       var inv = S.vehicule(etat.vehiculeId);
-      z.innerHTML = '<div class="alert alert-warning small d-flex gap-2"><i class="bi bi-pencil-square"></i><span>Brouillon sans soumission : aucun prix ni condition ne sont retenus. La transaction restera incomplète.</span></div>' +
-        '<dl class="pr-liste-def pr-liste-def-compacte">' + ligneDef("Véhicule", esc(S.nomVehicule(inv))) + ligneDef("Prix en inventaire", esc(P.argent(inv.prixDemande)) + '<span class="pr-sous d-block">indicatif, non figé</span>') +
-        ligneDef("Statut du véhicule", UI.pastilleVehicule(T.statutVehicule(inv.id))) + "</dl>";
+      z.innerHTML = alerte("Brouillon sans soumission : aucun prix ni condition ne sont retenus. La transaction restera incomplète.", "bi-pencil-square") +
+        '<dl class="ns-details">' +
+        ligneDef("Véhicule", esc(S.nomVehicule(inv))) +
+        ligneDef("Prix en inventaire", esc(P.argent(inv.prixDemande)) + sousLigne("indicatif, non figé")) +
+        ligneDef("Statut du véhicule", UI.pastilleVehicule(T.statutVehicule(inv.id))) +
+        "</dl>";
       return;
     }
+
     var o = v.offre;
-    var calc = C ? C.calculer(o, S.parametres) : null;
-    var st = T.statutVehicule(v.vehicule.id);
-    z.innerHTML = (v.statut !== "Acceptee" ? '<div class="alert alert-warning small d-flex gap-2"><i class="bi bi-pencil-square"></i><span>Version « ' + esc(S.libelleStatut(v.statut).toLowerCase()) + " » : la transaction sera un brouillon incomplet, sans proposition figée.</span></div>" : "") +
-      '<dl class="pr-liste-def pr-liste-def-compacte">' +
-      ligneDef("Véhicule", esc(S.nomVehicule(v.vehicule)) + '<span class="pr-sous d-block">N° ' + esc(v.vehicule.numeroStock) + "</span>") +
+    var calcul = C ? C.calculer(o, S.parametres) : null;
+    var html = "";
+    if (v.statut !== "Acceptee") {
+      html += alerte("Version « " + esc(S.libelleStatut(v.statut).toLowerCase()) + " » : la transaction sera un brouillon incomplet, sans proposition figée.", "bi-pencil-square");
+    }
+
+    var remise = "Aucune";
+    if (o.remise) {
+      remise = esc(P.argent(o.remise));
+      if (o.remise > ref.seuilRemiseApprobation) remise += sousLigne("validation du directeur requise");
+    }
+    var options = (o.options || []).map(function (x) { return x.libelle; });
+    var reprise = "Aucune";
+    if (o.reprise) {
+      reprise = esc(o.reprise.vehicule);
+      if (o.reprise.valeurEstimee != null) reprise += " · " + esc(P.argent(o.reprise.valeurEstimee));
+    }
+
+    html += '<dl class="ns-details">' +
+      ligneDef("Véhicule", esc(S.nomVehicule(v.vehicule)) + sousLigne("N° " + v.vehicule.numeroStock)) +
       ligneDef("Prix annoncé", esc(P.argent(o.prixAnnonce))) +
-      ligneDef("Remise", o.remise ? esc(P.argent(o.remise)) + (o.remise > ref.seuilRemiseApprobation ? ' <span class="pr-sous">(validation du directeur requise)</span>' : "") : "Aucune") +
-      ligneDef("Options", (o.options || []).length ? esc(o.options.map(function (x) { return x.libelle; }).join(", ")) : "Aucune") +
+      ligneDef("Remise", remise) +
+      ligneDef("Options", options.length ? esc(options.join(", ")) : "Aucune") +
       ligneDef("Mode d'achat envisagé", esc(o.modeAchat === "comptant" ? "Comptant" : "Financement")) +
-      ligneDef("Reprise", o.reprise ? esc(o.reprise.vehicule) + (o.reprise.valeurEstimee != null ? " · " + esc(P.argent(o.reprise.valeurEstimee)) : "") : "Aucune") +
+      ligneDef("Reprise", reprise) +
       ligneDef("Mise de fonds", o.miseDeFonds ? esc(P.argent(o.miseDeFonds)) : "Aucune") +
-      ligneDef("Total estimé", calc ? "<strong>" + esc(UI.montant(calc.totalEstime)) + "</strong>" : "—") +
-      ligneDef("Statut actuel du véhicule", UI.pastilleVehicule(st)) +
-      "</dl>" +
-      (v.statut === "Acceptee" ? '<p class="pr-note mb-0"><i class="bi bi-lock me-1"></i>Un instantané de cette version sera conservé : un changement de prix en inventaire ou une nouvelle version ne modifiera pas la transaction.</p>' : "");
+      ligneDef("Total estimé", calcul ? "<strong>" + esc(UI.montant(calcul.totalEstime)) + "</strong>" : "Non calculé") +
+      ligneDef("Statut actuel du véhicule", UI.pastilleVehicule(T.statutVehicule(v.vehicule.id))) +
+      "</dl>";
+    if (v.statut === "Acceptee") {
+      html += '<p class="ns-note"><i class="bi bi-lock"></i> Un instantané de cette version sera conservé : un changement de prix en inventaire ou une nouvelle version ne modifiera pas la transaction.</p>';
+    }
+    z.innerHTML = html;
   }
 
-  // ---------- Étape 3 ----------
+  // ---------- Étape 3 : mode d'achat ----------
+  function rendreModes() {
+    racine.querySelectorAll("[data-mode]").forEach(function (b) {
+      var choisi = b.dataset.mode === etat.mode;
+      b.classList.toggle("is-choisi", choisi);
+      b.setAttribute("aria-checked", String(choisi));
+    });
+  }
+
+  // Reprend ce que la soumission (ou, à défaut, la qualification de l'opportunité) dit déjà.
   function preremplirEtape3() {
+    zone("pour-client-3").textContent = "Pour " + nomDuClient();
     var v = version();
     var o = v ? v.offre : null;
     var opp = P.opportunite(etat.oppId);
     var q = (opp && opp.qualification) || {};
-    if (!modeChoisi()) {
-      var mode = o ? o.modeAchat : q.modeAchat === "comptant" || q.modeAchat === "financement" ? q.modeAchat : "indetermine";
-      var radio = document.getElementById("n-mode-" + mode);
-      if (radio) radio.checked = true;
+
+    if (!etat.mode) {
+      if (o) etat.mode = o.modeAchat;
+      else if (q.modeAchat === "comptant" || q.modeAchat === "financement") etat.mode = q.modeAchat;
+      else etat.mode = "indetermine";
     }
-    var avec = !!(o && o.reprise) || q.reprise === "oui";
-    var sw = document.getElementById("n-reprise");
-    if (!sw.dataset.touche) sw.checked = avec;
+    rendreModes();
+
+    var interrupteur = document.getElementById("n-reprise");
+    var avecReprise = !!(o && o.reprise) || q.reprise === "oui";
+    if (!interrupteur.dataset.touche) interrupteur.checked = avecReprise;
     if (!form.elements.description.value) form.elements.description.value = o && o.reprise ? o.reprise.vehicule : q.repriseDetail || "";
-    zone("champs-reprise").hidden = !sw.checked;
-    zone("aide-depot").textContent = o && o.acompteVerse ? "La soumission indique un acompte de " + P.argent(o.acompteVerse) + " : il sera noté « déclaré », à confirmer par une personne autorisée." : "Montant envisagé uniquement : aucun encaissement.";
+    zone("champs-reprise").hidden = !interrupteur.checked;
+
+    zone("aide-depot").textContent = o && o.acompteVerse
+      ? "La soumission indique un acompte de " + P.argent(o.acompteVerse) + " : il sera noté « déclaré », à confirmer par une personne autorisée."
+      : "Montant envisagé uniquement : aucun encaissement.";
   }
 
+  // Toutes les informations saisies, dans la forme attendue par T.invalide, T.apercu et T.creer.
   function donnees() {
-    var sw = document.getElementById("n-reprise");
-    var reprise = sw.checked ? {
-      description: form.elements.description.value.trim() || null,
-      marque: form.elements.marque.value.trim() || null,
-      modele: form.elements.modele.value.trim() || null,
-      annee: form.elements.annee.value || null,
-      kilometrage: form.elements.kilometrage.value,
-    } : null;
+    var reprise = null;
+    if (document.getElementById("n-reprise").checked) {
+      reprise = {
+        description: form.elements.description.value.trim() || null,
+        marque: form.elements.marque.value.trim() || null,
+        modele: form.elements.modele.value.trim() || null,
+        annee: form.elements.annee.value || null,
+        kilometrage: form.elements.kilometrage.value,
+      };
+    }
     return {
       prospectId: etat.prospectId,
       opportuniteId: etat.oppId,
       soumissionId: etat.sansSoumission ? null : etat.soumissionId,
       versionNumero: etat.sansSoumission ? null : etat.versionNumero,
       vehiculeId: etat.vehiculeId,
-      modeAchat: modeChoisi() || "indetermine",
+      modeAchat: etat.mode || "indetermine",
       depot: form.elements.depot.value,
       reprise: reprise,
       aConfirmer: form.elements.aConfirmer.value.trim() || null,
     };
   }
 
-  // ---------- Étape 4 ----------
+  // ---------- Étape 4 : vérification ----------
+  function liste(items, icone, vide) {
+    if (!items.length) return '<p class="ns-vide-texte">' + esc(vide) + "</p>";
+    return '<ul class="nt-liste">' + items.map(function (texte) {
+      return '<li><i class="bi ' + icone + '" aria-hidden="true"></i><span>' + texte + "</span></li>";
+    }).join("") + "</ul>";
+  }
+
   function rendreVerification() {
     var x = donnees();
     var refus = T.invalide(x);
-    var ap = T.apercu(x);
+    var apercu = T.apercu(x);
     var html = "";
-    if (refus) html += '<ul class="rv-alertes"><li class="rv-al-critique"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i><span><span class="visually-hidden">Bloquant : </span>' + esc(refus) + "</span></li></ul>";
-    if (ap) {
-      var a = ap.analyse;
+    if (refus) {
+      html += '<p class="nt-alerte is-bloquant"><i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i><span><span class="visually-hidden">Bloquant : </span>' + esc(refus) + "</span></p>";
+    }
+    if (apercu) {
+      var analyse = apercu.analyse;
+
       var completes = [];
       var c = P.contact(x.prospectId);
       if (c) completes.push("Client : " + c.prenom + " " + c.nom);
       if (P.opportunite(x.opportuniteId)) completes.push("Opportunité : " + P.opportunite(x.opportuniteId).titre);
-      completes.push("Véhicule : " + T.nomVehicule(ap.transaction));
-      if (!ap.transaction.brouillon) completes.push("Proposition acceptée retenue (version " + x.versionNumero + ")");
+      completes.push("Véhicule : " + T.nomVehicule(apercu.transaction));
+      if (!apercu.transaction.brouillon) completes.push("Proposition acceptée retenue (version " + x.versionNumero + ")");
       if (x.modeAchat !== "indetermine") completes.push("Mode d'achat : " + ref.modesAchat[x.modeAchat]);
-      var manquantes = a.elements.filter(function (e) { return e.proprietaire === "vendeur" || e.niveau === "information"; });
-      var validations = a.elements.filter(function (e) { return e.proprietaire === "departement" && e.niveau !== "information"; });
-      var etapesReq = a.axes.reduce(function (l, axe) {
-        return l.concat(axe.etapes.filter(function (e) { return e.etat !== "NonApplicable" && e.etat !== "Terminee" && e.responsable && e.responsable !== "conseiller" && e.responsable !== "client"; }));
-      }, []);
-      var dispo = a.elements.filter(function (e) { return e.axe === "vehicule" && e.niveau !== "information"; });
-      function liste(items, icone, vide) {
-        return items.length ? '<ul class="tx-verif">' + items.map(function (t) { return '<li><i class="bi ' + icone + '" aria-hidden="true"></i><span>' + t + "</span></li>"; }).join("") + "</ul>" : '<p class="text-muted small mb-0">' + esc(vide) + "</p>";
-      }
-      html += '<h3 class="tx-sous-titre">Informations complètes</h3>' + liste(completes.map(esc), "bi-check-circle-fill text-success", "—") +
-        '<h3 class="tx-sous-titre">Informations manquantes ou à compléter</h3>' + liste(manquantes.map(function (e) { return esc(e.nature); }), "bi-exclamation-circle", "Aucune information manquante.") +
-        '<h3 class="tx-sous-titre">Validations nécessaires</h3>' + liste(validations.map(function (e) { return esc(e.nature) + ' <span class="pr-sous">· ' + esc(e.departementLibelle) + "</span>"; })
-          .concat(etapesReq.filter(function (e) { return !validations.some(function (v) { return v.etape === e.cle; }); }).map(function (e) { return esc(e.libelle) + ' <span class="pr-sous">· ' + esc(ref.departements[e.responsable].libelle) + "</span>"; })), "bi-person-badge", "Aucune validation d'un autre département.") +
-        '<h3 class="tx-sous-titre">Disponibilité du véhicule</h3>' + liste(dispo.map(function (e) { return esc(e.nature); }), "bi-car-front", "Aucun problème de disponibilité connu.") +
-        '<h3 class="tx-sous-titre">Prochaines étapes</h3>' + liste([esc(a.prochaineAction.texte)].concat(a.actionsVendeur.slice(1, 3).map(function (e) { return esc(e.actionVendeur); })), "bi-arrow-right-circle", "—");
+
+      var manquantes = analyse.elements.filter(function (e) { return e.proprietaire === "vendeur" || e.niveau === "information"; });
+      var validations = analyse.elements.filter(function (e) { return e.proprietaire === "departement" && e.niveau !== "information"; });
+      // Étapes à faire par un autre département (ni le conseiller ni le client), pas encore terminées.
+      var etapesAutres = [];
+      analyse.axes.forEach(function (axe) {
+        axe.etapes.forEach(function (e) {
+          var aFaire = e.etat !== "NonApplicable" && e.etat !== "Terminee";
+          var parUnDepartement = e.responsable && e.responsable !== "conseiller" && e.responsable !== "client";
+          var dejaListee = validations.some(function (v) { return v.etape === e.cle; });
+          if (aFaire && parUnDepartement && !dejaListee) etapesAutres.push(e);
+        });
+      });
+      var disponibilite = analyse.elements.filter(function (e) { return e.axe === "vehicule" && e.niveau !== "information"; });
+
+      var textesValidations = validations.map(function (e) {
+        return esc(e.nature) + sousLigne(e.departementLibelle);
+      }).concat(etapesAutres.map(function (e) {
+        return esc(e.libelle) + sousLigne(ref.departements[e.responsable].libelle);
+      }));
+      var prochaines = [esc(analyse.prochaineAction.texte)].concat(analyse.actionsVendeur.slice(1, 3).map(function (e) { return esc(e.actionVendeur); }));
+
+      html += '<h3 class="nt-sous-titre">Informations complètes</h3>' + liste(completes.map(esc), "bi-check-circle-fill is-ok", "Aucune.") +
+        '<h3 class="nt-sous-titre">Informations manquantes ou à compléter</h3>' + liste(manquantes.map(function (e) { return esc(e.nature); }), "bi-exclamation-circle is-attention", "Aucune information manquante.") +
+        '<h3 class="nt-sous-titre">Validations nécessaires</h3>' + liste(textesValidations, "bi-person-badge", "Aucune validation d'un autre département.") +
+        '<h3 class="nt-sous-titre">Disponibilité du véhicule</h3>' + liste(disponibilite.map(function (e) { return esc(e.nature); }), "bi-car-front", "Aucun problème de disponibilité connu.") +
+        '<h3 class="nt-sous-titre">Prochaines étapes</h3>' + liste(prochaines, "bi-arrow-right-circle", "Aucune.");
     }
-    zone("verification").innerHTML = html || '<p class="text-muted mb-0">Complétez les étapes précédentes.</p>';
-    rendreRecapitulatif(x, ap);
-    racine.querySelector("[data-creer]").disabled = !!refus;
-  }
-  function rendreRecapitulatif(x, ap) {
-    var o = P.opportunite(x.opportuniteId);
-    var s = x.soumissionId ? S.soumission(x.soumissionId) : null;
-    var m = ap ? T.montants(ap.transaction) : null;
-    zone("recapitulatif").innerHTML = '<dl class="pr-liste-def pr-liste-def-compacte">' +
-      ligneDef("Client", esc(x.prospectId ? T.nomClient(x) : "—")) +
-      ligneDef("Opportunité", esc(o ? o.titre : "—")) +
-      ligneDef("Proposition", s ? esc(s.reference + " · version " + x.versionNumero) : "Aucune (brouillon)") +
-      ligneDef("Véhicule", ap ? esc(T.nomVehicule(ap.transaction)) : "—") +
-      ligneDef("Montant", m ? esc(UI.montant(m.totalEstime)) + (m.figee ? "" : ' <span class="tx-brouillon-tag">non figé</span>') : '<span class="text-muted">À déterminer</span>') +
-      ligneDef("Mode d'achat", esc(ref.modesAchat[x.modeAchat])) +
-      ligneDef("Reprise", x.reprise ? esc(x.reprise.description || "Oui") : "Aucune") +
-      ligneDef("État à la création", ap ? (ap.transaction.brouillon ? '<span class="tx-brouillon-tag">Brouillon incomplet</span>' : "Transaction active") : "—") +
-      "</dl>" +
-      '<p class="pr-note mb-0 mt-2">Enregistrement local dans cet onglet uniquement : aucune vente, aucun paiement, aucune réservation réelle du véhicule.</p>';
+    zone("verification").innerHTML = html || '<p class="ns-vide-texte">Complétez les étapes précédentes.</p>';
+    rendreRecapitulatif(x, apercu);
+    boutonCreer.disabled = !!refus;
   }
 
-  // ---------- Navigation ----------
+  // Lignes du récapitulatif, communes à l'étape 4 et à l'écran final.
+  function lignesRecap(x, transaction) {
+    var o = P.opportunite(x.opportuniteId);
+    var s = x.soumissionId ? S.soumission(x.soumissionId) : null;
+    var m = transaction ? T.montants(transaction) : null;
+    var proposition = s ? s.reference + " · version " + x.versionNumero : "Aucune proposition (brouillon)";
+    var vehicule = transaction ? esc(T.nomVehicule(transaction)) : "À choisir";
+    var montant = '<span class="ns-attenue">À déterminer</span>';
+    if (m) montant = esc(UI.montant(m.totalEstime)) + (m.figee ? "" : ' <span class="nt-etiquette-brouillon">non figé</span>');
+    var etatCreation = "Non disponible";
+    if (transaction) etatCreation = transaction.brouillon ? '<span class="nt-etiquette-brouillon">Brouillon incomplet</span>' : "Transaction active";
+
+    return ligneDef("Client", esc(x.prospectId ? T.nomClient(x) : "À choisir")) +
+      ligneDef("Opportunité", esc(o ? o.titre : "À choisir")) +
+      ligneDef("Véhicule et proposition", vehicule + sousLigne(proposition)) +
+      ligneDef("Montant", montant) +
+      ligneDef("Mode d'achat", esc(ref.modesAchat[x.modeAchat])) +
+      ligneDef("Reprise", x.reprise ? esc(x.reprise.description || "Oui") : "Aucune") +
+      ligneDef("État à la création", etatCreation);
+  }
+
+  function rendreRecapitulatif(x, apercu) {
+    zone("recapitulatif").innerHTML = lignesRecap(x, apercu ? apercu.transaction : null);
+  }
+
+  // ---------- Navigation entre les étapes ----------
+
+  // Vrai quand l'étape a ce qu'il faut pour activer « Suivant » (les règles complètes sont dans erreurEtape).
+  function etapeRemplie(n) {
+    if (n === 1) return !!(etat.prospectId && etat.oppId);
+    if (n === 2) return !!etat.vehiculeId;
+    if (n === 3) return !!etat.mode;
+    return true;
+  }
+
+  // Message qui empêche de quitter l'étape n, ou null si tout va bien.
   function erreurEtape(n) {
     if (n === 1) {
       if (!etat.prospectId) return "Choisissez un client.";
       if (!etat.oppId) return "Choisissez une opportunité active.";
-      var ex = T.enCoursPourOpportunite(etat.oppId);
-      if (ex) return "Une transaction est déjà en cours pour cette opportunité (" + ex.reference + ").";
+      var existante = T.enCoursPourOpportunite(etat.oppId);
+      if (existante) return "Une transaction est déjà en cours pour cette opportunité (" + existante.reference + ").";
     }
     if (n === 2) {
       if (!etat.sansSoumission && !etat.soumissionId) return "Choisissez une version de soumission, ou « Sans soumission ».";
       if (!etat.vehiculeId) return "Choisissez le véhicule envisagé.";
-      var st = T.statutVehicule(etat.vehiculeId);
-      if (["Vendu", "Livre"].indexOf(st) >= 0) return "Ce véhicule est déjà vendu ou livré à un autre client.";
-      var autre = T.liste().filter(function (t) { return t.vehiculeId === etat.vehiculeId && T.estActive(t); })[0];
+      if (estVenduOuLivre(T.statutVehicule(etat.vehiculeId))) return "Ce véhicule est déjà vendu ou livré à un autre client.";
+      var autre = transactionQuiRetient(etat.vehiculeId);
       if (autre) return "Ce véhicule est déjà retenu par la transaction " + autre.reference + ".";
     }
     if (n === 3) {
-      form.querySelector("[data-erreur-mode]").hidden = !!modeChoisi();
-      if (!modeChoisi()) return "Choisissez un mode d'achat.";
+      form.querySelector("[data-erreur-mode]").hidden = !!etat.mode;
+      if (!etat.mode) return "Choisissez un mode d'achat.";
+
       var depot = form.elements.depot;
-      depot.classList.toggle("is-invalid", depot.value !== "" && !(Number(depot.value) >= 0 && Number(depot.value) <= 100000));
-      var an = form.elements.annee, km = form.elements.kilometrage;
-      var avec = document.getElementById("n-reprise").checked;
-      an.classList.toggle("is-invalid", avec && an.value !== "" && (Number(an.value) < 1980 || Number(an.value) > new Date().getFullYear() + 1));
-      km.classList.toggle("is-invalid", avec && km.value !== "" && (Number(km.value) < 0 || Number(km.value) > 1000000));
+      var depotInvalide = depot.value !== "" && !(Number(depot.value) >= 0 && Number(depot.value) <= 100000);
+      depot.classList.toggle("is-invalid", depotInvalide);
+
+      var avecReprise = document.getElementById("n-reprise").checked;
+      var annee = form.elements.annee;
+      var km = form.elements.kilometrage;
+      var anneeMax = new Date().getFullYear() + 1;
+      var anneeInvalide = avecReprise && annee.value !== "" && (Number(annee.value) < 1980 || Number(annee.value) > anneeMax);
+      var kmInvalide = avecReprise && km.value !== "" && (Number(km.value) < 0 || Number(km.value) > 1000000);
+      annee.classList.toggle("is-invalid", anneeInvalide);
+      km.classList.toggle("is-invalid", kmInvalide);
+
       if (form.querySelector(".is-invalid")) return "Corrigez les montants indiqués.";
     }
     return null;
   }
+
+  // Avance (en vérifiant chaque étape traversée) ou recule jusqu'à l'étape n.
   function allerA(n) {
-    if (n < 1 || n > 4) return;
+    if (n < 1 || n > DERNIERE_ETAPE) return;
     if (n > etat.etape) {
       for (var k = etat.etape; k < n; k++) {
-        var err = erreurEtape(k);
-        if (err) { aide.textContent = err; if (k !== etat.etape) { etat.etape = k; rendre(); aide.textContent = err; } return; }
+        var erreur = erreurEtape(k);
+        if (erreur) {
+          if (k !== etat.etape) {
+            etat.etape = k;
+            rendre();
+          }
+          aide.textContent = erreur;
+          return;
+        }
       }
     }
     aide.textContent = "";
@@ -298,37 +496,68 @@
     etat.etapeMax = Math.max(etat.etapeMax, n);
     rendre();
   }
-  function rendre() {
-    racine.querySelectorAll("[data-etape]").forEach(function (s) { s.hidden = Number(s.dataset.etape) !== etat.etape; });
+
+  function rendreIndicateurEtapes() {
     racine.querySelectorAll("[data-aller]").forEach(function (b) {
       var n = Number(b.dataset.aller);
+      var li = b.closest("li");
+      var faite = n < etat.etape;
       b.disabled = n > etat.etapeMax;
-      b.closest("li").classList.toggle("is-active", n === etat.etape);
-      b.closest("li").classList.toggle("is-fait", n < etat.etape);
-      if (n === etat.etape) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+      li.classList.toggle("is-courante", n === etat.etape);
+      li.classList.toggle("is-faite", faite);
+      b.querySelector(".ns-num").innerHTML = faite ? '<i class="bi bi-check-lg" aria-hidden="true"></i>' : String(n);
+      if (n === etat.etape) b.setAttribute("aria-current", "step");
+      else b.removeAttribute("aria-current");
     });
-    racine.querySelector("[data-precedent]").hidden = etat.etape === 1;
-    racine.querySelector("[data-suivant]").hidden = etat.etape === 4;
-    racine.querySelector("[data-creer]").hidden = etat.etape !== 4;
-    if (etat.etape === 1) { rendreClients(); rendreOpportunites(); rendreContexte(); }
+  }
+
+  function rendreBoutons() {
+    var derniere = etat.etape === DERNIERE_ETAPE;
+    boutonSuivant.hidden = derniere;
+    boutonSuivant.disabled = !etapeRemplie(etat.etape);
+    boutonCreer.hidden = !derniere;
+  }
+
+  function rendre() {
+    racine.querySelectorAll("[data-etape]").forEach(function (s) { s.hidden = Number(s.dataset.etape) !== etat.etape; });
+    rendreIndicateurEtapes();
+    if (etat.etape === 1) { rendreClients(); rendreOpportunite(); }
     if (etat.etape === 2) rendreVersions();
     if (etat.etape === 3) preremplirEtape3();
     if (etat.etape === 4) rendreVerification();
+    rendreBoutons();
   }
+
+  // Un choix fait plus tôt dans le parcours oblige à repasser par les étapes suivantes.
   function reinitialiserApres(n) {
     etat.etapeMax = Math.min(etat.etapeMax, n);
+  }
+  function oublierProposition() {
+    etat.soumissionId = null;
+    etat.versionNumero = null;
+    etat.vehiculeId = null;
+    etat.sansSoumission = false;
+    etat.mode = null;
+  }
+
+  function precedent() {
+    if (etat.etape === 1) {
+      window.location.href = racine.dataset.urlListe;
+      return;
+    }
+    allerA(etat.etape - 1);
   }
 
   racine.addEventListener("click", function (e) {
     var b = e.target.closest("button");
     if (!b || b.disabled) return;
+
     if (b.dataset.prospect) {
       if (etat.prospectId !== b.dataset.prospect) {
         etat.prospectId = b.dataset.prospect;
         var actives = P.opportunitesDe(etat.prospectId).filter(P.estActive);
         etat.oppId = actives.length === 1 ? actives[0].id : null;
-        etat.soumissionId = etat.versionNumero = etat.vehiculeId = null;
-        etat.sansSoumission = false;
+        oublierProposition();
         reinitialiserApres(1);
       }
       aide.textContent = "";
@@ -336,104 +565,151 @@
     } else if (b.dataset.opp) {
       if (etat.oppId !== b.dataset.opp) {
         etat.oppId = b.dataset.opp;
-        etat.soumissionId = etat.versionNumero = etat.vehiculeId = null;
-        etat.sansSoumission = false;
+        oublierProposition();
         reinitialiserApres(1);
       }
       aide.textContent = "";
       rendre();
     } else if (b.dataset.version) {
-      var p = b.dataset.version.split("|");
-      etat.soumissionId = p[0];
-      etat.versionNumero = Number(p[1]);
+      var morceaux = b.dataset.version.split("|");
+      etat.soumissionId = morceaux[0];
+      etat.versionNumero = Number(morceaux[1]);
       etat.sansSoumission = false;
       etat.vehiculeId = version().vehicule.id;
-      form.querySelectorAll('input[name="mode"]').forEach(function (r) { r.checked = false; });
+      etat.mode = null;
       reinitialiserApres(2);
       aide.textContent = "";
       rendreVersions();
+      rendreBoutons();
     } else if (b.hasAttribute("data-sans-soumission")) {
+      oublierProposition();
       etat.sansSoumission = true;
-      etat.soumissionId = etat.versionNumero = null;
-      etat.vehiculeId = null;
       reinitialiserApres(2);
       rendreVersions();
+      rendreBoutons();
     } else if (b.dataset.vehicule) {
       etat.vehiculeId = b.dataset.vehicule;
       aide.textContent = "";
       rendreVehicules();
       rendreResumeProposition();
-    } else if (b.dataset.aller) allerA(Number(b.dataset.aller));
-    else if (b.hasAttribute("data-suivant")) allerA(etat.etape + 1);
-    else if (b.hasAttribute("data-precedent")) allerA(etat.etape - 1);
-    else if (b.hasAttribute("data-creer")) creer();
+      rendreBoutons();
+    } else if (b.dataset.mode) {
+      etat.mode = b.dataset.mode;
+      form.querySelector("[data-erreur-mode]").hidden = true;
+      aide.textContent = "";
+      rendreModes();
+      rendreBoutons();
+    } else if (b.dataset.aller) {
+      allerA(Number(b.dataset.aller));
+    } else if (b.hasAttribute("data-suivant")) {
+      allerA(etat.etape + 1);
+    } else if (b.hasAttribute("data-precedent")) {
+      precedent();
+    } else if (b.hasAttribute("data-creer")) {
+      creer();
+    }
   });
   rechercheClient.addEventListener("input", rendreClients);
   document.getElementById("n-reprise").addEventListener("change", function (e) {
     e.target.dataset.touche = "1";
     zone("champs-reprise").hidden = !e.target.checked;
   });
-  form.addEventListener("change", function (e) {
-    if (e.target.name === "mode") form.querySelector("[data-erreur-mode]").hidden = true;
-  });
   form.addEventListener("submit", function (e) { e.preventDefault(); });
 
+  // ---------- Création et écran final ----------
+  function afficherFin(transaction, x) {
+    racine.querySelector("[data-assistant]").hidden = true;
+    zone("origine").hidden = true;
+    zone("recap-fin").innerHTML = ligneDef("Référence", esc(transaction.reference)) + lignesRecap(x, transaction);
+    racine.querySelector("[data-ouvrir]").href = T.urlDetail(transaction.id);
+    var fin = racine.querySelector("[data-fin]");
+    fin.hidden = false;
+    fin.focus();
+  }
+
   function creer() {
-    for (var n = 1; n <= 3; n++) {
-      var err = erreurEtape(n);
-      if (err) { if (n !== etat.etape) { etat.etape = n; rendre(); } aide.textContent = err; return; }
+    for (var n = 1; n < DERNIERE_ETAPE; n++) {
+      var erreur = erreurEtape(n);
+      if (erreur) {
+        if (n !== etat.etape) {
+          etat.etape = n;
+          rendre();
+        }
+        aide.textContent = erreur;
+        return;
+      }
     }
     var x = donnees();
     var refus = T.invalide(x);
-    if (refus) { aide.textContent = refus; rendreVerification(); return; }
-    var t = T.creer(x);
-    if (!t) { aide.textContent = "Création impossible."; return; }
-    window.location.href = T.urlDetail(t.id);
+    if (refus) {
+      aide.textContent = refus;
+      rendreVerification();
+      return;
+    }
+    var transaction = T.creer(x);
+    if (!transaction) {
+      aide.textContent = "Création impossible : le dossier n'a pas pu être enregistré dans cet onglet.";
+      return;
+    }
+    afficherFin(transaction, x);
   }
 
   // ---------- Préremplissage selon le point de départ ----------
+  function versionAcceptee(soumission) {
+    var acceptees = soumission.versions.slice().reverse().filter(function (v) { return v.statut === "Acceptee"; });
+    return acceptees.length ? acceptees[0] : null;
+  }
+  function retenirVersion(soumission, v) {
+    etat.soumissionId = soumission.id;
+    etat.versionNumero = v.numero;
+    etat.vehiculeId = v.vehicule.id;
+  }
+
   var ds = racine.dataset;
   var origine = null;
-  var dsS = ds.soumission && S.soumission(ds.soumission);
-  var dsR = ds.rendezvous && R ? R.rdv(ds.rendezvous) : null;
-  if (dsS) {
-    etat.prospectId = dsS.prospectId;
-    var oS = P.opportunite(dsS.opportuniteId);
+  var depuisSoumission = ds.soumission ? S.soumission(ds.soumission) : null;
+  var depuisRendezVous = ds.rendezvous && R ? R.rdv(ds.rendezvous) : null;
+
+  if (depuisSoumission) {
+    etat.prospectId = depuisSoumission.prospectId;
+    var oS = P.opportunite(depuisSoumission.opportuniteId);
     if (oS && P.estActive(oS)) etat.oppId = oS.id;
-    var num = Number(ds.version) || null;
-    var vs = num ? S.version(dsS, num) : null;
-    if (!vs) vs = dsS.versions.slice().reverse().filter(function (v) { return v.statut === "Acceptee"; })[0] || S.versionCourante(dsS);
-    etat.soumissionId = dsS.id;
-    etat.versionNumero = vs.numero;
-    etat.vehiculeId = vs.vehicule.id;
-    origine = "Depuis la soumission " + dsS.reference + " (version " + vs.numero + ", " + S.libelleStatut(vs.statut).toLowerCase() + ").";
-  } else if (dsR) {
-    etat.prospectId = dsR.prospectId;
-    var oR = P.opportunite(dsR.opportuniteId);
+    var numero = Number(ds.version) || null;
+    var vS = numero ? S.version(depuisSoumission, numero) : null;
+    if (!vS) vS = versionAcceptee(depuisSoumission) || S.versionCourante(depuisSoumission);
+    retenirVersion(depuisSoumission, vS);
+    origine = "Depuis la soumission " + depuisSoumission.reference + " (version " + vS.numero + ", " + S.libelleStatut(vS.statut).toLowerCase() + ").";
+  } else if (depuisRendezVous) {
+    etat.prospectId = depuisRendezVous.prospectId;
+    var oR = P.opportunite(depuisRendezVous.opportuniteId);
     if (oR && P.estActive(oR)) etat.oppId = oR.id;
-    origine = "Depuis le rendez-vous « " + R.type(dsR.type).libelle + " » du " + R.jourCourt(dsR.debut) + (dsR.resultat ? " (résultat : " + (R.libelle("resultats", dsR.resultat.resultat) || "").toLowerCase() + ")" : "") + ".";
-    if (dsR.soumissionId && S.soumission(dsR.soumissionId)) {
-      var sR = S.soumission(dsR.soumissionId);
-      var vR = sR.versions.slice().reverse().filter(function (v) { return v.statut === "Acceptee"; })[0];
-      if (vR) { etat.soumissionId = sR.id; etat.versionNumero = vR.numero; etat.vehiculeId = vR.vehicule.id; }
-    }
+    origine = "Depuis le rendez-vous « " + R.type(depuisRendezVous.type).libelle + " » du " + R.jourCourt(depuisRendezVous.debut);
+    if (depuisRendezVous.resultat) origine += " (résultat : " + (R.libelle("resultats", depuisRendezVous.resultat.resultat) || "").toLowerCase() + ")";
+    origine += ".";
+    var sR = depuisRendezVous.soumissionId ? S.soumission(depuisRendezVous.soumissionId) : null;
+    var vR = sR ? versionAcceptee(sR) : null;
+    if (vR) retenirVersion(sR, vR);
   } else if (ds.opportunite && P.opportunite(ds.opportunite)) {
     var o = P.opportunite(ds.opportunite);
     etat.prospectId = o.prospectId;
     if (P.estActive(o)) etat.oppId = o.id;
     origine = "Depuis l'opportunité « " + o.titre + " ».";
-    var acc = [];
-    S.parOpportunite(o.id).forEach(function (s) { s.versions.forEach(function (v) { if (v.statut === "Acceptee") acc.push({ s: s, v: v }); }); });
-    if (acc.length === 1) { etat.soumissionId = acc[0].s.id; etat.versionNumero = acc[0].v.numero; etat.vehiculeId = acc[0].v.vehicule.id; }
+    // Une seule version acceptée pour cette opportunité : on la retient d'office.
+    var acceptees = [];
+    S.parOpportunite(o.id).forEach(function (s) {
+      s.versions.forEach(function (v) { if (v.statut === "Acceptee") acceptees.push({ s: s, v: v }); });
+    });
+    if (acceptees.length === 1) retenirVersion(acceptees[0].s, acceptees[0].v);
   } else if (ds.prospect && P.contact(ds.prospect)) {
     etat.prospectId = ds.prospect;
-    var act = P.opportunitesDe(etat.prospectId).filter(P.estActive);
-    if (act.length === 1) etat.oppId = act[0].id;
+    var activesDepart = P.opportunitesDe(etat.prospectId).filter(P.estActive);
+    if (activesDepart.length === 1) etat.oppId = activesDepart[0].id;
   }
+
   if (origine) {
-    var z = zone("origine");
-    z.hidden = false;
-    z.innerHTML = '<i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>' + esc(origine) + " Les informations connues sont reprises.";
+    var zoneOrigine = zone("origine");
+    zoneOrigine.hidden = false;
+    zoneOrigine.innerHTML = '<i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>' + esc(origine) + " Les informations connues sont reprises.";
   }
   if (etat.prospectId && etat.oppId && etat.soumissionId) etat.etapeMax = 3;
   rendre();

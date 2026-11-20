@@ -92,8 +92,9 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
                 "Correspond à la recherche de Camille Lavoie.", maintenant.AddHours(-1)),
         };
 
+        // L'alerte n° 4 se place entre la n° 3 (position 0) et la n° 5 (position 1).
         if (aConfirmer is not null)
-            alertes.Insert(3, new(4, TypeAlerte.RendezVousAConfirmer, $"Rendez-vous à confirmer — {aConfirmer.Client}",
+            alertes.Insert(1, new(4, TypeAlerte.RendezVousAConfirmer, $"Rendez-vous à confirmer — {aConfirmer.Client}",
                 $"{FormatVente.Jour(aConfirmer.Debut, maintenant)} à {FormatVente.Heure(aConfirmer.Debut)}, aucune confirmation du client.",
                 maintenant.AddHours(-3), aConfirmer.Id));
 
