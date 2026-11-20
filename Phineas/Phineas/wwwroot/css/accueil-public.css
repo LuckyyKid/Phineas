@@ -516,7 +516,9 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
   --ph-primary-50: #eaf0fd;
   --ph-accent: #f5a524;
 }
-.acc-page .acc-route { margin-top: 28px; }
+/* Pleine largeur obligatoire : dans le haut de page centré (flex), un bloc sans largeur se réduit à son contenu.
+   La voiture étant positionnée en absolu, la route ferait 0 px de large et la cacherait. */
+.acc-page .acc-route { width: 100%; max-width: 1080px; margin-top: 28px; }
 .acc-page .acc-route::before { background: rgba(23, 97, 79, .06); }
 .acc-page .acc-route::after {
   background: repeating-linear-gradient(90deg, rgba(23, 97, 79, .22) 0 18px, transparent 18px 36px);
