@@ -31,51 +31,59 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body data-boulon-dock>
-    <div class="lm-app">
+    <div class="lm-app @ViewData["ClasseApp"]">
         <aside class="lm-side" aria-label="Navigation principale">
-            <a class="lm-logo" asp-controller="Account" asp-action="Home"><partial name="_Logo" />phineas</a>
-
-            @if (dealershipName is not null)
+            @* Un espace peut fournir sa propre barre latérale (ex. espace vendeur). *@
+            @if (IsSectionDefined("Barre"))
             {
-                <div class="lm-tenant"><i class="bi bi-buildings"></i><span class="text-truncate">@dealershipName</span></div>
+                @RenderSection("Barre")
             }
+            else
+            {
+                <a class="lm-logo" asp-controller="Account" asp-action="Home"><partial name="_Logo" />phineas</a>
 
-            <nav class="lm-nav">
-                <a class="@Actif(accueil)" asp-controller="@accueil" asp-action="Index"><i class="bi bi-house"></i>Accueil</a>
-
-                @if (estAdmin)
+                @if (dealershipName is not null)
                 {
-                    <div class="lm-nav-label">Administration</div>
-                    <a class="@Actif("Concessions")" asp-controller="Concessions" asp-action="Index"><i class="bi bi-buildings"></i>Concessions</a>
-                    <a class="@Actif("Utilisateurs")" asp-controller="Utilisateurs" asp-action="Index"><i class="bi bi-people"></i>Personnel</a>
+                    <div class="lm-tenant"><i class="bi bi-buildings"></i><span class="text-truncate">@dealershipName</span></div>
                 }
 
-                <div class="lm-nav-label">Bientôt</div>
-                <span class="lm-soon" aria-disabled="true"><i class="bi bi-car-front"></i>Inventaire<em>Bientôt</em></span>
-                <span class="lm-soon" aria-disabled="true"><i class="bi bi-qr-code-scan"></i>Scan QR<em>Bientôt</em></span>
-                <span class="lm-soon" aria-disabled="true"><i class="bi bi-chat-dots"></i>Messagerie<em>Bientôt</em></span>
-                @if (voitFinance)
-                {
-                    <span class="lm-soon" aria-disabled="true"><i class="bi bi-shield-lock"></i>Coffre-fort F&amp;A<em>Bientôt</em></span>
-                }
-                <span class="lm-soon" aria-disabled="true"><i class="bi bi-stars"></i>Annonces IA<em>Bientôt</em></span>
-            </nav>
+                <nav class="lm-nav">
+                    <a class="@Actif(accueil)" asp-controller="@accueil" asp-action="Index"><i class="bi bi-house"></i>Accueil</a>
 
-            <div class="lm-side-foot">
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <div class="lm-user">
-                        <span class="lm-avatar" aria-hidden="true">@initials</span>
-                        <div class="min-w-0">
-                            <strong class="text-truncate">@fullName</strong>
-                            <small>@roleLabel</small>
+                    @if (estAdmin)
+                    {
+                        <div class="lm-nav-label">Administration</div>
+                        <a class="@Actif("Concessions")" asp-controller="Concessions" asp-action="Index"><i class="bi bi-buildings"></i>Concessions</a>
+                        <a class="@Actif("Utilisateurs")" asp-controller="Utilisateurs" asp-action="Index"><i class="bi bi-people"></i>Personnel</a>
+                    }
+
+                    <div class="lm-nav-label">Bientôt</div>
+                    <span class="lm-soon" aria-disabled="true"><i class="bi bi-car-front"></i>Inventaire<em>Bientôt</em></span>
+                    <span class="lm-soon" aria-disabled="true"><i class="bi bi-qr-code-scan"></i>Scan QR<em>Bientôt</em></span>
+                    <span class="lm-soon" aria-disabled="true"><i class="bi bi-chat-dots"></i>Messagerie<em>Bientôt</em></span>
+                    @if (voitFinance)
+                    {
+                        <span class="lm-soon" aria-disabled="true"><i class="bi bi-shield-lock"></i>Coffre-fort F&amp;A<em>Bientôt</em></span>
+                    }
+                    <span class="lm-soon" aria-disabled="true"><i class="bi bi-stars"></i>Annonces IA<em>Bientôt</em></span>
+                </nav>
+
+                <div class="lm-side-foot">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="lm-user">
+                            <span class="lm-avatar" aria-hidden="true">@initials</span>
+                            <div class="min-w-0">
+                                <strong class="text-truncate">@fullName</strong>
+                                <small>@roleLabel</small>
+                            </div>
                         </div>
-                    </div>
-                    <form asp-controller="Account" asp-action="Logout" method="post">
-                        <button type="submit" class="btn btn-ghost w-100 justify-content-start d-flex align-items-center gap-2"><i class="bi bi-box-arrow-right"></i>Se déconnecter</button>
-                    </form>
-                }
-            </div>
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="btn btn-ghost w-100 justify-content-start d-flex align-items-center gap-2"><i class="bi bi-box-arrow-right"></i>Se déconnecter</button>
+                        </form>
+                    }
+                </div>
+            }
         </aside>
         <div class="lm-scrim"></div>
 
