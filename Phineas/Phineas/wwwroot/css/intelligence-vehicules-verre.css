@@ -163,3 +163,42 @@
   .ivv-champs-deux { grid-template-columns: 1fr; }
   .ivv-demandes li, .ivv-arrivee { flex-direction: column; align-items: stretch; }
 }
+
+/* =========================================================
+   Thème sombre de Recommandations véhicules (html[data-theme="sombre"]).
+   Les variables --iv-* passent déjà en sombre dans intelligence-verre.css ; ici, seulement ce qui est
+   propre à la page : barres de score, pastilles de critères, menu Proposer, swipe, champs du formulaire.
+   ========================================================= */
+html[data-theme="sombre"] .iv-page .ivv-barre { background: var(--ps-piste); }
+html[data-theme="sombre"] .iv-page .ivv-barre span { background: linear-gradient(90deg, #8FE9D1 0%, #5FE0C0 55%, #2FB596 100%); }
+html[data-theme="sombre"] .iv-page .ivv-score-inconnu { color: var(--ps-ambre); }
+
+html[data-theme="sombre"] .iv-page .ivv-statut { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .iv-page .ivv-pastille { background: rgba(255, 255, 255, .05); color: var(--ps-texte-second); }
+html[data-theme="sombre"] .iv-page .ivv-pastille.is-ok { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+
+/* Menu « Proposer » : surface opaque sombre (le menu passe devant la bande de swipe) */
+html[data-theme="sombre"] .ivv-menu { background: var(--ps-surface); border-color: var(--ps-contour); box-shadow: var(--ps-ombre-forte); }
+html[data-theme="sombre"] .ivv-menu .dropdown-item { color: var(--ps-texte); }
+html[data-theme="sombre"] .ivv-menu .dropdown-item:hover,
+html[data-theme="sombre"] .ivv-menu .dropdown-item:focus { background: var(--ps-survol); }
+html[data-theme="sombre"] .ivv-menu .dropdown-item i { color: var(--ps-menthe); }
+html[data-theme="sombre"] .ivv-menu .dropdown-item:disabled,
+html[data-theme="sombre"] .ivv-menu .dropdown-item:disabled i { color: var(--ps-texte-discret); }
+
+/* Avis neutre, correspondances trouvées */
+html[data-theme="sombre"] .iv-page .ivv-avis { background: rgba(255, 255, 255, .04); }
+html[data-theme="sombre"] .iv-page .ivv-trouve { color: var(--ps-menthe); }
+html[data-theme="sombre"] .iv-page .ivv-avertissement { color: var(--ps-ambre); }
+
+/* Bande de swipe : barre de défilement discrète et focus visible */
+html[data-theme="sombre"] .iv-page .ivv-swipe-piste { scrollbar-color: rgba(255, 255, 255, .18) transparent; }
+html[data-theme="sombre"] .iv-page .ivv-swipe-piste:focus-visible { outline-color: var(--ps-focus); }
+
+/* Champs du formulaire « Nouvelle demande » */
+html[data-theme="sombre"] .iv-page .ivv-champ { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .iv-page .ivv-champ::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .iv-page .ivv-champ:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .iv-page .iv-select.is-invalid,
+html[data-theme="sombre"] .iv-page .ivv-champ.is-invalid { border-color: var(--ps-rose); }
+html[data-theme="sombre"] .iv-page .invalid-feedback { color: var(--ps-rose-texte); }

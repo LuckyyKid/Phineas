@@ -362,3 +362,97 @@
 .iv-table td { overflow-wrap: anywhere; }
 .iv-cellule-boutons { flex-wrap: wrap; justify-content: flex-end; }
 .iv-table td:last-child .iv-sous { margin-top: 6px; font-size: 12.5px; }
+
+/* =========================================================
+   Thème sombre (html[data-theme="sombre"], voir theme.js et theme-sombre.css)
+   Centre d'actions, Mes suivis et Recommandations véhicules : mêmes composants en verre sombre.
+   Principe : les variables --iv-* reprennent la palette --ps-* ; les fonds blancs écrits en dur
+   (champs, boutons blancs, survols) sont corrigés un par un plus bas. L'action principale devient
+   BLANCHE (bouton sapin), le vert ne reste qu'un accent.
+   ========================================================= */
+html[data-theme="sombre"] .iv-page {
+  --iv-ink: var(--ps-texte);
+  --iv-text: var(--ps-texte-courant);
+  --iv-muted: var(--ps-texte-second);
+  --iv-muted-2: var(--ps-texte-discret);
+  --iv-line: var(--ps-filet);
+  --iv-line-2: var(--ps-filet-2);
+  --iv-sapin-texte: var(--ps-menthe);
+  --iv-sapin-ink: #8FE9D1;
+  --iv-menthe-ink: var(--ps-menthe);
+  --iv-rouge: var(--ps-rose);
+  --iv-rouge-texte: var(--ps-rose-texte);
+  --iv-ambre: var(--ps-ambre);
+  --iv-ambre-ink: var(--ps-ambre);
+  --iv-flou: var(--ps-verre-flou);
+  --iv-ombre: none;
+}
+html[data-theme="sombre"] .iv-page :focus-visible { outline-color: var(--ps-focus); }
+
+/* Cartes en verre sombre */
+html[data-theme="sombre"] .iv-page .iv-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Haut de page : pastilles Démo et En ligne */
+html[data-theme="sombre"] .iv-page .iv-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .iv-page .iv-en-ligne { background: var(--ps-btn-second); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .iv-page .iv-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .iv-page .iv-demo-reset:hover { background: var(--ps-survol); color: var(--ps-texte); }
+
+/* Boutons : sapin devient l'action principale blanche, verre et blanc deviennent secondaires */
+html[data-theme="sombre"] .iv-page .iv-btn-sapin { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte) !important; box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .iv-page .iv-btn-sapin:hover { box-shadow: 0 14px 34px -12px rgba(255, 255, 255, .45); }
+html[data-theme="sombre"] .iv-page .iv-btn-verre,
+html[data-theme="sombre"] .iv-page .iv-btn-blanc,
+html[data-theme="sombre"] .iv-page .iv-btn-rond {
+  background: var(--ps-btn-second);
+  border-color: var(--ps-btn-second-contour);
+  color: var(--ps-texte) !important;
+  box-shadow: none;
+}
+html[data-theme="sombre"] .iv-page .iv-btn-verre:hover,
+html[data-theme="sombre"] .iv-page .iv-btn-blanc:hover,
+html[data-theme="sombre"] .iv-page .iv-btn-rond:hover { background: var(--ps-actif); border-color: var(--ps-actif-contour); box-shadow: none; }
+html[data-theme="sombre"] .iv-page .iv-btn-discret:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .iv-page .iv-btn:disabled,
+html[data-theme="sombre"] .iv-page .iv-btn[disabled] { opacity: .45; }
+
+/* Onglets : l'onglet actif est une pilule claire (comme le menu actif de la barre latérale) */
+html[data-theme="sombre"] .iv-page .iv-onglets .nav-link:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .iv-page .iv-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .iv-page .iv-onglets .nav-link.active .iv-compte { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .iv-page .iv-onglets-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Filtres : recherche, menus déroulants (flèche redessinée en clair), champ date, interrupteur */
+html[data-theme="sombre"] .iv-page .iv-recherche input,
+html[data-theme="sombre"] .iv-page .iv-champ-date { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); color-scheme: dark; }
+html[data-theme="sombre"] .iv-page .iv-select {
+  background: var(--ps-champ) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23A5ACAB' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='m3.5 6 4.5 4.5L12.5 6'/%3E%3C/svg%3E") no-repeat right 18px center;
+  border-color: var(--ps-champ-contour);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .iv-page .iv-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .iv-page .iv-recherche input:focus,
+html[data-theme="sombre"] .iv-page .iv-select:focus,
+html[data-theme="sombre"] .iv-page .iv-champ-date:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .iv-page .iv-interrupteur .form-check-input { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .iv-page .iv-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .iv-page .iv-interrupteur .form-check-input:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+
+/* Pagination : la page active est une pilule claire au lieu d'un rond blanc */
+html[data-theme="sombre"] .iv-page .iv-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .iv-page .iv-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+
+/* Centre d'actions : lignes, survol, priorités (rose = urgent, ambre = élevé), états */
+html[data-theme="sombre"] .iv-page .iv-action:hover,
+html[data-theme="sombre"] .iv-page .iv-action.is-ouverte { background: var(--ps-survol); }
+html[data-theme="sombre"] .iv-page .iv-prio-Urgent { background: var(--ps-rose); box-shadow: 0 0 8px rgba(255, 138, 154, .55); }
+html[data-theme="sombre"] .iv-page .iv-prio-Normal,
+html[data-theme="sombre"] .iv-page .iv-prio-Faible { border-color: rgba(255, 255, 255, .32); }
+html[data-theme="sombre"] .iv-page .iv-point-rouge { background: var(--ps-rose); box-shadow: 0 0 8px rgba(255, 138, 154, .55); }
+html[data-theme="sombre"] .iv-page .iv-etat,
+html[data-theme="sombre"] .iv-page .iv-pastille-grise { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .iv-page .iv-action-boutons .dropdown-menu { border-color: var(--ps-contour); box-shadow: var(--ps-ombre-forte); }
+
+/* Mes suivis : tableau, survol, encart */
+html[data-theme="sombre"] .iv-page .iv-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .iv-page .iv-encart { background: rgba(255, 255, 255, .04); }

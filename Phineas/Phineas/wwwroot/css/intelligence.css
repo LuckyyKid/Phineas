@@ -435,3 +435,66 @@
 .ia-ecart {
   color: #9a3412;
 }
+
+/* =========================================================
+   Thème sombre (html[data-theme="sombre"]) des composants ia-*.
+   Ces composants s'affichent aussi dans des fenêtres ajoutées à la fin de la page (carte d'une action,
+   relance, historique, critères d'un véhicule) : les règles ne sont donc PAS limitées à .iv-page.
+   Couleurs d'état : menthe = fait / compatible, rose = urgent / retard / non satisfait,
+   ambre = attention / à vérifier ; le violet et l'orange vif de la version claire sont remplacés.
+   ========================================================= */
+html[data-theme="sombre"] {
+  --ia-urgent: var(--ps-rose-texte);
+  --ia-eleve: var(--ps-ambre);
+  --ia-normal: var(--ps-texte-courant);
+  --ia-faible: var(--ps-texte-second);
+  --ia-ok: var(--ps-menthe);
+}
+
+/* Pastilles de priorité, d'état et de compatibilité : fond teinté sur sombre au lieu de blanc */
+html[data-theme="sombre"] .ia-prio,
+html[data-theme="sombre"] .ia-etat,
+html[data-theme="sombre"] .ia-compat { background: color-mix(in srgb, var(--c) 12%, transparent); border-color: color-mix(in srgb, var(--c) 40%, transparent); }
+html[data-theme="sombre"] .ia-etat { --c: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ia-etat-EnCours { --c: var(--ps-texte); }
+html[data-theme="sombre"] .ia-etat-Reportee { --c: var(--ps-ambre); }
+html[data-theme="sombre"] .ia-etat-Ignoree,
+html[data-theme="sombre"] .ia-etat-Obsolete { --c: var(--ps-texte-second); }
+html[data-theme="sombre"] .ia-compat-partiel { --c: var(--ps-ambre); }
+html[data-theme="sombre"] .ia-compat-a-verifier { --c: var(--ps-texte-second); }
+
+/* Cartes d'action et de véhicule : verre sombre, bord gauche gardé comme repère de priorité */
+html[data-theme="sombre"] .ia-carte,
+html[data-theme="sombre"] .ia-vehicule { background: var(--ps-verre); border-color: var(--ps-contour); border-left-color: var(--c, var(--ps-contour)); color: var(--ps-texte); }
+html[data-theme="sombre"] .ia-carte.is-retard { background: color-mix(in srgb, var(--ps-rose) 6%, transparent); }
+html[data-theme="sombre"] .ia-niveau-partiel { --c: var(--ps-ambre); }
+html[data-theme="sombre"] .ia-niveau-a-verifier { --c: var(--ps-texte-discret); }
+html[data-theme="sombre"] .ia-situation,
+html[data-theme="sombre"] .ia-contexte,
+html[data-theme="sombre"] .ia-pourquoi ul { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ia-groupe-titre i,
+html[data-theme="sombre"] .ia-pourquoi summary,
+html[data-theme="sombre"] .ia-vehicule summary { color: var(--ps-menthe); }
+html[data-theme="sombre"] .ia-carte-actions { border-top-color: var(--ps-filet-2); }
+
+/* Encadrés d'avertissement, de transfert, de correspondance et de simulation */
+html[data-theme="sombre"] .ia-avertissement { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .ia-transfert { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ia-tb-correspondances { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .ia-simulation { border-color: rgba(255, 210, 138, .45); background: var(--ps-ambre-fond); }
+html[data-theme="sombre"] .ia-canal,
+html[data-theme="sombre"] .ia-relance-suivi { background: rgba(255, 255, 255, .05); color: var(--ps-texte); }
+
+/* Critères d'un véhicule */
+html[data-theme="sombre"] .ia-cr-inconnu > i { color: var(--ps-ambre); }
+html[data-theme="sombre"] .ia-cr-non-applicable { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .ia-indisp { background: var(--ps-rose-fond); color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .ia-suspendue-icone,
+html[data-theme="sombre"] .ia-ecart { color: var(--ps-ambre); }
+
+/* Filets des listes (historique, suspendues, critères, demandes, arrivées) */
+html[data-theme="sombre"] .ia-historique li,
+html[data-theme="sombre"] .ia-suspendues > li,
+html[data-theme="sombre"] .ia-criteres-client li,
+html[data-theme="sombre"] .ia-demandes > li,
+html[data-theme="sombre"] .ia-arrivee { border-bottom-color: var(--ps-filet); }
