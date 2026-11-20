@@ -19,7 +19,7 @@
 
 <div class="rc-page rp-page">
 
-    <div class="rp-haut">
+    <div class="rp-haut" data-entete-liste>
         <nav class="rp-ariane" aria-label="Fil d'Ariane">
             <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Ventes perdues</span>
         </nav>
@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <header class="rp-entete">
+    <header class="rp-entete" data-entete-liste>
         <div>
             <p class="rp-label">Relations clients</p>
             <h1 class="rp-titre">Ventes perdues</h1>
@@ -176,8 +176,8 @@
             </div>
         </div>
 
+        @* Fiche d'analyse d'une vente perdue (?opportunite=…) : haut, en-tête et contenu rendus par relations-pertes.js. *@
         <div data-mode="fiche" hidden>
-            <p class="mb-3"><a href="@Url.Action("Pertes")" class="rp-retour"><i class="bi bi-arrow-left" aria-hidden="true"></i>Toutes les ventes perdues</a></p>
             <div data-zone="fiche"></div>
         </div>
     </div>
