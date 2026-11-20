@@ -317,3 +317,60 @@
   .cx-carre { animation: none; opacity: var(--opacite-fixe, .4); }
   .cx-bouton { transition: none; }
 }
+
+/* =========================================================
+   Thème sombre (contrat : wwwroot/js/theme.js, palette --ps-* : wwwroot/css/theme-sombre.css)
+   Formulaire sur fond presque noir, champs en verre sombre, bouton principal BLANC ;
+   le panneau de droite reste vert sapin (il est déjà foncé), avec un contour discret.
+   Les carrés du panneau gardent leur pulsation (couleur menthe tirée de --cx-menthe).
+   ========================================================= */
+
+/* ---------- Couleurs de la page ---------- */
+html[data-theme="sombre"] .cx-page {
+  --cx-encre: var(--ps-texte);
+  --cx-texte: var(--ps-texte-courant);
+  --cx-gris: var(--ps-texte-second);
+  --cx-gris-2: var(--ps-texte-discret);
+  --cx-filet: var(--ps-champ-contour);
+  --cx-champ-fond: var(--ps-champ);
+  --cx-sapin-plein: var(--ps-menthe);   /* lien « Accueil » et petits accents : menthe sur fond sombre */
+  --cx-vert-vif: var(--ps-menthe);
+  --cx-rouge: var(--ps-rose);
+  --cx-rouge-texte: var(--ps-rose-texte);
+
+  background: var(--ps-fond);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .cx-page :focus-visible { outline-color: var(--ps-focus); }
+
+/* Moitié gauche : halo blanc très discret à la place du halo menthe */
+html[data-theme="sombre"] .cx-gauche { background: radial-gradient(60% 40% at 0% 0%, rgba(255, 255, 255, .07), transparent 70%); }
+html[data-theme="sombre"] .cx-lien-accueil:hover { color: #8FE9D1; }
+
+/* ---------- Champs ---------- */
+html[data-theme="sombre"] .cx-saisie:focus {
+  background: rgba(255, 255, 255, .07);
+  border-color: var(--ps-champ-focus);
+  box-shadow: 0 0 0 .5px var(--ps-champ-focus);
+}
+/* Autoremplissage du navigateur : on garde un fond sombre et un texte clair (sinon fond blanc ou jaune) */
+html[data-theme="sombre"] .cx-saisie:-webkit-autofill,
+html[data-theme="sombre"] .cx-saisie:-webkit-autofill:hover,
+html[data-theme="sombre"] .cx-saisie:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ps-texte);
+  caret-color: var(--ps-texte);
+  -webkit-box-shadow: 0 0 0 100px #151818 inset;
+  box-shadow: 0 0 0 100px #151818 inset;
+}
+html[data-theme="sombre"] .cx-oeil { background: rgba(255, 255, 255, .06); }
+html[data-theme="sombre"] .cx-oeil:hover { background: rgba(255, 255, 255, .11); color: var(--ps-texte); }
+
+/* ---------- Bouton « Se connecter » : blanc quand il est prêt, gris discret sinon ---------- */
+html[data-theme="sombre"] .cx-bouton { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .cx-bouton.is-inactif { background: rgba(255, 255, 255, .06); color: #8A9392; box-shadow: none; }
+
+/* ---------- Messages d'erreur : rose de la palette ---------- */
+html[data-theme="sombre"] .cx-erreurs { background: var(--ps-rose-fond); border: 1px solid var(--ps-rose-contour); }
+
+/* ---------- Panneau de droite : déjà vert foncé, on ajoute un contour et une ombre noire ---------- */
+html[data-theme="sombre"] .cx-panneau { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), var(--ps-ombre-forte); }
