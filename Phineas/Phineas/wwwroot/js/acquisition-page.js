@@ -28,6 +28,10 @@
   function barre(libelle, n, max) {
     return '<li class="rc-ligne-barre"><span class="rc-lb-libelle">' + esc(libelle) + '</span><span class="rc-lb-piste" aria-hidden="true"><span style="width:' + (max ? Math.round(n / max * 100) : 0) + '%"></span></span><strong>' + n + "</strong></li>";
   }
+  // Page affichée de chaque liste (provenances, liens, publications, prospection), par id de liste. Absente = page 1.
+  var pages = {};
+  var Pagination = window.OutilsPagination;
+
   function mesContacts() { return P.contacts().filter(function (c) { return c.conseillerId === P.moiId; }); }
 
   // ---------- Sources et origines ----------
@@ -47,7 +51,9 @@
     zone("origines").innerHTML = '<ul class="rc-barres">' + ko.map(function (k) { return barre(ref.origines[k], parOrigine[k] || 0, maxo); }).join("") + "</ul>" +
       '<p class="small text-muted mt-2 mb-0">Referral Loop : recommandation attribuée (phase 07). Réseau : recommandation sans attribution. Concession : prospects confiés par la direction.</p>';
     var f = champ("f-origine").value;
-    champ("provenances-corps").innerHTML = l.filter(function (c) { return !f || OV.origine(c.id) === f; }).map(function (c) {
+    var provenances = Pagination.decouper(pages, "provenances-corps", l.filter(function (c) { return !f || OV.origine(c.id) === f; }));
+    Pagination.afficherBarre(racine, "provenances-corps", provenances.pagination);
+    champ("provenances-corps").innerHTML = provenances.elements.map(function (c) {
       var at = OV.attributionDe(c.id);
       var o = at && at.opportuniteId ? P.opportunite(at.opportuniteId) : P.opportunitesDe(c.id)[0];
       var lien = at && at.lienId ? OV.lien(at.lienId) : null, an = at && at.annonceId ? OV.annonce(at.annonceId) : null;
@@ -65,7 +71,9 @@
     var sa = champ("lk-annonce"), sv = champ("lk-vehicule"), a0 = sa.value, v0 = sv.value;
     sa.innerHTML = '<option value="">Aucune annonce</option>' + OV.annonces().filter(function (a) { return a.statut !== "Archivee"; }).map(function (a) { return '<option value="' + esc(a.id) + '"' + (a.id === a0 ? " selected" : "") + ">" + esc(a.reference + " — " + a.titre) + "</option>"; }).join("");
     sv.innerHTML = '<option value="">Choisir</option>' + S.inventaire().map(function (v) { return '<option value="' + esc(v.id) + '"' + (v.id === v0 ? " selected" : "") + ">" + esc(S.nomVehicule(v) + " · " + v.numeroStock) + "</option>"; }).join("");
-    champ("liens-corps").innerHTML = OV.liens().slice().reverse().map(function (l) {
+    var liens = Pagination.decouper(pages, "liens-corps", OV.liens().slice().reverse());
+    Pagination.afficherBarre(racine, "liens-corps", liens.pagination);
+    champ("liens-corps").innerHTML = liens.elements.map(function (l) {
       var a = l.annonceId ? OV.annonce(l.annonceId) : null, v = S.vehicule(l.vehiculeId);
       var nb = OV.attributions().filter(function (x) { return x.lienId === l.id; }).length;
       return '<tr><td data-label="Référence de suivi"><code class="ov-code">' + esc(l.reference) + '</code> <button type="button" class="btn btn-link btn-sm p-0" data-acq="copier-lien" data-id="' + esc(l.id) + '">Copier</button></td>' +
@@ -84,7 +92,9 @@
   function rendrePublications() {
     var s = champ("pb-annonce"), v0 = s.value;
     s.innerHTML = OV.annonces().filter(function (a) { return ["Approuvee", "PretePublication", "Publiee"].indexOf(a.statut) >= 0; }).map(function (a) { return '<option value="' + esc(a.id) + '"' + (a.id === v0 ? " selected" : "") + ">" + esc(a.reference + " — " + a.titre) + "</option>"; }).join("") || '<option value="">Aucune annonce approuvée</option>';
-    champ("publications-corps").innerHTML = OV.publications().map(function (p) {
+    var publications = Pagination.decouper(pages, "publications-corps", OV.publications());
+    Pagination.afficherBarre(racine, "publications-corps", publications.pagination);
+    champ("publications-corps").innerHTML = publications.elements.map(function (p) {
       var a = OV.annonce(p.annonceId), v = a ? S.vehicule(a.vehiculeId) : null;
       var actif = p.statut === "APreparer" || p.statut === "Prevue";
       return '<tr data-publication="' + esc(p.id) + '"><td data-label="Plateforme">' + esc(plateforme(p.plateforme)) + "</td>" +
@@ -104,7 +114,9 @@
   // ---------- Prospection personnelle ----------
   function rendreProspection() {
     var l = OV.prospection();
-    zone("prospection").innerHTML = l.length ? l.map(function (p) {
+    var prospection = Pagination.decouper(pages, "prospection", l);
+    Pagination.afficherBarre(racine, "prospection", prospection.pagination);
+    zone("prospection").innerHTML = l.length ? prospection.elements.map(function (p) {
       return '<li data-prospection="' + esc(p.id) + '"><div><strong>' + esc(p.nom) + "</strong>" + (p.entreprise ? " — " + esc(p.entreprise) : "") + ' <span class="badge-soft">' + esc(ref.typesProspection[p.type]) + "</span>" +
         '<span class="d-block small">' + esc([p.vehiculeInteret ? "Intérêt : " + p.vehiculeInteret : null, p.premierContact ? "premier contact le " + P.dateCourte(p.premierContact) : null, p.moyenContactAutorise ? "contact autorisé : " + p.moyenContactAutorise : "moyen de contact autorisé non précisé"].filter(Boolean).join(" · ")) + "</span>" +
         (p.contexte ? '<span class="d-block small text-muted">' + esc(p.contexte) + "</span>" : "") +
@@ -134,7 +146,10 @@
 
   function rendre() { rendreSources(); rendreLiens(); rendrePublications(); rendreProspection(); }
 
-  champ("f-origine").addEventListener("change", rendreSources);
+  champ("f-origine").addEventListener("change", function () {
+    pages["provenances-corps"] = 1;
+    rendreSources();
+  });
   champ("lk-annonce").addEventListener("change", function () { var a = OV.annonce(this.value); if (a) champ("lk-vehicule").value = a.vehiculeId; });
   champ("form-lien").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -194,6 +209,7 @@
       P.notifier(r2.statut === "cree" ? "Opportunité créée (source « Prospection ») ; suivi planifié." : "Contact déjà connu : rattaché, aucun doublon créé.");
     }
   });
+  Pagination.ecouterClics(racine, pages, rendre);
   OV.abonner(rendre);
   P.abonner(rendre);
   rendre();
