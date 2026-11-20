@@ -3,12 +3,12 @@
 
 <partial name="_LoginConfirmation" model="Model" />
 
-<div class="card mt-4">
-    <div class="card-header"><span><i class="bi bi-hourglass-split me-2"></i>Bientôt dans cet espace</span></div>
-    <ul class="soon-list">
-        <li>Tableau de bord en direct de l'inventaire</li>
-        <li>Approuver ou refuser les dossiers de financement</li>
-        <li>Gérer l'équipe de la concession</li>
-        <li>Consulter les documents financiers et le journal d'audit</li>
-    </ul>
+<div class="lm-section-title"><h2>Votre concession</h2><span>Bientôt dans cet espace</span></div>
+<div class="lm-tiles">
+    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-kanban"></i></span><h3>Tableau en direct</h3><p>Chaque véhicule par étape, mis à jour à chaque scan.</p></div>
+    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-shield-lock"></i></span><h3>Dossiers de financement</h3><p>Approuver ou refuser, avec double authentification.</p></div>
+    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-people"></i></span><h3>Mon équipe</h3><p>Ajouter et gérer les conseillers et mécaniciens.</p></div>
+    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-journal-text"></i></span><h3>Piste d’audit</h3><p>Qui a ouvert quel document, et quand.</p></div>
 </div>
+
+<partial name="_TesterAcces" model="Model" />
