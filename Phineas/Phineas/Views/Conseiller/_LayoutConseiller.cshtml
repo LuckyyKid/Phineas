@@ -47,7 +47,7 @@
 }
 
 @section Barre {
-    <a class="ph-logo" asp-controller="Conseiller" asp-action="Index"><span class="ph-logo-mark" aria-hidden="true"></span>phineas</a>
+    <a class="ph-logo" asp-controller="Conseiller" asp-action="Index"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 30 }' />phineas</a>
 
     <nav class="ph-nav" aria-label="Navigation de l'espace vendeur">
         @foreach (var entree in NavigationVendeur.Menu)
