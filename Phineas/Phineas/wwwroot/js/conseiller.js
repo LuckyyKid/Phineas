@@ -35,96 +35,85 @@
     if (cible) notifier(cible.getAttribute("data-bientot"));
   });
 
-  // Retire un élément d'une liste avec possibilité d'annuler.
-  function retirer(el, message, apres) {
-    var annule = false;
-    el.classList.add("is-leaving");
-    setTimeout(function () {
-      el.classList.remove("is-leaving");
-      if (annule) return;
-      el.hidden = true;
-      apres();
-    }, 200);
-    notifier(message, function () {
-      annule = true;
-      el.hidden = false;
-      apres();
-    });
+  // ---------- À faire en premier ----------
+  // Une seule priorité visible : « valider » la retire, « plus tard » la remet en fin de file.
+  var focus = document.getElementById("ph-focus");
+  if (!focus) return;
+
+  var priorites = Array.prototype.slice.call(focus.querySelectorAll("[data-priorite]"));
+  var etapes = Array.prototype.slice.call(focus.querySelectorAll("[data-etape]"));
+  var position = focus.querySelector("[data-position]");
+  var fin = focus.querySelector("[data-fin]");
+  var total = priorites.length;
+  var file = priorites.slice();
+  var faites = 0;
+
+  function fermerDossier(p) {
+    p.querySelector("[data-dossier]").hidden = true;
+    p.querySelector("[data-voir-dossier]").setAttribute("aria-expanded", "false");
   }
 
-  // ---------- Actions prioritaires ----------
-  var priorites = document.getElementById("sv-priorites");
-  if (priorites) {
-    var cartes = Array.prototype.slice.call(priorites.querySelectorAll(".sv-prio"));
-    var puces = Array.prototype.slice.call(priorites.querySelectorAll("[data-filtre]"));
-    var videPrio = priorites.querySelector("[data-vide]");
-    var filtre = "toutes";
+  function afficher() {
+    // Garde le focus clavier dans la carte quand la priorité affichée change.
+    var focusDedans = focus.contains(document.activeElement);
+    priorites.forEach(function (p) {
+      p.hidden = true;
+      fermerDossier(p);
+    });
+    // La priorité affichée est toujours la première de la file ; file vide = tout est réglé.
+    var courante = file[0];
+    var resteAFaire = file.length > 0;
+    if (resteAFaire) courante.hidden = false;
+    fin.hidden = resteAFaire;
 
-    var correspond = {
-      toutes: function () {
-        return true;
-      },
-      aujourdhui: function (c) {
-        return c.dataset.aujourdhui === "1";
-      },
-      critique: function (c) {
-        return c.dataset.urgence === "critique";
-      },
-    };
+    // Points de progression : faits en menthe, courant en blanc.
+    etapes.forEach(function (etape, index) {
+      etape.classList.toggle("is-done", index < faites);
+      etape.classList.toggle("is-current", resteAFaire && index === faites);
+    });
 
-    function actualiser() {
-      var visibles = 0;
-      cartes.forEach(function (c) {
-        var montre = !c.dataset.traite && correspond[filtre](c);
-        c.hidden = !montre;
-        if (montre) visibles++;
-      });
-      puces.forEach(function (p) {
-        var f = p.dataset.filtre;
-        var actif = f === filtre;
-        p.classList.toggle("is-active", actif);
-        p.setAttribute("aria-pressed", actif ? "true" : "false");
-        p.querySelector("span").textContent = cartes.filter(function (c) {
-          return !c.dataset.traite && correspond[f](c);
-        }).length;
-      });
-      videPrio.classList.toggle("d-none", visibles > 0);
+    // « 2/3 » pendant le travail, « 3/3 » quand tout est fait.
+    var numero = total;
+    if (resteAFaire) numero = faites + 1;
+    if (position) position.textContent = numero + "/" + total;
+
+    if (focusDedans) {
+      if (resteAFaire) {
+        courante.querySelector("[data-valider]").focus();
+      } else {
+        fin.setAttribute("tabindex", "-1");
+        fin.focus();
+      }
     }
-
-    puces.forEach(function (p) {
-      p.addEventListener("click", function () {
-        filtre = p.dataset.filtre;
-        actualiser();
-      });
-    });
-
-    priorites.addEventListener("click", function (e) {
-      var bouton = e.target.closest("[data-traiter]");
-      if (!bouton) return;
-      var carte = bouton.closest(".sv-prio");
-      var nom = carte.querySelector(".sv-prio-who strong").textContent;
-      carte.dataset.traite = "1";
-      retirer(carte, nom + " : marqué comme traité (non enregistré).", function () {
-        if (!carte.hidden) delete carte.dataset.traite;
-        actualiser();
-      });
-    });
   }
 
-  // ---------- Alertes ----------
-  var alertes = document.getElementById("sv-alertes");
-  if (alertes) {
-    var videAlertes = alertes.querySelector("[data-vide]");
+  focus.addEventListener("click", function (e) {
+    var p = e.target.closest("[data-priorite]");
+    if (!p) return;
+    var nom = p.querySelector(".ph-focus-nom").textContent;
 
-    function actualiserAlertes() {
-      var restantes = alertes.querySelectorAll(".sv-alert:not([hidden])").length;
-      videAlertes.classList.toggle("d-none", restantes > 0);
+    if (e.target.closest("[data-valider]")) {
+      file.shift();
+      faites++;
+      afficher();
+      notifier(nom + " : c'est noté (non enregistré).", function () {
+        file.unshift(p);
+        faites--;
+        afficher();
+      });
+    } else if (e.target.closest("[data-plus-tard]")) {
+      if (file.length < 2) {
+        notifier("C'est la dernière priorité du jour.");
+        return;
+      }
+      file.push(file.shift());
+      afficher();
+    } else if (e.target.closest("[data-voir-dossier]")) {
+      var dossier = p.querySelector("[data-dossier]");
+      dossier.hidden = !dossier.hidden;
+      e.target.closest("[data-voir-dossier]").setAttribute("aria-expanded", dossier.hidden ? "false" : "true");
     }
+  });
 
-    alertes.addEventListener("click", function (e) {
-      var bouton = e.target.closest("[data-ignorer]");
-      if (!bouton) return;
-      retirer(bouton.closest(".sv-alert"), "Alerte masquée (non enregistrée).", actualiserAlertes);
-    });
-  }
+  afficher();
 })();

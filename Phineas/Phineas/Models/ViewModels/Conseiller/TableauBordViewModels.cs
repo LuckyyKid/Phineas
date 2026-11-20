@@ -24,6 +24,7 @@ public enum Urgence
 
 public enum TypeVisite
 {
+    PremiereRencontre,
     EssaiRoutier,
     Presentation,
     Negociation,
@@ -48,9 +49,10 @@ public enum TonIndicateur
 
 public record Indicateur(string Libelle, int Valeur, string Detail, string Icone, TonIndicateur Ton);
 
+// ProspectId nul : la personne n'a pas encore de fiche prospect (ex. recommandation pas encore saisie).
 public record ActionPrioritaire(
     int Id,
-    string ProspectId,
+    string? ProspectId,
     string Prospect,
     string Vehicule,
     string Evenement,
@@ -63,7 +65,8 @@ public record ActionPrioritaire(
     bool EcheanceAujourdhui
 );
 
-public record RendezVousResume(DateTime Debut, string ProspectId, string Client, string Vehicule, TypeVisite Type, bool Confirme);
+// Vehicule nul : le client n'a pas encore choisi de véhicule (ex. première rencontre).
+public record RendezVousResume(DateTime Debut, string ProspectId, string Client, string? Vehicule, TypeVisite Type, bool Confirme);
 
 public record EtapePipeline(EtapeVente Etape, int Nombre, decimal Valeur);
 
@@ -95,6 +98,12 @@ public static class FormatVente
     public static string Argent(decimal montant) => montant.ToString("C0", Culture);
 
     public static string Heure(DateTime d) => d.ToString("H' h 'mm", Culture);
+
+    // Format compact des listes d'horaires (18:30).
+    public static string HeureCourte(DateTime d) => d.ToString("HH':'mm", Culture);
+
+    // « jeudi 19 novembre » : la date du jour en tête du tableau de bord.
+    public static string DateDuJour(DateTime d) => d.ToString("dddd d MMMM", Culture);
 
     public static string DateLongue(DateTime d)
     {
@@ -142,6 +151,7 @@ public static class FormatVente
     public static string Libelle(TypeVisite type) =>
         type switch
         {
+            TypeVisite.PremiereRencontre => "Première rencontre",
             TypeVisite.EssaiRoutier => "Essai routier",
             TypeVisite.Presentation => "Présentation",
             TypeVisite.Negociation => "Négociation",

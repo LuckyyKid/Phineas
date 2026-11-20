@@ -18,7 +18,7 @@ public static class NavigationVendeur
     public static readonly IReadOnlyList<EntreeNavigation> Menu =
     [
         new("Accueil", "bi-house", "Conseiller", "Index"),
-        new("Centre d'actions", "bi-lightning-charge"),
+        new("Actions", "bi-lightning-charge"),
         new("Prospects", "bi-people", "Prospects", "Index"),
         new("Rendez-vous", "bi-calendar4"),
         new(
@@ -30,5 +30,6 @@ public static class NavigationVendeur
                 new("Nouvelle transaction", "bi-cash-coin"),
             ]
         ),
+        new("Clients", "bi-person-heart"),
     ];
 }

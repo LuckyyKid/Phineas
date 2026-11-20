@@ -1,3 +1,5 @@
+@* Coque de toutes les pages vendeur : barre latérale en verre (menu dans NavigationVendeur.cs), notification et scripts communs.
+   Elle s'insère dans _Layout.cshtml par la section « Barre » et la classe ph-espace. *@
 @using Phineas.Models.Constants
 @using Phineas.Models.ViewModels.Conseiller
 @{
@@ -50,7 +52,7 @@
                 continue;
             }
 
-            var compteur = entree.Libelle == "Centre d'actions" ? nbActions : null;
+            var compteur = entree.Libelle == "Actions" ? nbActions : null;
             if (entree.Disponible)
             {
                 var active = EstActive(entree);
