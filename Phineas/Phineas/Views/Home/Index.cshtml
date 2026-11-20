@@ -95,6 +95,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    @* Mascotte Boulon (mascot.css / mascot.js, communes à l'application) : la petite voiture qui roule sous l'aperçu du produit. *@
+    <link rel="stylesheet" href="~/css/mascot.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/accueil-public.css" asp-append-version="true" />
 </head>
 <body class="acc-page">
@@ -169,6 +171,9 @@
                         <span><strong>Luc B.</strong> a terminé l'inspection de la Honda Accord<small>À l'instant · Baie B-04</small></span>
                     </div>
                 </div>
+
+                @* Route de la mascotte Boulon : mascot.js y fait rouler la voiture (immobile si moins d'animations). *@
+                <div class="boulon-road acc-route" data-boulon-road aria-hidden="true"></div>
 
                 <div class="acc-concu">
                     <span class="acc-concu-label">Conçu pour</span>
@@ -400,6 +405,7 @@
         </div>
     </footer>
 
+    <script src="~/js/mascot.js" asp-append-version="true"></script>
     <script src="~/js/accueil-public.js" asp-append-version="true"></script>
 </body>
 </html>
