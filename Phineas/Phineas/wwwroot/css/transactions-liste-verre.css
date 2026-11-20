@@ -124,6 +124,28 @@
 .txv-table td:nth-child(5) { width: 20%; }
 .txv-montant { font-weight: 500; font-variant-numeric: tabular-nums; }
 
+/* Pied de la liste : 6 transactions par page (transactions-liste.js), même rendu que la liste des prospects */
+.txv-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 14px; padding: 16px 12px 18px; border-top: 1px solid var(--ns-line-2); }
+.txv-pagination[hidden] { display: none; }
+.txv-pages-info { font-family: var(--ns-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--ns-muted); }
+.txv-pages { display: flex; align-items: center; gap: 4px; }
+.txv-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 14px;
+  color: var(--ns-text);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.txv-page-btn:hover:not(:disabled) { background: rgba(11, 13, 13, .05); color: var(--ns-ink); }
+.txv-page-btn.is-active { background: #FFFFFF; border-color: var(--ns-line-2); color: var(--ns-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+.txv-page-btn:disabled { color: var(--ns-muted-2); opacity: .45; cursor: default; }
+.txv-pages-trou { padding: 0 4px; color: var(--ns-muted); }
+
 .txv-nom { font-weight: 500; color: var(--ns-ink); text-decoration: none; }
 .txv-nom:hover { color: var(--ns-sapin-texte); text-decoration: underline; text-underline-offset: 3px; }
 
@@ -140,6 +162,11 @@
 .txv-colonne-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 8px 4px; font-size: 15px; font-weight: 500; color: var(--ns-ink); }
 .txv-compte { font-family: var(--ns-mono); font-size: 12px; font-weight: 400; color: var(--ns-muted); }
 .txv-cartes { display: flex; flex-direction: column; gap: 10px; }
+/* Navigation d'une colonne de plus de 6 cartes : flèches et « 1/2 » en bas de colonne */
+.txv-colonne-pages { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: auto; padding-top: 4px; font-family: var(--ns-mono); font-size: 12px; color: var(--ns-muted); }
+.txv-colonne-pages button { width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--ns-line-2); background: #FFFFFF; color: var(--ns-text); font-size: 12px; line-height: 1; }
+.txv-colonne-pages button:hover:not(:disabled) { color: var(--ns-ink); border-color: rgba(11, 13, 13, .14); }
+.txv-colonne-pages button:disabled { opacity: .4; cursor: default; }
 .txv-colonne-vide { margin: 14px 0 0; text-align: center; font-size: 14px; color: var(--ns-muted); }
 
 .txv-carte { padding: 14px; border-radius: 14px; border: 1px solid var(--txv-filet); background: #FFFFFF; box-shadow: 0 1px 2px rgba(11, 13, 13, .04), 0 6px 16px -10px rgba(11, 13, 13, .16); font-size: 14px; line-height: 1.4; }

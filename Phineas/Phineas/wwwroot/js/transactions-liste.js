@@ -25,6 +25,13 @@
   var corps = document.getElementById("liste-corps");
   var board = document.getElementById("pipeline");
   var CLE_VUE = "phineas.salesos.transactions.v1:vue";
+  var paginationListe = document.getElementById("pagination-liste");
+
+  // Au-delà de TRANSACTIONS_PAR_PAGE, la liste et chaque colonne du pipeline se découpent en pages.
+  var TRANSACTIONS_PAR_PAGE = 6;
+  // Page affichée de la liste, et page affichée de chaque colonne du pipeline (rangée par clé d'étape).
+  var pageListe = 1;
+  var pagesColonnes = {};
 
   // Icône de chaque état d'un axe : l'état se lit à la couleur ET à l'icône (jamais à la couleur seule).
   var ICONES_AXE = {
@@ -182,6 +189,66 @@
     return html;
   }
 
+  // ---------- Pagination ----------
+  // Page à afficher : la page demandée, ramenée entre 1 et la dernière page (la liste a pu raccourcir).
+  function pageValide(pageDemandee, total) {
+    var nbPages = Math.max(1, Math.ceil(total / TRANSACTIONS_PAR_PAGE));
+    return Math.min(Math.max(1, pageDemandee || 1), nbPages);
+  }
+  function morceauDePage(elements, page) {
+    var debut = (page - 1) * TRANSACTIONS_PAR_PAGE;
+    return elements.slice(debut, debut + TRANSACTIONS_PAR_PAGE);
+  }
+  // Une recherche, un filtre, un interrupteur ou un changement de vue repart de la première page.
+  function revenirPremierePage() {
+    pageListe = 1;
+    pagesColonnes = {};
+  }
+
+  // Numéros affichés : toutes les pages jusqu'à 7, sinon la première, la dernière et les voisines de la page courante.
+  // Un null marque un trou entre deux numéros (affiché « … »). Exemple pour 10 pages, page 5 : 1 … 4 5 6 … 10.
+  // Même règle que la liste des prospects et le Centre d'actions.
+  function numerosPages(nbPages, pageCourante) {
+    var numeros = [];
+    var precedent = 0;
+    for (var page = 1; page <= nbPages; page++) {
+      var estAuBord = page === 1 || page === nbPages;
+      var estVoisine = Math.abs(page - pageCourante) <= 1;
+      if (nbPages <= 7 || estAuBord || estVoisine) {
+        if (page - precedent > 1) numeros.push(null);
+        numeros.push(page);
+        precedent = page;
+      }
+    }
+    return numeros;
+  }
+  function boutonPage(numero, libelle, contenu, desactive, courant) {
+    var classe = "txv-page-btn";
+    if (courant) classe += " is-active";
+    return '<button type="button" class="' + classe + '" data-page="' + numero + '"' + (desactive ? " disabled" : "") +
+      (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
+  }
+  // Pied de la liste : « 1 à 6 sur 14 » à gauche, flèches et numéros à droite ; caché si tout tient sur une page.
+  function rendrePaginationListe(total) {
+    var nbPages = Math.ceil(total / TRANSACTIONS_PAR_PAGE);
+    paginationListe.hidden = nbPages <= 1;
+    if (nbPages <= 1) {
+      paginationListe.innerHTML = "";
+      return;
+    }
+    var debut = (pageListe - 1) * TRANSACTIONS_PAR_PAGE + 1;
+    var fin = Math.min(total, pageListe * TRANSACTIONS_PAR_PAGE);
+    var html = '<span class="txv-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
+      '<div class="txv-pages">' +
+      boutonPage(pageListe - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', pageListe === 1, false);
+    numerosPages(nbPages, pageListe).forEach(function (numero) {
+      if (numero === null) html += '<span class="txv-pages-trou" aria-hidden="true">…</span>';
+      else html += boutonPage(numero, "Page " + numero, String(numero), false, numero === pageListe);
+    });
+    html += boutonPage(pageListe + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', pageListe === nbPages, false) + "</div>";
+    paginationListe.innerHTML = html;
+  }
+
   // ---------- Vue Liste ----------
   function ligne(t, a) {
     return "<tr>" +
@@ -209,12 +276,26 @@
       '<div class="txv-carte-bas">' + ligneBasDeCarte(a) + "</div>" +
       "</article>";
   }
+  // Une colonne garde ses cartes 6 par 6 ; au-delà, une petite navigation « 1/2 » en bas de colonne.
   function colonne(etape, dossiers) {
+    var page = pageValide(pagesColonnes[etape.cle], dossiers.length);
+    pagesColonnes[etape.cle] = page;
+    var nbPages = Math.ceil(dossiers.length / TRANSACTIONS_PAR_PAGE);
+
     var contenu = '<p class="txv-colonne-vide">Aucune transaction</p>';
-    if (dossiers.length) contenu = dossiers.map(function (x) { return carte(x.t, x.a); }).join("");
+    if (dossiers.length) contenu = morceauDePage(dossiers, page).map(function (x) { return carte(x.t, x.a); }).join("");
+
+    var navigation = "";
+    if (nbPages > 1) {
+      navigation = '<div class="txv-colonne-pages">' +
+        '<button type="button" data-colonne="' + esc(etape.cle) + '" data-sens="-1"' + (page === 1 ? " disabled" : "") + ' aria-label="Cartes précédentes de ' + esc(etape.libelle) + '"><i class="bi bi-chevron-left"></i></button>' +
+        "<span>" + page + "/" + nbPages + "</span>" +
+        '<button type="button" data-colonne="' + esc(etape.cle) + '" data-sens="1"' + (page === nbPages ? " disabled" : "") + ' aria-label="Cartes suivantes de ' + esc(etape.libelle) + '"><i class="bi bi-chevron-right"></i></button>' +
+        "</div>";
+    }
     return '<section class="txv-colonne" role="listitem" aria-label="' + esc(etape.libelle) + ", " + dossiers.length + ' transaction(s)">' +
       '<header class="txv-colonne-tete"><span>' + esc(etape.libelle) + '</span><span class="txv-compte">' + dossiers.length + "</span></header>" +
-      '<div class="txv-cartes" role="list">' + contenu + "</div></section>";
+      '<div class="txv-cartes" role="list">' + contenu + "</div>" + navigation + "</section>";
   }
 
   function rendre() {
@@ -225,7 +306,9 @@
       var ox = estOuverte(x.a) ? 0 : 1, oy = estOuverte(y.a) ? 0 : 1;
       return ox - oy || y.a.blocages.length - x.a.blocages.length || (actionRequise(y.a) ? 1 : 0) - (actionRequise(x.a) ? 1 : 0) || new Date(y.t.dateCreation) - new Date(x.t.dateCreation);
     });
-    corps.innerHTML = liste.map(function (x) { return ligne(x.t, x.a); }).join("");
+    pageListe = pageValide(pageListe, liste.length);
+    corps.innerHTML = morceauDePage(liste, pageListe).map(function (x) { return ligne(x.t, x.a); }).join("");
+    rendrePaginationListe(liste.length);
 
     board.innerHTML = ref.etapesPipeline.map(function (e) {
       var dossiers = liste.filter(function (x) { return x.a.etapePipeline === e.cle; });
@@ -244,14 +327,42 @@
     racine.querySelectorAll("[data-effacer-filtres]").forEach(function (b) { b.hidden = !filtresActifs(); });
   }
 
+  function relancer() {
+    revenirPremierePage();
+    rendre();
+  }
   Object.keys(f).forEach(function (k) {
-    f[k].addEventListener(k === "recherche" ? "input" : "change", rendre);
+    f[k].addEventListener(k === "recherche" ? "input" : "change", relancer);
   });
   document.querySelectorAll('input[name="vue"]').forEach(function (r) {
     r.addEventListener("change", function () {
       try { window.sessionStorage.setItem(CLE_VUE, r.value); } catch (e) {}
-      rendre();
+      relancer();
     });
+  });
+
+  // Pagination de la liste : change de page et garde le focus sur la page choisie.
+  paginationListe.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-page]");
+    if (!bouton || bouton.disabled) return;
+    pageListe = Number(bouton.dataset.page);
+    rendre();
+    var pageCourante = paginationListe.querySelector('[aria-current="page"]');
+    if (pageCourante) pageCourante.focus();
+  });
+
+  // Navigation d'une colonne du pipeline : avance ou recule de 6 cartes et garde le focus dans la colonne.
+  board.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-colonne]");
+    if (!bouton || bouton.disabled) return;
+    var cle = bouton.dataset.colonne;
+    var sens = Number(bouton.dataset.sens);
+    pagesColonnes[cle] = (pagesColonnes[cle] || 1) + sens;
+    rendre();
+    var memeBouton = board.querySelector('[data-colonne="' + cle + '"][data-sens="' + sens + '"]');
+    var autreBouton = board.querySelector('[data-colonne="' + cle + '"][data-sens="' + (-sens) + '"]');
+    if (memeBouton && !memeBouton.disabled) memeBouton.focus();
+    else if (autreBouton) autreBouton.focus();
   });
   racine.addEventListener("click", function (e) {
     if (!e.target.closest("[data-effacer-filtres]")) return;
@@ -259,7 +370,7 @@
     ["etape", "mode", "financement", "departement", "livraison"].forEach(function (k) { f[k].value = ""; });
     f.conseiller.value = P.moiId;
     f.bloquees.checked = f.action.checked = false;
-    rendre();
+    relancer();
   });
   try {
     if (window.sessionStorage.getItem(CLE_VUE) === "pipeline") document.getElementById("vue-pipeline").checked = true;
