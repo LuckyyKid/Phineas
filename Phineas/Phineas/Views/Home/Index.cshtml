@@ -54,15 +54,16 @@
     //   Photo : nom du fichier de la photo détourée (fond transparent, PNG ou WebP, carré), à déposer
     //           dans wwwroot/images/equipe/ (ex. "marie-tremblay.png"). null = pas encore de photo.
     // Le fond vert de chaque portrait vient de la feuille de style (acc-portrait-1 à acc-portrait-4).
-    // Ne jamais inventer de nom, de visage ni de parcours.
+    // Les quatre personnes ci-dessous sont FICTIVES (noms et titres choisis à la demande de l'utilisateur
+    // pour la démonstration) : à remplacer par les vraies informations de l'équipe.
     // Nom de remplacement affiché tant que le vrai nom n'est pas fourni.
     const string NomAVenir = "Prénom Nom";
     var equipe = new[]
     {
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-1.webp"),
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-2.webp"),
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-3.webp"),
-        (Initiales: "PN", Nom: "Prénom Nom", Role: "Rôle dans l'équipe", Parcours: "Parcours, en une ligne", Photo: (string?)"equipe-4.webp")
+        (Initiales: "SL", Nom: "Samuel Lemieux", Role: "Cofondateur et directeur produit", Parcours: "Dix ans comme conseiller aux ventes en concession", Photo: (string?)"equipe-1.webp"),
+        (Initiales: "LF", Nom: "Léa Fortier", Role: "Designer de l'expérience conseiller", Parcours: "Conçoit les écrans utilisés chaque jour en salle de montre", Photo: (string?)"equipe-2.webp"),
+        (Initiales: "MD", Nom: "Malik Desrosiers", Role: "Responsable technique", Parcours: "Architecture .NET, MySQL et suivi en direct avec SignalR", Photo: (string?)"equipe-3.webp"),
+        (Initiales: "YB", Nom: "Yasmine Belhadj", Role: "Responsable sécurité et données", Parcours: "Protection des dossiers F&A et conformité à la Loi 25", Photo: (string?)"equipe-4.webp")
     };
     const int NombreFondsPortrait = 4;
 
