@@ -1,0 +1,161 @@
+/* =========================================================
+   Page « Transactions », vues Liste et Pipeline, en verre clair (maquettes 11 et 12).
+   Chargée par Views/Transactions/Index.cshtml après assistant-verre.css, qui fournit le haut de page,
+   les couleurs (variables --ns-) et les boutons (ns-btn). Ne contient que ce qui est propre à cette page (préfixe txv-).
+   ========================================================= */
+
+.txv-page {
+  --txv-rouge: #D93A2E;
+  --txv-rouge-texte: #B42318;
+  --txv-ambre: #E09A1C;
+  --txv-filet: rgba(11, 13, 13, .06);
+  --txv-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.txv-gris { color: var(--ns-muted); }
+.txv-sous { display: block; margin-top: 2px; font-size: 13px; color: var(--ns-muted); }
+.txv-ref { display: block; margin-top: 2px; font-family: var(--ns-mono); font-size: 12.5px; color: var(--ns-muted); }
+.txv-point { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.txv-point-rouge { background: var(--txv-rouge); }
+.txv-point-ambre { background: var(--txv-ambre); }
+
+/* ---------- En-tête ---------- */
+.txv-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
+.txv-entete .ns-label { margin-bottom: 0; }
+.txv-intro { margin: 0; font-size: 18px; color: var(--ns-text); }
+.txv-btn-principal { height: 42px; padding: 0 22px; font-size: 15px; white-space: nowrap; }
+.txv-btn-principal:hover { color: #FFFFFF; }
+
+/* ---------- Chiffres ---------- */
+.txv-chiffres { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
+.txv-chiffre { display: flex; flex-direction: column; gap: 12px; padding: 24px 22px 22px; border-radius: 20px; }
+.txv-chiffre-valeur { font-size: 36px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ns-ink); }
+.txv-chiffre-libelle { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; line-height: 1.4; color: var(--ns-text); }
+
+/* ---------- Grande carte : barre d'outils ---------- */
+.txv-module { padding: 0; overflow: hidden; }
+.txv-outils { display: flex; flex-direction: column; gap: 14px; padding: 22px 22px 16px; border-bottom: 1px solid var(--ns-line-2); }
+.txv-ligne-outils { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+
+.txv-recherche { position: relative; flex: 1 1 220px; min-width: 200px; }
+.txv-recherche i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ns-muted); pointer-events: none; }
+.txv-recherche input {
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 42px;
+  border-radius: 999px;
+  border: 1px solid var(--ns-line-2);
+  background: #FFFFFF;
+  font-size: 14.5px;
+  color: var(--ns-ink);
+}
+.txv-recherche input::placeholder { color: var(--ns-muted-2); }
+.txv-recherche input:focus { outline: none; border-color: var(--ns-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+
+/* Bascule Liste / Pipeline : pilule grise très pâle, position active en pilule blanche */
+.txv-bascule { display: inline-flex; padding: 4px; border-radius: 999px; background: rgba(11, 13, 13, .05); }
+.txv-bascule label { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px; border-radius: 999px; font-size: 14.5px; color: var(--ns-text); cursor: pointer; }
+.txv-bascule .btn-check:checked + label { background: #FFFFFF; color: var(--ns-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .14); }
+.txv-bascule .btn-check:focus-visible + label { outline: 2px solid var(--ns-menthe-ink); outline-offset: 2px; }
+
+.txv-select {
+  height: 40px;
+  padding: 0 38px 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--ns-line-2);
+  background: #FFFFFF var(--txv-chevron) no-repeat right 14px center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 14.5px;
+  color: var(--ns-ink);
+  cursor: pointer;
+}
+.txv-select:focus { outline: none; border-color: var(--ns-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+
+/* Interrupteurs : gris éteint, vert sapin allumé */
+.txv-interrupteur { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; margin: 0 6px; padding-left: 0; }
+.txv-interrupteur .form-check-input { float: none; width: 38px; height: 22px; margin: 0; border-color: var(--ns-line-2); background-color: rgba(11, 13, 13, .08); cursor: pointer; }
+.txv-interrupteur .form-check-input:checked { border-color: #17614F; background-color: #17614F; }
+.txv-interrupteur .form-check-input:focus { box-shadow: 0 0 0 3px rgba(29, 154, 130, .2); }
+.txv-interrupteur .form-check-label { font-size: 14.5px; color: var(--ns-ink); cursor: pointer; }
+
+.txv-effacer { height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font-size: 14px; font-weight: 500; color: var(--ns-sapin-texte); }
+.txv-effacer:hover { background: rgba(11, 13, 13, .04); }
+.txv-effacer[hidden] { display: none; }
+
+.txv-aide { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: 12px; color: var(--ns-muted); }
+.txv-aide strong { font-weight: 500; color: var(--ns-ink); }
+
+/* ---------- Pastilles d'axes : un rond par axe, couleur ET icône ---------- */
+.txv-axes { display: flex; gap: 4px; margin-top: 8px; }
+.txv-axe { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; line-height: 1; }
+.txv-axe-Terminee { background: linear-gradient(160deg, #17614F 0%, #0C3B32 100%); color: #FFFFFF; }
+.txv-axe-EnCours { background: rgba(95, 224, 192, .22); color: #127463; }
+.txv-axe-Bloquee { background: var(--txv-rouge); color: #FFFFFF; }
+.txv-axe-EnAttente { background: rgba(224, 154, 28, .18); color: var(--ns-ambre-ink); }
+.txv-axe-NonCommencee, .txv-axe-NonApplicable { background: rgba(11, 13, 13, .05); color: var(--ns-muted-2); }
+.txv-axe-NonCommencee i { font-size: 8px; }
+
+.txv-blocage, .txv-attente { display: flex; align-items: baseline; gap: 8px; font-weight: 500; }
+.txv-blocage { color: var(--txv-rouge-texte); }
+.txv-attente { color: var(--ns-ambre-ink); }
+.txv-blocage .txv-point, .txv-attente .txv-point { transform: translateY(-1px); }
+
+/* ---------- Vue Liste ---------- */
+.txv-defile { overflow-x: auto; padding: 4px 14px 14px; }
+.txv-table { width: 100%; min-width: 980px; border-collapse: separate; border-spacing: 0; font-size: 14.5px; color: var(--ns-ink); }
+.txv-table th {
+  padding: 18px 12px 12px;
+  font-family: var(--ns-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--ns-muted);
+}
+.txv-table td { padding: 18px 12px; vertical-align: top; border-top: 1px solid var(--txv-filet); line-height: 1.4; }
+.txv-table tbody tr { transition: background-color .15s ease; }
+.txv-table tbody tr:hover td { background: rgba(255, 255, 255, .85); }
+.txv-table tbody tr:hover td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+.txv-table tbody tr:hover td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+.txv-table td:nth-child(1) { width: 15%; }
+.txv-table td:nth-child(5) { width: 20%; }
+.txv-montant { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.txv-nom { font-weight: 500; color: var(--ns-ink); text-decoration: none; }
+.txv-nom:hover { color: var(--ns-sapin-texte); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Vue Pipeline : colonnes de 230 px minimum qui défilent dans la carte ---------- */
+.txv-colonnes {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 1fr);
+  gap: 12px;
+  padding: 20px 22px 22px;
+  overflow-x: auto;
+}
+.txv-colonne { display: flex; flex-direction: column; gap: 10px; min-height: 320px; padding: 10px; border-radius: 20px; background: rgba(11, 13, 13, .03); }
+.txv-colonne-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 8px 4px; font-size: 15px; font-weight: 500; color: var(--ns-ink); }
+.txv-compte { font-family: var(--ns-mono); font-size: 12px; font-weight: 400; color: var(--ns-muted); }
+.txv-cartes { display: flex; flex-direction: column; gap: 10px; }
+.txv-colonne-vide { margin: 14px 0 0; text-align: center; font-size: 14px; color: var(--ns-muted); }
+
+.txv-carte { padding: 14px; border-radius: 14px; border: 1px solid var(--txv-filet); background: #FFFFFF; box-shadow: 0 1px 2px rgba(11, 13, 13, .04), 0 6px 16px -10px rgba(11, 13, 13, .16); font-size: 14px; line-height: 1.4; }
+.txv-carte-vehicule { margin: 10px 0 0; color: var(--ns-ink); }
+.txv-carte-bas { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--txv-filet); font-size: 13.5px; }
+
+/* ---------- Aucun résultat ---------- */
+.txv-vide { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 20px; text-align: center; font-size: 15px; color: var(--ns-muted); }
+.txv-vide[hidden] { display: none; }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 1199.98px) {
+  .txv-chiffres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 767.98px) {
+  .txv-entete { flex-direction: column; align-items: flex-start; }
+  .txv-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .txv-outils { padding: 18px 16px 14px; }
+}

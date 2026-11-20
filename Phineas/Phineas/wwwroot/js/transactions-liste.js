@@ -1,4 +1,6 @@
-// Page « Transactions » : indicateurs, vue Liste et vue Pipeline, recherche et filtres sur les données locales.
+// Page « Transactions » (Views/Transactions/Index.cshtml) : chiffres, vue Liste et vue Pipeline, recherche et filtres
+// sur les données locales (window.Transactions). Rien n'est recalculé ici : l'analyse de chaque dossier vient de T.analyse.
+// Styles : transactions-liste-verre.css (préfixe txv-).
 (function () {
   "use strict";
 
@@ -23,6 +25,18 @@
   var corps = document.getElementById("liste-corps");
   var board = document.getElementById("pipeline");
   var CLE_VUE = "phineas.salesos.transactions.v1:vue";
+
+  // Icône de chaque état d'un axe : l'état se lit à la couleur ET à l'icône (jamais à la couleur seule).
+  var ICONES_AXE = {
+    Terminee: "bi-check-lg",
+    EnCours: "bi-arrow-repeat",
+    Bloquee: "bi-slash-circle",
+    EnAttente: "bi-hourglass-split",
+    NonCommencee: "bi-circle",
+    NonApplicable: "bi-dash",
+  };
+  // Statuts qui apportent une information de plus que l'étape et les pastilles : affichés sous l'étape.
+  var STATUTS_A_PRECISER = ["EnAttente", "LivraisonPlanifiee", "Cloturee", "Annulee"];
 
   function normaliser(s) {
     return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -63,7 +77,7 @@
     return !!(f.recherche.value.trim() || f.conseiller.value !== P.moiId || f.etape.value || f.mode.value || f.financement.value || f.departement.value || f.livraison.value || f.bloquees.checked || f.action.checked);
   }
 
-  // ---------- Indicateurs (mes transactions) ----------
+  // ---------- Chiffres (mes transactions) ----------
   function compteurs() {
     var miennes = T.liste().filter(function (t) { return t.conseillerId === P.moiId; });
     var c = { actives: 0, action: 0, bloquees: 0, financement: 0, pretes: 0, finalisees: 0 };
@@ -84,58 +98,123 @@
     });
   }
 
-  // ---------- Cellules communes ----------
+  // ---------- Morceaux communs à la liste et au pipeline ----------
+
+  // Quatre ronds de 20 px, un par axe (validation commerciale, financement, véhicule, livraison).
+  // L'infobulle donne l'axe et son état, ex. « Financement : bloqué ».
+  function pastillesAxes(a) {
+    var resume = a.axes.map(function (x) { return x.libelle + " : " + etatAxe(x); }).join(" ; ");
+    var ronds = a.axes.map(function (x) {
+      return '<span class="txv-axe txv-axe-' + esc(x.etat) + '" title="' + esc(x.libelle + " : " + etatAxe(x)) + '">' +
+        '<i class="bi ' + (ICONES_AXE[x.etat] || "bi-circle") + '" aria-hidden="true"></i></span>';
+    }).join("");
+    return '<span class="txv-axes" role="img" aria-label="' + esc(resume) + '">' + ronds + "</span>";
+  }
+  function etatAxe(x) {
+    return (ref.etatsEtape[x.etat] || x.etat).toLowerCase();
+  }
+
+  // « Financement complet » ; « Achat comptant, prix non figé » tant qu'aucune proposition n'est retenue.
+  function modeTexte(t) {
+    var texte = ref.modesAchat[t.modeAchat] || "";
+    var m = T.montants(t);
+    if (m && !m.figee) texte += ", prix non figé";
+    return texte;
+  }
   function montantTexte(t) {
     var m = T.montants(t);
-    if (!m) return '<span class="text-muted">À déterminer</span>';
-    return esc(UI.montant(m.totalEstime)) + (m.figee ? "" : ' <span class="tx-brouillon-tag">non figé</span>');
+    if (!m) return "À déterminer";
+    return UI.montant(m.totalEstime);
   }
-  function livraisonTexte(t, a) {
-    var d = t.livraison && t.livraison.datePrevue;
-    if (a.statut === "Livree" || a.statut === "Cloturee") return '<span class="pr-sous">Livrée le ' + esc(P.dateCourte(t.livraison.confirmeeLe || d)) + "</span>";
-    if (a.statut === "Annulee") return '<span class="text-muted">—</span>';
-    if (!d) return '<span class="text-muted">Non déterminée</span>';
-    return esc(P.dateCourte(d)) + '<span class="pr-sous d-block">' + esc(P.echeance(d)) + (a.statut === "LivraisonPlanifiee" ? " · rendez-vous planifié" : "") + "</span>";
+
+  // « N° DEMO-1058 · Reçu » : numéro d'inventaire et état du véhicule, en texte gris (pas de pastille colorée).
+  function vehiculeDetail(t) {
+    var v = T.vehiculeDe(t);
+    var morceaux = [];
+    if (v) morceaux.push("N° " + v.numeroStock);
+    var statut = T.statutVehicule(t.vehiculeId);
+    if (statut) morceaux.push(ref.statutsVehicule[statut] || statut);
+    return morceaux.join(" · ");
   }
-  function departementsTexte(a) {
-    if (!a.departementsAttendus.length) return '<span class="text-muted">—</span>';
-    return a.departementsAttendus.map(function (d) { return '<span class="tx-dep">' + esc(d.libelle) + "</span>"; }).join("");
+
+  // Blocage en rouge précédé d'un point ; sinon ce qui est en attente (ambre) ; sinon « Aucun blocage ».
+  function blocageTexte(a) {
+    if (a.blocages.length) {
+      var autres = a.blocages.length > 1 ? " (+" + (a.blocages.length - 1) + ")" : "";
+      return '<span class="txv-blocage"><span class="txv-point txv-point-rouge" aria-hidden="true"></span>' + esc(a.blocages[0].nature + autres) + "</span>";
+    }
+    var attente = a.elements.filter(function (e) { return e.niveau === "attente"; })[0];
+    if (attente) return '<span class="txv-attente"><span class="txv-point txv-point-ambre" aria-hidden="true"></span>' + esc(attente.nature) + "</span>";
+    return '<span class="txv-gris">Aucun blocage</span>';
+  }
+  function attenduTexte(a) {
+    if (!a.departementsAttendus.length) return "";
+    var noms = a.departementsAttendus.map(function (d) { return d.libelle; }).join(", ");
+    return '<span class="txv-sous">Attendu de : ' + esc(noms) + "</span>";
   }
   function prochaineTexte(a) {
     var p = a.prochaineAction;
-    return esc(p.texte) + (p.responsable ? '<span class="pr-sous d-block">' + esc(p.responsable.libelle) + "</span>" : "");
+    return esc(p.texte) + (p.responsable ? '<span class="txv-sous">' + esc(p.responsable.libelle) + "</span>" : "");
+  }
+  function livraisonTexte(t, a) {
+    var d = t.livraison && t.livraison.datePrevue;
+    if (a.statut === "Livree" || a.statut === "Cloturee") return "Livrée le " + esc(P.dateCourte(t.livraison.confirmeeLe || d));
+    if (a.statut === "Annulee") return '<span class="txv-gris">Annulée</span>';
+    if (!d) return '<span class="txv-gris">À déterminer</span>';
+    var precision = P.echeance(d);
+    if (a.statut === "LivraisonPlanifiee") precision += " · rendez-vous planifié";
+    return esc(P.dateCourte(d)) + '<span class="txv-sous">' + esc(precision) + "</span>";
   }
   function etapeLibelle(cle) {
     return (ref.etapesPipeline.filter(function (x) { return x.cle === cle; })[0] || { libelle: cle }).libelle;
   }
+  function statutPrecision(a) {
+    if (STATUTS_A_PRECISER.indexOf(a.statut) < 0) return "";
+    return '<span class="txv-sous">' + esc(T.statutAffiche(a.statut).libelle) + "</span>";
+  }
+  // Référence en mono, avec « Brouillon » et le conseiller quand ce n'est pas vous (dossiers fictifs de collègues).
+  function referenceTexte(t) {
+    var texte = t.reference;
+    if (t.brouillon) texte += " · Brouillon";
+    var conseiller = P.conseiller(t.conseillerId);
+    var html = '<span class="txv-ref">' + esc(texte) + "</span>";
+    if (!conseiller.moi) html += '<span class="txv-sous">' + esc(conseiller.nom) + " (fictif)</span>";
+    return html;
+  }
 
   // ---------- Vue Liste ----------
   function ligne(t, a) {
-    var cons = P.conseiller(t.conseillerId);
-    var v = T.vehiculeDe(t);
-    return '<tr class="' + (a.blocages.length ? "is-bloquee" : "") + '">' +
-      '<td data-label="Transaction"><a class="pr-nom" href="' + esc(T.urlDetail(t.id)) + '">' + esc(T.nomClient(t)) + "</a>" +
-      '<span class="pr-sous d-block">' + esc(t.reference) + (t.brouillon ? ' · <span class="tx-brouillon-tag">Brouillon</span>' : "") + "</span>" +
-      '<span class="pr-sous d-block">' + esc(cons.moi ? "Vous" : cons.nom + " (fictif)") + "</span></td>" +
-      '<td data-label="Véhicule">' + esc(T.nomVehicule(t)) + (v ? '<span class="pr-sous d-block">N° ' + esc(v.numeroStock) + "</span>" : "") + UI.pastilleVehicule(T.statutVehicule(t.vehiculeId)) + "</td>" +
-      '<td data-label="Montant et mode">' + montantTexte(t) + '<span class="pr-sous d-block">' + esc(ref.modesAchat[t.modeAchat]) + "</span></td>" +
-      '<td data-label="Étape">' + UI.pastilleStatut(a.statut) + '<span class="pr-sous d-block">' + esc(etapeLibelle(a.etapePipeline)) + "</span>" + UI.miniAxes(a) + "</td>" +
-      '<td data-label="Blocages">' + (a.blocages.length ? '<span class="tx-nb-blocages"><i class="bi bi-sign-stop-fill" aria-hidden="true"></i>' + a.blocages.length + "</span>" + UI.resumeBlocage(a) : '<span class="text-muted">Aucun</span>') + "</td>" +
-      '<td data-label="Département attendu">' + departementsTexte(a) + "</td>" +
-      '<td data-label="Prochaine action">' + prochaineTexte(a) + "</td>" +
-      '<td data-label="Livraison">' + livraisonTexte(t, a) + "</td></tr>";
+    return "<tr>" +
+      '<td><a class="txv-nom" href="' + esc(T.urlDetail(t.id)) + '">' + esc(T.nomClient(t)) + "</a>" + referenceTexte(t) + "</td>" +
+      "<td>" + esc(T.nomVehicule(t)) + '<span class="txv-sous">' + esc(vehiculeDetail(t)) + "</span></td>" +
+      '<td><span class="txv-montant">' + esc(montantTexte(t)) + '</span><span class="txv-sous">' + esc(modeTexte(t)) + "</span></td>" +
+      "<td>" + esc(etapeLibelle(a.etapePipeline)) + statutPrecision(a) + pastillesAxes(a) + "</td>" +
+      "<td>" + blocageTexte(a) + attenduTexte(a) + "</td>" +
+      "<td>" + prochaineTexte(a) + "</td>" +
+      "<td>" + livraisonTexte(t, a) + "</td></tr>";
   }
 
   // ---------- Vue Pipeline ----------
+  // Une seule ligne sous le filet : le blocage (rouge), sinon ce qui est en attente, sinon la prochaine action.
+  function ligneBasDeCarte(a) {
+    if (a.blocages.length || a.elements.some(function (e) { return e.niveau === "attente"; })) return blocageTexte(a);
+    return '<span class="txv-gris">' + esc(a.prochaineAction.texte) + "</span>";
+  }
   function carte(t, a) {
-    return '<article class="vcard pr-carte tx-carte' + (a.blocages.length ? " is-bloquee" : "") + '" role="listitem">' +
-      '<a class="pr-nom" href="' + esc(T.urlDetail(t.id)) + '">' + esc(T.nomClient(t)) + "</a>" +
-      '<div class="vcard-meta">' + esc(t.reference) + (t.brouillon ? " · Brouillon" : "") + "</div>" +
-      '<div class="pr-carte-ligne"><i class="bi bi-car-front"></i>' + esc(T.nomVehicule(t)) + "</div>" +
-      '<div class="pr-carte-ligne"><i class="bi bi-cash"></i>' + montantTexte(t) + " · " + esc(ref.modesAchat[t.modeAchat]) + "</div>" +
-      '<div class="tx-carte-axes">' + UI.pastilleStatut(a.statut) + UI.miniAxes(a) + "</div>" +
-      (UI.resumeBlocage(a) ? '<div class="pr-carte-action">' + UI.resumeBlocage(a) + "</div>" : "") +
+    var montant = montantTexte(t) + " · " + modeTexte(t);
+    return '<article class="txv-carte" role="listitem">' +
+      '<a class="txv-nom" href="' + esc(T.urlDetail(t.id)) + '">' + esc(T.nomClient(t)) + "</a>" + referenceTexte(t) +
+      '<p class="txv-carte-vehicule">' + esc(T.nomVehicule(t)) + '<span class="txv-sous">' + esc(montant) + "</span></p>" +
+      pastillesAxes(a) +
+      '<div class="txv-carte-bas">' + ligneBasDeCarte(a) + "</div>" +
       "</article>";
+  }
+  function colonne(etape, dossiers) {
+    var contenu = '<p class="txv-colonne-vide">Aucune transaction</p>';
+    if (dossiers.length) contenu = dossiers.map(function (x) { return carte(x.t, x.a); }).join("");
+    return '<section class="txv-colonne" role="listitem" aria-label="' + esc(etape.libelle) + ", " + dossiers.length + ' transaction(s)">' +
+      '<header class="txv-colonne-tete"><span>' + esc(etape.libelle) + '</span><span class="txv-compte">' + dossiers.length + "</span></header>" +
+      '<div class="txv-cartes" role="list">' + contenu + "</div></section>";
   }
 
   function rendre() {
@@ -149,15 +228,15 @@
     corps.innerHTML = liste.map(function (x) { return ligne(x.t, x.a); }).join("");
 
     board.innerHTML = ref.etapesPipeline.map(function (e) {
-      var cartes = liste.filter(function (x) { return x.a.etapePipeline === e.cle; });
-      return '<section class="board-col pr-col tx-col tx-col-' + esc(e.cle) + '" role="listitem" aria-label="' + esc(e.libelle) + ", " + cartes.length + ' transaction(s)">' +
-        '<header><span class="pr-col-titre">' + esc(e.libelle) + '</span><span class="count">' + cartes.length + "</span></header>" +
-        '<div class="board-cards" role="list">' + (cartes.length ? cartes.map(function (x) { return carte(x.t, x.a); }).join("") : '<div class="pr-col-vide">Aucune transaction</div>') + "</div></section>";
+      var dossiers = liste.filter(function (x) { return x.a.etapePipeline === e.cle; });
+      return colonne(e, dossiers);
     }).join("");
 
     var vide = !liste.length;
     document.getElementById("etat-vide").hidden = !vide;
-    document.querySelector("[data-vide-texte]").textContent = filtresActifs() ? "Aucune transaction ne correspond à ces critères." : "Vous n'avez encore aucune transaction. Ouvrez-en une depuis une soumission acceptée ou une opportunité.";
+    var texteVide = "Vous n'avez encore aucune transaction. Ouvrez-en une depuis une soumission acceptée ou une opportunité.";
+    if (filtresActifs()) texteVide = "Aucune transaction ne correspond.";
+    document.querySelector("[data-vide-texte]").textContent = texteVide;
     var pipeline = document.getElementById("vue-pipeline").checked;
     document.getElementById("vue-liste-contenu").hidden = pipeline || vide;
     document.getElementById("vue-pipeline-contenu").hidden = !pipeline || vide;
