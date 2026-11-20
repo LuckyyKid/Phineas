@@ -30,7 +30,9 @@
         {
             if (entree.Enfants is { } enfants)
             {
-                <details class="ph-groupe" open="@enfants.Any(EstActive)">
+                // Le groupe s'ouvre et passe en vert sapin quand une de ses pages est affichée.
+                var groupeActif = enfants.Any(EstActive);
+                <details class="ph-groupe @(groupeActif ? "is-active" : "")" open="@groupeActif">
                     <summary><i class="bi @entree.Icone"></i>@entree.Libelle</summary>
                     <div class="ph-sous-nav">
                         @foreach (var enfant in enfants)

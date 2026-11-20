@@ -1,3 +1,6 @@
+@* Assistant « Nouvelle soumission » en 3 étapes (client et opportunité, véhicule, offre), puis écran de confirmation.
+   Données : prospects et soumissions de démonstration (SoumissionsController.Nouvelle).
+   Interactions : wwwroot/js/soumissions-nouvelle.js. Styles : bloc « Nouvelle soumission » de soumissions.css. *@
 @using Phineas.Models.ViewModels.Conseiller
 @model SoumissionsPageViewModel
 @{
@@ -6,101 +9,101 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
 }
 
-<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Soumissions</a>
-
-<header class="sv-head">
-    <div>
-        <h1>Nouvelle soumission</h1>
-        <p class="text-muted mb-0">Les informations déjà connues du dossier sont reprises automatiquement.</p>
-    </div>
-</header>
-
-<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
-
-<div id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId">
-    <ol class="so-etapes" aria-label="Étapes de création">
-        <li><button type="button" data-aller="1"><span>1</span>Client et opportunité</button></li>
-        <li><button type="button" data-aller="2"><span>2</span>Véhicule</button></li>
-        <li><button type="button" data-aller="3"><span>3</span>Offre</button></li>
-    </ol>
-
-    @* ---------- Étape 1 ---------- *@
-    <section class="so-etape" data-etape="1" aria-labelledby="titre-etape-1">
-        <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et opportunité</h2>
-        <div class="row g-4">
-            <div class="col-lg-5">
-                <div class="card">
-                    <div class="card-header sv-card-header"><span><i class="bi bi-person me-2"></i>Client</span></div>
-                    <div class="card-body pb-2">
-                        <div class="pr-search mw-100">
-                            <i class="bi bi-search" aria-hidden="true"></i>
-                            <input type="search" class="form-control" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
-                        </div>
-                    </div>
-                    <div class="so-choix-liste" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
-                </div>
-            </div>
-            <div class="col-lg-7 d-flex flex-column gap-4">
-                <div class="card">
-                    <div class="card-header sv-card-header"><span><i class="bi bi-briefcase me-2"></i>Opportunité</span></div>
-                    <div class="card-body" data-zone="opportunites">
-                        <p class="text-muted mb-0">Choisissez d'abord un prospect.</p>
-                    </div>
-                </div>
-                <div class="card" data-zone="besoins" hidden></div>
-            </div>
+<div class="ns-page" id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId">
+    <div class="ns-haut">
+        <nav class="ns-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Nouvelle soumission</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
+        <div class="ns-puces" role="note" title="Prospects, véhicules et montants fictifs. Rien n'est enregistré en base.">
+            <span class="ns-chip-demo">Démo</span>
+            <span class="ns-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="ns-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="ns-en-ligne"><span class="ns-point-vert" aria-hidden="true"></span>En ligne</span>
         </div>
-    </section>
+    </div>
 
-    @* ---------- Étape 2 ---------- *@
-    <section class="so-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
-        <h2 class="visually-hidden" id="titre-etape-2">Étape 2 : véhicule</h2>
-        <div class="card">
-            <div class="pr-toolbar">
-                <div class="pr-search">
+    <a class="ns-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Soumissions</a>
+    <h1 class="ns-titre">Nouvelle soumission</h1>
+    <p class="ns-intro">Les informations déjà connues du dossier sont reprises automatiquement.</p>
+
+    <div data-assistant>
+        <ol class="ns-etapes" aria-label="Étapes de création">
+            <li><button type="button" data-aller="1"><span class="ns-num">1</span>Client et opportunité</button></li>
+            <li><button type="button" data-aller="2"><span class="ns-num">2</span>Véhicule</button></li>
+            <li><button type="button" data-aller="3"><span class="ns-num">3</span>Offre</button></li>
+        </ol>
+
+        @* ---------- Étape 1 : client et opportunité ---------- *@
+        <section class="ns-etape ns-deux-cartes" data-etape="1" aria-labelledby="titre-etape-1">
+            <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et opportunité</h2>
+            <div class="ns-verre ns-carte">
+                <p class="ns-label">Client</p>
+                <div class="ns-recherche">
                     <i class="bi bi-search" aria-hidden="true"></i>
-                    <input type="search" class="form-control" id="n-recherche-vehicule" placeholder="Marque, modèle, année ou n° d'inventaire" aria-label="Rechercher un véhicule" autocomplete="off" />
+                    <input type="search" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
                 </div>
-                <div class="form-check form-switch pr-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="n-indisponibles" />
-                    <label class="form-check-label" for="n-indisponibles">Afficher les véhicules vendus</label>
+                <div class="ns-clients" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+            </div>
+            <div class="ns-verre ns-carte">
+                <p class="ns-label">Opportunité</p>
+                <div data-zone="opportunite">
+                    <div class="ns-vide"><i class="bi bi-person"></i><span>Choisissez d'abord un prospect.</span></div>
                 </div>
             </div>
-            <div class="so-besoin-rappel" data-zone="rappel-besoin"></div>
-            <div class="so-vehicules" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
-            <div class="pr-etat-vide" data-zone="vehicules-vide" hidden>
-                <i class="bi bi-car-front"></i><strong>Aucun véhicule trouvé</strong><span>Modifiez la recherche.</span>
-            </div>
-            <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-cone-striped me-1"></i>Inventaire de démonstration : véhicules fictifs, l'inventaire réel n'est ni lu ni modifié.</p>
-        </div>
-    </section>
+        </section>
 
-    @* ---------- Étape 3 ---------- *@
-    <section class="so-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
-        <h2 class="visually-hidden" id="titre-etape-3">Étape 3 : offre</h2>
-        <div class="row g-4">
-            <div class="col-lg-7">
-                <div class="card"><div class="card-body"><partial name="_EditeurOffre" model="Model" /></div></div>
+        @* ---------- Étape 2 : véhicule ---------- *@
+        <section class="ns-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
+            <div class="ns-verre ns-carte">
+                <div class="ns-question">
+                    <h2 id="titre-etape-2">Quel véhicule proposer ?</h2>
+                    <span data-zone="pour-client-2"></span>
+                </div>
+                <div class="ns-recherche ns-recherche-vehicule">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="n-recherche-vehicule" placeholder="Marque, modèle, année ou n° d'inventaire" aria-label="Rechercher un véhicule" autocomplete="off" />
+                </div>
+                <div class="ns-tuiles" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
+                <p class="ns-vide-texte" data-zone="vehicules-vide" hidden>Aucun véhicule ne correspond à cette recherche.</p>
+                <nav class="ns-pagination" data-zone="pagination-vehicules" aria-label="Pages de véhicules" hidden></nav>
             </div>
-            <div class="col-lg-5">
-                <section class="card pr-resume-collant">
-                    <div class="card-header sv-card-header"><span><i class="bi bi-receipt me-2"></i>Détail du prix</span><span class="badge-soft sv-fictif">Illustratif</span></div>
-                    <div class="card-body" data-zone="detail-prix" aria-live="polite"></div>
-                </section>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <div class="so-navigation">
-        <button type="button" class="btn btn-outline-secondary" data-precedent>Précédent</button>
-        <span class="so-navigation-aide text-muted small" data-aide aria-live="polite"></span>
-        <button type="button" class="btn btn-primary" data-suivant>Suivant</button>
-        <button type="button" class="btn btn-primary" data-creer hidden><i class="bi bi-check2 me-1"></i>Créer le brouillon</button>
+        @* ---------- Étape 3 : offre ---------- *@
+        <section class="ns-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
+            <div class="ns-verre ns-carte">
+                <div class="ns-question">
+                    <h2 id="titre-etape-3">Quelle offre proposer ?</h2>
+                    <span data-zone="pour-client-3"></span>
+                </div>
+                <div class="ns-tuiles ns-tuiles-3" role="radiogroup" aria-label="Offre" data-zone="offres"></div>
+                <p class="ns-note">Le détail (options, financement, échange) se règle ensuite dans la fiche de la soumission.</p>
+            </div>
+        </section>
+
+        <div class="ns-boutons">
+            <button type="button" class="ns-btn ns-btn-verre" data-precedent>Précédent</button>
+            <button type="button" class="ns-btn ns-btn-sapin" data-suivant disabled>Suivant<i class="bi bi-arrow-right"></i></button>
+            <button type="button" class="ns-btn ns-btn-sapin" data-creer disabled hidden>Créer la soumission</button>
+            <span class="ns-aide" data-aide aria-live="polite"></span>
+        </div>
     </div>
+
+    @* ---------- Écran final ---------- *@
+    <section class="ns-fin" data-fin hidden aria-labelledby="titre-fin" tabindex="-1">
+        <span class="ns-fin-icone" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+        <h2 class="ns-fin-titre" id="titre-fin">Soumission prête</h2>
+        <dl class="ns-fin-recap" data-zone="recap"></dl>
+        <div class="ns-fin-boutons">
+            <a class="ns-btn ns-btn-blanc" asp-action="Index">Retour : Soumissions</a>
+            <a class="ns-btn ns-btn-translucide" href="#" data-ouvrir>Ouvrir la soumission</a>
+            <button type="button" class="ns-btn ns-btn-translucide" data-recommencer>Recommencer</button>
+        </div>
+    </section>
 </div>
 
 <partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
@@ -110,7 +113,5 @@
     <script src="~/js/prospects-store.js" asp-append-version="true"></script>
     <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
     <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
-    <script src="~/js/soumissions-composants.js" asp-append-version="true"></script>
-    <script src="~/js/soumissions-editeur.js" asp-append-version="true"></script>
     <script src="~/js/soumissions-nouvelle.js" asp-append-version="true"></script>
 }
