@@ -236,3 +236,65 @@
   .sl-select { max-width: none; flex: 1 1 160px; }
   .sl-pagination { padding: 16px 20px; }
 }
+
+/* =========================================================
+   Thème sombre (html[data-theme="sombre"], voir wwwroot/js/theme.js et theme-sombre.css)
+   Liste des soumissions (.sl-page) : verre sombre, bouton principal blanc, statuts en point + libellé
+   (menthe : prête ou acceptée ; ambre : en attente ; gris clair : envoyée ; gris : brouillon, expirée).
+   ========================================================= */
+html[data-theme="sombre"] .sl-page {
+  --sl-ink: var(--ps-texte);
+  --sl-text: var(--ps-texte-courant);
+  --sl-muted: var(--ps-texte-second);
+  --sl-muted-2: var(--ps-texte-discret);
+  --sl-line: var(--ps-filet);
+  --sl-line-2: var(--ps-filet-2);
+  --sl-sapin: var(--ps-btn-principal);
+  --sl-sapin-ink: var(--ps-menthe);
+  --sl-sapin-texte: var(--ps-menthe);
+  --sl-menthe-ink: var(--ps-menthe);
+  --sl-rouge-texte: var(--ps-rose-texte);
+  --sl-ambre: var(--ps-ambre);
+  --sl-ambre-ink: var(--ps-ambre);
+  --sl-ombre: none;
+}
+html[data-theme="sombre"] .sl-page :focus-visible { outline-color: var(--ps-focus); }
+html[data-theme="sombre"] .sl-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Haut de page */
+html[data-theme="sombre"] .sl-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .sl-demo-reset:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .sl-en-ligne { background: var(--ps-btn-second); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .sl-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+
+/* Boutons : l'action principale est BLANCHE */
+html[data-theme="sombre"] .sl-btn-sapin,
+html[data-theme="sombre"] .sl-btn-sapin:hover { color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .sl-btn-secondaire { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .sl-btn-secondaire:hover { border-color: var(--ps-contour-survol); }
+
+/* Cartes de chiffres : contour plus clair au survol */
+html[data-theme="sombre"] .sl-chiffre { transition: border-color .15s ease; }
+html[data-theme="sombre"] .sl-chiffre:hover { border-color: var(--ps-contour-survol); }
+
+/* Barre d'outils : recherche et menus */
+html[data-theme="sombre"] .sl-recherche input { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .sl-select {
+  background: var(--ps-champ) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23A5ACAB' stroke-width='1.6' d='m3 6 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
+  border-color: var(--ps-champ-contour);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .sl-recherche input:focus,
+html[data-theme="sombre"] .sl-select:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+
+/* Tableau */
+html[data-theme="sombre"] .sl-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .sl-st-Envoyee { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .sl-st-Envoyee .sl-statut-point { background: var(--ps-texte-courant); }
+html[data-theme="sombre"] .sl-st-Acceptee .sl-statut-point { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .sl-ouvrir { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-menthe); }
+html[data-theme="sombre"] .sl-ouvrir:hover { border-color: var(--ps-contour-survol); color: var(--ps-texte); }
+
+/* Pagination */
+html[data-theme="sombre"] .sl-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .sl-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); box-shadow: none; }

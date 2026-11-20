@@ -727,3 +727,65 @@
     box-shadow: inset 3px 0 0 var(--tx-critique);
   }
 }
+
+/* =========================================================
+   Thème sombre (html[data-theme="sombre"], voir wwwroot/js/theme.js et theme-sombre.css)
+   1. Fiche, Deal Control Tower et tableau de bord (classes tx-, dans la coque .ph-espace).
+   2. Assistant Nouvelle transaction (.nt-page) ; le reste de l'assistant est dans assistant-verre.css.
+   ========================================================= */
+/* Couleurs d'état en teintes claires : vert menthe fait, ambre attente, rose blocage */
+html[data-theme="sombre"] {
+  --tx-critique: var(--ps-rose-texte);
+  --tx-attente: var(--ps-ambre);
+  --tx-info: var(--ps-texte-second);
+  --tx-ok: var(--ps-menthe);
+}
+html[data-theme="sombre"] .tx-statut,
+html[data-theme="sombre"] .tx-etat,
+html[data-theme="sombre"] .tx-fin,
+html[data-theme="sombre"] .tx-paie,
+html[data-theme="sombre"] .tx-origine { background: color-mix(in srgb, var(--c) 14%, transparent); }
+html[data-theme="sombre"] .tx-mini-seg { background: color-mix(in srgb, var(--c) 18%, transparent); }
+html[data-theme="sombre"] .tx-st-EnAttente { --c: #B9A7F5; }
+html[data-theme="sombre"] .tx-st-LivraisonPlanifiee,
+html[data-theme="sombre"] .tx-origine-departement { --c: #7FD8C4; }
+html[data-theme="sombre"] .tx-st-Livree { --c: var(--ps-texte-courant); }
+html[data-theme="sombre"] .tx-st-Cloturee,
+html[data-theme="sombre"] .tx-et-NonCommencee,
+html[data-theme="sombre"] .tx-fin,
+html[data-theme="sombre"] .tx-paie-Aucun,
+html[data-theme="sombre"] .tx-paie-EnAttente { --c: var(--ps-texte-second); }
+html[data-theme="sombre"] .tx-et-NonApplicable { --c: var(--ps-texte-discret); }
+html[data-theme="sombre"] .tx-st-Annulee { --c: var(--ps-rose-texte); }
+html[data-theme="sombre"] .tx-origine { --c: var(--ps-texte-courant); }
+html[data-theme="sombre"] .tx-origine-simulation { --c: var(--ps-ambre); }
+
+html[data-theme="sombre"] .tx-brouillon-tag { border-color: rgba(255, 210, 138, .5); background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .tx-dep { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .tx-q-alerte { background: var(--ps-rose-fond); }
+html[data-theme="sombre"] .tx-q-alerte li { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .tx-etape.tx-et-NonApplicable { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .tx-etape.tx-et-NonApplicable .tx-etape-nom { text-decoration-color: rgba(255, 255, 255, .25); }
+html[data-theme="sombre"] .tx-element { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .tx-element.tx-niv-critique { background: var(--ps-rose-fond); }
+html[data-theme="sombre"] .tx-taches .tx-tache-AFaire > i { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .tx-simulation { border-color: rgba(255, 210, 138, .45); background: var(--ps-ambre-fond); }
+html[data-theme="sombre"] .tx-distinction { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .tx-refus { border-color: var(--ps-rose-contour); background: var(--ps-rose-fond); }
+html[data-theme="sombre"] .tx-gagnee { background: var(--ps-menthe-fond); }
+html[data-theme="sombre"] .tx-tl-simulation .pr-tl-icone { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .tx-tl-departement .pr-tl-icone { background: var(--ps-menthe-fond); color: #7FD8C4; }
+
+/* ---------- Assistant Nouvelle transaction (.nt-page) ---------- */
+html[data-theme="sombre"] .nt-page .nt-origine { background: var(--ps-btn-second); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .nt-etiquette-brouillon { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .ns-fin .nt-sous,
+html[data-theme="sombre"] .ns-fin .ns-attenue { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .nt-alerte.is-bloquant,
+html[data-theme="sombre"] .nt-erreur { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .nt-champ { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .nt-champ::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .nt-champ:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .nt-champ.is-invalid { border-color: var(--ps-rose); }
+html[data-theme="sombre"] .nt-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .nt-interrupteur .form-check-input:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
