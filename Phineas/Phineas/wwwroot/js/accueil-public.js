@@ -253,3 +253,36 @@
     });
   }
 })();
+
+// ---------- Vidéo de présentation (section À propos) ----------
+// Ouvre la fenêtre de la vidéo ; la ferme avec la croix, Échap (géré par dialog) ou un clic à côté de la vidéo.
+// La vidéo s'arrête à la fermeture.
+(function () {
+  "use strict";
+
+  var bouton = document.querySelector("[data-ouvrir-video]");
+  var fenetre = document.querySelector("[data-video-fenetre]");
+  if (!bouton || !fenetre || typeof fenetre.showModal !== "function") return;
+  var video = fenetre.querySelector("[data-video]");
+
+  bouton.addEventListener("click", function () {
+    fenetre.showModal();
+    if (video) video.play().catch(function () { /* lecture refusée par le navigateur : l'utilisateur appuie sur lecture */ });
+  });
+
+  function fermer() {
+    fenetre.close();
+  }
+  fenetre.querySelector("[data-fermer-video]").addEventListener("click", fermer);
+
+  // Un clic sur le fond voilé (en dehors du contenu de la fenêtre) ferme la vidéo.
+  fenetre.addEventListener("click", function (evenement) {
+    if (evenement.target === fenetre) fermer();
+  });
+
+  fenetre.addEventListener("close", function () {
+    if (video) video.pause();
+    bouton.focus();
+  });
+})();
+
