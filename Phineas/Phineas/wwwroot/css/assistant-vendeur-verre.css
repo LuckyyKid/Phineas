@@ -202,3 +202,44 @@
   .av-saisie-ligne { flex-direction: column; align-items: stretch; }
   .av-reponse { max-width: 100%; }
 }
+
+/* =========================================================
+   Thème sombre · Assistant vendeur (contrat : wwwroot/js/theme.js)
+   Les textes suivent --ogp-* (redéfinies dans outils.css) ; ici, le verre, les champs,
+   les modes, les bulles et le bouton « Demander » (blanc, seul bouton principal).
+   ========================================================= */
+html[data-theme="sombre"] .av-page {
+  --av-menthe-pale: var(--ps-menthe-fond);
+  --av-menthe-etiquette: var(--ps-menthe-fond);
+  --av-ambre-fond: var(--ps-ambre-fond);
+  --av-ambre-texte: var(--ps-ambre);
+}
+html[data-theme="sombre"] .av-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; backdrop-filter: var(--ps-verre-flou); -webkit-backdrop-filter: var(--ps-verre-flou); }
+
+/* Champs (dossier, menu du mode, question) */
+html[data-theme="sombre"] .av-select,
+html[data-theme="sombre"] .av-question { border-color: var(--ps-champ-contour); background: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-select:focus,
+html[data-theme="sombre"] .av-question:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .av-question.is-invalid { border-color: var(--ps-rose); }
+html[data-theme="sombre"] .av-vide-pointille { border-color: var(--ps-contour-survol); }
+
+/* Modes en pilules : le mode choisi est une pilule claire translucide */
+html[data-theme="sombre"] .av-mode { border-color: var(--ps-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-mode:hover { background: var(--ps-survol); border-color: var(--ps-contour-survol); box-shadow: none; }
+html[data-theme="sombre"] .av-mode.is-active { border-color: var(--ps-actif-contour); background: var(--ps-actif); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .av-mode.is-active i { color: var(--ps-menthe); }
+
+/* Conversation : question en menthe translucide, réponse en surface sombre */
+html[data-theme="sombre"] .av-question-bulle { background: var(--ps-menthe-fond); color: #CFF5EA; }
+html[data-theme="sombre"] .av-reponse { border-color: var(--ps-contour); background: var(--ps-surface); box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .8); }
+html[data-theme="sombre"] .av-bouton { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-bouton:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-etiquette { background: var(--ps-menthe-fond); color: #CFF5EA; }
+html[data-theme="sombre"] .av-etiquette:hover { color: var(--ps-texte); }
+html[data-theme="sombre"] .av-etiquette-neutre { background: var(--ps-survol); color: var(--ps-texte-second); }
+
+/* Bouton « Demander » : blanc quand il est actif, éteint sinon */
+html[data-theme="sombre"] .av-demander { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .av-demander:disabled { background: rgba(255, 255, 255, .06); color: var(--ps-texte-discret); box-shadow: none; }

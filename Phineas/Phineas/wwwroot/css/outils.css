@@ -628,3 +628,86 @@
 }
 .og-page .ov-simulation i { color: var(--ogp-sapin-texte); }
 .og-page .ov-simulation strong { font-weight: 500; color: var(--ogp-ink); }
+
+/* =========================================================
+   Thème sombre · pages Outils (contrat : wwwroot/js/theme.js, palette : theme-sombre.css)
+   Les quatre pages (Assistant, Studio d'annonces, Acquisition, Performances) partagent
+   les variables --ogp-* de .og-page : on les redéfinit ici, puis chaque feuille de page
+   corrige ce que les variables ne couvrent pas. Les règles claires ci-dessus ne changent pas.
+   ========================================================= */
+html[data-theme="sombre"] .og-page {
+  --ogp-ink: var(--ps-texte);
+  --ogp-text: var(--ps-texte-courant);
+  --ogp-muted: var(--ps-texte-second);
+  --ogp-muted-2: var(--ps-texte-discret);
+  --ogp-line: var(--ps-filet);
+  --ogp-line-2: var(--ps-filet-2);
+  --ogp-sapin: var(--ps-actif);          /* fond d'un élément choisi (le texte est corrigé dans chaque page) */
+  --ogp-sapin-ink: #CFF5EA;              /* texte sur fond menthe pâle */
+  --ogp-sapin-texte: var(--ps-menthe);   /* liens et icônes d'accent */
+  --ogp-menthe-ink: var(--ps-menthe);
+  --ogp-ambre: var(--ps-ambre);
+  --ogp-ambre-ink: var(--ps-ambre);
+  --ogp-ombre: none;
+}
+html[data-theme="sombre"] .og-page :focus-visible { outline-color: var(--ps-focus); }
+
+/* Haut de page commun (_HautOutils et hauts propres aux pages) */
+html[data-theme="sombre"] .og-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .og-demo-reset:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .og-en-ligne { border-color: var(--ps-contour); background: var(--ps-btn-second); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .og-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+
+/* Boutons Bootstrap restylés : principal blanc, secondaires en verre */
+html[data-theme="sombre"] .og-page .btn-primary,
+html[data-theme="sombre"] .og-page .btn-primary:hover,
+html[data-theme="sombre"] .og-page .btn-primary:focus { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .og-page .btn-outline-primary,
+html[data-theme="sombre"] .og-page .btn-outline-secondary { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .og-page .btn-outline-primary:hover,
+html[data-theme="sombre"] .og-page .btn-outline-secondary:hover { border-color: var(--ps-contour-survol); background: var(--ps-survol); color: var(--ps-texte); }
+
+/* Cartes, chiffres, champs, tableaux et onglets communs */
+html[data-theme="sombre"] .og-page .sv-kpi,
+html[data-theme="sombre"] .og-page .card { border-color: var(--ps-contour); background: var(--ps-verre); box-shadow: none; }
+html[data-theme="sombre"] .og-page .form-control,
+html[data-theme="sombre"] .og-page .pr-search .form-control,
+html[data-theme="sombre"] .og-page .form-select { border-color: var(--ps-champ-contour); background-color: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .og-page .form-control:focus,
+html[data-theme="sombre"] .og-page .form-select:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .og-page .form-switch .form-check-input { border-color: var(--ps-champ-contour); background-color: var(--ps-piste); }
+html[data-theme="sombre"] .og-page .form-switch .form-check-input:checked,
+html[data-theme="sombre"] .og-page .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .og-page .table tbody tr:hover > * { background: var(--ps-survol); }
+html[data-theme="sombre"] .og-page .pr-onglets { background: var(--ps-btn-second); }
+html[data-theme="sombre"] .og-page .pr-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .og-page .badge-soft { background: var(--ps-survol); color: var(--ps-texte-courant); }
+
+/* Pagination à 6 */
+html[data-theme="sombre"] .og-page .og-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .og-page .og-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+
+/* Encadré « simulation » de la page restylée */
+html[data-theme="sombre"] .og-page .ov-simulation { border-color: var(--ps-contour); background: var(--ps-verre); }
+
+/* Anciens composants du module (ov-), encore utilisés dans les fiches prospect, soumission,
+   rendez-vous et transaction par outils-liens.js : couleurs claires écrites en dur remplacées. */
+html[data-theme="sombre"] .ov-simulation,
+html[data-theme="sombre"] .ov-badge-simulation { border-color: rgba(255, 210, 138, .45); background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .ov-non-connecte { border-color: var(--ps-contour); background: var(--ps-btn-second); }
+html[data-theme="sombre"] .ov-non-connecte,
+html[data-theme="sombre"] .ov-nc { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ov-bulle-assistant { background: var(--ps-surface); }
+html[data-theme="sombre"] .ov-hors-contexte,
+html[data-theme="sombre"] .ov-validation,
+html[data-theme="sombre"] .ov-code,
+html[data-theme="sombre"] .ov-photo { background: var(--ps-surface-2); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ov-apercu { background: var(--ps-surface); }
+html[data-theme="sombre"] .ov-type,
+html[data-theme="sombre"] .ov-statut { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .ov-source { background: var(--ps-menthe-fond); color: #CFF5EA; }
+html[data-theme="sombre"] .ov-manquant,
+html[data-theme="sombre"] .ov-verifier li.is-alerte { color: var(--ps-ambre); }
+html[data-theme="sombre"] .ov-etapes li.is-active { border-color: var(--ps-actif-contour); background: var(--ps-actif); color: var(--ps-texte); }
+html[data-theme="sombre"] .ov-etapes li.is-fait { color: var(--ps-menthe); }
+html[data-theme="sombre"] .ov-variante.is-retenue { border-color: var(--ps-menthe); box-shadow: 0 0 0 2px rgba(95, 224, 192, .2); }

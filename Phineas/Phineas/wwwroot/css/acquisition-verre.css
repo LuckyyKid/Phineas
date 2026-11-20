@@ -304,3 +304,62 @@
   .acq-actions, .acq-contact { flex-direction: column; align-items: flex-start; }
   .acq-module-tete { flex-direction: column; align-items: flex-start; }
 }
+
+/* =========================================================
+   Thème sombre · Acquisition commerciale, six onglets (contrat : wwwroot/js/theme.js)
+   Les textes suivent --ogp-* (outils.css).
+   ========================================================= */
+html[data-theme="sombre"] .acq-page {
+  --acq-menthe: var(--ps-menthe);
+  --acq-menthe-pale: var(--ps-menthe-fond);
+  --acq-sapin-clair: var(--ps-menthe);
+  --acq-gris-pale: rgba(255, 255, 255, .06);
+  --acq-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23A5ACAB' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+}
+html[data-theme="sombre"] .acq-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; backdrop-filter: var(--ps-verre-flou); -webkit-backdrop-filter: var(--ps-verre-flou); }
+
+/* Bouton « Studio d'annonces » et onglets */
+html[data-theme="sombre"] .acq-btn-verre { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .acq-btn-verre:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-page .acq-onglets { border-color: var(--ps-contour); background: var(--ps-verre); }
+html[data-theme="sombre"] .acq-page .acq-onglets .nav-link:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .acq-page .acq-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+
+/* Répartitions : piste claire translucide, barre menthe qui s'éclaircit vers la valeur */
+html[data-theme="sombre"] .acq-barre-piste { background: var(--ps-piste); }
+html[data-theme="sombre"] .acq-barre-piste span { background: linear-gradient(90deg, #2FA98A 0%, var(--ps-menthe) 100%); }
+
+/* Tableaux et pastilles */
+html[data-theme="sombre"] .acq-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .acq-avatar { color: #CFF5EA; }
+html[data-theme="sombre"] .acq-statut-publiee { color: #CFF5EA; }
+html[data-theme="sombre"] .acq-pastille-blanche { border-color: var(--ps-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+
+/* Boutons ronds (copier, prévisualiser) et boutons blancs secondaires */
+html[data-theme="sombre"] .acq-rond,
+html[data-theme="sombre"] .acq-btn-blanc { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); }
+html[data-theme="sombre"] .acq-btn-blanc { color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-rond:hover:not(:disabled),
+html[data-theme="sombre"] .acq-btn-blanc:hover { border-color: var(--ps-contour-survol); background: var(--ps-survol); box-shadow: none; }
+html[data-theme="sombre"] .acq-btn-blanc:hover { color: var(--ps-texte); }
+
+/* Pagination (ronds de 34 px propres à la page) */
+html[data-theme="sombre"] .acq-page .og-page-btn.is-active { border-color: var(--ps-actif-contour); box-shadow: none; }
+
+/* Formulaires : champs sombres, bouton principal blanc */
+html[data-theme="sombre"] .acq-input,
+html[data-theme="sombre"] .acq-select,
+html[data-theme="sombre"] .acq-texte { border-color: var(--ps-champ-contour); background-color: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-input:focus,
+html[data-theme="sombre"] .acq-select:focus,
+html[data-theme="sombre"] .acq-texte:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .acq-page .is-invalid { border-color: var(--ps-rose); }
+html[data-theme="sombre"] .acq-page .invalid-feedback { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .acq-btn-sapin { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* Aperçu du lien, tuiles « Non connecté » en pointillés, notes */
+html[data-theme="sombre"] .acq-apercu,
+html[data-theme="sombre"] .acq-note { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .acq-url { border-color: var(--ps-champ-contour); background: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-tuile { border-color: var(--ps-contour-survol); }
