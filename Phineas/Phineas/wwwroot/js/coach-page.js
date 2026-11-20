@@ -89,7 +89,8 @@
   var Pagination = window.OutilsPagination;
 
   function rendreHistorique() {
-    var l = OV.consultations().slice(0, 8);
+    // Toutes les consultations, de la plus récente à la plus ancienne : la pagination garde la liste courte.
+    var l = OV.consultations();
     var morceau = Pagination.decouper(pages, "historique", l);
     Pagination.afficherBarre(racine, "historique", morceau.pagination);
     zone("historique").innerHTML = l.length ? morceau.elements.map(function (c) {
