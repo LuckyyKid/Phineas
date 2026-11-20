@@ -1,0 +1,195 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@{
+    var replanification = !string.IsNullOrEmpty(Model.Replanifier);
+    ViewData["Title"] = replanification ? "Replanifier un rendez-vous" : "Nouveau rendez-vous";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Agenda</a>
+
+<header class="sv-head">
+    <div>
+        <h1>@ViewData["Title"]</h1>
+        <p class="text-muted mb-0">@(replanification ? "L'ancien créneau est conservé dans l'historique." : "Les informations déjà connues du dossier sont reprises automatiquement.")</p>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId" data-soumission="@Model.SoumissionId"
+     data-replanifier="@Model.Replanifier" data-date="@Model.Date" data-type="@Model.Type" data-vehicule="@Model.VehiculeId">
+    <div class="alert alert-info small rv-bandeau-replanification" data-zone="replanification" hidden></div>
+
+    <ol class="so-etapes" aria-label="Étapes de planification">
+        <li><button type="button" data-aller="1"><span>1</span>Client et contexte</button></li>
+        <li><button type="button" data-aller="2"><span>2</span>Type</button></li>
+        <li><button type="button" data-aller="3"><span>3</span>Planification</button></li>
+        <li><button type="button" data-aller="4"><span>4</span>Véhicule</button></li>
+    </ol>
+
+    @* ---------- Étape 1 ---------- *@
+    <section class="so-etape" data-etape="1" aria-labelledby="titre-etape-1">
+        <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et contexte</h2>
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-person me-2"></i>Client</span></div>
+                    <div class="card-body pb-2">
+                        <div class="pr-search mw-100">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" class="form-control" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="so-choix-liste" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+                </div>
+            </div>
+            <div class="col-lg-7 d-flex flex-column gap-4">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-briefcase me-2"></i>Opportunité</span></div>
+                    <div class="card-body" data-zone="opportunites"><p class="text-muted mb-0">Choisissez d'abord un prospect.</p></div>
+                </div>
+                <div class="card" data-zone="carte-soumissions" hidden>
+                    <div class="card-header sv-card-header"><span><i class="bi bi-file-earmark-text me-2"></i>Soumission associée</span><span class="pr-sous">Facultative</span></div>
+                    <div class="card-body" data-zone="soumissions"></div>
+                </div>
+                <div class="card" data-zone="contexte" hidden></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Étape 2 ---------- *@
+    <section class="so-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
+        <h2 class="visually-hidden" id="titre-etape-2">Étape 2 : type de rendez-vous</h2>
+        <div class="card">
+            <div class="card-body">
+                <div class="rv-types" role="radiogroup" aria-label="Type de rendez-vous" data-zone="types"></div>
+                <p class="pr-note mb-0 mt-3"><i class="bi bi-info-circle me-1"></i>Les rencontres avec le service financement et les livraisons sont de simples événements d'agenda dans cette version : aucun dossier de financement ni de livraison n'est créé.</p>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Étape 3 ---------- *@
+    <section class="so-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
+        <h2 class="visually-hidden" id="titre-etape-3">Étape 3 : planification</h2>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <form class="card" id="form-planification" novalidate>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label" for="p-date">Date <span class="pr-requis">*</span></label>
+                                <input type="date" class="form-control" id="p-date" name="date" required />
+                                <div class="invalid-feedback" data-message="date">Indiquez une date.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label" for="p-heure">Heure de début <span class="pr-requis">*</span></label>
+                                <input type="time" class="form-control" id="p-heure" name="heure" step="900" required />
+                                <div class="invalid-feedback">Indiquez une heure de début.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label" for="p-duree">Durée <span class="pr-requis">*</span></label>
+                                <select class="form-select" id="p-duree" name="duree">
+                                    @foreach (var d in ReferentielsRendezVous.Durees)
+                                    {
+                                        <option value="@d">@(d < 60 ? $"{d} min" : d % 60 == 0 ? $"{d / 60} h" : $"{d / 60} h {d % 60}")</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="form-label d-block">Heure de fin</span>
+                                <output class="rv-fin" id="p-fin" for="p-heure p-duree" aria-live="polite">—</output>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label" for="p-conseiller">Conseiller responsable <span class="pr-requis">*</span></label>
+                                <select class="form-select" id="p-conseiller" name="conseiller">
+                                    @foreach (var c in Model.Prospects.Conseillers)
+                                    {
+                                        <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? c.Nom + " (moi)" : c.Nom + " (fictif)")</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <span class="form-label d-block" id="p-mode-titre">Moyen de rencontre <span class="pr-requis">*</span></span>
+                                <div class="pr-segment btn-group flex-wrap" role="radiogroup" aria-labelledby="p-mode-titre">
+                                    @foreach (var (cle, libelle) in ReferentielsRendezVous.Modes)
+                                    {
+                                        <input type="radio" class="btn-check" name="mode" id="p-mode-@cle" value="@cle" />
+                                        <label class="btn btn-sm" for="p-mode-@cle">@libelle</label>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="p-lieu">Lieu</label>
+                                <input class="form-control" id="p-lieu" name="lieu" maxlength="120" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="p-objectif">Objectif du rendez-vous</label>
+                                <input class="form-control" id="p-objectif" name="objectif" maxlength="200" placeholder="Ex. : comparer le coût total avec un CR-V" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="p-commentaire">Commentaire <span class="text-muted">(facultatif)</span></label>
+                                <textarea class="form-control" id="p-commentaire" name="commentaire" rows="2" maxlength="500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-lg-5">
+                <section class="card pr-resume-collant" aria-labelledby="titre-verif">
+                    <div class="card-header sv-card-header"><span id="titre-verif"><i class="bi bi-shield-check me-2"></i>Vérification du créneau</span><span class="badge-soft sv-fictif">Démonstration</span></div>
+                    <div class="card-body" data-zone="verification" aria-live="polite"></div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Étape 4 ---------- *@
+    <section class="so-etape" data-etape="4" aria-labelledby="titre-etape-4" hidden>
+        <h2 class="visually-hidden" id="titre-etape-4">Étape 4 : véhicule</h2>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="pr-toolbar">
+                        <div class="pr-search">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" class="form-control" id="n-recherche-vehicule" placeholder="Marque, modèle, année ou n° d'inventaire" aria-label="Rechercher un véhicule" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="so-besoin-rappel" data-zone="rappel-vehicule"></div>
+                    <div class="so-vehicules rv-vehicules" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
+                    <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-cone-striped me-1"></i>Inventaire de démonstration (le même que pour les soumissions) : l'inventaire réel n'est ni lu ni modifié, et aucun véhicule n'est réellement réservé.</p>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <section class="card pr-resume-collant" aria-labelledby="titre-recap">
+                    <div class="card-header sv-card-header"><span id="titre-recap"><i class="bi bi-card-checklist me-2"></i>Récapitulatif</span></div>
+                    <div class="card-body" data-zone="recapitulatif" aria-live="polite"></div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <div class="so-navigation">
+        <button type="button" class="btn btn-outline-secondary" data-precedent>Précédent</button>
+        <span class="so-navigation-aide text-muted small" data-aide aria-live="polite"></span>
+        <button type="button" class="btn btn-primary" data-suivant>Suivant</button>
+        <button type="button" class="btn btn-primary" data-creer hidden><i class="bi bi-check2 me-1"></i>@(replanification ? "Replanifier" : "Créer le rendez-vous")</button>
+    </div>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-nouveau.js" asp-append-version="true"></script>
+}

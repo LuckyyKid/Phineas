@@ -22,16 +22,6 @@ public enum Urgence
     Normale,
 }
 
-public enum TypeVisite
-{
-    PremiereRencontre,
-    EssaiRoutier,
-    Presentation,
-    Negociation,
-    Signature,
-    Livraison,
-}
-
 public enum TypeAlerte
 {
     VehiculeDisponible,
@@ -47,7 +37,8 @@ public enum TonIndicateur
     Critique,
 }
 
-public record Indicateur(string Libelle, int Valeur, string Detail, string Icone, TonIndicateur Ton);
+// Valeur nulle : calculée dans le navigateur à partir de l'état local (affichée « — » sans JavaScript).
+public record Indicateur(string Libelle, int? Valeur, string Detail, string Icone, TonIndicateur Ton);
 
 // ProspectId nul : la personne n'a pas encore de fiche prospect (ex. recommandation pas encore saisie).
 public record ActionPrioritaire(
@@ -65,12 +56,12 @@ public record ActionPrioritaire(
     bool EcheanceAujourdhui
 );
 
-// Vehicule nul : le client n'a pas encore choisi de véhicule (ex. première rencontre).
-public record RendezVousResume(DateTime Debut, string ProspectId, string Client, string? Vehicule, TypeVisite Type, bool Confirme);
+// Construit à partir de IServiceRendezVous : même source que l'agenda.
+public record RendezVousResume(string Id, DateTime Debut, string ProspectId, string Client, string? Vehicule, TypeRendezVous Type, StatutRendezVous Statut);
 
 public record EtapePipeline(EtapeVente Etape, int Nombre, decimal Valeur);
 
-public record AlerteVente(int Id, TypeAlerte Type, string Titre, string Detail, DateTime Date);
+public record AlerteVente(int Id, TypeAlerte Type, string Titre, string Detail, DateTime Date, string? RendezVousId = null);
 
 public class TableauBordConseillerViewModel
 {
@@ -89,6 +80,15 @@ public class TableauBordConseillerViewModel
     public int Gagnes { get; set; }
     public int Perdus { get; set; }
     public IReadOnlyList<AlerteVente> Alertes { get; set; } = [];
+
+    // Données complètes pour l'état local partagé avec l'agenda (rendez-vous confirmés, annulés… dans cet onglet).
+    public RendezVousPageViewModel? Agenda { get; set; }
+
+    // Transactions : compteurs, blocages et prochaines livraisons calculés depuis le même état local que le module.
+    public DonneesTransactions? Transactions { get; set; }
+
+    // Phase 06 : actions prioritaires calculées par le moteur (même source que le Centre d'actions).
+    public DonneesIntelligence? Intelligence { get; set; }
 }
 
 public static class FormatVente
@@ -146,18 +146,6 @@ public static class FormatVente
             EtapeVente.Gagne => "Gagné",
             EtapeVente.Perdu => "Perdu",
             _ => etape.ToString(),
-        };
-
-    public static string Libelle(TypeVisite type) =>
-        type switch
-        {
-            TypeVisite.PremiereRencontre => "Première rencontre",
-            TypeVisite.EssaiRoutier => "Essai routier",
-            TypeVisite.Presentation => "Présentation",
-            TypeVisite.Negociation => "Négociation",
-            TypeVisite.Signature => "Signature",
-            TypeVisite.Livraison => "Livraison",
-            _ => type.ToString(),
         };
 
     public static (string Libelle, string Icone) Libelle(Urgence urgence) =>

@@ -22,6 +22,12 @@
     suivi: { libelle: "Suivi planifié", icone: "bi-alarm" },
     qualification: { libelle: "Qualification", icone: "bi-clipboard-check" },
     opportunite: { libelle: "Nouvelle opportunité", icone: "bi-briefcase" },
+    soumission: { libelle: "Soumission", icone: "bi-file-earmark-text" },
+    rendezvous: { libelle: "Rendez-vous", icone: "bi-calendar-event" },
+    transaction: { libelle: "Transaction", icone: "bi-cash-coin" },
+    action: { libelle: "Action réalisée", icone: "bi-check2-square" },
+    brouillon: { libelle: "Brouillon (non envoyé)", icone: "bi-pencil-square" },
+    texto: { libelle: "Texto", icone: "bi-chat-dots" },
   };
 
   function zone(nom) {
@@ -402,7 +408,7 @@
         "<div><dt>Critères</dt><dd>" + (criteres.length ? esc(criteres.join(" · ")) : aPreciser()) +
         '<span class="pr-sous d-block">Complétude : ' + comp.remplis + " / " + comp.total + "</span></dd></div>" +
         "<div><dt>Prochaine action</dt><dd>" + (P.estActive(o) ? prochaineHtml(o) + badgeSuivi(o) : '<span class="text-muted">Opportunité clôturée</span>') + "</dd></div>" +
-        "</dl></div>" +
+        "</dl>" + soumissionsHtml(o) + rendezVousHtml(o) + transactionsHtml(o) + "</div>" +
         '<div class="pr-opp-pied">' +
         '<span class="pr-sous">Ouverte le ' + esc(P.dateCourte(o.dateCreation)) + " · activité " + esc(P.relatif(o.derniereActivite)) + "</span>" +
         '<label class="visually-hidden" for="opp-etape-' + esc(o.id) + '">Étape de « ' + esc(o.titre) + " »</label>" +
@@ -411,6 +417,66 @@
         "</div></article>"
       );
     }).join("") : '<div class="pr-etat-vide card"><i class="bi bi-briefcase"></i><strong>Aucune opportunité</strong><span>Créez une opportunité pour suivre un projet d\'achat.</span></div>';
+  }
+
+  // Soumissions de l'opportunité (module Soumissions chargé sur la fiche).
+  function soumissionsHtml(o) {
+    var S = window.Soumissions;
+    if (!S) return "";
+    var liste = S.parOpportunite(o.id);
+    return '<div class="pr-soumissions"><div class="pr-soumissions-tete"><span>Soumissions</span>' +
+      (P.estActive(o) ? '<a class="btn btn-sm btn-link p-0" href="' + esc(S.urlNouvelle(o.id)) + '"><i class="bi bi-plus-lg me-1"></i>Créer une soumission</a>' : "") + "</div>" +
+      (liste.length
+        ? "<ul>" + liste.map(function (s) {
+            var v = S.versionCourante(s);
+            return '<li><a href="' + esc(S.urlDetail(s.id)) + '">' + esc(s.reference) + "</a>" +
+              '<span class="so-statut so-st-' + esc(v.statut) + '">' + esc(S.libelleStatut(v.statut)) + "</span>" +
+              '<span class="pr-sous">' + esc(S.nomVehicule(v.vehicule)) + " · v" + v.numero + "</span></li>";
+          }).join("") + "</ul>"
+        : '<p class="pr-sous mb-0">Aucune soumission pour cette opportunité.</p>') + "</div>";
+  }
+
+  // Rendez-vous de l'opportunité (module Rendez-vous chargé sur la fiche) : à venir, passés, essais et résultats.
+  function rendezVousHtml(o) {
+    var R = window.RendezVous;
+    if (!R) return "";
+    var maintenant = new Date();
+    var liste = R.parOpportunite(o.id);
+    var aVenir = liste.filter(function (r) { return R.estActif(r) && R.fin(r) >= maintenant; });
+    var passes = liste.filter(function (r) { return aVenir.indexOf(r) < 0; }).reverse();
+    var essais = liste.filter(function (r) { return R.estEssai(r) && r.statut === "Termine"; }).length;
+    function ligne(r) {
+      var res = r.resultat;
+      var action = res && res.prochaineAction && res.prochaineAction !== "aucune" ? R.libelle("prochainesActions", res.prochaineAction) : null;
+      return '<li><a href="' + esc(R.urlDetail(r.id)) + '">' + esc(R.type(r.type).libelle) + "</a>" +
+        '<span class="rv-statut rv-st-' + esc(r.statut) + '"><i class="bi ' + esc(R.statut(r.statut).icone) + '" aria-hidden="true"></i>' + esc(R.statut(r.statut).libelle) + "</span>" +
+        '<span class="pr-sous">' + esc(R.jourCourt(r.debut) + ", " + R.plage(r)) + "</span>" +
+        (res ? '<span class="pr-sous d-block w-100">Résultat : ' + esc(R.libelle("resultats", res.resultat)) + (action ? " · prochaine action : " + esc(action.toLowerCase()) : "") + "</span>" : "") +
+        "</li>";
+    }
+    return '<div class="pr-soumissions"><div class="pr-soumissions-tete"><span>Rendez-vous' + (essais ? " · " + essais + " essai" + (essais > 1 ? "s" : "") + " réalisé" + (essais > 1 ? "s" : "") : "") + "</span>" +
+      (P.estActive(o) ? '<a class="btn btn-sm btn-link p-0" href="' + esc(R.urlNouveau({ opportunite: o.id })) + '"><i class="bi bi-calendar-plus me-1"></i>Planifier un rendez-vous</a>' : "") + "</div>" +
+      (aVenir.length ? '<p class="pr-sous mb-1">À venir</p><ul>' + aVenir.map(ligne).join("") + "</ul>" : "") +
+      (passes.length ? '<p class="pr-sous mb-1 mt-2">Passés</p><ul>' + passes.map(ligne).join("") + "</ul>" : "") +
+      (!liste.length ? '<p class="pr-sous mb-0">Aucun rendez-vous pour cette opportunité.</p>' : "") + "</div>";
+  }
+
+  // Transactions de l'opportunité (module Transactions chargé sur la fiche) : progression, blocages, prochaine action.
+  function transactionsHtml(o) {
+    var T = window.Transactions, UI = window.TransactionsUI;
+    if (!T || !UI) return "";
+    var liste = T.parOpportunite(o.id);
+    var enCours = T.enCoursPourOpportunite(o.id);
+    return '<div class="pr-soumissions"><div class="pr-soumissions-tete"><span>Transactions</span>' +
+      (P.estActive(o) && !enCours ? '<a class="btn btn-sm btn-link p-0" href="' + esc(T.urlNouvelle({ opportunite: o.id })) + '"><i class="bi bi-cash-coin me-1"></i>Créer une transaction</a>' : "") + "</div>" +
+      (liste.length
+        ? "<ul>" + liste.map(function (t) {
+            var a = T.analyse(t);
+            return '<li><a href="' + esc(T.urlDetail(t.id)) + '">' + esc(t.reference) + "</a>" + UI.pastilleStatut(a.statut) + UI.miniAxes(a) +
+              '<span class="pr-sous d-block w-100">' + esc(T.nomVehicule(t)) + (a.blocages.length ? " · " + a.blocages.length + " blocage" + (a.blocages.length > 1 ? "s" : "") : "") + "</span>" +
+              (T.estActive(t) ? '<span class="pr-sous d-block w-100">Prochaine action : ' + esc(a.prochaineAction.texte) + "</span>" : "") + "</li>";
+          }).join("") + "</ul>"
+        : '<p class="pr-sous mb-0">Aucune transaction pour cette opportunité.</p>') + "</div>";
   }
 
   // ---------- Rendu global ----------
@@ -528,6 +594,12 @@
   racine.addEventListener("change", function (e) {
     var sel = e.target.closest("[data-etape-opp]");
     if (!sel) return;
+    // Phase 07 : une opportunité perdue passe par le parcours de clôture (motif et origine du motif).
+    if (sel.value === "Perdu" && window.RelationsUI) {
+      sel.value = P.opportunite(sel.dataset.etapeOpp).etape;
+      window.RelationsUI.ouvrirCloture(sel.dataset.etapeOpp);
+      return;
+    }
     var annuler = P.changerEtape(sel.dataset.etapeOpp, sel.value);
     if (annuler) P.notifier("Étape changée : « " + P.libelleEtape(sel.value) + " » (modification locale).", annuler);
     var focus = document.getElementById("opp-etape-" + sel.dataset.etapeOpp);
@@ -548,6 +620,9 @@
   });
 
   P.abonner(rendre);
+  if (window.Soumissions) window.Soumissions.abonner(rendre);
+  if (window.RendezVous) window.RendezVous.abonner(rendre);
+  if (window.Transactions) window.Transactions.abonner(rendre);
   rendre();
   var hash = window.location.hash.replace("#", "");
   if (["qualification", "historique", "opportunites"].indexOf(hash) >= 0 && !racine.hidden) onglet(hash);

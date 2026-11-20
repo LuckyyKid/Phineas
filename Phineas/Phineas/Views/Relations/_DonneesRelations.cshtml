@@ -1,0 +1,27 @@
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Phineas.Models.ViewModels.Conseiller
+@model ChargeRelations
+@{
+    // L'encodeur par défaut échappe < > & ' : le JSON est sûr dans une balise <script>.
+    var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
+    var charge = new
+    {
+        donnees = Model.Donnees,
+        referentiels = ReferentielsRelations.PourClient(),
+        conseillerNom = Model.ConseillerNom,
+        concession = Model.Concession,
+        urls = new
+        {
+            pertes = Url.Action("Pertes", "Relations"),
+            satisfaction = Url.Action("Satisfaction", "Relations"),
+            reseau = Url.Action("Reseau", "Relations"),
+            statistiques = Url.Action("Statistiques", "Relations"),
+            recommande = Url.Action("Recommande", "Relations"),
+        },
+    };
+}
+<script type="application/json" id="relations-donnees">@Html.Raw(JsonSerializer.Serialize(charge, options))</script>

@@ -77,6 +77,18 @@ public class ProspectsPageViewModel
     public bool DonneesFictives { get; init; }
     public string? ProspectId { get; init; }
     public bool OuvrirCreation { get; init; }
+
+    // Fourni sur la fiche pour afficher les soumissions de chaque opportunité.
+    public DonneesSoumissions? Soumissions { get; init; }
+
+    // Fourni sur la fiche pour afficher les rendez-vous de chaque opportunité.
+    public DonneesRendezVous? RendezVous { get; init; }
+
+    // Fourni sur la fiche pour afficher les transactions de chaque opportunité.
+    public DonneesTransactions? Transactions { get; init; }
+
+    // Phase 06 : données du moteur d'intelligence commerciale (actions liées au dossier affiché).
+    public DonneesIntelligence? Intelligence { get; init; }
 }
 
 // Libellés métier : une seule source pour les vues Razor et le JavaScript.
@@ -93,6 +105,8 @@ public static class ReferentielsVente
         ("recommandation", "Recommandation"),
         ("prospection", "Prospection"),
         ("autre", "Autre"),
+        // Phase 08 : provenance non notée (jamais devinée).
+        ("inconnue", "Source inconnue"),
     ];
 
     public static readonly IReadOnlyList<(string Cle, string Libelle)> MoyensContact =

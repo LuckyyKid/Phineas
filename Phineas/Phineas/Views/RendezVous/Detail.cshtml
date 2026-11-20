@@ -1,0 +1,430 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@{
+    ViewData["Title"] = "Rendez-vous";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Agenda</a>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div class="pr-etat-vide card" id="rdv-introuvable" hidden>
+    <i class="bi bi-calendar-x"></i>
+    <strong>Rendez-vous introuvable</strong>
+    <span>Il n'existe pas dans les données de démonstration de cet onglet (elles ont peut-être été réinitialisées).</span>
+    <a class="btn btn-sm btn-outline-primary" asp-action="Index">Retour à l'agenda</a>
+</div>
+
+<div id="rdv" data-rdv-id="@Model.RendezVousId" hidden>
+
+    <section class="card pr-fiche-tete" aria-labelledby="rdv-titre">
+        <div class="pr-fiche-identite">
+            <span class="so-icone-tete" data-champ="icone"></span>
+            <div class="pr-fiche-titre">
+                <h1 id="rdv-titre" data-champ="titre"></h1>
+                <div class="pr-fiche-badges" data-champ="badges"></div>
+            </div>
+            <div class="pr-fiche-actions" data-zone="actions"></div>
+        </div>
+        <dl class="pr-fiche-meta">
+            <div><dt>Client</dt><dd data-champ="client"></dd></div>
+            <div><dt>Date et heure</dt><dd data-champ="creneau"></dd></div>
+            <div><dt>Conseiller</dt><dd data-champ="conseiller"></dd></div>
+            <div><dt>Véhicule</dt><dd data-champ="vehicule"></dd></div>
+            <div><dt>Opportunité</dt><dd data-champ="opportunite"></dd></div>
+        </dl>
+    </section>
+
+    <div data-zone="alertes"></div>
+
+    @* Transaction liée (livraison, financement, finalisation) ou ouverture depuis le résultat : transactions-liens.js. *@
+    <div data-trx-lien="rendezvous" data-id="@Model.RendezVousId"></div>
+    <div data-ia-lien="rendezvous" data-id="@Model.RendezVousId"></div>
+    <div data-ov-lien="rendezvous" data-id="@Model.RendezVousId"></div>
+
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-apercu" data-bs-toggle="tab" data-bs-target="#panneau-apercu" type="button" role="tab" aria-controls="panneau-apercu" aria-selected="true">Vue d'ensemble</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-preparation" data-bs-toggle="tab" data-bs-target="#panneau-preparation" type="button" role="tab" aria-controls="panneau-preparation" aria-selected="false">Préparation <span class="pr-compte" data-champ="progression"></span></button></li>
+        <li class="nav-item" role="presentation" data-zone="onglet-essai"><button class="nav-link" id="onglet-essai" data-bs-toggle="tab" data-bs-target="#panneau-essai" type="button" role="tab" aria-controls="panneau-essai" aria-selected="false">Essai routier</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-resultat" data-bs-toggle="tab" data-bs-target="#panneau-resultat" type="button" role="tab" aria-controls="panneau-resultat" aria-selected="false">Résultat</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-historique" data-bs-toggle="tab" data-bs-target="#panneau-historique" type="button" role="tab" aria-controls="panneau-historique" aria-selected="false">Historique <span class="pr-compte" data-champ="nb-historique"></span></button></li>
+    </ul>
+
+    <div class="tab-content">
+        @* ---------- Vue d'ensemble ---------- *@
+        <div class="tab-pane fade show active" id="panneau-apercu" role="tabpanel" aria-labelledby="onglet-apercu" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-bullseye me-2"></i>Objectif et informations utiles</span></div>
+                        <div class="card-body" data-zone="informations"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-clipboard-data me-2"></i>Besoins du client</span><span class="pr-sous">Repris de la qualification</span></div>
+                        <div class="card-body" data-zone="besoins"></div>
+                    </section>
+                </div>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-signpost-split me-2"></i>Actions disponibles</span></div>
+                        <div class="card-body" data-zone="actions-disponibles"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-file-earmark-text me-2"></i>Soumission associée</span></div>
+                        <div class="card-body" data-zone="soumission"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-arrow-repeat me-2"></i>Planification</span></div>
+                        <div class="card-body" data-zone="planification"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Préparation ---------- *@
+        <div class="tab-pane fade" id="panneau-preparation" role="tabpanel" aria-labelledby="onglet-preparation" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-journal-check me-2"></i>Résumé du dossier</span><span class="badge-soft">Assistant de préparation</span></div>
+                        <div class="card-body" data-zone="preparation"></div>
+                    </section>
+                </div>
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-list-check me-2"></i>Checklist commerciale</span></div>
+                        <div class="card-body" data-zone="checklist"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-car-front me-2"></i>Véhicule à préparer</span></div>
+                        <div class="card-body" data-zone="vehicule-prep"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-exclamation-triangle me-2"></i>Éléments manquants</span></div>
+                        <div class="card-body" data-zone="manquants"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Essai routier ---------- *@
+        <div class="tab-pane fade" id="panneau-essai" role="tabpanel" aria-labelledby="onglet-essai" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-car-front me-2"></i>Avant l'essai</span></div>
+                        <div class="card-body" data-zone="essai-vehicule"></div>
+                    </section>
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-stopwatch me-2"></i>Déroulement</span></div>
+                        <div class="card-body" data-zone="essai-deroulement" aria-live="polite"></div>
+                    </section>
+                </div>
+                <div class="col-lg-5">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-list-check me-2"></i>Checklist de l'essai</span><span class="pr-sous">Indicative</span></div>
+                        <div class="card-body" data-zone="essai-checklist"></div>
+                    </section>
+                    <p class="pr-note mt-3"><i class="bi bi-shield-lock me-1"></i>Aucune pièce d'identité ni aucun permis de conduire n'est recueilli ici : la vérification se fait par le personnel autorisé, selon la procédure de la concession. Aucune géolocalisation n'est utilisée.</p>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Résultat ---------- *@
+        <div class="tab-pane fade" id="panneau-resultat" role="tabpanel" aria-labelledby="onglet-resultat" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-flag me-2"></i>Résultat de la rencontre</span></div>
+                        <div class="card-body" data-zone="resultat-etat"></div>
+                        <form class="card-body border-top" id="form-resultat" novalidate hidden>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <span class="form-label d-block">Présence</span>
+                                    <span class="rv-ok"><i class="bi bi-person-check me-1"></i>Client présent</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="res-resultat">Résultat <span class="pr-requis">*</span></label>
+                                    <select class="form-select" id="res-resultat" name="resultat" required>
+                                        <option value="">Choisir…</option>
+                                        @foreach (var (cle, libelle) in ReferentielsRendezVous.Resultats)
+                                        {
+                                            <option value="@cle">@libelle</option>
+                                        }
+                                    </select>
+                                    <div class="invalid-feedback">Indiquez le résultat.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="res-observations">Observations</label>
+                                    <textarea class="form-control" id="res-observations" name="observations" rows="2" maxlength="500"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="res-objections">Objections exprimées</label>
+                                    <textarea class="form-control" id="res-objections" name="objections" rows="2" maxlength="500"></textarea>
+                                </div>
+                                <fieldset class="col-12 rv-essai-champs" data-si-essai>
+                                    <legend class="h6">Après l'essai routier</legend>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="res-appreciation">Appréciation générale</label>
+                                            <select class="form-select" id="res-appreciation" name="appreciation">
+                                                <option value="">Non précisée</option>
+                                                @foreach (var (cle, libelle) in ReferentielsRendezVous.Appreciations)
+                                                {
+                                                    <option value="@cle">@libelle</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="res-interet">Niveau d'intérêt déclaré par le client</label>
+                                            <select class="form-select" id="res-interet" name="interet">
+                                                <option value="">Non précisé</option>
+                                                @foreach (var (cle, libelle) in ReferentielsRendezVous.Interets)
+                                                {
+                                                    <option value="@cle">@libelle</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="res-aimes">Points appréciés</label>
+                                            <input class="form-control" id="res-aimes" name="pointsAimes" maxlength="200" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="res-moins">Points moins appréciés</label>
+                                            <input class="form-control" id="res-moins" name="pointsMoins" maxlength="200" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="res-questions">Questions exprimées</label>
+                                            <input class="form-control" id="res-questions" name="questions" maxlength="200" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="res-alternatif">Véhicule alternatif envisagé</label>
+                                            <input class="form-control" id="res-alternatif" name="vehiculeAlternatif" maxlength="120" />
+                                        </div>
+                                    </div>
+                                    <p class="pr-note mb-0 mt-2">Ces observations sont déclaratives : elles ne sont pas converties en probabilité d'achat.</p>
+                                </fieldset>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="res-action">Prochaine action</label>
+                                    <select class="form-select" id="res-action" name="prochaineAction">
+                                        @foreach (var (cle, libelle) in ReferentielsRendezVous.ProchainesActions)
+                                        {
+                                            <option value="@cle">@libelle</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="res-date">Date de suivi</label>
+                                    <input type="date" class="form-control" id="res-date" name="dateSuivi" />
+                                    <div class="invalid-feedback">Indiquez aujourd'hui ou une date à venir.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="res-precision">Précision sur la prochaine action</label>
+                                    <input class="form-control" id="res-precision" name="precisionAction" maxlength="200" placeholder="Ex. : comparer le coût total avec un CR-V" />
+                                </div>
+                            </div>
+                            <div class="pr-form-pied mt-3">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-annuler-resultat>Annuler</button>
+                                <button type="submit" class="btn btn-primary btn-sm">Enregistrer le résultat</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <div class="col-lg-5">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-arrow-right-circle me-2"></i>Suite commerciale</span></div>
+                        <div class="card-body" data-zone="suite"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Historique ---------- *@
+        <div class="tab-pane fade" id="panneau-historique" role="tabpanel" aria-labelledby="onglet-historique" tabindex="0">
+            <section class="card">
+                <div class="card-header sv-card-header"><span><i class="bi bi-clock-history me-2"></i>Historique du rendez-vous</span></div>
+                <ol class="pr-timeline" data-zone="historique"></ol>
+            </section>
+        </div>
+    </div>
+</div>
+
+@* ---------- Modales ---------- *@
+<div class="modal fade" id="modal-annulation" tabindex="-1" aria-labelledby="modal-annulation-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-annulation" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-annulation-titre">Annuler le rendez-vous</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="an-motif">Motif <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="an-motif" name="motif" required>
+                            <option value="">Choisir…</option>
+                            @foreach (var (cle, libelle) in ReferentielsRendezVous.MotifsAnnulation)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Indiquez le motif (ou « Motif inconnu »).</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="an-auteur">Annulé par <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="an-auteur" name="auteur" required>
+                            @foreach (var (cle, libelle) in ReferentielsRendezVous.AuteursAnnulation)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="an-commentaire">Commentaire</label>
+                        <textarea class="form-control" id="an-commentaire" name="commentaire" rows="2" maxlength="300"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="an-intention" name="intention" />
+                            <label class="form-check-label" for="an-intention">Le client souhaite replanifier</label>
+                        </div>
+                    </div>
+                </div>
+                <p class="pr-note mb-0 mt-3">La date d'annulation est enregistrée automatiquement. Le rendez-vous annulé reste visible dans l'agenda et l'historique.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Retour</button>
+                <button type="submit" class="btn btn-danger">Annuler le rendez-vous</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-absence" tabindex="-1" aria-labelledby="modal-absence-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-absence" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-absence-titre">Client absent</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-2" data-zone="absence-preferences"></p>
+                <fieldset>
+                    <legend class="form-label">Prochaine action <span class="pr-requis">*</span></legend>
+                    @foreach (var (cle, libelle) in ReferentielsRendezVous.ActionsAbsence)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="prochaineAction" id="ab-@cle" value="@cle" />
+                            <label class="form-check-label" for="ab-@cle">@libelle</label>
+                        </div>
+                    }
+                    <div class="text-danger small mt-1" data-message-action role="alert" hidden>Choisissez la prochaine action.</div>
+                </fieldset>
+                <div class="row g-3 mt-1" data-si-suivi hidden>
+                    <div class="col-md-6">
+                        <label class="form-label" for="ab-date">Date de suivi</label>
+                        <input type="date" class="form-control" id="ab-date" name="dateSuivi" />
+                        <div class="invalid-feedback">Indiquez aujourd'hui ou une date à venir.</div>
+                    </div>
+                </div>
+                <label class="form-label mt-3" for="ab-commentaire">Commentaire</label>
+                <textarea class="form-control" id="ab-commentaire" name="commentaire" rows="2" maxlength="300"></textarea>
+                <p class="pr-note mb-0 mt-3">Aucune relance automatique n'est programmée : la prochaine action est ajoutée au suivi de l'opportunité.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Retour</button>
+                <button type="submit" class="btn btn-primary">Enregistrer l'absence</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-modifier" tabindex="-1" aria-labelledby="modal-modifier-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-modifier" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-modifier-titre">Modifier le rendez-vous</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Pour changer la date ou l'heure, utilisez « Replanifier » : l'ancien créneau est alors conservé dans l'historique.</p>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="mo-objectif">Objectif</label>
+                        <input class="form-control" id="mo-objectif" name="objectif" maxlength="200" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="mo-mode">Moyen de rencontre</label>
+                        <select class="form-select" id="mo-mode" name="mode">
+                            @foreach (var (cle, libelle) in ReferentielsRendezVous.Modes)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="mo-lieu">Lieu</label>
+                        <input class="form-control" id="mo-lieu" name="lieu" maxlength="120" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="mo-conseiller">Conseiller responsable</label>
+                        <select class="form-select" id="mo-conseiller" name="conseillerId">
+                            @foreach (var c in Model.Prospects.Conseillers)
+                            {
+                                <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? c.Nom + " (moi)" : c.Nom + " (fictif)")</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="mo-commentaire">Commentaire</label>
+                        <textarea class="form-control" id="mo-commentaire" name="commentaire" rows="2" maxlength="500"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<partial name="_ModaleRappel" />
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-rappel.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-detail.js" asp-append-version="true"></script>
+    @if (Model.Transactions is not null)
+    {
+        <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-liens.js" asp-append-version="true"></script>
+        <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+        <script src="~/js/relations-store.js" asp-append-version="true"></script>
+        <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+        <script src="~/js/outils-store.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-liens.js" asp-append-version="true"></script>
+        <script src="~/js/outils-liens.js" asp-append-version="true"></script>
+    }
+}

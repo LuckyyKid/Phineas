@@ -1,0 +1,679 @@
+/* Module Transactions et Deal Control Tower (phase 05). Reprend les jetons de phineas.css et les composants
+   de prospects.css, soumissions.css et rendezvous.css. Chaque état est porté par une icône et un texte. */
+
+:root {
+  --tx-critique: #b91c1c;
+  --tx-action: var(--ph-primary);
+  --tx-attente: #b45309;
+  --tx-info: #475569;
+  --tx-ok: #15803d;
+}
+
+/* ---------- Pastilles ---------- */
+.tx-statut,
+.tx-etat,
+.tx-fin,
+.tx-paie,
+.tx-origine {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+  color: var(--c);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tx-st-Active { --c: var(--ph-primary); }
+.tx-st-Bloquee { --c: var(--tx-critique); }
+.tx-st-EnAttente { --c: #7c3aed; }
+.tx-st-PreteALivrer { --c: var(--tx-ok); }
+.tx-st-LivraisonPlanifiee { --c: #0f766e; }
+.tx-st-Livree { --c: #334155; }
+.tx-st-Cloturee { --c: #64748b; }
+.tx-st-Annulee { --c: #9f1239; }
+
+.tx-et-NonCommencee { --c: #64748b; }
+.tx-et-EnCours { --c: var(--ph-primary); }
+.tx-et-EnAttente { --c: var(--tx-attente); }
+.tx-et-Bloquee { --c: var(--tx-critique); }
+.tx-et-Terminee { --c: var(--tx-ok); }
+.tx-et-NonApplicable { --c: #94a3b8; }
+
+.tx-fin { --c: #475569; }
+.tx-fin-Approuve, .tx-fin-ApprouveSousConditions { --c: var(--tx-ok); }
+.tx-fin-Refuse, .tx-fin-DossierIncomplet, .tx-fin-InformationRequise, .tx-fin-Annule { --c: var(--tx-critique); }
+.tx-fin-Transmis, .tx-fin-EnAnalyse { --c: var(--tx-attente); }
+.tx-fin-EnPreparation { --c: var(--ph-primary); }
+
+.tx-paie-Aucun, .tx-paie-EnAttente { --c: #64748b; }
+.tx-paie-Declare { --c: var(--tx-attente); }
+.tx-paie-Confirme { --c: var(--tx-ok); }
+
+.tx-origine { --c: #475569; font-weight: 500; }
+.tx-origine-conseiller { --c: var(--ph-primary); }
+.tx-origine-departement { --c: #0f766e; }
+.tx-origine-simulation { --c: #a16207; border-style: dashed; }
+
+.tx-brouillon-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px dashed #b45309;
+  border-radius: 6px;
+  color: #92400e;
+  background: #fffbeb;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.tx-dep {
+  display: inline-block;
+  margin: 0 0.25rem 0.25rem 0;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.75rem;
+}
+.tx-nb-blocages {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--tx-critique);
+  font-weight: 700;
+}
+.tx-ok {
+  display: inline-flex;
+  gap: 0.3rem;
+  color: var(--tx-ok);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.tx-erreur {
+  color: var(--tx-critique);
+}
+.tx-erreur[hidden] {
+  display: none;
+}
+.tx-titre-ref {
+  margin-left: 0.4rem;
+  color: var(--ph-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ---------- Indicateur compact des quatre axes ---------- */
+.tx-mini {
+  display: inline-flex;
+  gap: 2px;
+  margin-top: 0.3rem;
+  vertical-align: middle;
+}
+.tx-mini-seg {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 18px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c) 14%, #fff);
+  color: var(--c);
+  font-size: 0.7rem;
+}
+
+/* ---------- Résumé d'une ligne ---------- */
+.tx-resume {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.tx-resume.tx-niv-critique { color: var(--tx-critique); }
+.tx-resume.tx-niv-action { color: var(--tx-action); }
+.tx-resume.tx-niv-attente { color: var(--tx-attente); }
+
+/* ---------- Page Transactions ---------- */
+.tx-kpis {
+  grid-template-columns: repeat(6, 1fr);
+}
+@media (max-width: 1199.98px) {
+  .tx-kpis {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 575.98px) {
+  .tx-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.tx-table td {
+  font-size: 0.84rem;
+}
+.tx-table td .status-pill {
+  margin-top: 0.25rem;
+}
+.tx-table tr.is-bloquee td:first-child {
+  box-shadow: inset 3px 0 0 var(--tx-critique);
+}
+.tx-table td[data-label="Blocages"] .tx-resume {
+  margin-top: 0.25rem;
+  max-width: 220px;
+}
+.tx-table td[data-label="Blocages"] .tx-resume {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tx-table td[data-label="Département attendu"] {
+  min-width: 140px;
+}
+.tx-col {
+  flex-basis: 260px;
+}
+.tx-col-Terminee,
+.tx-col-Livree {
+  --c: #64748b;
+}
+.tx-col-PreteALivrer {
+  --c: var(--tx-ok);
+}
+.tx-carte.is-bloquee {
+  border-left: 3px solid var(--tx-critique);
+}
+.tx-carte-axes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+.tx-carte-axes .tx-mini {
+  margin-top: 0;
+}
+
+/* ---------- Fiche : méta et situation ---------- */
+.tx-meta {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.tx-situation {
+  margin-bottom: 1.25rem;
+  border-left: 4px solid var(--ph-primary);
+}
+.tx-situation-grille {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.tx-situation-grille > div {
+  padding: 0.9rem 1.15rem;
+  border-right: 1px solid var(--ph-border);
+  font-size: 0.86rem;
+}
+.tx-situation-grille > div:last-child {
+  border-right: 0;
+}
+.tx-situation-grille ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.tx-q {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--ph-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tx-q-alerte {
+  background: #fef2f2;
+}
+.tx-q-alerte li {
+  color: #7f1d1d;
+}
+.tx-q-action {
+  background: var(--ph-primary-50);
+}
+.tx-q-action .btn {
+  margin-top: 0.5rem;
+}
+@media (max-width: 991.98px) {
+  .tx-situation-grille {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tx-situation-grille > div:nth-child(2n) {
+    border-right: 0;
+  }
+  .tx-situation-grille > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--ph-border);
+  }
+}
+@media (max-width: 575.98px) {
+  .tx-situation-grille {
+    grid-template-columns: 1fr;
+  }
+  .tx-situation-grille > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--ph-border);
+  }
+}
+
+/* ---------- Deal Control Tower ---------- */
+.tx-tour {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 1399.98px) {
+  .tx-tour {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 575.98px) {
+  .tx-tour {
+    grid-template-columns: 1fr;
+  }
+}
+.tx-axe {
+  border: 1px solid var(--ph-border);
+  border-top: 3px solid var(--c);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  min-width: 0;
+}
+.tx-axe header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+.tx-axe h3 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.tx-axe-progression {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  font-size: 0.72rem;
+  color: var(--ph-muted);
+}
+.tx-axe-progression .progress {
+  flex: 1;
+  height: 6px;
+}
+.tx-etapes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tx-etape {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.3rem 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.tx-etape > i {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--c);
+}
+.tx-etape.tx-et-NonApplicable {
+  color: #94a3b8;
+}
+.tx-etape.tx-et-NonApplicable .tx-etape-nom {
+  text-decoration: line-through;
+  text-decoration-color: #cbd5e1;
+}
+.tx-etape.tx-et-Bloquee .tx-etape-nom {
+  color: var(--tx-critique);
+  font-weight: 600;
+}
+.tx-etape-resp,
+.tx-etape-detail {
+  display: block;
+  color: var(--ph-muted);
+  font-size: 0.72rem;
+}
+.tx-etape-resp::before {
+  content: "→ ";
+}
+
+/* ---------- Blocages, actions et dépendances ---------- */
+.tx-groupe + .tx-groupe {
+  margin-top: 1rem;
+}
+.tx-groupe h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--c);
+}
+.tx-groupe-detail {
+  color: var(--ph-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.tx-groupe ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.tx-niv-critique { --c: var(--tx-critique); }
+.tx-niv-action { --c: var(--tx-action); }
+.tx-niv-attente { --c: var(--tx-attente); }
+.tx-niv-information { --c: var(--tx-info); }
+.tx-element {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--ph-border);
+  border-left: 3px solid var(--c);
+  border-radius: 8px;
+  background: #fff;
+}
+.tx-element.tx-niv-critique {
+  background: #fef7f7;
+}
+.tx-element-nature {
+  display: block;
+  font-size: 0.86rem;
+}
+.tx-element-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 1rem;
+  margin: 0.4rem 0;
+  font-size: 0.78rem;
+}
+.tx-element-meta dt {
+  color: var(--ph-muted);
+  font-weight: 500;
+  font-size: 0.7rem;
+}
+.tx-element-meta dd {
+  margin: 0;
+}
+@media (max-width: 575.98px) {
+  .tx-element-meta {
+    grid-template-columns: 1fr;
+  }
+}
+.tx-element-vous {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--ph-border);
+  font-size: 0.8rem;
+}
+.tx-element-vous i {
+  margin-right: 0.3rem;
+}
+
+/* ---------- Préparation à la livraison ---------- */
+.tx-pret-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+.tx-pret-etat {
+  display: inline-flex;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+.tx-pret.is-pret .tx-pret-etat {
+  color: var(--tx-ok);
+}
+.tx-pret.is-non-pret .tx-pret-etat {
+  color: var(--tx-critique);
+}
+.tx-pret .progress {
+  height: 8px;
+}
+.tx-conditions,
+.tx-pieces,
+.tx-taches,
+.tx-verif {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+.tx-conditions li,
+.tx-pieces li,
+.tx-taches li,
+.tx-verif li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.3rem 0;
+  font-size: 0.84rem;
+}
+.tx-conditions li > span {
+  flex: 1;
+  min-width: 0;
+}
+.tx-conditions .is-ok > i,
+.tx-pieces .is-ok > i {
+  color: var(--tx-ok);
+}
+.tx-conditions .is-ko > i,
+.tx-pieces .is-ko > i {
+  color: var(--tx-critique);
+}
+.tx-taches .tx-tache-Terminee > i { color: var(--tx-ok); }
+.tx-taches .tx-tache-EnCours > i { color: var(--ph-primary); }
+.tx-taches .tx-tache-EnAttentePiece > i { color: var(--tx-critique); }
+.tx-taches .tx-tache-AFaire > i { color: #64748b; }
+
+/* ---------- Simulation (fictif) ---------- */
+.tx-simulation {
+  border: 1px dashed #d97706;
+  background: #fffdf7;
+}
+.tx-simu-liste {
+  display: grid;
+  gap: 0.4rem;
+}
+.tx-simu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+.tx-simu-dep {
+  color: var(--ph-muted);
+  font-size: 0.7rem;
+}
+
+/* ---------- Sections détaillées ---------- */
+.tx-sous-titre {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.tx-sous-titre:first-child {
+  margin-top: 0;
+}
+.tx-fin-etat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.84rem;
+}
+.tx-distinction {
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 0.82rem;
+}
+.tx-refus {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef7f7;
+}
+.tx-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.tx-options .btn {
+  width: 100%;
+  text-align: left;
+}
+.tx-versions,
+.tx-rdv,
+.tx-statuts,
+.tx-validations,
+.tx-lien-liste,
+.tx-tb-liste {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+.tx-versions li,
+.tx-rdv li,
+.tx-statuts li,
+.tx-validations li,
+.tx-lien-liste li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--ph-border);
+  font-size: 0.84rem;
+}
+.tx-statuts li,
+.tx-validations li {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+.tx-statuts time,
+.tx-validations time {
+  flex: 0 0 4.5rem;
+  color: var(--ph-muted);
+  font-size: 0.78rem;
+}
+.tx-statuts li > span {
+  flex: 1;
+}
+.tx-lien-liste li {
+  justify-content: flex-start;
+}
+.tx-lien-tete {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+.tx-lien-tete i {
+  color: var(--ph-primary);
+}
+.tx-gagnee {
+  padding: 0.7rem;
+  border-radius: 10px;
+  background: #f0fdf4;
+}
+.tx-tl-simulation .pr-tl-icone {
+  background: #fef3c7;
+  color: #a16207;
+}
+.tx-tl-departement .pr-tl-icone {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+/* ---------- Parcours de création ---------- */
+.tx-modes {
+  display: grid;
+  gap: 0.35rem;
+}
+.tx-verif li > i {
+  margin-top: 0.15rem;
+}
+.tx-verif li > span {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- Tableau de bord ---------- */
+.tx-tb {
+  padding: 0.85rem 1.15rem 1rem;
+}
+.tx-tb-chiffres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.82rem;
+}
+.tx-tb-chiffres strong {
+  font-size: 1.05rem;
+}
+.tx-tb-titre {
+  margin: 0.8rem 0 0.3rem;
+  color: var(--ph-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tx-tb-ligne {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--ph-border);
+  font-size: 0.84rem;
+}
+.tx-tb-ligne:last-child {
+  border-bottom: 0;
+}
+
+/* ---------- Ajustements de mise en page ---------- */
+.tx-brouillon-tag {
+  white-space: nowrap;
+}
+.pr-fiche-meta .tx-fin {
+  white-space: normal;
+  margin-top: 0.2rem;
+}
+#form-depot .btn,
+#form-date .btn,
+#form-mode .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.tx-table td[data-label="Blocages"] .tx-resume i {
+  margin-right: 0.3rem;
+}
+@media (max-width: 767.98px) {
+  .tx-table tr.is-bloquee td:first-child {
+    box-shadow: none;
+  }
+  .tx-table tbody tr.is-bloquee {
+    box-shadow: inset 3px 0 0 var(--tx-critique);
+  }
+}

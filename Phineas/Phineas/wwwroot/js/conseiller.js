@@ -37,16 +37,29 @@
 
   // ---------- À faire en premier ----------
   // Une seule priorité visible : « valider » la retire, « plus tard » la remet en fin de file.
+  // Les priorités sont écrites dans la carte par accueil-moteur.js, qui appelle ensuite SalesOS.rafraichirFocus().
   var focus = document.getElementById("ph-focus");
   if (!focus) return;
 
-  var priorites = Array.prototype.slice.call(focus.querySelectorAll("[data-priorite]"));
-  var etapes = Array.prototype.slice.call(focus.querySelectorAll("[data-etape]"));
-  var position = focus.querySelector("[data-position]");
+  var priorites = [];
+  var etapes = [];
+  var position = null;
   var fin = focus.querySelector("[data-fin]");
-  var total = priorites.length;
-  var file = priorites.slice();
+  var total = 0;
+  var file = [];
   var faites = 0;
+
+  // Relit les priorités présentes dans la carte et repart de la première.
+  function rafraichirFocus() {
+    priorites = Array.prototype.slice.call(focus.querySelectorAll("[data-priorite]"));
+    etapes = Array.prototype.slice.call(focus.querySelectorAll("[data-etape]"));
+    position = focus.querySelector("[data-position]");
+    total = priorites.length;
+    file = priorites.slice();
+    faites = 0;
+    afficher();
+  }
+  window.SalesOS.rafraichirFocus = rafraichirFocus;
 
   function fermerDossier(p) {
     p.querySelector("[data-dossier]").hidden = true;
@@ -93,10 +106,17 @@
     var nom = p.querySelector(".ph-focus-nom").textContent;
 
     if (e.target.closest("[data-valider]")) {
+      // Priorité venue du moteur : on la marque comme réalisée dans le Centre d'actions aussi.
+      var annulerMoteur = null;
+      var actionId = p.getAttribute("data-action-id");
+      if (actionId && window.Intelligence) {
+        annulerMoteur = window.Intelligence.terminer(actionId);
+      }
       file.shift();
       faites++;
       afficher();
-      notifier(nom + " : c'est noté (non enregistré).", function () {
+      notifier(nom + " : action marquée comme réalisée.", function () {
+        if (annulerMoteur) annulerMoteur();
         file.unshift(p);
         faites--;
         afficher();
@@ -114,6 +134,4 @@
       e.target.closest("[data-voir-dossier]").setAttribute("aria-expanded", dossier.hidden ? "false" : "true");
     }
   });
-
-  afficher();
 })();

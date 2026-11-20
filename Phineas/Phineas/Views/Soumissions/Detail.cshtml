@@ -1,0 +1,208 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model SoumissionsPageViewModel
+@{
+    ViewData["Title"] = "Soumission";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+    ViewData["ChoixVehicule"] = true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Soumissions</a>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div class="pr-etat-vide card" id="soumission-introuvable" hidden>
+    <i class="bi bi-file-earmark-x"></i>
+    <strong>Soumission introuvable</strong>
+    <span>Elle n'existe pas dans les données de démonstration de cet onglet (elles ont peut-être été réinitialisées).</span>
+    <a class="btn btn-sm btn-outline-primary" asp-action="Index">Retour aux soumissions</a>
+</div>
+
+<div id="soumission" data-soumission-id="@Model.SoumissionId" hidden>
+
+    <section class="card pr-fiche-tete" aria-labelledby="so-reference">
+        <div class="pr-fiche-identite">
+            <span class="so-icone-tete"><i class="bi bi-file-earmark-text"></i></span>
+            <div class="pr-fiche-titre">
+                <h1 id="so-reference" data-champ="reference"></h1>
+                <div class="pr-fiche-badges" data-champ="badges"></div>
+            </div>
+            <div class="pr-fiche-actions">
+                <button type="button" class="btn btn-sm btn-primary" data-action="modifier" hidden><i class="bi bi-pencil me-1"></i>Modifier le brouillon</button>
+                <button type="button" class="btn btn-sm btn-primary" data-action="version" hidden><i class="bi bi-layers me-1"></i>Nouvelle version</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="apercu"><i class="bi bi-eye me-1"></i>Prévisualiser</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="dupliquer"><i class="bi bi-copy me-1"></i>Dupliquer</button>
+                <a class="btn btn-sm btn-outline-primary" asp-controller="RendezVous" asp-action="Nouveau" asp-route-soumission="@Model.SoumissionId"><i class="bi bi-calendar-plus me-1"></i>Planifier un rendez-vous</a>
+                <div class="dropdown" data-zone="menu-statut">
+                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-flag me-1"></i>Statut</button>
+                    <ul class="dropdown-menu dropdown-menu-end sv-menu" data-zone="transitions"></ul>
+                </div>
+            </div>
+        </div>
+        <dl class="pr-fiche-meta">
+            <div><dt>Client</dt><dd data-champ="client"></dd></div>
+            <div><dt>Opportunité</dt><dd data-champ="opportunite"></dd></div>
+            <div><dt>Véhicule</dt><dd data-champ="vehicule"></dd></div>
+            <div><dt>Validité</dt><dd data-champ="validite"></dd></div>
+            <div><dt>Montant</dt><dd data-champ="montant"></dd></div>
+        </dl>
+    </section>
+
+    <div data-zone="alertes"></div>
+
+    @* Transaction issue de cette soumission, ou ouverture depuis une version acceptée : transactions-liens.js. *@
+    <div data-trx-lien="soumission" data-id="@Model.SoumissionId"></div>
+    <div data-ia-lien="soumission" data-id="@Model.SoumissionId"></div>
+    <div data-ov-lien="soumission" data-id="@Model.SoumissionId"></div>
+
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-offre" data-bs-toggle="tab" data-bs-target="#panneau-offre" type="button" role="tab" aria-controls="panneau-offre" aria-selected="true">Offre</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-scenarios" data-bs-toggle="tab" data-bs-target="#panneau-scenarios" type="button" role="tab" aria-controls="panneau-scenarios" aria-selected="false">Scénarios</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-apercu" data-bs-toggle="tab" data-bs-target="#panneau-apercu" type="button" role="tab" aria-controls="panneau-apercu" aria-selected="false">Aperçu client</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-versions" data-bs-toggle="tab" data-bs-target="#panneau-versions" type="button" role="tab" aria-controls="panneau-versions" aria-selected="false">Versions <span class="pr-compte" data-champ="nb-versions"></span></button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-offre" role="tabpanel" aria-labelledby="onglet-offre" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card" data-zone="offre-edition">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-pencil-square me-2"></i>Modifier la version <span data-champ="numero-version"></span></span><span class="badge-soft">Brouillon modifiable</span></div>
+                        <div class="card-body"><partial name="_EditeurOffre" model="Model" /></div>
+                        <div class="pr-form-pied">
+                            <span class="pr-modifie" data-indicateur-modifie hidden><i class="bi bi-circle-fill"></i>Modifications non enregistrées</span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-annuler-offre>Annuler les changements</button>
+                            <button type="button" class="btn btn-primary btn-sm" data-enregistrer-offre>Enregistrer</button>
+                        </div>
+                    </div>
+                    <div class="card" data-zone="offre-lecture">
+                        <div class="card-body so-fige">
+                            <i class="bi bi-lock"></i>
+                            <div>
+                                <strong>Cette version a été émise : elle est figée.</strong>
+                                <p class="mb-2">Pour changer l'offre, créez une nouvelle version. L'historique conserve chaque version telle qu'elle a été préparée.</p>
+                                <button type="button" class="btn btn-sm btn-primary" data-action="version" hidden><i class="bi bi-layers me-1"></i>Créer une nouvelle version</button>
+                            </div>
+                        </div>
+                        <div class="card-body border-top" data-zone="offre-resume"></div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <section class="card pr-resume-collant">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-receipt me-2"></i>Détail du prix</span><span class="badge-soft sv-fictif">Illustratif</span></div>
+                        <div class="card-body" data-zone="detail-prix" aria-live="polite"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-scenarios" role="tabpanel" aria-labelledby="onglet-scenarios" tabindex="0">
+            <section class="card">
+                <div class="card-header sv-card-header">
+                    <span><i class="bi bi-columns-gap me-2"></i>Comparer les modes d'achat</span>
+                    <button type="button" class="btn btn-sm btn-primary" data-enregistrer-scenarios hidden>Enregistrer les scénarios</button>
+                </div>
+                <div class="card-body" data-zone="comparateur"></div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-apercu" role="tabpanel" aria-labelledby="onglet-apercu" tabindex="0">
+            <div class="so-apercu-barre">
+                <label class="form-label mb-0" for="apercu-version">Version</label>
+                <select class="form-select form-select-sm pr-select-compact" id="apercu-version"></select>
+                <span class="flex-grow-1"></span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-retour-edition><i class="bi bi-arrow-left me-1"></i>Revenir à l'offre</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-imprimer><i class="bi bi-printer me-1"></i>Imprimer</button>
+                <span class="d-block w-100 small text-muted"><i class="bi bi-info-circle me-1"></i>L'envoi par courriel, texto ou WhatsApp n'est pas encore disponible : aucun document n'est transmis au client.</span>
+            </div>
+            <div data-zone="document"></div>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-versions" role="tabpanel" aria-labelledby="onglet-versions" tabindex="0">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-clock-history me-2"></i>Historique des versions</span></div>
+                        <ol class="so-versions" data-zone="versions"></ol>
+                    </section>
+                </div>
+                <div class="col-lg-5">
+                    <section class="card">
+                        <div class="card-header sv-card-header"><span><i class="bi bi-arrow-left-right me-2"></i>Comparer deux versions</span></div>
+                        <div class="card-body">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><label class="form-label" for="comparer-a">Version</label><select class="form-select form-select-sm" id="comparer-a"></select></div>
+                                <div class="col-6"><label class="form-label" for="comparer-b">Avec</label><select class="form-select form-select-sm" id="comparer-b"></select></div>
+                            </div>
+                            <div data-zone="comparaison-versions" aria-live="polite"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-version" tabindex="-1" aria-labelledby="modal-version-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-version" novalidate>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-version-titre">Nouvelle version</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">La version actuelle reste figée telle quelle. La nouvelle version en reprend le contenu en brouillon.</p>
+                <label class="form-label" for="v-note">Motif de la nouvelle version <span class="pr-requis">*</span></label>
+                <input class="form-control" id="v-note" name="note" required maxlength="120" placeholder="Ex. : mise de fonds modifiée" />
+                <div class="invalid-feedback">Indiquez le motif.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary">Créer la version</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+<partial name="_DonneesSoumissions" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+@if (Model.RendezVous is not null && Model.Transactions is not null)
+{
+    <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Prospects, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = Model.ConseillerNom, Concession = Model.Concession }" />
+    <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />
+    <partial name="~/Views/Intelligence/_DonneesIntelligence.cshtml" model="new ChargeIntelligence(Model.Intelligence!, Model.ConseillerNom)" />
+}
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-editeur.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-detail.js" asp-append-version="true"></script>
+    @if (Model.Transactions is not null)
+    {
+        <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+        <script src="~/js/transactions-liens.js" asp-append-version="true"></script>
+        <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+        <script src="~/js/relations-store.js" asp-append-version="true"></script>
+        <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+        <script src="~/js/outils-store.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+        <script src="~/js/intelligence-liens.js" asp-append-version="true"></script>
+        <script src="~/js/outils-liens.js" asp-append-version="true"></script>
+    }
+}

@@ -1,0 +1,108 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model SoumissionsPageViewModel
+@{
+    ViewData["Title"] = "Soumissions";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Soumissions</h1>
+        <p class="text-muted mb-0">Vos propositions commerciales, leurs versions et leur statut.</p>
+    </div>
+    <div class="sv-quick">
+        <a class="btn btn-primary btn-sm" asp-action="Nouvelle"><i class="bi bi-plus-lg me-1"></i>Nouvelle soumission</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<section class="card sv-kpis so-kpis" aria-label="Résumé des soumissions">
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-files"></i>Total</div><div class="sv-kpi-value" data-compteur="total">—</div><div class="sv-kpi-detail">soumissions</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-pencil-square"></i>En préparation</div><div class="sv-kpi-value" data-compteur="preparation">—</div><div class="sv-kpi-detail">brouillons et prêtes</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-send"></i>Envoyées</div><div class="sv-kpi-value" data-compteur="envoyees">—</div><div class="sv-kpi-detail">envoi déclaré</div></div>
+    <div class="sv-kpi sv-ton-attention"><div class="sv-kpi-label"><i class="bi bi-hourglass-split"></i>En attente</div><div class="sv-kpi-value" data-compteur="attente">—</div><div class="sv-kpi-detail">réponse du client</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-check2-circle"></i>Acceptées</div><div class="sv-kpi-value" data-compteur="acceptees">—</div><div class="sv-kpi-detail">acceptation déclarée</div></div>
+</section>
+
+<section class="card pr-module" aria-label="Liste des soumissions">
+    <div class="pr-toolbar">
+        <div class="pr-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" class="form-control" id="f-recherche" placeholder="Rechercher un client, un véhicule ou une référence" aria-label="Rechercher une soumission" autocomplete="off" />
+        </div>
+    </div>
+    <div class="pr-filtres">
+        <select class="form-select form-select-sm" id="f-statut" aria-label="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            @foreach (var s in ReferentielsSoumission.Statuts)
+            {
+                <option value="@s">@ReferentielsSoumission.Libelle(s)</option>
+            }
+        </select>
+        <select class="form-select form-select-sm" id="f-periode" aria-label="Filtrer par date de modification">
+            <option value="">Toutes les dates</option>
+            <option value="7">Modifiées depuis 7 jours</option>
+            <option value="30">Modifiées depuis 30 jours</option>
+            <option value="expire">Validité dépassée</option>
+        </select>
+        <select class="form-select form-select-sm" id="f-conseiller" aria-label="Filtrer par conseiller">
+            <option value="">Tous les conseillers</option>
+            @foreach (var c in Model.Prospects.Conseillers)
+            {
+                <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes soumissions" : c.Nom + " (fictif)")</option>
+            }
+        </select>
+        <select class="form-select form-select-sm" id="f-opportunite" aria-label="Filtrer par opportunité">
+            <option value="">Toutes les opportunités</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+    </div>
+
+    <div class="pr-resultat" id="resultat" aria-live="polite"></div>
+
+    <div id="zone-liste" class="table-responsive">
+        <table class="table pr-table so-table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Référence</th>
+                    <th scope="col">Client et opportunité</th>
+                    <th scope="col">Véhicule</th>
+                    <th scope="col" class="text-end">Prix proposé</th>
+                    <th scope="col">Dates</th>
+                    <th scope="col">Statut</th>
+                </tr>
+            </thead>
+            <tbody id="liste-corps"></tbody>
+        </table>
+    </div>
+
+    <div class="pr-etat-vide" id="etat-vide" hidden>
+        <i class="bi bi-search"></i>
+        <strong>Aucun résultat</strong>
+        <span>Aucune soumission ne correspond à ces critères.</span>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-effacer-filtres>Effacer les filtres</button>
+    </div>
+    <div class="pr-etat-vide" id="etat-aucun" hidden>
+        <i class="bi bi-file-earmark-plus"></i>
+        <strong>Aucune soumission pour l'instant</strong>
+        <span>Préparez une proposition à partir d'une opportunité.</span>
+        <a class="btn btn-sm btn-primary" asp-action="Nouvelle">Nouvelle soumission</a>
+    </div>
+</section>
+
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+<partial name="_DonneesSoumissions" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-liste.js" asp-append-version="true"></script>
+}

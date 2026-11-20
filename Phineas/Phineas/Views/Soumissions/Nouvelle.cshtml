@@ -1,0 +1,116 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model SoumissionsPageViewModel
+@{
+    ViewData["Title"] = "Nouvelle soumission";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Soumissions</a>
+
+<header class="sv-head">
+    <div>
+        <h1>Nouvelle soumission</h1>
+        <p class="text-muted mb-0">Les informations déjà connues du dossier sont reprises automatiquement.</p>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId" data-vehicule="@Model.VehiculeId">
+    <ol class="so-etapes" aria-label="Étapes de création">
+        <li><button type="button" data-aller="1"><span>1</span>Client et opportunité</button></li>
+        <li><button type="button" data-aller="2"><span>2</span>Véhicule</button></li>
+        <li><button type="button" data-aller="3"><span>3</span>Offre</button></li>
+    </ol>
+
+    @* ---------- Étape 1 ---------- *@
+    <section class="so-etape" data-etape="1" aria-labelledby="titre-etape-1">
+        <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et opportunité</h2>
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-person me-2"></i>Client</span></div>
+                    <div class="card-body pb-2">
+                        <div class="pr-search mw-100">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" class="form-control" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="so-choix-liste" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+                </div>
+            </div>
+            <div class="col-lg-7 d-flex flex-column gap-4">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-briefcase me-2"></i>Opportunité</span></div>
+                    <div class="card-body" data-zone="opportunites">
+                        <p class="text-muted mb-0">Choisissez d'abord un prospect.</p>
+                    </div>
+                </div>
+                <div class="card" data-zone="besoins" hidden></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Étape 2 ---------- *@
+    <section class="so-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
+        <h2 class="visually-hidden" id="titre-etape-2">Étape 2 : véhicule</h2>
+        <div class="card">
+            <div class="pr-toolbar">
+                <div class="pr-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" class="form-control" id="n-recherche-vehicule" placeholder="Marque, modèle, année ou n° d'inventaire" aria-label="Rechercher un véhicule" autocomplete="off" />
+                </div>
+                <div class="form-check form-switch pr-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="n-indisponibles" />
+                    <label class="form-check-label" for="n-indisponibles">Afficher les véhicules vendus</label>
+                </div>
+            </div>
+            <div class="so-besoin-rappel" data-zone="rappel-besoin"></div>
+            <div class="so-vehicules" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
+            <div class="pr-etat-vide" data-zone="vehicules-vide" hidden>
+                <i class="bi bi-car-front"></i><strong>Aucun véhicule trouvé</strong><span>Modifiez la recherche.</span>
+            </div>
+            <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-cone-striped me-1"></i>Inventaire de démonstration : véhicules fictifs, l'inventaire réel n'est ni lu ni modifié.</p>
+        </div>
+    </section>
+
+    @* ---------- Étape 3 ---------- *@
+    <section class="so-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
+        <h2 class="visually-hidden" id="titre-etape-3">Étape 3 : offre</h2>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card"><div class="card-body"><partial name="_EditeurOffre" model="Model" /></div></div>
+            </div>
+            <div class="col-lg-5">
+                <section class="card pr-resume-collant">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-receipt me-2"></i>Détail du prix</span><span class="badge-soft sv-fictif">Illustratif</span></div>
+                    <div class="card-body" data-zone="detail-prix" aria-live="polite"></div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <div class="so-navigation">
+        <button type="button" class="btn btn-outline-secondary" data-precedent>Précédent</button>
+        <span class="so-navigation-aide text-muted small" data-aide aria-live="polite"></span>
+        <button type="button" class="btn btn-primary" data-suivant>Suivant</button>
+        <button type="button" class="btn btn-primary" data-creer hidden><i class="bi bi-check2 me-1"></i>Créer le brouillon</button>
+    </div>
+</div>
+
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+<partial name="_DonneesSoumissions" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-editeur.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-nouvelle.js" asp-append-version="true"></script>
+}

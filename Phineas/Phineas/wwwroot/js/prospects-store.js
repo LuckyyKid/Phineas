@@ -37,6 +37,8 @@
   var etat = lire() || cloner(donneesInitiales);
   var modifie = !!lire();
   var abonnes = [];
+  // Autres modules locaux (ex. soumissions) partageant le bandeau de démonstration.
+  var modules = [];
 
   function changer() {
     modifie = true;
@@ -353,6 +355,18 @@
     changer();
   }
 
+  // Ajoute un véhicule aux options envisagées d'une opportunité (ex. depuis les recommandations de véhicules).
+  function ajouterVehiculeEnvisage(oppId, libelle) {
+    var o = opportunite(oppId);
+    if (!o || !libelle || (o.vehiculesEnvisages || []).indexOf(libelle) >= 0) return false;
+    o.vehiculesEnvisages = (o.vehiculesEnvisages || []).concat([libelle]);
+    o.derniereActivite = iso(maintenant());
+    // Entrée « qualification » : un changement interne, pas un échange avec le client (ne résout pas une première réponse).
+    journaliser(o.prospectId, o.id, "qualification", "Véhicule ajouté aux options envisagées : " + libelle + ".");
+    changer();
+    return true;
+  }
+
   function planifierSuivi(oppId, action, date) {
     var o = opportunite(oppId);
     if (!o) return;
@@ -376,12 +390,24 @@
     return i;
   }
 
+  // Sert à annuler une action d'un autre module qui avait ajouté une entrée d'historique.
+  function retirerDerniereInteraction(contactId) {
+    var derniere = interactionsDe(contactId)[0];
+    if (!derniere) return;
+    etat.interactions = etat.interactions.filter(function (x) { return x.id !== derniere.id; });
+    changer();
+  }
+
   function reinitialiser() {
     try {
       window.sessionStorage.removeItem(CLE);
     } catch (e) {}
     etat = cloner(donneesInitiales);
     modifie = false;
+    modules.forEach(function (m) { m.reinitialiser(); });
+    abonnes.forEach(function (f) { f(); });
+  }
+  function rafraichir() {
     abonnes.forEach(function (f) { f(); });
   }
 
@@ -390,8 +416,9 @@
     var marque = document.querySelector("[data-etat-demo]");
     var bouton = document.querySelector("[data-reinitialiser]");
     function maj() {
-      if (marque) marque.hidden = !modifie;
-      if (bouton) bouton.hidden = !modifie;
+      var change = modifie || modules.some(function (m) { return m.estModifie(); });
+      if (marque) marque.hidden = !change;
+      if (bouton) bouton.hidden = !change;
     }
     if (bouton) {
       bouton.addEventListener("click", function () {
@@ -415,6 +442,8 @@
     urlFiche: function (id) { return charge.urlFiche.replace("__id__", encodeURIComponent(id)); },
     urlListe: charge.urlListe,
     abonner: function (f) { abonnes.push(f); },
+    enregistrerModule: function (m) { modules.push(m); rafraichir(); },
+    rafraichir: rafraichir,
     notifier: notifier,
     // lecture
     contacts: contacts,
@@ -441,7 +470,9 @@
     ajouterOpportunite: ajouterOpportunite,
     enregistrerQualification: enregistrerQualification,
     planifierSuivi: planifierSuivi,
+    ajouterVehiculeEnvisage: ajouterVehiculeEnvisage,
     ajouterNote: ajouterNote,
+    retirerDerniereInteraction: retirerDerniereInteraction,
     // outils
     esc: esc,
     argent: argent,

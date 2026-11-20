@@ -1,0 +1,280 @@
+// Composants partagés du moteur d'intelligence commerciale : carte d'action, pastilles, fenêtres (report, ignorer,
+// transfert, historique), éditeur de relance et tableau des critères de compatibilité. Les fenêtres sont créées à la
+// demande pour être disponibles sur toutes les pages qui chargent le moteur.
+(function () {
+  "use strict";
+
+  var I = window.Intelligence, P = window.Prospects, S = window.Soumissions;
+  if (!I || !P) return;
+  var esc = P.esc;
+  var ref = I.ref;
+  var PRIO = {};
+  ref.priorites.forEach(function (p) { PRIO[p.cle] = p; });
+  var CAT = {};
+  ref.categories.forEach(function (c) { CAT[c.cle] = c; });
+
+  function pastillePriorite(cle) {
+    var p = PRIO[cle] || { libelle: cle, icone: "bi-circle" };
+    return '<span class="ia-prio ia-prio-' + esc(cle) + '"><i class="bi ' + esc(p.icone) + '" aria-hidden="true"></i>' + esc(p.libelle) + "</span>";
+  }
+  function pastilleEtat(cle) {
+    return '<span class="ia-etat ia-etat-' + esc(cle) + '">' + esc(ref.etatsAction[cle] || cle) + "</span>";
+  }
+  function echeanceTexte(d) {
+    if (!d) return "Sans échéance";
+    var m = new Date(), e = new Date(d);
+    if (e < m) return "En retard · " + P.dateCourte(e);
+    var h = (e - m) / 3600000;
+    if (h < 24 && e.toDateString() === m.toDateString()) return "Aujourd'hui, " + e.toLocaleTimeString("fr-CA", { hour: "numeric", minute: "2-digit" });
+    return P.echeance(e).charAt(0).toUpperCase() + P.echeance(e).slice(1);
+  }
+  function enRetard(a) {
+    return a.echeance && new Date(a.echeance) < new Date();
+  }
+
+  // ---------- Carte d'action ----------
+  function carte(a, options) {
+    options = options || {};
+    var cat = CAT[a.categorie] || {};
+    var lien = I.urlObjet(a);
+    var actif = a.statut === "ATraiter" || a.statut === "EnCours";
+    var secondaires = actif ? [
+      a.statut === "ATraiter" ? '<button type="button" class="dropdown-item" data-ia="commencer" data-id="' + esc(a.id) + '"><i class="bi bi-play-circle"></i>Commencer le traitement</button>' : "",
+      '<button type="button" class="dropdown-item" data-ia="reporter" data-id="' + esc(a.id) + '"><i class="bi bi-clock"></i>Reporter</button>',
+      '<button type="button" class="dropdown-item" data-ia="ignorer" data-id="' + esc(a.id) + '"><i class="bi bi-eye-slash"></i>Ignorer</button>',
+      a.assignation ? '<button type="button" class="dropdown-item" data-ia="reprendre-charge" data-id="' + esc(a.id) + '"><i class="bi bi-person-check"></i>Reprendre en charge</button>'
+        : '<button type="button" class="dropdown-item" data-ia="transferer" data-id="' + esc(a.id) + '"><i class="bi bi-people"></i>Confier à un collègue</button>',
+    ].join("") : (a.statut === "Reportee" || a.statut === "Ignoree") && !a.horsFile ? '<button type="button" class="dropdown-item" data-ia="reactiver" data-id="' + esc(a.id) + '"><i class="bi bi-arrow-counterclockwise"></i>Remettre dans la file</button>' : "";
+    secondaires += '<button type="button" class="dropdown-item" data-ia="historique" data-id="' + esc(a.id) + '"><i class="bi bi-clock-history"></i>Historique de l\'action</button>';
+    var principale = !actif ? "" : a.relance ? '<button type="button" class="btn btn-sm btn-primary" data-ia="relance" data-id="' + esc(a.id) + '"><i class="bi bi-pencil-square me-1"></i>Préparer la relance</button>'
+      : '<a class="btn btn-sm btn-primary" href="' + esc(lien) + '"><i class="bi bi-box-arrow-up-right me-1"></i>' + esc(a.actionProposee) + "</a>";
+    return '<article class="ia-carte ia-prio-bord-' + esc(a.priorite) + (enRetard(a) && actif ? " is-retard" : "") + '" data-action-id="' + esc(a.id) + '" aria-labelledby="ia-t-' + esc(cleId(a.id)) + '">' +
+      '<header class="ia-carte-tete"><span class="ia-type"><i class="bi ' + esc(cat.icone || "bi-lightning") + '" aria-hidden="true"></i><span id="ia-t-' + esc(cleId(a.id)) + '">' + esc(a.regleLibelle) + "</span></span>" +
+      '<span class="ia-carte-pastilles">' + pastillePriorite(a.priorite) + (a.statut !== "ATraiter" ? pastilleEtat(a.statut) : "") + "</span></header>" +
+      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">— ' + esc(a.vehicule) + "</span>" : "") + "</p>" +
+      (a.declencheur ? '<p class="ia-situation">' + esc(a.declencheur) + "</p>" : "") +
+      '<p class="ia-motif"><span class="visually-hidden">Raison : </span>' + esc(a.motif) + "</p>" +
+      ((a.contexte || []).length && !options.compacte ? '<ul class="ia-contexte">' + a.contexte.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
+      (a.avertissement ? '<p class="ia-avertissement"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>' + esc(a.avertissement) + "</p>" : "") +
+      (a.assignation ? '<p class="ia-transfert"><i class="bi bi-people me-1" aria-hidden="true"></i>Prise en charge temporaire par <strong>' + esc(a.assignation.collegue) + "</strong> (" + esc((ref.motifsTransfert[a.assignation.motif] || "").toLowerCase()) + ")</p>" : "") +
+      (a.statut === "Reportee" && a.reporteJusqua ? '<p class="ia-transfert"><i class="bi bi-clock me-1" aria-hidden="true"></i>Reportée au ' + esc(P.dateCourte(a.reporteJusqua)) + "</p>" : "") +
+      '<dl class="ia-meta"><div><dt>Action proposée</dt><dd>' + esc(a.actionProposee) + "</dd></div>" +
+      '<div><dt>Échéance</dt><dd class="' + (enRetard(a) ? "ia-retard" : "") + '">' + esc(echeanceTexte(a.echeance)) + "</dd></div>" +
+      '<div><dt>Responsable</dt><dd>' + esc(a.departement === "conseiller" ? "Vous" : (window.Transactions && window.Transactions.ref.departements[a.departement] || {}).libelle || a.departement) + (a.source ? ' <span class="pr-sous">· ' + esc(a.source) + "</span>" : "") + "</dd></div></dl>" +
+      (options.compacte ? "" : '<details class="ia-pourquoi"><summary>Pourquoi cette recommandation et cette priorité ?</summary><ul>' +
+        "<li>Règle : « " + esc(a.regleLibelle) + " » (" + esc(a.nature === "commerciale" ? "sollicitation commerciale" : a.nature === "dossier" ? "communication liée au dossier" : "action interne") + ").</li>" +
+        (a.raisonsPriorite || []).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") +
+        "<li>Résolution : " + esc(a.resolution || "—") + "</li><li>Expiration : " + esc(a.expiration || "—") + "</li>" +
+        "<li>Détectée " + esc(a.detecteLe ? P.relatif(a.detecteLe) : "—") + ".</li></ul></details>") +
+      '<footer class="ia-carte-actions">' + principale +
+      '<a class="btn btn-sm btn-outline-primary" href="' + esc(lien) + '">Consulter le dossier</a>' +
+      (actif ? '<button type="button" class="btn btn-sm btn-ghost" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="bi bi-check2 me-1"></i>Marquer comme réalisée</button>' : "") +
+      '<div class="dropdown"><button type="button" class="btn btn-sm btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Autres actions">Plus</button><div class="dropdown-menu dropdown-menu-end sv-menu">' + secondaires + "</div></div>" +
+      "</footer></article>";
+  }
+  function cleId(id) {
+    return String(id).replace(/[^a-zA-Z0-9-]/g, "_");
+  }
+
+  // ---------- Fenêtre générique ----------
+  var modale = null;
+  function fenetre(titre, corpsHtml, pied) {
+    if (!modale) {
+      var el = document.createElement("div");
+      el.className = "modal fade";
+      el.id = "ia-modale";
+      el.tabIndex = -1;
+      el.setAttribute("aria-labelledby", "ia-modale-titre");
+      el.setAttribute("aria-hidden", "true");
+      el.innerHTML = '<div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h2 class="modal-title h5" id="ia-modale-titre"></h2>' +
+        '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button></div><div class="modal-body"></div><div class="modal-footer"></div></div></div>';
+      document.body.appendChild(el);
+      modale = el;
+      el.addEventListener("click", surClicModale);
+      el.addEventListener("change", surChangeModale);
+    }
+    modale.querySelector("#ia-modale-titre").textContent = titre;
+    modale.querySelector(".modal-body").innerHTML = corpsHtml;
+    modale.querySelector(".modal-footer").innerHTML = pied || '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>';
+    if (window.bootstrap) bootstrap.Modal.getOrCreateInstance(modale).show();
+    else modale.classList.add("show");
+    return modale;
+  }
+  function fermer() {
+    if (modale && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modale).hide();
+  }
+  function notifier(annuler, ok, ko) {
+    P.notifier(annuler ? ok : ko || "Action impossible dans l'état actuel.", annuler || undefined);
+  }
+  var courant = null;
+
+  function ouvrirReport(id) {
+    var a = I.action(id);
+    courant = { type: "reporter", id: id };
+    var demain = new Date(); demain.setDate(demain.getDate() + 1);
+    fenetre("Reporter l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + "</p>" +
+      '<label class="form-label" for="ia-date">Revenir dans la file le <span class="pr-requis">*</span></label><input type="date" class="form-control" id="ia-date" min="' + esc(P.versChampDate(demain)) + '" value="' + esc(P.versChampDate(demain)) + '" />' +
+      '<div class="invalid-feedback">Choisissez une date à venir.</div>' +
+      '<label class="form-label mt-3" for="ia-motif">Motif <span class="text-muted">(facultatif)</span></label><input class="form-control" id="ia-motif" maxlength="200" />' +
+      '<p class="pr-note mt-2 mb-0">L\'action ne réapparaîtra pas avant cette date, sauf si vous la remettez dans la file.</p>',
+      '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Reporter</button>');
+  }
+  function ouvrirIgnorer(id) {
+    var a = I.action(id);
+    courant = { type: "ignorer", id: id };
+    fenetre("Ignorer l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + "</p>" +
+      '<label class="form-label" for="ia-motif-ignorer">Motif <span class="text-muted">(facultatif)</span></label><select class="form-select" id="ia-motif-ignorer"><option value="">Sans motif</option>' +
+      Object.keys(ref.motifsIgnorer).map(function (k) { return '<option value="' + esc(k) + '">' + esc(ref.motifsIgnorer[k]) + "</option>"; }).join("") + "</select>" +
+      '<p class="pr-note mt-2 mb-0">Une action ignorée ne réapparaît que si un nouvel événement crée une nouvelle situation.</p>',
+      '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Ignorer</button>');
+  }
+  function ouvrirTransfert(id) {
+    var a = I.action(id);
+    courant = { type: "transferer", id: id };
+    var collegues = P.conseillers().filter(function (c) { return c.id !== P.moiId; });
+    fenetre("Confier l'action à un collègue", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + "</p>" +
+      '<label class="form-label" for="ia-collegue">Collègue <span class="pr-requis">*</span></label><select class="form-select" id="ia-collegue">' +
+      collegues.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nom) + " (fictif)</option>"; }).join("") + "</select>" +
+      '<label class="form-label mt-3" for="ia-motif-transfert">Motif <span class="pr-requis">*</span></label><select class="form-select" id="ia-motif-transfert">' +
+      Object.keys(ref.motifsTransfert).map(function (k) { return '<option value="' + esc(k) + '">' + esc(ref.motifsTransfert[k]) + "</option>"; }).join("") + "</select>" +
+      '<div class="ia-transfert-contexte mt-3"><strong>Contexte transmis</strong><p class="mb-1">' + esc(a.motif) + "</p>" + ((a.contexte || []).length ? "<ul>" + a.contexte.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") + "</div>" +
+      '<p class="pr-note mt-2 mb-0">Prise en charge temporaire et tracée : le prospect reste attribué à ' + esc(I.ref.conseillerNom || "vous") + ". Aucune affectation ni autorisation serveur n'est modifiée.</p>",
+      '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Confier</button>');
+  }
+  function ouvrirHistorique(id) {
+    var a = I.action(id);
+    courant = null;
+    fenetre("Historique de l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> — " + esc(a.client) + " " + pastilleEtat(a.statut) + "</p>" +
+      '<ol class="ia-historique">' + (a.historique || []).slice().reverse().map(function (h) {
+        return "<li><time>" + esc(P.dateComplete(h.date)) + "</time><span>" + esc(h.texte) + ' <span class="pr-sous">· ' + esc(h.auteur) + (h.de && h.vers && h.de !== h.vers ? " · " + esc(ref.etatsAction[h.de] || h.de) + " → " + esc(ref.etatsAction[h.vers] || h.vers) : "") + "</span></span></li>";
+      }).join("") + "</ol>");
+  }
+
+  // ---------- Éditeur de relance ----------
+  function ouvrirRelance(id) {
+    var ctx = I.contexteRelance(id);
+    if (!ctx) return;
+    var a = ctx.action;
+    var suspension = I.suspensionContact(a.prospectId, a.opportuniteId, a.nature);
+    courant = { type: "relance", id: id };
+    var tons = ref.tons.map(function (t) { return '<option value="' + esc(t.cle) + '">' + esc(t.libelle) + "</option>"; }).join("");
+    var demain = new Date(); demain.setDate(demain.getDate() + 2);
+    fenetre("Préparer une relance — " + a.client,
+      '<div class="ia-relance">' +
+      '<section><h3 class="ia-sous-titre">Motif de la relance</h3><p class="mb-1"><strong>' + esc(a.regleLibelle) + "</strong> : " + esc(a.motif) + "</p>" +
+      (a.avertissement ? '<p class="ia-avertissement">' + esc(a.avertissement) + "</p>" : "") +
+      (suspension ? '<p class="ia-avertissement"><i class="bi bi-slash-circle me-1"></i>Contact suspendu : ' + esc(suspension) + "</p>" : "") + "</section>" +
+      '<section><h3 class="ia-sous-titre">Informations utilisées</h3><dl class="ia-utilisees">' + ctx.utilisees.map(function (u) {
+        return "<div><dt>" + esc(u.libelle) + "</dt><dd>" + (u.valeur ? esc(u.valeur) : '<span class="rv-a-verifier">Non disponible</span>') + "</dd></div>";
+      }).join("") + "</dl>" + (ctx.aVerifier.length ? '<p class="pr-note mb-0">À vérifier avant d\'écrire : ' + esc(ctx.aVerifier.join(" · ")) + ".</p>" : "") + "</section>" +
+      '<section><div class="row g-2 align-items-end"><div class="col-sm-6"><label class="form-label" for="ia-ton">Ton</label><select class="form-select form-select-sm" id="ia-ton">' + tons + "</select></div>" +
+      '<div class="col-sm-6"><span class="form-label d-block">Canal envisagé</span><span class="ia-canal"><i class="bi bi-chat-left-text me-1"></i>' + esc(ctx.canal) + (ctx.coordonnee ? " · " + esc(ctx.coordonnee) : "") + "</span></div></div>" +
+      '<label class="form-label mt-2" for="ia-texte">Brouillon (modifiable)</label><textarea class="form-control" id="ia-texte" rows="9">' + esc(I.brouillon(id, "professionnel")) + "</textarea>" +
+      '<p class="pr-note mt-1 mb-0"><i class="bi bi-info-circle me-1"></i>Phineas n\'envoie rien. Copier le message ne l\'envoie pas ; vous le transmettez vous-même, puis vous pouvez déclarer le contact.</p></section>' +
+      '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi (local)</h3><div class="row g-2"><div class="col-sm-5"><input type="date" class="form-control form-control-sm" id="ia-suivi-date" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" aria-label="Date du suivi" /></div>' +
+      '<div class="col-sm-7"><input class="form-control form-control-sm" id="ia-suivi-texte" maxlength="120" value="' + esc(a.actionProposee) + '" aria-label="Action de suivi" /></div></div>' +
+      '<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-ia-relance="suivi"><i class="bi bi-alarm me-1"></i>Programmer le suivi</button></section>' +
+      "</div>",
+      '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>' +
+      '<button type="button" class="btn btn-outline-primary" data-ia-relance="copier"><i class="bi bi-clipboard me-1"></i>Copier le message</button>' +
+      '<button type="button" class="btn btn-outline-primary" data-ia-relance="brouillon"><i class="bi bi-journal-text me-1"></i>Enregistrer dans l\'historique</button>' +
+      '<button type="button" class="btn btn-primary" data-ia-relance="contact"' + (suspension ? " disabled" : "") + '><i class="bi bi-check2 me-1"></i>J\'ai contacté le client</button>');
+  }
+
+  function surChangeModale(e) {
+    if (e.target.id === "ia-ton" && courant && courant.type === "relance") {
+      modale.querySelector("#ia-texte").value = I.brouillon(courant.id, e.target.value);
+    }
+  }
+  function surClicModale(e) {
+    var b = e.target.closest("[data-ia-valider], [data-ia-relance]");
+    if (!b || !courant) return;
+    var id = courant.id;
+    if (b.hasAttribute("data-ia-valider")) {
+      if (courant.type === "reporter") {
+        var champ = modale.querySelector("#ia-date");
+        var date = champ.value ? P.depuisChampDate(champ.value) : null;
+        champ.classList.toggle("is-invalid", !date || date <= new Date());
+        if (!date || date <= new Date()) return;
+        fermer();
+        notifier(I.reporter(id, date, modale.querySelector("#ia-motif").value.trim()), "Action reportée au " + P.dateCourte(date) + ".");
+      } else if (courant.type === "ignorer") {
+        var motif = modale.querySelector("#ia-motif-ignorer").value;
+        fermer();
+        notifier(I.ignorer(id, motif), "Action ignorée.");
+      } else if (courant.type === "transferer") {
+        var col = modale.querySelector("#ia-collegue").value;
+        var mt = modale.querySelector("#ia-motif-transfert").value;
+        fermer();
+        notifier(I.transferer(id, col, mt), "Action confiée temporairement à " + P.conseiller(col).nom + ".");
+      }
+      return;
+    }
+    var quoi = b.dataset.iaRelance;
+    var texte = modale.querySelector("#ia-texte").value;
+    if (quoi === "copier") {
+      var z = modale.querySelector("#ia-texte");
+      z.select();
+      try {
+        if (navigator.clipboard) navigator.clipboard.writeText(texte); else document.execCommand("copy");
+        P.notifier("Message copié. Rien n'a été envoyé.");
+      } catch (err) { P.notifier("Copie impossible : sélectionnez le texte manuellement."); }
+    } else if (quoi === "brouillon") {
+      notifier(I.enregistrerBrouillon(id, texte), "Brouillon enregistré dans l'historique (non envoyé).", "Le brouillon est vide.");
+    } else if (quoi === "contact") {
+      var ctx = I.contexteRelance(id);
+      var res = I.declarerContact(id, ctx.canalCle, "« " + texte.trim().split("\n").filter(Boolean).slice(1, 2).join(" ").slice(0, 120) + " »");
+      fermer();
+      notifier(res, "Contact déclaré et action marquée comme réalisée.", "Contact impossible : relance suspendue pour ce client.");
+    } else if (quoi === "suivi") {
+      var dch = modale.querySelector("#ia-suivi-date").value;
+      var ok = I.programmerSuivi(id, dch ? P.depuisChampDate(dch) : null, modale.querySelector("#ia-suivi-texte").value);
+      P.notifier(ok ? "Suivi programmé dans l'opportunité (local)." : "Indiquez une date et une action.");
+    }
+  }
+
+  // Délégation : les boutons [data-ia] des cartes, sur n'importe quelle page.
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ia]");
+    if (!b || b.disabled) return;
+    var id = b.dataset.id, quoi = b.dataset.ia;
+    if (quoi === "relance") ouvrirRelance(id);
+    else if (quoi === "reporter") ouvrirReport(id);
+    else if (quoi === "ignorer") ouvrirIgnorer(id);
+    else if (quoi === "transferer") ouvrirTransfert(id);
+    else if (quoi === "historique") ouvrirHistorique(id);
+    else if (quoi === "commencer") notifier(I.commencer(id), "Traitement commencé.");
+    else if (quoi === "terminer") notifier(I.terminer(id), "Action marquée comme réalisée.");
+    else if (quoi === "reactiver") notifier(I.reactiver(id), "Action remise dans la file.");
+    else if (quoi === "reprendre-charge") notifier(I.reprendreEnCharge(id), "Vous reprenez l'action en charge.");
+  });
+
+  // ---------- Compatibilité ----------
+  var ICONES_CRITERE = { satisfait: "bi-check-circle-fill", "non-satisfait": "bi-x-circle-fill", inconnu: "bi-question-circle", "non-applicable": "bi-dash-circle" };
+  var LIBELLES_CRITERE = { satisfait: "Satisfait", "non-satisfait": "Non satisfait", inconnu: "Information inconnue", "non-applicable": "Non applicable" };
+  var NIVEAUX = { compatible: "Compatible", partiel: "Partiellement compatible", "a-verifier": "Compatibilité à vérifier", incompatible: "Critère indispensable non respecté" };
+  function pastilleCompatibilite(r) {
+    return '<span class="ia-compat ia-compat-' + esc(r.niveau) + '" title="Pourcentage des critères connus satisfaits (pondérés) : pas une probabilité d’achat.">' + esc(NIVEAUX[r.niveau]) +
+      (r.score != null && r.niveau !== "a-verifier" ? " · " + r.score + " % des critères connus" : "") + "</span>";
+  }
+  function criteres(r) {
+    return '<ul class="ia-criteres">' + r.items.map(function (i) {
+      return '<li class="ia-cr-' + esc(i.statut) + '"><i class="bi ' + ICONES_CRITERE[i.statut] + '" aria-hidden="true"></i><span><span class="visually-hidden">' + LIBELLES_CRITERE[i.statut] + " : </span><strong>" + esc(i.libelle) + "</strong>" +
+        (i.indispensable ? ' <span class="ia-indisp">indispensable</span>' : "") + '<span class="pr-sous d-block">' + esc(i.detail) + "</span></span></li>";
+    }).join("") + "</ul>" +
+      '<p class="ia-couverture"><span>Couverture des informations : <strong>' + r.couverture + " %</strong></span>" + (r.score == null ? ' <span class="rv-a-verifier">Trop peu de critères connus pour un pourcentage fiable.</span>' : "") + "</p>";
+  }
+
+  window.IntelligenceUI = {
+    carte: carte,
+    pastillePriorite: pastillePriorite,
+    pastilleEtat: pastilleEtat,
+    pastilleCompatibilite: pastilleCompatibilite,
+    criteres: criteres,
+    niveauxCompatibilite: NIVEAUX,
+    echeanceTexte: echeanceTexte,
+    fenetre: fenetre,
+    ouvrirRelance: ouvrirRelance,
+    categories: CAT,
+  };
+})();

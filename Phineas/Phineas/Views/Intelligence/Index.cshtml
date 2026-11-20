@@ -1,0 +1,153 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model IntelligencePageViewModel
+@{
+    ViewData["Title"] = "Centre d'actions";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Centre d'actions</h1>
+        <p class="text-muted mb-0">Ce qui demande votre attention, tous modules confondus. Chaque action est justifiée et reliée à son dossier.</p>
+    </div>
+    <div class="sv-quick">
+        <a class="btn btn-outline-primary btn-sm" asp-action="Suivis"><i class="bi bi-arrow-repeat me-1"></i>Mes suivis</a>
+        <a class="btn btn-outline-primary btn-sm" asp-action="Vehicules"><i class="bi bi-car-front me-1"></i>Recommandations véhicules</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<section class="card sv-kpis ia-kpis" aria-label="Résumé de mes actions">
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-list-task"></i>À traiter</div><div class="sv-kpi-value" data-compteur="aTraiter">—</div><div class="sv-kpi-detail">actions actives</div></div>
+    <div class="sv-kpi sv-ton-critique"><div class="sv-kpi-label"><i class="bi bi-exclamation-octagon"></i>Prioritaires</div><div class="sv-kpi-value" data-compteur="prioritaires">—</div><div class="sv-kpi-detail">urgentes ou élevées</div></div>
+    <div class="sv-kpi sv-ton-attention"><div class="sv-kpi-label"><i class="bi bi-hourglass-split"></i>Échéance proche</div><div class="sv-kpi-value" data-compteur="echeance">—</div><div class="sv-kpi-detail">dans les 24 heures</div></div>
+    <div class="sv-kpi sv-ton-critique"><div class="sv-kpi-label"><i class="bi bi-alarm"></i>En retard</div><div class="sv-kpi-value" data-compteur="retard">—</div><div class="sv-kpi-detail">échéance dépassée</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-check2-all"></i>Terminées</div><div class="sv-kpi-value" data-compteur="terminees">—</div><div class="sv-kpi-detail">aujourd'hui</div></div>
+</section>
+
+<div id="centre">
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-file" data-bs-toggle="tab" data-bs-target="#panneau-file" type="button" role="tab" aria-controls="panneau-file" aria-selected="true">À traiter <span class="pr-compte" data-champ="nb-file"></span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-surveillance" data-bs-toggle="tab" data-bs-target="#panneau-surveillance" type="button" role="tab" aria-controls="panneau-surveillance" aria-selected="false">Opportunités qui stagnent <span class="pr-compte" data-champ="nb-surveillance"></span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-reportees" data-bs-toggle="tab" data-bs-target="#panneau-reportees" type="button" role="tab" aria-controls="panneau-reportees" aria-selected="false">Reportées <span class="pr-compte" data-champ="nb-reportees"></span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-traitees" data-bs-toggle="tab" data-bs-target="#panneau-traitees" type="button" role="tab" aria-controls="panneau-traitees" aria-selected="false">Traitées et obsolètes</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-continuite" data-bs-toggle="tab" data-bs-target="#panneau-continuite" type="button" role="tab" aria-controls="panneau-continuite" aria-selected="false">Continuité</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-file" role="tabpanel" aria-labelledby="onglet-file" tabindex="0">
+            <section class="card pr-module" aria-label="Actions à traiter">
+                <div class="pr-toolbar">
+                    <div class="pr-search">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <input type="search" class="form-control" id="f-recherche" placeholder="Client, véhicule ou situation" aria-label="Rechercher une action" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="pr-filtres">
+                    <select class="form-select form-select-sm" id="f-categorie" aria-label="Filtrer par catégorie">
+                        <option value="">Toutes les catégories</option>
+                        @foreach (var (cle, libelle, _) in ReferentielsIntelligence.Categories)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                    <select class="form-select form-select-sm" id="f-priorite" aria-label="Filtrer par priorité">
+                        <option value="">Toutes les priorités</option>
+                        @foreach (var (cle, libelle, _) in ReferentielsIntelligence.Priorites)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                    <select class="form-select form-select-sm" id="f-responsable" aria-label="Filtrer par responsable">
+                        <option value="moi">Mes actions</option>
+                        <option value="confiees">Confiées à un collègue</option>
+                        <option value="">Tous les conseillers</option>
+                    </select>
+                    <div class="form-check form-switch pr-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="f-retard" />
+                        <label class="form-check-label" for="f-retard">En retard</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+                </div>
+                <div class="pr-resultat" id="resultat" aria-live="polite"></div>
+                <div class="ia-file" id="file"></div>
+                <div class="pr-etat-vide" id="file-vide" hidden>
+                    <i class="bi bi-check2-circle"></i>
+                    <strong data-vide-titre>Aucune action</strong>
+                    <span data-vide-texte></span>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-surveillance" role="tabpanel" aria-labelledby="onglet-surveillance" tabindex="0">
+            <section class="card">
+                <div class="card-header sv-card-header"><span><i class="bi bi-binoculars me-2"></i>Commercial Opportunity Monitor</span><span class="badge-soft">Règles de démonstration</span></div>
+                <div class="card-body">
+                    <p class="pr-note"><i class="bi bi-info-circle me-1"></i>Une opportunité inactive n'est pas une preuve de désintérêt : rien n'est classé « perdu » automatiquement. Les seuils sont configurables.</p>
+                    <div class="ia-file" id="surveillance"></div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-reportees" role="tabpanel" aria-labelledby="onglet-reportees" tabindex="0">
+            <section class="card"><div class="card-body"><div class="ia-file" id="reportees"></div></div></section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-traitees" role="tabpanel" aria-labelledby="onglet-traitees" tabindex="0">
+            <section class="card">
+                <div class="card-body">
+                    <div class="pr-filtres px-0 pt-0">
+                        <select class="form-select form-select-sm" id="f-traitees" aria-label="Filtrer par état">
+                            <option value="Terminee">Terminées</option>
+                            <option value="Ignoree">Ignorées</option>
+                            <option value="Obsolete">Devenues obsolètes</option>
+                        </select>
+                    </div>
+                    <div class="ia-file" id="traitees"></div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panneau-continuite" role="tabpanel" aria-labelledby="onglet-continuite" tabindex="0">
+            <section class="card">
+                <div class="card-header sv-card-header"><span><i class="bi bi-people me-2"></i>Continuité commerciale</span></div>
+                <div class="card-body">
+                    <p class="small">Vous serez absent ? Repérez les actions qui ne peuvent pas attendre votre retour et confiez-les temporairement à un collègue. Le prospect reste le vôtre : aucune affectation, autorisation ni commission n'est modifiée.</p>
+                    <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+                        <div><label class="form-label" for="c-retour">Je serai de retour le</label><input type="date" class="form-control form-control-sm" id="c-retour" /></div>
+                    </div>
+                    <div class="ia-file" id="continuite"></div>
+                    <h3 class="ia-sous-titre mt-4">Actions confiées à un collègue</h3>
+                    <div class="ia-file" id="confiees"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-actions.js" asp-append-version="true"></script>
+}

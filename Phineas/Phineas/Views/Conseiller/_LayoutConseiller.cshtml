@@ -6,8 +6,30 @@
     Layout = "_Layout";
     ViewData["ClasseApp"] = "ph-espace";
     var controleur = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
     // Une section reste active sur toutes ses pages (ex. liste et fiche des prospects).
     bool EstActive(EntreeNavigation e) => e.Controleur is not null && e.Controleur == controleur;
+
+    // Dans un groupe, une seule sous-entrée est surlignée : celle de la page affichée,
+    // sinon la liste (« Index ») du même contrôleur. Ex. : la fiche d'une soumission surligne « Soumissions ».
+    EntreeNavigation? EnfantActif(IReadOnlyList<EntreeNavigation> enfants)
+    {
+        foreach (var enfant in enfants)
+        {
+            if (enfant.Controleur == controleur && enfant.Action == action)
+            {
+                return enfant;
+            }
+        }
+        foreach (var enfant in enfants)
+        {
+            if (enfant.Controleur == controleur && enfant.Action == "Index")
+            {
+                return enfant;
+            }
+        }
+        return null;
+    }
 
     var nomComplet = User.FindFirst(AppClaims.FullName)?.Value ?? User.Identity?.Name ?? "";
     var concession = User.FindFirst(AppClaims.DealershipName)?.Value;
@@ -32,14 +54,17 @@
         {
             if (entree.Enfants is { } enfants)
             {
-                <details class="ph-groupe" open="@enfants.Any(EstActive)">
+                // Le groupe s'ouvre et passe en vert sapin quand une de ses pages est affichée.
+                var enfantActif = EnfantActif(enfants);
+                var groupeActif = enfantActif is not null;
+                <details class="ph-groupe @(groupeActif ? "is-active" : "")" open="@groupeActif">
                     <summary><i class="bi @entree.Icone"></i>@entree.Libelle</summary>
                     <div class="ph-sous-nav">
                         @foreach (var enfant in enfants)
                         {
                             if (enfant.Disponible)
                             {
-                                var actif = EstActive(enfant);
+                                var actif = enfant == enfantActif;
                                 <a class="@(actif ? "is-active" : "")" asp-controller="@enfant.Controleur" asp-action="@enfant.Action" aria-current="@(actif ? "page" : null)">@enfant.Libelle</a>
                             }
                             else
@@ -52,7 +77,7 @@
                 continue;
             }
 
-            var compteur = entree.Libelle == "Actions" ? nbActions : null;
+            var compteur = entree.Libelle == "Centre d'actions" ? nbActions : null;
             if (entree.Disponible)
             {
                 var active = EstActive(entree);

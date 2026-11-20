@@ -1,0 +1,77 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model IntelligencePageViewModel
+@{
+    ViewData["Title"] = "Mes suivis";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Centre d'actions</a>
+
+<header class="sv-head">
+    <div>
+        <h1>Mes suivis</h1>
+        <p class="text-muted mb-0">Qui relancer, pourquoi, et comment le client préfère être contacté. Vous gardez la main sur chaque message.</p>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="suivis">
+    <section class="card mb-4" aria-labelledby="titre-a-relancer">
+        <div class="card-header sv-card-header"><span id="titre-a-relancer"><i class="bi bi-arrow-repeat me-2"></i>À relancer <span class="pr-compte" data-champ="nb-relances"></span></span><span class="badge-soft">Délais : règles de démonstration</span></div>
+        <div class="table-responsive">
+            <table class="table pr-table ia-table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Client</th>
+                        <th scope="col">Pourquoi</th>
+                        <th scope="col">Dernier contact</th>
+                        <th scope="col">Canal préféré</th>
+                        <th scope="col">Prochaine action</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody id="relances"></tbody>
+            </table>
+        </div>
+        <div class="pr-etat-vide" id="relances-vide" hidden>
+            <i class="bi bi-check2-circle"></i>
+            <strong>Aucune relance à faire</strong>
+            <span>Les relances apparaîtront lorsqu'une situation le justifiera.</span>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="titre-suspendues">
+        <div class="card-header sv-card-header"><span id="titre-suspendues"><i class="bi bi-pause-circle me-2"></i>Relances suspendues <span class="pr-compte" data-champ="nb-suspendues"></span></span></div>
+        <div class="card-body">
+            <p class="pr-note"><i class="bi bi-shield-lock me-1"></i>Une recommandation ne conduit jamais automatiquement à une sollicitation. Les communications nécessaires au traitement d'un dossier sont distinguées des sollicitations commerciales ; cette distinction devra être validée juridiquement et techniquement. Le prototype n'assure pas à lui seul la conformité.</p>
+            <ul class="ia-suspendues" id="suspendues"></ul>
+        </div>
+    </section>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-suivis.js" asp-append-version="true"></script>
+}

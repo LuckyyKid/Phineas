@@ -1,0 +1,598 @@
+/* Module Rendez-vous (Phineas Sales OS) — complète conseiller.css, prospects.css et soumissions.css */
+
+/* ---------- Statuts : icône + libellé, jamais la couleur seule ---------- */
+.rv-statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+  color: var(--c);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.rv-st-Planifie { --c: #475569; }
+.rv-st-AConfirmer { --c: #b45309; }
+.rv-st-Confirme { --c: #15803d; }
+.rv-st-EnCours { --c: var(--ph-primary); }
+.rv-st-Termine { --c: #334155; }
+.rv-st-Annule { --c: #b91c1c; }
+.rv-st-ClientAbsent { --c: #9f1239; }
+.rv-st-Replanifie { --c: #7c3aed; }
+
+.rv-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.rv-a-verifier {
+  color: #b45309;
+  font-weight: 500;
+}
+.rv-ok {
+  color: var(--sv-ok);
+}
+.rv-titre-client {
+  font-weight: 500;
+  color: var(--ph-muted);
+}
+
+/* ---------- Alertes ---------- */
+.rv-alertes {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.rv-alertes li {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+.rv-alertes i {
+  margin-top: 0.1rem;
+}
+.rv-al-critique {
+  background: #fef2f2;
+  color: #991b1b;
+}
+.rv-al-attention {
+  background: #fffbeb;
+  color: #92400e;
+}
+#rdv > [data-zone="alertes"] .rv-alertes {
+  margin: 0 0 1rem;
+}
+
+/* ---------- Barre d'outils de l'agenda ---------- */
+.rv-nav-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.rv-periode {
+  margin: 0 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.rv-champ-date {
+  width: auto;
+  max-width: 11rem;
+}
+.rv-calendrier {
+  padding: 0 1.15rem 1rem;
+}
+
+/* ---------- Événement ---------- */
+.rv-evt {
+  --c: #475569;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  width: 100%;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+  border-left: 3px solid var(--c);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c) 8%, #fff);
+  color: var(--ph-ink);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+  position: relative;
+}
+.rv-evt:hover {
+  background: color-mix(in srgb, var(--c) 14%, #fff);
+}
+.rv-evt:focus-visible {
+  outline: 2px solid var(--ph-primary);
+  outline-offset: 1px;
+  z-index: 3;
+}
+.rv-evt.is-selection {
+  box-shadow: 0 0 0 2px var(--ph-primary);
+  z-index: 2;
+}
+.rv-evt.rv-st-AConfirmer {
+  border-style: dashed;
+  border-left-style: solid;
+}
+.rv-evt.is-clos {
+  opacity: 0.72;
+}
+.rv-evt.rv-st-Annule .rv-evt-client,
+.rv-evt.rv-st-Replanifie .rv-evt-client {
+  text-decoration: line-through;
+}
+.rv-evt-ligne {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rv-evt-heure {
+  font-weight: 700;
+  color: #334155;
+}
+.rv-evt-client {
+  font-weight: 600;
+}
+.rv-evt-type {
+  display: block;
+  color: var(--ph-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.rv-evt-type i {
+  margin-right: 0.25rem;
+}
+.rv-evt-icones {
+  float: right;
+  display: inline-flex;
+  gap: 0.15rem;
+  margin-left: 0.2rem;
+  color: var(--c);
+}
+.rv-ic-critique {
+  color: var(--sv-critique);
+}
+.rv-ic-attention {
+  color: var(--sv-haute);
+}
+.rv-grille.is-semaine .rv-evt {
+  padding: 0.15rem 0.3rem;
+  font-size: 0.6875rem;
+}
+.rv-grille.is-semaine .rv-evt-ligne {
+  white-space: normal;
+}
+
+/* ---------- Vues jour et semaine ---------- */
+.rv-grille {
+  --rv-colonne-heures: 3.25rem;
+  border: 1px solid var(--ph-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.rv-grille.is-semaine {
+  overflow-x: auto;
+}
+.rv-grille-tete,
+.rv-grille-corps {
+  display: grid;
+  grid-template-columns: var(--rv-colonne-heures) repeat(var(--rv-jours), minmax(0, 1fr));
+}
+@media (max-width: 991.98px) {
+  .rv-grille.is-semaine .rv-grille-tete,
+  .rv-grille.is-semaine .rv-grille-corps {
+    min-width: 680px;
+  }
+}
+.rv-grille-tete {
+  border-bottom: 1px solid var(--ph-border);
+  background: #f8fafc;
+}
+.rv-jour-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.5rem;
+  border-left: 1px solid var(--ph-border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.rv-jour-tete .btn-link {
+  color: var(--ph-ink);
+  font-size: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+.rv-jour-tete.is-aujourdhui .btn-link {
+  color: var(--ph-primary-600);
+}
+.rv-jour-tete.is-aujourdhui {
+  background: var(--ph-primary-50);
+}
+.rv-ajouter {
+  color: var(--ph-muted);
+  line-height: 1;
+  border-radius: 4px;
+}
+.rv-ajouter:hover,
+.rv-ajouter:focus-visible {
+  color: var(--ph-primary);
+  background: #fff;
+}
+.rv-grille-corps {
+  position: relative;
+}
+.rv-heures {
+  position: relative;
+}
+.rv-heure {
+  position: absolute;
+  right: 0.4rem;
+  transform: translateY(-0.1rem);
+  font-size: 0.6875rem;
+  color: var(--ph-muted);
+}
+.rv-col {
+  position: relative;
+  border-left: 1px solid var(--ph-border);
+  background-image: repeating-linear-gradient(to bottom, var(--ph-border) 0, var(--ph-border) 1px, transparent 1px, transparent var(--rv-heure));
+}
+.rv-col.is-aujourdhui {
+  background-color: #fbfcff;
+}
+.rv-col .rv-evt {
+  position: absolute;
+  margin-left: 2px;
+}
+.rv-maintenant {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--sv-critique);
+  z-index: 1;
+}
+.rv-maintenant::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sv-critique);
+}
+
+/* ---------- Vue mois ---------- */
+.rv-mois {
+  border: 1px solid var(--ph-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.rv-mois-tete,
+.rv-mois-corps {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.rv-mois-tete div {
+  padding: 0.35rem 0.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--ph-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ph-muted);
+}
+.rv-mois-jour {
+  min-height: 6.5rem;
+  padding: 0.3rem;
+  border-right: 1px solid var(--ph-border);
+  border-bottom: 1px solid var(--ph-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.rv-mois-jour:nth-child(7n) {
+  border-right: 0;
+}
+.rv-mois-jour.is-autre {
+  background: #f8fafc;
+}
+.rv-mois-jour.is-autre .rv-mois-num {
+  color: #94a3b8;
+}
+.rv-mois-num {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.rv-mois-jour.is-aujourdhui .rv-mois-num {
+  background: var(--ph-primary);
+  color: #fff;
+}
+.rv-mois .rv-evt {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.6875rem;
+}
+.rv-mois .rv-evt-type {
+  display: none;
+}
+.rv-plus {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.6875rem;
+  color: var(--ph-primary);
+  text-align: left;
+}
+
+/* ---------- Vue liste ---------- */
+.rv-liste-jour h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.rv-liste-jour:first-child h3 {
+  margin-top: 0.25rem;
+}
+.rv-liste-jour ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--ph-border);
+  border-radius: 10px;
+}
+.rv-ligne {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.7rem 0.85rem;
+}
+.rv-ligne + .rv-ligne {
+  border-top: 1px solid var(--ph-border);
+}
+.rv-ligne.is-clos {
+  opacity: 0.75;
+}
+.rv-ligne.is-selection {
+  background: var(--ph-primary-50);
+}
+.rv-ligne-heure {
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+.rv-ligne-titre {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-weight: 600;
+  color: var(--ph-ink);
+  text-align: left;
+}
+.rv-ligne-titre:hover {
+  color: var(--ph-primary);
+  text-decoration: underline;
+}
+.rv-ligne-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.25rem 0;
+}
+@media (max-width: 575.98px) {
+  .rv-ligne {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .rv-ligne-heure {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- À confirmer (bande) et panneau de sélection ---------- */
+.rv-bande-aconfirmer {
+  margin-bottom: 1.5rem;
+}
+.rv-aconfirmer {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.rv-aconfirmer > li:not(.sv-empty) {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--ph-border);
+  border-right: 1px solid var(--ph-border);
+}
+.rv-aconfirmer > .sv-empty {
+  grid-column: 1 / -1;
+}
+.rv-panneau {
+  --bs-offcanvas-width: 420px;
+}
+.rv-ac-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* ---------- Parcours de création ---------- */
+.rv-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.6rem;
+}
+.rv-type-choix {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--ph-border);
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.rv-type-choix i {
+  font-size: 1.15rem;
+  color: var(--ph-primary);
+}
+.rv-type-choix small {
+  font-weight: 400;
+  color: var(--ph-muted);
+}
+.rv-type-choix:hover {
+  border-color: #c7d2fe;
+}
+.rv-type-choix.is-active {
+  border-color: var(--ph-primary);
+  background: var(--ph-primary-50);
+  box-shadow: inset 0 0 0 1px var(--ph-primary);
+}
+.rv-type-choix:focus-visible {
+  outline: 2px solid var(--ph-primary);
+  outline-offset: 2px;
+}
+.rv-bandeau-replanification:not([hidden]) {
+  display: flex;
+  gap: 0.5rem;
+}
+.rv-fin {
+  display: block;
+  padding: 0.375rem 0;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.rv-sans-vehicule .so-photo {
+  color: var(--ph-muted);
+}
+
+/* ---------- Fiche ---------- */
+.rv-prep dd ul {
+  margin: 0;
+}
+.rv-puces {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.rv-notes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.rv-notes .pr-sous {
+  display: block;
+}
+.rv-checklist {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.rv-vehicule {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+.rv-vehicule .so-photo {
+  flex: 0 0 6.5rem;
+  height: 4.5rem;
+}
+.rv-transitions,
+.rv-suite {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.rv-transitions li {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+.rv-transitions li.is-impossible {
+  color: var(--ph-muted);
+}
+.rv-suite {
+  margin-bottom: 0.75rem;
+}
+.rv-suite li.is-suggere a {
+  font-weight: 700;
+}
+.rv-en-cours {
+  color: var(--ph-primary-600);
+  font-weight: 500;
+}
+.rv-essai-champs {
+  border-top: 1px solid var(--ph-border);
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 575.98px) {
+  .rv-calendrier {
+    padding: 0 0.75rem 0.75rem;
+  }
+  .rv-periode {
+    flex-basis: 100%;
+    margin: 0.25rem 0 0;
+  }
+  .rv-mois-jour {
+    min-height: 4.5rem;
+    padding: 0.2rem;
+  }
+  .rv-mois .rv-evt-heure {
+    display: none;
+  }
+}
+
+/* Titre de la fiche : type + client, plus compact que le nom d'un prospect. */
+#rdv-titre {
+  font-size: 1.4rem;
+}
+
+/* Mobile : l'agenda reste prioritaire, les rendez-vous à confirmer défilent horizontalement. */
+@media (max-width: 767.98px) {
+  .rv-aconfirmer {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 85%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .rv-aconfirmer > li {
+    scroll-snap-align: start;
+  }
+  .rv-aconfirmer > .sv-empty {
+    grid-column: auto;
+  }
+}

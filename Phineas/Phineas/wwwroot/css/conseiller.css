@@ -288,6 +288,8 @@
 .ph-soir { display: flex; flex-direction: column; padding: 32px 36px 20px; border-radius: 28px; }
 .ph-soir-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--ph-line-2); }
 .ph-lien-off { font-size: 15px; color: var(--ph-text); }
+.ph-lien { font-size: 15px; color: var(--ph-text); text-decoration: none; }
+.ph-lien:hover { color: var(--ph-ink); text-decoration: underline; }
 .ph-rdv-liste { list-style: none; margin: 0; padding: 0; }
 .ph-rdv { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--ph-line-2); }
 .ph-rdv:last-child { border-bottom: 0; }

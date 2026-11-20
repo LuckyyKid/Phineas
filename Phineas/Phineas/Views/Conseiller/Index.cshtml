@@ -1,32 +1,17 @@
 @* Page d'accueil du conseiller : en-tête, 4 chiffres, carte « À faire en premier » et rendez-vous du jour.
-   Données : ServiceTableauBordDemo (via ConseillerController.Index). Interactions : wwwroot/js/conseiller.js. Styles : conseiller.css. *@
+   Données : ServiceTableauBordDemo (via ConseillerController.Index) pour le rendu serveur, puis accueil-moteur.js
+   qui remplit les priorités, les chiffres et les rendez-vous à partir du moteur d'intelligence et des stores du navigateur.
+   Interactions de la carte : wwwroot/js/conseiller.js. Styles : conseiller.css. *@
 @using Phineas.Models.ViewModels.Conseiller
 @model TableauBordConseillerViewModel
 @{
     ViewData["Title"] = "Accueil";
-    ViewData["NbActions"] = Model.Actions.Count;
     Layout = "_LayoutConseiller";
     var maintenant = Model.Maintenant;
 
-    // Nombre de priorités montrées dans la carte focus (une seule visible à la fois).
-    const int NbPrioritesMax = 3;
     // À partir de cette heure, les rendez-vous restants sont annoncés « ce soir ».
+    // Même valeur dans accueil-moteur.js (HEURE_DU_SOIR).
     const int HeureDuSoir = 17;
-
-    // Priorités : échéances du jour qui ne sont pas d'urgence normale, dans l'ordre fourni par le service.
-    var priorites = new List<ActionPrioritaire>();
-    foreach (var action in Model.Actions)
-    {
-        if (priorites.Count == NbPrioritesMax)
-        {
-            break;
-        }
-        bool urgente = action.Urgence != Urgence.Normale;
-        if (action.EcheanceAujourdhui && urgente)
-        {
-            priorites.Add(action);
-        }
-    }
 
     // Rendez-vous encore à venir aujourd'hui, du plus tôt au plus tard.
     var rdvDuJour = new List<RendezVousResume>();
@@ -56,37 +41,20 @@
         moment = "ce soir";
     }
 
-    // Phrase de résumé sous le titre, ex. « 3 priorités aujourd'hui et 4 rendez-vous ce soir. »
+    // Phrase de résumé sous le titre. Les priorités viennent du moteur (navigateur) : accueil-moteur.js
+    // réécrit cette phrase, ex. « 3 priorités aujourd'hui et 4 rendez-vous ce soir. »
     string resume;
-    if (priorites.Count == 0)
-    {
-        resume = "Aucune priorité urgente aujourd'hui";
-    }
-    else if (priorites.Count == 1)
-    {
-        resume = "1 priorité aujourd'hui";
-    }
-    else
-    {
-        resume = $"{priorites.Count} priorités aujourd'hui";
-    }
-
     if (rdvDuJour.Count == 0)
     {
-        resume += " et aucun rendez-vous à venir.";
+        resume = "Aucun rendez-vous à venir aujourd'hui.";
     }
     else if (rdvDuJour.Count == 1)
     {
-        resume += $" et 1 rendez-vous {moment}.";
+        resume = $"1 rendez-vous {moment}.";
     }
     else
     {
-        resume += $" et {rdvDuJour.Count} rendez-vous {moment}.";
-    }
-
-    if (priorites.Count > 0)
-    {
-        resume += " On commence par la plus urgente.";
+        resume = $"{rdvDuJour.Count} rendez-vous {moment}.";
     }
 }
 
@@ -94,14 +62,15 @@
     <div>
         <p class="ph-label">@FormatVente.DateDuJour(maintenant)</p>
         <h1 class="ph-hello">Bonjour @Model.Prenom</h1>
-        <p class="ph-resume">@resume</p>
+        <p class="ph-resume" data-resume>@resume</p>
     </div>
     <div class="dropdown">
         <button type="button" class="ph-pill" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-plus-lg"></i>Créer</button>
         <ul class="dropdown-menu dropdown-menu-end ph-menu">
             <li><a class="dropdown-item" asp-controller="Prospects" asp-action="Index" asp-route-nouveau="true"><i class="bi bi-person-plus"></i>Prospect</a></li>
-            <li><button type="button" class="dropdown-item" data-bientot="La planification arrive avec le module Rendez-vous."><i class="bi bi-calendar-plus"></i>Rendez-vous</button></li>
-            <li><button type="button" class="dropdown-item" data-bientot="Les soumissions arrivent avec le module Ventes."><i class="bi bi-file-earmark-plus"></i>Soumission</button></li>
+            <li><a class="dropdown-item" asp-controller="RendezVous" asp-action="Nouveau"><i class="bi bi-calendar-plus"></i>Rendez-vous</a></li>
+            <li><a class="dropdown-item" asp-controller="Soumissions" asp-action="Nouvelle"><i class="bi bi-file-earmark-plus"></i>Soumission</a></li>
+            <li><a class="dropdown-item" asp-controller="Transactions" asp-action="Nouvelle"><i class="bi bi-cash-coin"></i>Transaction</a></li>
         </ul>
     </div>
 </header>
@@ -109,13 +78,14 @@
 <section class="ph-stats" aria-label="Indicateurs">
     @foreach (var i in Model.Indicateurs)
     {
+        @* Valeur nulle : calculée par accueil-moteur.js (repérée par data-indicateur = icône de l'indicateur). *@
         <div class="ph-glass ph-stat" title="@i.Detail">
-            <span class="ph-stat-value">@i.Valeur</span>
+            <span class="ph-stat-value" data-indicateur="@i.Icone">@(i.Valeur?.ToString() ?? "…")</span>
             <span class="ph-stat-label">
                 @i.Libelle
-                @if (i.Ton == TonIndicateur.Critique && i.Valeur > 0)
+                @if (i.Ton == TonIndicateur.Critique)
                 {
-                    <span class="ph-dot ph-dot-alerte" role="img" aria-label="à traiter"></span>
+                    <span class="ph-dot ph-dot-alerte" role="img" aria-label="à traiter" data-alerte-indicateur hidden="@(!(i.Valeur > 0))"></span>
                 }
             </span>
         </div>
@@ -123,97 +93,104 @@
 </section>
 
 <div class="ph-grid">
+    @* Les priorités sont rendues par accueil-moteur.js à partir du moteur d'intelligence commerciale
+       (même source que le Centre d'actions), puis animées par conseiller.js. *@
     <section class="ph-focus" id="ph-focus" aria-labelledby="titre-focus" aria-live="polite">
         <div class="ph-focus-top">
             <h2 class="ph-label" id="titre-focus">À faire en premier</h2>
-            @if (priorites.Count > 1)
-            {
-                <span class="ph-steps" aria-hidden="true">
-                    @for (var n = 0; n < priorites.Count; n++)
-                    {
-                        <i data-etape></i>
-                    }
-                    <span data-position>1/@priorites.Count</span>
-                </span>
-            }
+            <span class="ph-steps" aria-hidden="true" data-etapes hidden></span>
         </div>
 
-        @for (var n = 0; n < priorites.Count; n++)
-        {
-            var p = priorites[n];
-            <article class="ph-focus-item" data-priorite hidden="@(n > 0)">
-                <p class="ph-focus-type">
-                    @p.Evenement
-                    @if (p.Urgence == Urgence.Critique)
-                    {
-                        <span class="ph-tag-retard">En retard</span>
-                    }
-                </p>
-                @* Sans ProspectId, la personne n'a pas encore de fiche : le nom reste du texte simple. *@
-                @if (p.ProspectId is not null)
-                {
-                    <h3 class="ph-focus-nom"><a class="sv-lien-fiche" asp-controller="Prospects" asp-action="Fiche" asp-route-id="@p.ProspectId">@p.Prospect</a></h3>
-                }
-                else
-                {
-                    <h3 class="ph-focus-nom">@p.Prospect</h3>
-                }
-                <p class="ph-focus-texte">@p.Motif</p>
-                <p class="ph-focus-dossier" data-dossier hidden>
-                    <span>@p.Vehicule</span>
-                    <span>@FormatVente.Libelle(p.Etape)</span>
-                    <span>@FormatVente.Relatif(p.DateEvenement, maintenant)</span>
-                </p>
-                <div class="ph-focus-actions">
-                    <button type="button" class="ph-btn ph-btn-blanc" data-valider>@p.ProchaineAction<i class="bi bi-arrow-right"></i></button>
-                    <button type="button" class="ph-btn ph-btn-verre" data-voir-dossier aria-expanded="false">Voir le dossier</button>
-                    <button type="button" class="ph-btn-discret" data-plus-tard>Plus tard</button>
-                </div>
-            </article>
-        }
+        <div data-priorites>
+            <p class="ph-focus-texte" data-chargement>Chargement des priorités…</p>
+        </div>
 
-        <div class="ph-focus-fin" data-fin hidden="@(priorites.Count > 0)">
+        <div class="ph-focus-fin" data-fin hidden>
             <h3 class="ph-focus-nom">Tout est réglé</h3>
             <p class="ph-focus-texte">Vos priorités du jour sont traitées. Prenez de l'avance sur vos relances.</p>
+            <a class="ph-btn ph-btn-verre" asp-controller="Intelligence" asp-action="Index">Ouvrir le Centre d'actions</a>
         </div>
     </section>
 
     <section class="ph-glass ph-soir" aria-labelledby="titre-soir">
         <div class="ph-soir-top">
-            <h2 class="ph-label" id="titre-soir">@(moment == "ce soir" ? "Ce soir" : "Aujourd'hui")</h2>
-            <span class="ph-lien-off" title="Disponible avec le module Rendez-vous">Agenda</span>
+            <h2 class="ph-label" id="titre-soir" data-titre-soir>@(moment == "ce soir" ? "Ce soir" : "Aujourd'hui")</h2>
+            <a class="ph-lien" asp-controller="RendezVous" asp-action="Index">Agenda</a>
         </div>
-        @if (rdvDuJour.Count == 0)
-        {
-            <p class="ph-vide">Plus aucun rendez-vous aujourd'hui.</p>
-        }
-        else
-        {
-            <ul class="ph-rdv-liste">
-                @foreach (var r in rdvDuJour)
-                {
-                    <li class="ph-rdv">
-                        <time class="ph-rdv-heure" datetime="@r.Debut.ToString("s")">@FormatVente.HeureCourte(r.Debut)</time>
-                        <div class="ph-rdv-info">
-                            <a class="sv-lien-fiche" asp-controller="Prospects" asp-action="Fiche" asp-route-id="@r.ProspectId"><strong>@r.Client</strong></a>
-                            <span>@FormatVente.Libelle(r.Type)@(r.Vehicule is null ? "" : " · " + r.Vehicule)</span>
-                        </div>
-                        @if (r.Confirme)
-                        {
-                            <span class="ph-dot ph-dot-ok" role="img" aria-label="Confirmé" title="Confirmé"></span>
-                        }
-                        else
-                        {
-                            <span class="ph-a-confirmer">À confirmer</span>
-                        }
-                    </li>
-                }
-            </ul>
-        }
+        @* Rendu serveur à partir des mêmes données que l'agenda, puis rafraîchi depuis l'état local (accueil-moteur.js). *@
+        <div data-rdv-jour>
+            @if (rdvDuJour.Count == 0)
+            {
+                <p class="ph-vide">Plus aucun rendez-vous aujourd'hui.</p>
+            }
+            else
+            {
+                <ul class="ph-rdv-liste">
+                    @foreach (var r in rdvDuJour)
+                    {
+                        <li class="ph-rdv">
+                            <time class="ph-rdv-heure" datetime="@r.Debut.ToString("s")">@FormatVente.HeureCourte(r.Debut)</time>
+                            <div class="ph-rdv-info">
+                                <a class="sv-lien-fiche" asp-controller="RendezVous" asp-action="Detail" asp-route-id="@r.Id"><strong>@r.Client</strong></a>
+                                <span>@ReferentielsRendezVous.Libelle(r.Type)@(r.Vehicule is null ? "" : " · " + r.Vehicule)</span>
+                            </div>
+                            @if (r.Statut == StatutRendezVous.Confirme)
+                            {
+                                <span class="ph-dot ph-dot-ok" role="img" aria-label="Confirmé" title="Confirmé"></span>
+                            }
+                            else
+                            {
+                                <span class="ph-a-confirmer">@ReferentielsRendezVous.Libelle(r.Statut)</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
     </section>
 </div>
 
 @if (Model.DonneesFictives)
 {
     <p class="ph-note">Données de démonstration · rien n'est enregistré</p>
+}
+
+@if (Model.Agenda is not null)
+{
+    <partial name="~/Views/RendezVous/_DonneesModules.cshtml" model="Model.Agenda" />
+    @if (Model.Transactions is not null)
+    {
+        <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.Agenda.ConseillerNom)" />
+        @if (Model.Intelligence is not null)
+        {
+            <partial name="~/Views/Intelligence/_DonneesIntelligence.cshtml" model="new ChargeIntelligence(Model.Intelligence, Model.Agenda.ConseillerNom)" />
+        }
+    }
+}
+
+@section Scripts {
+    @if (Model.Agenda is not null)
+    {
+        <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+        <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+        <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+        <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+        @if (Model.Transactions is not null)
+        {
+            <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+            <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+            <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+            @if (Model.Intelligence is not null)
+            {
+                <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+                <script src="~/js/relations-store.js" asp-append-version="true"></script>
+                <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+                <script src="~/js/outils-store.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+                <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+            }
+        }
+        <script src="~/js/accueil-moteur.js" asp-append-version="true"></script>
+    }
 }

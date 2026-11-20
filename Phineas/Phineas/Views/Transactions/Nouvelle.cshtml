@@ -1,0 +1,179 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model TransactionsPageViewModel
+@{
+    ViewData["Title"] = "Nouvelle transaction";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+}
+
+<a class="pr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Transactions</a>
+
+<header class="sv-head">
+    <div>
+        <h1>Nouvelle transaction</h1>
+        <p class="text-muted mb-0">Ouvrir le dossier d'achat d'un client à partir d'une proposition acceptée.</p>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId" data-soumission="@Model.SoumissionId"
+     data-version="@Model.Version" data-rendezvous="@Model.RendezVousId">
+    <div class="alert alert-info small tx-origine-parcours" data-zone="origine" hidden></div>
+
+    <ol class="so-etapes" aria-label="Étapes de création">
+        <li><button type="button" data-aller="1"><span>1</span>Client et opportunité</button></li>
+        <li><button type="button" data-aller="2"><span>2</span>Véhicule et proposition</button></li>
+        <li><button type="button" data-aller="3"><span>3</span>Mode d'achat</button></li>
+        <li><button type="button" data-aller="4"><span>4</span>Vérification</button></li>
+    </ol>
+
+    @* ---------- Étape 1 ---------- *@
+    <section class="so-etape" data-etape="1" aria-labelledby="titre-etape-1">
+        <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et opportunité</h2>
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-person me-2"></i>Client</span></div>
+                    <div class="card-body pb-2">
+                        <div class="pr-search mw-100">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" class="form-control" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="so-choix-liste" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+                </div>
+            </div>
+            <div class="col-lg-7 d-flex flex-column gap-4">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-briefcase me-2"></i>Opportunité</span></div>
+                    <div class="card-body" data-zone="opportunites"><p class="text-muted mb-0">Choisissez d'abord un prospect.</p></div>
+                </div>
+                <div class="card" data-zone="contexte" hidden></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Étape 2 ---------- *@
+    <section class="so-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
+        <h2 class="visually-hidden" id="titre-etape-2">Étape 2 : véhicule et proposition</h2>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header sv-card-header"><span><i class="bi bi-file-earmark-text me-2"></i>Version de soumission retenue</span></div>
+                    <div class="card-body" data-zone="versions"></div>
+                </div>
+                <div class="card mt-4" data-zone="carte-vehicules" hidden>
+                    <div class="card-header sv-card-header"><span><i class="bi bi-car-front me-2"></i>Véhicule envisagé</span><span class="pr-sous">Brouillon sans soumission</span></div>
+                    <div class="so-vehicules rv-vehicules" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <section class="card pr-resume-collant" aria-labelledby="titre-resume-proposition">
+                    <div class="card-header sv-card-header"><span id="titre-resume-proposition"><i class="bi bi-card-checklist me-2"></i>Résumé de la proposition</span></div>
+                    <div class="card-body" data-zone="resume-proposition" aria-live="polite"></div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Étape 3 ---------- *@
+    <section class="so-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
+        <h2 class="visually-hidden" id="titre-etape-3">Étape 3 : mode d'achat</h2>
+        <form class="card" id="form-mode-achat" novalidate>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <span class="form-label d-block" id="n-mode-titre">Mode d'achat <span class="pr-requis">*</span></span>
+                        <div class="tx-modes" role="radiogroup" aria-labelledby="n-mode-titre">
+                            @foreach (var (cle, libelle) in ReferentielsTransactions.ModesAchat)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="mode" id="n-mode-@cle" value="@cle" />
+                                    <label class="form-check-label" for="n-mode-@cle">@libelle</label>
+                                </div>
+                            }
+                        </div>
+                        <div class="tx-erreur small" data-erreur-mode hidden>Choisissez un mode d'achat (« à déterminer » est possible).</div>
+                        <div class="mt-3">
+                            <label class="form-label" for="n-depot">Dépôt envisagé <span class="text-muted">(facultatif)</span></label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" class="form-control" id="n-depot" name="depot" min="0" max="100000" step="50" />
+                                <span class="input-group-text">$</span>
+                            </div>
+                            <div class="invalid-feedback">Montant invalide.</div>
+                            <div class="form-text" data-zone="aide-depot"></div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label" for="n-confirmer">Informations à confirmer <span class="text-muted">(facultatif)</span></label>
+                            <textarea class="form-control" id="n-confirmer" name="aConfirmer" rows="2" maxlength="300" placeholder="Ex. : date de livraison souhaitée par le client"></textarea>
+                        </div>
+                        <p class="pr-note mt-3 mb-0"><i class="bi bi-shield-lock me-1"></i>Aucune donnée bancaire ni financière n'est saisie ici : le dossier de financement est traité par le service F&amp;A.</p>
+                    </div>
+                    <div class="col-lg-6">
+                        <fieldset data-zone="reprise">
+                            <legend class="form-label">Reprise</legend>
+                            <div class="form-check form-switch pr-switch mb-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="n-reprise" name="avecReprise" />
+                                <label class="form-check-label" for="n-reprise">Le client fait reprendre un véhicule</label>
+                            </div>
+                            <div class="row g-2" data-zone="champs-reprise" hidden>
+                                <div class="col-12"><label class="form-label" for="n-rp-description">Description</label><input class="form-control form-control-sm" id="n-rp-description" name="description" maxlength="80" /></div>
+                                <div class="col-sm-6"><label class="form-label" for="n-rp-marque">Marque</label><input class="form-control form-control-sm" id="n-rp-marque" name="marque" maxlength="40" /></div>
+                                <div class="col-sm-6"><label class="form-label" for="n-rp-modele">Modèle</label><input class="form-control form-control-sm" id="n-rp-modele" name="modele" maxlength="40" /></div>
+                                <div class="col-sm-6"><label class="form-label" for="n-rp-annee">Année</label><input class="form-control form-control-sm" id="n-rp-annee" name="annee" type="number" min="1980" max="2030" /><div class="invalid-feedback">Année invalide.</div></div>
+                                <div class="col-sm-6"><label class="form-label" for="n-rp-km">Kilométrage</label><input class="form-control form-control-sm" id="n-rp-km" name="kilometrage" type="number" min="0" max="1000000" /><div class="invalid-feedback">Kilométrage invalide.</div></div>
+                                <div class="col-12 form-text">Les champs vides seront signalés « à compléter ». La valeur est confirmée par l'évaluateur autorisé : aucune évaluation automatique.</div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    @* ---------- Étape 4 ---------- *@
+    <section class="so-etape" data-etape="4" aria-labelledby="titre-etape-4" hidden>
+        <h2 class="visually-hidden" id="titre-etape-4">Étape 4 : vérification initiale</h2>
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <section class="card" aria-labelledby="titre-verification">
+                    <div class="card-header sv-card-header"><span id="titre-verification"><i class="bi bi-shield-check me-2"></i>Vérification initiale</span><span class="badge-soft sv-fictif">Démonstration</span></div>
+                    <div class="card-body" data-zone="verification" aria-live="polite"></div>
+                </section>
+            </div>
+            <div class="col-lg-5">
+                <section class="card pr-resume-collant" aria-labelledby="titre-recap">
+                    <div class="card-header sv-card-header"><span id="titre-recap"><i class="bi bi-card-checklist me-2"></i>Récapitulatif</span></div>
+                    <div class="card-body" data-zone="recapitulatif"></div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <div class="so-navigation">
+        <button type="button" class="btn btn-outline-secondary" data-precedent>Précédent</button>
+        <span class="so-navigation-aide text-muted small" data-aide aria-live="polite"></span>
+        <button type="button" class="btn btn-primary" data-suivant>Suivant</button>
+        <button type="button" class="btn btn-primary" data-creer hidden><i class="bi bi-check2 me-1"></i>Ouvrir la transaction</button>
+    </div>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-nouvelle.js" asp-append-version="true"></script>
+}

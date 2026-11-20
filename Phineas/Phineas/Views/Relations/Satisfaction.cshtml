@@ -1,0 +1,121 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model RelationsPageViewModel
+@{
+    ViewData["Title"] = "Satisfaction et après-vente";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Satisfaction et après-vente</h1>
+        <p class="text-muted mb-0">Garder le lien après la livraison : vérifier la satisfaction, résoudre les problèmes et maintenir la relation.</p>
+    </div>
+    <div class="sv-quick">
+        <button type="button" class="btn btn-outline-primary btn-sm" data-rc="probleme"><i class="bi bi-life-preserver me-1"></i>Enregistrer un problème</button>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<div id="satisfaction" data-transaction="@Model.TransactionId" data-rdv-url="@Url.Action("Nouveau", "RendezVous")">
+    <section class="card sv-kpis rc-kpis" aria-label="Résumé de l'après-vente">
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-key"></i>Livrés récemment</div><div class="sv-kpi-value" data-compteur="livres">—</div><div class="sv-kpi-detail" data-detail="livres">livraisons confirmées</div></div>
+        <div class="sv-kpi sv-ton-attention"><div class="sv-kpi-label"><i class="bi bi-telephone-outbound"></i>Suivis à effectuer</div><div class="sv-kpi-value" data-compteur="suivis">—</div><div class="sv-kpi-detail">recommandés par le moteur</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-chat-square-heart"></i>Retours reçus</div><div class="sv-kpi-value" data-compteur="retours">—</div><div class="sv-kpi-detail">enquêtes (simulées)</div></div>
+        <div class="sv-kpi sv-ton-critique"><div class="sv-kpi-label"><i class="bi bi-life-preserver"></i>Problèmes ouverts</div><div class="sv-kpi-value" data-compteur="ouverts">—</div><div class="sv-kpi-detail">à suivre</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-check2-circle"></i>Problèmes résolus</div><div class="sv-kpi-value" data-compteur="resolus">—</div><div class="sv-kpi-detail">résolus ou clôturés</div></div>
+        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-share"></i>Intérêt à recommander</div><div class="sv-kpi-value" data-compteur="interet">—</div><div class="sv-kpi-detail">déclaré dans l'enquête</div></div>
+    </section>
+
+    <ul class="nav pr-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-livraisons" data-bs-toggle="tab" data-bs-target="#panneau-livraisons" type="button" role="tab" aria-controls="panneau-livraisons" aria-selected="true">Suivis après livraison</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-problemes" data-bs-toggle="tab" data-bs-target="#panneau-problemes" type="button" role="tab" aria-controls="panneau-problemes" aria-selected="false">Problèmes clients <span class="pr-compte" data-champ="nb-problemes"></span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-actions" data-bs-toggle="tab" data-bs-target="#panneau-actions" type="button" role="tab" aria-controls="panneau-actions" aria-selected="false">Actions après-vente <span class="pr-compte" data-champ="nb-actions"></span></button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-livraisons" role="tabpanel" aria-labelledby="onglet-livraisons" tabindex="0">
+            <section class="card pr-module">
+                <div class="pr-filtres">
+                    <select class="form-select form-select-sm" id="f-conseiller" aria-label="Filtrer par conseiller">
+                        <option value="@Model.Prospects.ConseillerConnecteId">Mes clients</option>
+                        <option value="">Tous les conseillers</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="f-etat" aria-label="Filtrer par état du suivi">
+                        <option value="">Tous les suivis</option>
+                        <option value="a-faire">Suivi à faire</option>
+                        <option value="recu">Retour reçu</option>
+                        <option value="probleme">Problème ouvert</option>
+                    </select>
+                </div>
+                <p class="pr-note px-3"><i class="bi bi-info-circle me-1"></i>Seule une livraison confirmée déclenche un suivi (règle de démonstration : @ReferentielsRelations.DelaiSuiviSatisfactionJours jours après la livraison). Une soumission acceptée ou une livraison planifiée ne suffit pas.</p>
+                <div class="rc-livraisons" id="livraisons"></div>
+                <div class="pr-etat-vide" id="livraisons-vide" hidden>
+                    <i class="bi bi-key"></i>
+                    <strong>Aucune livraison confirmée</strong>
+                    <span>Les suivis après-vente apparaîtront lorsqu'une transaction sera réellement livrée.</span>
+                </div>
+            </section>
+        </div>
+        <div class="tab-pane fade" id="panneau-problemes" role="tabpanel" aria-labelledby="onglet-problemes" tabindex="0">
+            <section class="card pr-module">
+                <div class="table-responsive">
+                    <table class="table pr-table rc-table mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Client</th>
+                                <th scope="col">Transaction et véhicule</th>
+                                <th scope="col">Problème</th>
+                                <th scope="col">Signalé le</th>
+                                <th scope="col">Département</th>
+                                <th scope="col">Priorité</th>
+                                <th scope="col">État</th>
+                                <th scope="col">Prochaine action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="problemes-corps"></tbody>
+                    </table>
+                </div>
+                <div class="pr-etat-vide" id="problemes-vide" hidden>
+                    <i class="bi bi-emoji-smile"></i>
+                    <strong>Aucun problème signalé</strong>
+                    <span>Les problèmes après-vente enregistrés apparaîtront ici.</span>
+                </div>
+            </section>
+        </div>
+        <div class="tab-pane fade" id="panneau-actions" role="tabpanel" aria-labelledby="onglet-actions" tabindex="0">
+            <section class="card"><div class="card-body">
+                <p class="pr-note"><i class="bi bi-lightning-charge me-1"></i>Mêmes actions que dans le Centre d'actions (catégorie « Relations clients ») : aucune seconde liste de tâches.</p>
+                <div class="ia-file" id="actions"></div>
+            </div></section>
+        </div>
+    </div>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-satisfaction.js" asp-append-version="true"></script>
+}

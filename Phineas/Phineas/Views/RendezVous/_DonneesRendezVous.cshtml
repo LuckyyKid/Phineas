@@ -1,0 +1,22 @@
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@{
+    // L'encodeur par défaut échappe < > & ' : le JSON est sûr dans une balise <script>.
+    var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
+    var charge = new
+    {
+        donnees = Model.RendezVous,
+        referentiels = ReferentielsRendezVous.PourClient(),
+        conseillerNom = Model.ConseillerNom,
+        concession = Model.Concession,
+        urlDetail = Url.Action("Detail", "RendezVous", new { id = "__id__" }),
+        urlNouveau = Url.Action("Nouveau", "RendezVous"),
+        urlAgenda = Url.Action("Index", "RendezVous"),
+    };
+}
+<script type="application/json" id="rendezvous-donnees">@Html.Raw(JsonSerializer.Serialize(charge, options))</script>

@@ -1,0 +1,147 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model TransactionsPageViewModel
+@{
+    ViewData["Title"] = "Transactions";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions.css" asp-append-version="true" />
+}
+
+<header class="sv-head">
+    <div>
+        <h1>Transactions</h1>
+        <p class="text-muted mb-0">Où en est chaque dossier d'achat, ce qui le bloque et qui doit intervenir.</p>
+    </div>
+    <div class="sv-quick">
+        <a class="btn btn-primary btn-sm" asp-action="Nouvelle"><i class="bi bi-plus-lg me-1"></i>Nouvelle transaction</a>
+    </div>
+</header>
+
+<partial name="~/Views/Prospects/_BandeauDemo.cshtml" />
+
+<section class="card sv-kpis tx-kpis" aria-label="Résumé de mes transactions">
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-cash-coin"></i>Actives</div><div class="sv-kpi-value" data-compteur="actives">—</div><div class="sv-kpi-detail">dossiers en cours</div></div>
+    <div class="sv-kpi sv-ton-attention"><div class="sv-kpi-label"><i class="bi bi-person-check"></i>Action requise</div><div class="sv-kpi-value" data-compteur="action">—</div><div class="sv-kpi-detail">de votre part</div></div>
+    <div class="sv-kpi sv-ton-critique"><div class="sv-kpi-label"><i class="bi bi-sign-stop"></i>Bloquées</div><div class="sv-kpi-value" data-compteur="bloquees">—</div><div class="sv-kpi-detail">au moins un blocage</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-bank"></i>Financement en attente</div><div class="sv-kpi-value" data-compteur="financement">—</div><div class="sv-kpi-detail">décision ou conditions F&amp;A</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-key"></i>Prêtes à livrer</div><div class="sv-kpi-value" data-compteur="pretes">—</div><div class="sv-kpi-detail">toutes conditions remplies</div></div>
+    <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-trophy"></i>Finalisées</div><div class="sv-kpi-value" data-compteur="finalisees">—</div><div class="sv-kpi-detail">livrées ou clôturées</div></div>
+</section>
+
+<section class="card pr-module" aria-label="Liste des transactions" id="transactions">
+    <div class="pr-toolbar">
+        <div class="pr-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" class="form-control" id="f-recherche" placeholder="Client, véhicule ou référence" aria-label="Rechercher une transaction" autocomplete="off" />
+        </div>
+        <div class="pr-vues btn-group" role="group" aria-label="Mode d'affichage">
+            <input type="radio" class="btn-check" name="vue" id="vue-liste" value="liste" checked />
+            <label class="btn btn-sm" for="vue-liste"><i class="bi bi-list-ul me-1"></i>Liste</label>
+            <input type="radio" class="btn-check" name="vue" id="vue-pipeline" value="pipeline" />
+            <label class="btn btn-sm" for="vue-pipeline"><i class="bi bi-kanban me-1"></i>Pipeline</label>
+        </div>
+    </div>
+    <div class="pr-filtres">
+        <select class="form-select form-select-sm" id="f-conseiller" aria-label="Filtrer par conseiller">
+            @foreach (var c in Model.Prospects.Conseillers)
+            {
+                <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes transactions" : c.Nom + " (fictif)")</option>
+            }
+            <option value="">Tous les conseillers</option>
+        </select>
+        <select class="form-select form-select-sm" id="f-etape" aria-label="Filtrer par étape">
+            <option value="">Toutes les étapes</option>
+            @foreach (var (cle, libelle) in ReferentielsTransactions.EtapesPipeline)
+            {
+                <option value="@cle">@libelle</option>
+            }
+        </select>
+        <select class="form-select form-select-sm" id="f-mode" aria-label="Filtrer par mode d'achat">
+            <option value="">Tous les modes d'achat</option>
+            @foreach (var (cle, libelle) in ReferentielsTransactions.ModesAchat)
+            {
+                <option value="@cle">@libelle</option>
+            }
+        </select>
+        <select class="form-select form-select-sm" id="f-financement" aria-label="Filtrer par statut financier">
+            <option value="">Tous les statuts financiers</option>
+            @foreach (var (cle, libelle) in ReferentielsTransactions.StatutsFinancement)
+            {
+                <option value="@cle">@libelle</option>
+            }
+        </select>
+        <select class="form-select form-select-sm" id="f-departement" aria-label="Filtrer par département responsable d'un blocage">
+            <option value="">Tous les départements</option>
+            @foreach (var (cle, libelle, _) in ReferentielsTransactions.Departements)
+            {
+                <option value="@cle">@libelle</option>
+            }
+        </select>
+        <select class="form-select form-select-sm" id="f-livraison" aria-label="Filtrer par date de livraison">
+            <option value="">Toutes les dates de livraison</option>
+            <option value="7j">Livraison d'ici 7 jours</option>
+            <option value="connue">Date connue</option>
+            <option value="inconnue">Date non déterminée</option>
+        </select>
+        <div class="form-check form-switch pr-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="f-bloquees" />
+            <label class="form-check-label" for="f-bloquees">Bloquées</label>
+        </div>
+        <div class="form-check form-switch pr-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="f-action" />
+            <label class="form-check-label" for="f-action">Action requise</label>
+        </div>
+        <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+    </div>
+    <div class="pr-resultat" id="resultat" aria-live="polite"></div>
+
+    <div id="vue-liste-contenu" class="table-responsive">
+        <table class="table pr-table tx-table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Transaction</th>
+                    <th scope="col">Véhicule</th>
+                    <th scope="col">Montant et mode</th>
+                    <th scope="col">Étape</th>
+                    <th scope="col">Blocages</th>
+                    <th scope="col">Département attendu</th>
+                    <th scope="col">Prochaine action</th>
+                    <th scope="col">Livraison</th>
+                </tr>
+            </thead>
+            <tbody id="liste-corps"></tbody>
+        </table>
+    </div>
+
+    <div id="vue-pipeline-contenu" hidden>
+        <div class="pr-pipeline-options">
+            <span class="small text-muted"><i class="bi bi-info-circle me-1"></i>Étapes synthétiques : le financement et la préparation du véhicule avancent souvent en parallèle. Les quatre pastilles de chaque carte indiquent l'état réel de chaque axe.</span>
+        </div>
+        <div class="pr-board tx-board" id="pipeline" role="list" aria-label="Pipeline des transactions"></div>
+    </div>
+
+    <div class="pr-etat-vide" id="etat-vide" hidden>
+        <i class="bi bi-cash-coin"></i>
+        <strong>Aucune transaction</strong>
+        <span data-vide-texte>Aucune transaction ne correspond à ces critères.</span>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-effacer-filtres>Effacer les filtres</button>
+    </div>
+    <p class="small text-muted px-3 pb-3 mb-0"><i class="bi bi-cone-striped me-1"></i>Transactions de démonstration : aucune vente, aucun paiement ni aucune décision de financement réels.</p>
+</section>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-liste.js" asp-append-version="true"></script>
+}

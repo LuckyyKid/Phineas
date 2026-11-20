@@ -409,6 +409,12 @@
     if (!sel) return;
     var o = P.opportunite(sel.dataset.opp);
     var c = o && P.contact(o.prospectId);
+    // Phase 07 : clôturer comme perdue se fait depuis la fiche (motif, origine du motif, futur suivi).
+    if (sel.value === "Perdu" && o) {
+      sel.value = o.etape;
+      window.location.href = P.urlFiche(o.prospectId) + "?cloturer=" + encodeURIComponent(o.id);
+      return;
+    }
     var annuler = P.changerEtape(sel.dataset.opp, sel.value);
     if (!annuler) return;
     P.notifier(c.prenom + " " + c.nom + " : « " + P.libelleEtape(sel.value) + " » (modification locale).", annuler);

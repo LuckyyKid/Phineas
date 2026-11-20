@@ -1,0 +1,100 @@
+@using System.Text.Json
+@using Phineas.Models.ViewModels.Conseiller
+@model ApercuRecommandationViewModel
+@{
+    Layout = null;
+    var p = Model.Profil;
+    var langues = p is null ? new List<string>() : p.Langues.Select(l => ReferentielsRelations.Langues.FirstOrDefault(x => x.Cle == l).Libelle ?? l).ToList();
+    // Seules les informations publiques autorisées du conseiller sont transmises à cette page.
+    var charge = new
+    {
+        nom = Model.ConseillerNom,
+        role = "Conseiller aux ventes",
+        concession = Model.Concession ?? "Concession de démonstration",
+        presentation = p?.Presentation,
+        telephone = p is { AfficherTelephone: true } ? p.TelephonePro : null,
+        courriel = p is { AfficherCourriel: true } ? p.CourrielPro : null,
+        langues = p is { AfficherLangues: true } ? langues : new List<string>(),
+        code = p?.CodeRecommandation,
+        retour = Url.Action("Reseau", "Relations"),
+    };
+}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Aperçu — Votre conseiller automobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/phineas.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+</head>
+<body class="rc-public-body">
+    <div class="rc-apercu-bandeau" role="note">
+        <i class="bi bi-cone-striped" aria-hidden="true"></i>
+        <span><strong>Aperçu de démonstration.</strong> Ce parcours n'est pas publié et aucun lien public n'existe. N'inscrivez pas de vraies coordonnées : rien ne quitte cet onglet du navigateur.</span>
+        <a class="btn btn-sm btn-light" href="@charge.retour"><i class="bi bi-arrow-left me-1"></i>Retour à mon espace</a>
+    </div>
+
+    <main class="rc-public" id="parcours">
+        <section class="rc-public-carte" aria-labelledby="pub-nom" data-etape="1">
+            <header class="rc-public-marque"><span class="brand-mark brand-mark-sm" aria-hidden="true">P</span><span data-pub="concession"></span></header>
+            <div class="rc-profil-public">
+                <span class="rc-avatar rc-avatar-lg" aria-hidden="true" data-pub="initiales"></span>
+                <div>
+                    <h1 class="h4 mb-0" id="pub-nom" data-pub="nom"></h1>
+                    <p class="text-muted mb-2"><span data-pub="role"></span> · <span data-pub="concession"></span></p>
+                    <p data-pub="presentation"></p>
+                    <ul class="rc-carte-contacts" data-pub="contacts"></ul>
+                </div>
+            </div>
+            <p class="small">Vous avez reçu cette carte d'une personne de votre entourage. Si vous cherchez un véhicule, vous pouvez demander de l'aide, sans engagement.</p>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-primary" data-pub-action="contact"><i class="bi bi-chat-dots me-1"></i>Prendre contact</button>
+                <button type="button" class="btn btn-outline-primary" data-pub-action="rendezvous"><i class="bi bi-calendar-plus me-1"></i>Demander un rendez-vous</button>
+            </div>
+        </section>
+
+        <section class="rc-public-carte" aria-labelledby="pub-form-titre" data-etape="2" hidden>
+            <h2 class="h5" id="pub-form-titre">Votre demande</h2>
+            <p class="small text-muted">Remplissez seulement ce que vous souhaitez partager. Les champs marqués * sont nécessaires pour vous répondre.</p>
+            <form id="pub-form" novalidate>
+                <input type="hidden" name="motif" value="contact" />
+                <div class="row g-3">
+                    <div class="col-sm-6"><label class="form-label" for="pub-prenom">Prénom *</label><input class="form-control" id="pub-prenom" name="prenom" autocomplete="off" /><div class="invalid-feedback" data-erreur="prenom"></div></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-nomf">Nom *</label><input class="form-control" id="pub-nomf" name="nom" autocomplete="off" /><div class="invalid-feedback" data-erreur="nom"></div></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-courriel">Courriel</label><input type="email" class="form-control" id="pub-courriel" name="courriel" autocomplete="off" /><div class="invalid-feedback" data-erreur="courriel"></div></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-tel">Téléphone</label><input type="tel" class="form-control" id="pub-tel" name="telephone" autocomplete="off" /><div class="invalid-feedback" data-erreur="telephone"></div></div>
+                    <div class="col-12"><div class="invalid-feedback" data-erreur="contact"></div></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-pref">Moyen de contact préféré</label><select class="form-select" id="pub-pref" name="contactPrefere"><option value="courriel">Courriel</option><option value="telephone">Téléphone</option><option value="texto">Texto</option></select></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-vehicule">Véhicule recherché</label><input class="form-control" id="pub-vehicule" name="vehicule" placeholder="Ex. : VUS compact" /></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-budget">Budget approximatif <span class="text-muted">(facultatif)</span></label><input type="number" min="0" step="500" class="form-control" id="pub-budget" name="budget" /></div>
+                    <div class="col-sm-6"><label class="form-label" for="pub-horizon">Horizon d'achat <span class="text-muted">(facultatif)</span></label><select class="form-select" id="pub-horizon" name="horizon"><option value="">Non précisé</option>@foreach (var (cle, libelle) in ReferentielsVente.Horizons)
+                        {<option value="@cle">@libelle</option>}</select></div>
+                    <div class="col-12"><label class="form-label" for="pub-commentaire">Commentaire</label><textarea class="form-control" id="pub-commentaire" name="commentaire" rows="3"></textarea></div>
+                </div>
+                <div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="pub-ok" name="consentementContact" /><label class="form-check-label" for="pub-ok">J'accepte que ce conseiller me contacte au sujet de ma demande. *</label><div class="invalid-feedback" data-erreur="consentementContact"></div></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="pub-info" name="consentementInformation" /><label class="form-check-label" for="pub-info">J'accepte de recevoir des informations sur des véhicules correspondant à ma recherche (facultatif).</label></div>
+                <p class="small text-muted mt-2">Vos informations servent uniquement à répondre à votre demande. La personne qui vous a recommandé ce conseiller n'y a pas accès.</p>
+                <div class="d-flex gap-2"><button type="submit" class="btn btn-primary">Envoyer ma demande</button><button type="button" class="btn btn-ghost" data-pub-action="retour">Retour</button></div>
+            </form>
+        </section>
+
+        <section class="rc-public-carte text-center" data-etape="3" hidden aria-live="polite">
+            <i class="bi bi-check2-circle rc-public-ok" aria-hidden="true"></i>
+            <h2 class="h5">Merci, votre demande a été transmise</h2>
+            <p><span data-pub="nom"></span> vous répondra par le moyen que vous avez choisi.</p>
+            <p class="small text-muted">Démonstration : la demande reste dans cet onglet et sera traitée à votre retour dans l'espace conseiller.</p>
+            <a class="btn btn-outline-primary btn-sm" href="@charge.retour">Retour à mon espace (démonstration)</a>
+        </section>
+    </main>
+
+    <script type="application/json" id="profil-public">@Html.Raw(JsonSerializer.Serialize(charge, new JsonSerializerOptions(JsonSerializerDefaults.Web)))</script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-public.js" asp-append-version="true"></script>
+</body>
+</html>
