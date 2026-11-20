@@ -1151,3 +1151,120 @@
   align-items: center;
   gap: 0.25rem 0.6rem;
 }
+
+/* =========================================================
+   Thème sombre : pages Prospects (liste, pipeline, fiche, tiroir, création)
+   Actif seulement quand <html data-theme="sombre"> (voir wwwroot/js/theme.js).
+   Reprend la palette partagée --ps-* de theme-sombre.css. Le thème clair ci-dessus ne change pas.
+   ========================================================= */
+
+/* ---------- Liste et pipeline en verre (.pr-page) ----------
+   Les variables de la page passent en sombre : la plupart des règles suivent toutes seules. */
+html[data-theme="sombre"] .pr-page {
+  --pr-ink: var(--ps-texte);
+  --pr-text: var(--ps-texte-courant);
+  --pr-muted: var(--ps-texte-second);
+  --pr-muted-2: var(--ps-texte-discret);
+  --pr-line: var(--ps-contour);
+  --pr-line-2: var(--ps-filet-2);
+  --pr-sapin-ink: var(--ps-menthe);
+  --pr-menthe-ink: var(--ps-menthe);
+  --pr-ambre: var(--ps-ambre);
+  --pr-ambre-ink: var(--ps-ambre);
+  --pr-flou: var(--ps-verre-flou);
+  --pr-ombre: none;
+  /* Chevron des menus déroulants, en gris clair pour rester visible sur le fond sombre */
+  --pr-chevron: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 16 16%22%3E%3Cpath fill=%22none%22 stroke=%22%23A5ACAB%22 stroke-width=%221.6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22m4 6 4 4 4-4%22/%3E%3C/svg%3E");
+}
+
+/* Cartes en verre sombre (chiffres, module liste et pipeline) */
+html[data-theme="sombre"] .pr-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Haut de page : pastilles Démo et En ligne */
+html[data-theme="sombre"] .pr-en-ligne { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .pr-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .pr-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .pr-page .pr-demo-reset:hover { background: var(--ps-survol); }
+
+/* Action principale : blanche en thème sombre (le vert n'est qu'un accent) */
+html[data-theme="sombre"] .pr-btn-sapin,
+html[data-theme="sombre"] .pr-btn-sapin:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* Barre d'outils : recherche, bascule Liste / Pipeline, filtres, interrupteurs */
+html[data-theme="sombre"] .pr-recherche input { background: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .pr-recherche input:focus,
+html[data-theme="sombre"] .pr-filtre:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .pr-bascule { background: rgba(255, 255, 255, .05); }
+html[data-theme="sombre"] .pr-bascule .btn-check:checked + label { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .pr-filtre { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .pr-filtre:hover { background-color: rgba(255, 255, 255, .07); }
+html[data-theme="sombre"] .pr-filtre option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .pr-interrupteur .form-check-input { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .pr-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .pr-interrupteur .form-check-input:focus { box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+
+/* Liens, tableau, lignes et survols */
+html[data-theme="sombre"] .pr-lien { color: var(--ps-menthe); }
+html[data-theme="sombre"] .pr-lien:hover,
+html[data-theme="sombre"] .pr-page .pr-nom:hover,
+html[data-theme="sombre"] .pr-page .pr-nom:focus-visible { color: #8FE9D1; }
+html[data-theme="sombre"] .pr-tableau tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .pr-tableau tr.is-nouveau td { background: var(--ps-menthe-fond); }
+html[data-theme="sombre"] .pr-avatar { background: rgba(95, 224, 192, .14); color: var(--ps-menthe); }
+html[data-theme="sombre"] .pr-pastille { background: var(--ps-btn-second); border-color: var(--ps-contour); }
+
+/* Pagination de la liste */
+html[data-theme="sombre"] .pr-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .pr-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+
+/* Pipeline : colonnes, cartes, changement d'étape, pages par colonne */
+html[data-theme="sombre"] .pr-colonne { background: rgba(255, 255, 255, .025); }
+html[data-theme="sombre"] .pr-page .pr-carte { background: rgba(255, 255, 255, .05); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .pr-page .pr-carte:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .pr-page .pr-deplacer { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .pr-colonne-pages button { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .pr-colonne-pages button:hover:not(:disabled) { border-color: var(--ps-contour-survol); color: var(--ps-texte); }
+
+/* ---------- Fiche du prospect, tiroir de création et anciens écrans (.pr-*) ----------
+   Ces styles lisent déjà les variables --ph-* de la coque, passées en sombre par espace-vendeur.css
+   et theme-sombre.css. On ne corrige ici que les couleurs écrites en dur. */
+html[data-theme="sombre"] .pr-demo-reset { color: var(--ps-ambre); }
+
+/* Boutons à bascule (vues, segments) */
+html[data-theme="sombre"] .pr-vues .btn,
+html[data-theme="sombre"] .pr-segment .btn { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .pr-vues .btn-check:checked + .btn,
+html[data-theme="sombre"] .pr-segment .btn-check:checked + .btn { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); }
+
+/* Ancien tableau (en-têtes et lignes) */
+html[data-theme="sombre"] .pr-resultat,
+html[data-theme="sombre"] .pr-table thead th { background: rgba(255, 255, 255, .02); }
+html[data-theme="sombre"] .pr-table tbody tr:hover td { background: var(--ps-survol); }
+
+/* États : retard en rose, suivi et attente en ambre, fait en menthe */
+html[data-theme="sombre"] .pr-echeance.is-retard,
+html[data-theme="sombre"] .pr-requis { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .pr-suivi { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .pr-modifie,
+html[data-theme="sombre"] .pr-manquants ul { color: var(--ps-ambre); }
+html[data-theme="sombre"] .pr-prefere { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .pr-complet { color: var(--ps-menthe); }
+
+/* Cartes, textes et états vides */
+html[data-theme="sombre"] .pr-carte-ligne,
+html[data-theme="sombre"] .pr-tl-action { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .pr-etat-vide > i { color: var(--ps-texte-discret); }
+
+/* Pieds de formulaire et du tiroir : surface opaque pour rester lisibles au défilement */
+html[data-theme="sombre"] .pr-tiroir-pied,
+html[data-theme="sombre"] .pr-form-pied { background: var(--ps-surface); }
+
+/* Onglets de la fiche : compteurs et complétude */
+html[data-theme="sombre"] .pr-onglets .pr-compte { background: rgba(255, 255, 255, .07); color: var(--ps-texte-second); }
+html[data-theme="sombre"] .pr-completude .progress { background: var(--ps-piste); }
+html[data-theme="sombre"] .pr-completude .progress-bar { background: var(--ps-texte-second); }
+html[data-theme="sombre"] .pr-opps-compact li + li { border-top-color: var(--ps-filet); }
+
+/* Historique (ligne de temps) */
+html[data-theme="sombre"] .pr-tl-icone { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .pr-tl-opp { background: rgba(255, 255, 255, .05); color: var(--ps-texte-second); }

@@ -1159,3 +1159,219 @@
   .nr-autre, .nr-details-grille { grid-template-columns: 1fr; }
   .nr-tuiles-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* =========================================================
+   Thème sombre : pages Rendez-vous (agenda, nouveau rendez-vous, détail)
+   Actif seulement quand <html data-theme="sombre"> (voir wwwroot/js/theme.js).
+   Reprend la palette partagée --ps-* de theme-sombre.css. Le thème clair ci-dessus ne change pas.
+   ========================================================= */
+
+/* ---------- Statuts et alertes (agenda, détail, fiche du prospect) ----------
+   Chaque statut garde sa couleur, éclaircie pour le fond sombre. Rose et ambre restent réservés
+   aux alertes (annulé, absent) et aux attentes (à confirmer). */
+html[data-theme="sombre"] .rv-st-Planifie { --c: #A5ACAB; }
+html[data-theme="sombre"] .rv-st-AConfirmer { --c: var(--ps-ambre); }
+html[data-theme="sombre"] .rv-st-Confirme { --c: var(--ps-menthe); }
+html[data-theme="sombre"] .rv-st-EnCours { --c: #8FE9D1; }
+html[data-theme="sombre"] .rv-st-Termine { --c: #BFC5C4; }
+html[data-theme="sombre"] .rv-st-Annule { --c: var(--ps-rose-texte); }
+html[data-theme="sombre"] .rv-st-ClientAbsent { --c: var(--ps-rose); }
+html[data-theme="sombre"] .rv-st-Replanifie { --c: #C9C2F2; }
+html[data-theme="sombre"] .rv-statut {
+  border-color: color-mix(in srgb, var(--c) 40%, transparent);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+html[data-theme="sombre"] .rv-a-verifier { color: var(--ps-ambre); }
+html[data-theme="sombre"] .rv-al-critique { background: var(--ps-rose-fond); color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .rv-al-attention { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+
+/* ---------- Grille de l'agenda (semaine, jour, mois) et événements ---------- */
+html[data-theme="sombre"] .rv-evt { background: color-mix(in srgb, var(--c) 14%, transparent); }
+html[data-theme="sombre"] .rv-evt:hover { background: color-mix(in srgb, var(--c) 22%, transparent); }
+html[data-theme="sombre"] .rv-evt-heure { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .rv-grille-tete,
+html[data-theme="sombre"] .rv-mois-tete div,
+html[data-theme="sombre"] .rv-mois-jour.is-autre { background: rgba(255, 255, 255, .02); }
+html[data-theme="sombre"] .rv-mois-jour.is-autre .rv-mois-num { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .rv-mois-jour.is-aujourdhui .rv-mois-num { background: var(--ps-menthe); color: var(--ps-fond); }
+html[data-theme="sombre"] .rv-col.is-aujourdhui { background-color: rgba(95, 224, 192, .04); }
+html[data-theme="sombre"] .rv-ajouter:hover,
+html[data-theme="sombre"] .rv-ajouter:focus-visible { background: var(--ps-survol); }
+
+/* Tuiles de type de rendez-vous (anciens écrans) */
+html[data-theme="sombre"] .rv-type-choix { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .rv-type-choix:hover { border-color: var(--ps-contour-survol); }
+
+/* Panneau latéral d'un rendez-vous et fenêtre de rappel */
+html[data-theme="sombre"] .ph-espace .rv-panneau { background: rgba(20, 23, 23, .94); border-left-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .ph-espace #modal-rappel .modal-content { border-color: var(--ps-contour); }
+
+/* ---------- Agenda en verre (.ag-page) ---------- */
+html[data-theme="sombre"] .ag-page {
+  --ag-ink: var(--ps-texte);
+  --ag-text: var(--ps-texte-courant);
+  --ag-muted: var(--ps-texte-second);
+  --ag-muted-2: var(--ps-texte-discret);
+  --ag-line: var(--ps-contour);
+  --ag-line-2: var(--ps-filet-2);
+  --ag-sapin-texte: var(--ps-menthe);
+  --ag-menthe-ink: var(--ps-menthe);
+  --ag-ambre: var(--ps-ambre);
+  --ag-ambre-ink: var(--ps-ambre);
+  --ag-flou: var(--ps-verre-flou);
+  --ag-ombre: none;
+}
+html[data-theme="sombre"] .ag-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Haut de page */
+html[data-theme="sombre"] .ag-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .ag-demo-reset:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .ag-en-ligne { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .ag-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+
+/* Boutons : action principale blanche, ronds et pilules secondaires */
+html[data-theme="sombre"] .ag-btn-sapin,
+html[data-theme="sombre"] .ag-btn-sapin:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .ag-rond,
+html[data-theme="sombre"] .ag-pilule { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .ag-rond:hover,
+html[data-theme="sombre"] .ag-pilule:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .ag-filtres-btn.is-actif { border-color: var(--ps-actif-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .ag-filtres-btn[aria-expanded="true"] { background: var(--ps-survol); }
+
+/* Bascule de vue, interrupteurs, filtres repliés, champs */
+html[data-theme="sombre"] .ag-bascule { background: rgba(255, 255, 255, .05); }
+html[data-theme="sombre"] .ag-bascule .btn-check:checked + label { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .ag-interrupteur .form-check-input { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .ag-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .ag-interrupteur .form-check-input:focus { box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+html[data-theme="sombre"] .ag-filtres { background: rgba(255, 255, 255, .02); }
+html[data-theme="sombre"] .ag-champ { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .ag-champ:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .ag-champ option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .ag-lien { color: var(--ps-menthe); }
+
+/* Vue jour en lignes : cartes de rendez-vous et statuts */
+html[data-theme="sombre"] .ag-jour-carte { background: rgba(255, 255, 255, .04); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .ag-jour-carte:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .ag-jour-carte.is-selection { border-color: var(--ps-menthe); box-shadow: 0 0 0 1px var(--ps-menthe); }
+html[data-theme="sombre"] .ag-statut.is-confirme .ag-point { box-shadow: var(--ps-menthe-lueur); }
+
+/* Grilles semaine et mois dans la carte en verre */
+html[data-theme="sombre"] .ag-page .rv-grille,
+html[data-theme="sombre"] .ag-page .rv-mois { background: rgba(255, 255, 255, .02); }
+html[data-theme="sombre"] .ag-page .rv-grille-tete,
+html[data-theme="sombre"] .ag-page .rv-mois-tete div { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .ag-page .rv-jour-tete.is-aujourdhui,
+html[data-theme="sombre"] .ag-page .rv-col.is-aujourdhui { background: rgba(95, 224, 192, .05); }
+html[data-theme="sombre"] .ag-page .rv-evt { background: rgba(255, 255, 255, .05); }
+html[data-theme="sombre"] .ag-page .rv-evt:hover { background: rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .ag-page .rv-evt.rv-st-Confirme { background: var(--ps-menthe-fond); border-color: rgba(95, 224, 192, .3); }
+html[data-theme="sombre"] .ag-page .rv-evt.rv-st-AConfirmer { background: var(--ps-ambre-fond); border-color: rgba(255, 210, 138, .3); }
+html[data-theme="sombre"] .ag-page .rv-evt.is-selection { box-shadow: 0 0 0 2px var(--ps-menthe); }
+html[data-theme="sombre"] .ag-page .rv-mois-jour.is-autre { background: rgba(255, 255, 255, .015); }
+
+/* Carte « À confirmer » : carte mise en avant en verre plus clair, avec un fin trait lumineux en haut */
+html[data-theme="sombre"] .ag-aconfirmer { background: var(--ps-verre-fort); border-color: var(--ps-contour-fort); box-shadow: var(--ps-ombre-forte); color: var(--ps-texte); }
+html[data-theme="sombre"] .ag-aconfirmer::before { height: 1px; background: var(--ps-trait-lumineux); }
+html[data-theme="sombre"] .ag-ac-liste li,
+html[data-theme="sombre"] .ag-ac-vide { border-top-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .ag-ac-id span { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ag-ac-confirmer,
+html[data-theme="sombre"] .ag-ac-vide,
+html[data-theme="sombre"] .ag-ac-note { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ag-ac-confirmer:hover { color: var(--ps-texte); }
+html[data-theme="sombre"] .ag-page .ag-btn-blanc,
+html[data-theme="sombre"] .ag-page .ag-btn-blanc:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* ---------- Assistant Nouveau rendez-vous (.nr-page) ---------- */
+html[data-theme="sombre"] .nr-page {
+  --nr-ink: var(--ps-texte);
+  --nr-text: var(--ps-texte-courant);
+  --nr-muted: var(--ps-texte-second);
+  --nr-muted-2: var(--ps-texte-discret);
+  --nr-line: var(--ps-contour);
+  --nr-line-2: var(--ps-filet-2);
+  --nr-sapin-texte: var(--ps-menthe);
+  --nr-menthe-ink: var(--ps-menthe);
+  --nr-ambre-ink: var(--ps-ambre);
+  --nr-flou: var(--ps-verre-flou);
+  --nr-ombre: none;
+}
+html[data-theme="sombre"] .nr-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Haut de page et lien de retour */
+html[data-theme="sombre"] .nr-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .nr-demo-reset:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .nr-en-ligne { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .nr-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .nr-retour:hover { color: #8FE9D1; }
+
+/* Étapes : faite en menthe, en cours en pilule claire, à venir en gris */
+html[data-theme="sombre"] .nr-etapes { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .nr-etapes button:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .nr-num { border-color: rgba(255, 255, 255, .2); }
+html[data-theme="sombre"] .nr-etapes .is-faite .nr-num { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .nr-etapes .is-courante button { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+
+/* Recherche et choix du client */
+html[data-theme="sombre"] .nr-recherche input { background: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .nr-recherche input:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .nr-client { background: rgba(255, 255, 255, .04); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .nr-client:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .nr-client.is-choisi { border-color: var(--ps-menthe); background: var(--ps-actif); box-shadow: none; }
+html[data-theme="sombre"] .nr-avatar { background: rgba(95, 224, 192, .14); color: var(--ps-menthe); }
+html[data-theme="sombre"] .nr-client.is-choisi .nr-avatar { background: var(--ps-menthe); color: var(--ps-fond); }
+html[data-theme="sombre"] .nr-coche { color: var(--ps-menthe); }
+html[data-theme="sombre"] .nr-vide { border-color: rgba(255, 255, 255, .16); }
+
+/* Tuiles, pilules d'opportunité et de choix : choisi = fond clair et contour menthe */
+html[data-theme="sombre"] .nr-tuile,
+html[data-theme="sombre"] .nr-opp-pilule,
+html[data-theme="sombre"] .nr-pilule-choix { background: rgba(255, 255, 255, .04); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .nr-tuile:hover,
+html[data-theme="sombre"] .nr-pilule-choix:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .nr-tuile:disabled:hover { border-color: var(--ps-contour); }
+html[data-theme="sombre"] .nr-tuile.is-choisi,
+html[data-theme="sombre"] .nr-opp-pilule.is-choisi,
+html[data-theme="sombre"] .nr-pilule-choix.is-choisi { background: var(--ps-actif); border-color: var(--ps-menthe); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .nr-tuile.is-choisi strong { color: var(--ps-texte); }
+html[data-theme="sombre"] .nr-tuile.is-choisi span,
+html[data-theme="sombre"] .nr-tuile.is-choisi small { color: var(--ps-texte-courant); }
+
+/* Pagination des véhicules */
+html[data-theme="sombre"] .nr-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .nr-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+
+/* Boutons : principal blanc, secondaire en verre sombre */
+html[data-theme="sombre"] .nr-btn-sapin,
+html[data-theme="sombre"] .nr-btn-blanc,
+html[data-theme="sombre"] .nr-btn-blanc:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .nr-btn-verre { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .nr-btn-verre:hover { background: var(--ps-actif); }
+html[data-theme="sombre"] .nr-btn-translucide,
+html[data-theme="sombre"] .nr-btn-translucide:hover { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+
+/* Messages d'erreur en rose */
+html[data-theme="sombre"] .nr-aide,
+html[data-theme="sombre"] .nr-erreur { color: var(--ps-rose-texte); }
+
+/* Champs du formulaire, créneau libre, segments, case de confirmation */
+html[data-theme="sombre"] .nr-champ input,
+html[data-theme="sombre"] .nr-champ select,
+html[data-theme="sombre"] .nr-champ textarea { background: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .nr-champ input:focus,
+html[data-theme="sombre"] .nr-champ select:focus,
+html[data-theme="sombre"] .nr-champ textarea:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .nr-champ select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .nr-replan { background: var(--ps-btn-second); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .nr-autre { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .nr-segment { background: rgba(255, 255, 255, .05); }
+html[data-theme="sombre"] .nr-segment .btn-check:checked + label { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .nr-case input { accent-color: var(--ps-menthe); }
+
+/* Écran « Rendez-vous créé » : carte mise en avant en verre plus clair */
+html[data-theme="sombre"] .nr-fin-carte { background: var(--ps-verre-fort); border-color: var(--ps-contour-fort); box-shadow: var(--ps-ombre-forte); color: var(--ps-texte); }
+html[data-theme="sombre"] .nr-fin-icone { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .nr-fin-recap div { border-top-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .nr-fin-recap dt { color: var(--ps-texte-second); }
