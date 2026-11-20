@@ -1,0 +1,217 @@
+/* =========================================================
+   Ventes perdues en verre clair (maquette 32).
+   Chargée par Views/Relations/Pertes.cshtml après relations.css (variables --rcp- de .rc-page).
+   Tout est rangé sous .rp-page : les autres pages Relations ne sont pas touchées.
+   ========================================================= */
+
+.rp-page {
+  --rp-point-vert: #17614F;
+  --rp-point-vert-texte: #17614F;
+  --rp-point-ambre: #E09A1C;
+  --rp-point-gris: #434B4A;
+  --rp-point-gris-clair: #8A9493;
+  --rp-hauteur-champ: 40px;
+}
+
+/* ---------- Haut de page ---------- */
+.rp-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+.rp-ariane { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--rcp-muted); }
+.rp-ariane i { font-size: 11px; }
+.rp-ariane [aria-current] { color: var(--rcp-ink); font-weight: 500; }
+.rp-puces { display: flex; align-items: center; gap: 8px; }
+.rp-chip-demo { padding: 4px 10px; border-radius: 999px; background: #FBF1DE; color: var(--rcp-ambre-ink); font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
+.rp-en-ligne { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--rcp-line-2); background: rgba(255, 255, 255, .7); font-size: 13.5px; color: var(--rcp-text); }
+.rp-point-vert { width: 7px; height: 7px; border-radius: 50%; background: var(--rcp-menthe-ink); box-shadow: 0 0 0 3px rgba(95, 224, 192, .28); }
+
+/* ---------- En-tête ---------- */
+.rp-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.rp-label { margin: 0; font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--rcp-muted); }
+.rp-page .rp-titre { margin: 12px 0; font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--rcp-ink); }
+.rp-intro { max-width: 40em; margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--rcp-text); }
+.rp-boutons { display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+
+/* Bouton secondaire en verre (aucun bouton vert plein sur cette page) */
+.rp-btn-verre {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background: rgba(255, 255, 255, .7);
+  backdrop-filter: var(--rcp-flou);
+  -webkit-backdrop-filter: var(--rcp-flou);
+  box-shadow: var(--rcp-ombre);
+  font-size: 15px;
+  color: var(--rcp-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.rp-btn-verre i { color: var(--rcp-sapin-texte); }
+.rp-btn-verre:hover { color: var(--rcp-ink); background: #FFFFFF; }
+
+/* ---------- Phrase de résumé ---------- */
+.rp-resume { max-width: 46em; margin: 0 0 24px; font-size: 20px; font-weight: 300; line-height: 1.45; color: var(--rcp-ink); }
+.rp-resume:empty { display: none; }
+
+/* ---------- Cartes en verre ---------- */
+.rp-verre {
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rcp-flou);
+  -webkit-backdrop-filter: var(--rcp-flou);
+  border: 1px solid var(--rcp-line);
+  box-shadow: var(--rcp-ombre);
+}
+
+/* ---------- Six chiffres côte à côte ---------- */
+.rp-chiffres { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px; }
+.rp-chiffre { display: flex; flex-direction: column; gap: 6px; padding: 22px 20px 20px; border-radius: 20px; }
+.rp-chiffre-valeur { margin-bottom: 8px; font-size: 36px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rp-chiffre-libelle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--rcp-ink); }
+.rp-chiffre-detail { font-size: 12px; line-height: 1.4; color: var(--rcp-muted); }
+.rp-point-ambre { width: 7px; height: 7px; border-radius: 50%; background: var(--rp-point-ambre); }
+
+/* ---------- Carte du tableau ---------- */
+.rp-module { border-radius: 28px; overflow: hidden; }
+
+/* Barre d'outils sur une seule rangée */
+.rp-outils { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 20px 22px; border-bottom: 1px solid var(--rcp-line-2); }
+.rp-plus { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 22px; border-bottom: 1px solid var(--rcp-line-2); background: rgba(11, 13, 13, .02); }
+.rp-plus[hidden] { display: none; }
+.rp-recherche { position: relative; flex: 1 1 220px; min-width: 200px; }
+.rp-recherche i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--rcp-muted); pointer-events: none; }
+.rp-recherche input {
+  width: 100%;
+  height: var(--rp-hauteur-champ);
+  padding: 0 16px 0 42px;
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background: rgba(255, 255, 255, .85);
+  font-size: 14.5px;
+  color: var(--rcp-ink);
+}
+.rp-recherche input::placeholder { color: var(--rcp-muted-2); }
+.rp-recherche input:focus, .rp-select:focus { outline: none; border-color: var(--rcp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.rp-select {
+  height: var(--rp-hauteur-champ);
+  padding: 0 38px 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='m4 6 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 14px center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 14.5px;
+  color: var(--rcp-ink);
+}
+
+/* Interrupteurs : gris éteint, vert sapin allumé */
+.rp-interrupteur { display: inline-flex; align-items: center; gap: 10px; min-height: 0; margin: 0; padding: 0; }
+.rp-interrupteur .form-check-input { float: none; width: 36px; height: 20px; margin: 0; border-color: rgba(11, 13, 13, .12); background-color: rgba(11, 13, 13, .08); cursor: pointer; }
+.rp-interrupteur .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.rp-interrupteur .form-check-input:focus { box-shadow: 0 0 0 3px rgba(29, 154, 130, .2); border-color: var(--rcp-menthe-ink); }
+.rp-interrupteur .form-check-label { font-size: 14.5px; color: var(--rcp-text); cursor: pointer; }
+
+/* Liens discrets (Plus de filtres, Effacer, Réinitialiser) */
+.rp-lien { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; border: 0; background: none; font-size: 14px; font-weight: 500; color: var(--rcp-sapin-texte); }
+.rp-lien:hover { text-decoration: underline; }
+.rp-lien[hidden] { display: none; }
+
+/* ---------- Tableau ---------- */
+.rp-defile { overflow-x: auto; padding: 0 12px; }
+.rp-defile[hidden] { display: none; }
+.rp-table { width: 100%; min-width: 980px; border-collapse: separate; border-spacing: 0; }
+.rp-table th {
+  padding: 20px 14px 12px;
+  border-bottom: 1px solid var(--rcp-line-2);
+  font-family: var(--rcp-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--rcp-muted);
+}
+.rp-table td { padding: 18px 14px; border-bottom: 1px solid var(--rcp-line); vertical-align: top; font-size: 14.5px; line-height: 1.45; color: var(--rcp-ink); }
+.rp-table tbody tr:last-child td { border-bottom: 0; }
+.rp-table tbody tr { transition: background-color .15s ease; }
+.rp-table tbody tr:hover td { background: rgba(255, 255, 255, .85); }
+.rp-table tbody tr:hover td:first-child { border-radius: 16px 0 0 16px; }
+.rp-table tbody tr:hover td:last-child { border-radius: 0 16px 16px 0; }
+.rp-nom { font-weight: 500; color: var(--rcp-ink); text-decoration: none; }
+.rp-nom:hover { color: var(--rcp-sapin-texte); text-decoration: underline; }
+.rp-sous { display: block; margin-top: 2px; font-size: 13px; color: var(--rcp-muted); }
+.rp-motif { display: block; font-weight: 500; }
+.rp-attenue { color: var(--rcp-muted); }
+
+/* États : un point de 8 px et un libellé, sans fond ni bordure de pastille */
+.rp-etat { display: inline-flex; align-items: baseline; gap: 8px; margin-top: 4px; font-size: 12.5px; font-weight: 500; }
+.rp-motif + .rp-etat { margin-top: 6px; }
+.rp-point { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; transform: translateY(-1px); }
+.rp-etat-vert-plein { color: var(--rp-point-vert-texte); }
+.rp-etat-vert-plein .rp-point { background: var(--rp-point-vert); }
+.rp-etat-vert-creux { color: var(--rp-point-vert-texte); }
+.rp-etat-vert-creux .rp-point { border: 1.5px solid var(--rcp-menthe-ink); }
+.rp-etat-ambre-plein { color: var(--rcp-ambre-ink); }
+.rp-etat-ambre-plein .rp-point { background: var(--rp-point-ambre); }
+.rp-etat-ambre-creux { color: var(--rcp-ambre-ink); }
+.rp-etat-ambre-creux .rp-point { border: 1.5px solid var(--rp-point-ambre); }
+.rp-etat-gris-plein { color: var(--rp-point-gris); }
+.rp-etat-gris-plein .rp-point { background: var(--rp-point-gris); }
+.rp-etat-gris-creux { color: var(--rcp-muted); }
+.rp-etat-gris-creux .rp-point { border: 1.5px solid var(--rp-point-gris-clair); }
+/* Dans la colonne Récupération, l'état est la valeur principale : un peu plus grand. */
+.rp-table td:nth-child(5) .rp-etat { margin-top: 0; font-size: 14px; }
+
+/* ---------- État vide ---------- */
+.rp-vide { padding: 36px 22px; text-align: center; }
+.rp-vide[hidden] { display: none; }
+.rp-vide p { margin: 0 0 14px; font-size: 15px; color: var(--rcp-muted); }
+.rp-btn-blanc { height: 40px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--rcp-line-2); background: #FFFFFF; font-size: 14.5px; color: var(--rcp-ink); }
+.rp-btn-blanc:hover { border-color: rgba(11, 13, 13, .16); }
+
+/* ---------- Pied de carte et pagination ---------- */
+.rp-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 26px; border-top: 1px solid var(--rcp-line-2); font-size: 14px; color: var(--rcp-text); }
+.rp-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.rp-pagination[hidden] { display: none; }
+.rp-pages-info { margin-right: 10px; font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--rcp-muted); }
+.rp-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 14px;
+  color: var(--rcp-text);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.rp-page-btn:hover:not(:disabled) { background: rgba(11, 13, 13, .05); color: var(--rcp-ink); }
+.rp-page-btn.is-active { background: #FFFFFF; border-color: var(--rcp-line-2); color: var(--rcp-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+.rp-page-btn:disabled { color: var(--rcp-muted-2); opacity: .45; cursor: default; }
+.rp-pages-trou { padding: 0 4px; color: var(--rcp-muted); }
+
+/* ---------- Note du bas ---------- */
+.rp-note { display: flex; gap: 12px; margin-top: 24px; padding: 18px 22px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 13.5px; line-height: 1.55; color: var(--rcp-text); }
+.rp-note > i { margin-top: 2px; color: var(--rcp-sapin-texte); }
+.rp-note p { margin: 0; }
+.rp-note p + p { margin-top: 6px; }
+.rp-note p:empty, .rp-note p[hidden] { display: none; }
+.rp-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rp-demo [hidden] { display: none; }
+.rp-demo .rp-lien { padding: 0; }
+
+.rp-retour { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--rcp-sapin-texte); text-decoration: none; }
+.rp-retour:hover { text-decoration: underline; }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 991.98px) {
+  .rp-entete { flex-direction: column; align-items: flex-start; }
+  .rp-chiffres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 575.98px) {
+  .rp-haut { flex-direction: column; align-items: flex-start; }
+  .rp-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-pied { flex-direction: column; align-items: flex-start; }
+}
