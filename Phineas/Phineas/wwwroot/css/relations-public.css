@@ -482,3 +482,72 @@
 @media (prefers-reduced-motion: reduce) {
   .pub-corps *, .pub-corps *::before, .pub-corps *::after { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* =========================================================
+   Thème sombre : page publique du conseiller (accueil, recherche, rendez-vous, confirmation).
+   Cartes opaques en surface sombre (pas de verre ici, comme en clair), action principale blanche,
+   carte de la conseillère et bande de rappel gardent leur dégradé vert sapin.
+   ========================================================= */
+html[data-theme="sombre"] {
+  --pub-fond: var(--ps-fond);
+  --pub-encre: var(--ps-texte);
+  --pub-texte: var(--ps-texte-courant);
+  --pub-gris: var(--ps-texte-second);
+  --pub-gris-2: var(--ps-texte-discret);
+  --pub-filet: var(--ps-filet);
+  --pub-sapin-texte: var(--ps-menthe);
+  --pub-menthe-fond: var(--ps-menthe-fond);
+  --pub-champ-fond: var(--ps-champ);
+  --pub-ombre: none;
+  --pub-ombre-verte: var(--ps-ombre-forte);
+}
+html[data-theme="sombre"] .pub-corps::before {
+  background:
+    radial-gradient(40% 44% at 0% 0%, rgba(255, 255, 255, .07), transparent 70%),
+    radial-gradient(36% 50% at 100% 40%, rgba(95, 224, 192, .08), transparent 70%);
+}
+html[data-theme="sombre"] .pub-corps :focus-visible { outline-color: var(--ps-focus); }
+
+/* Bandeau d'aperçu : un vert encore plus sombre, filet clair en bas */
+html[data-theme="sombre"] .pub-bandeau { background: #08221D; border-bottom: 1px solid var(--ps-filet); }
+
+/* Cartes opaques sombres */
+html[data-theme="sombre"] .pub-carte,
+html[data-theme="sombre"] .pub-carte-conseiller { background: var(--ps-surface); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .pub-carte-conseiller { box-shadow: var(--ps-ombre-forte), inset 0 0 0 1px var(--ps-contour); }
+html[data-theme="sombre"] .pub-aide-icone { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+
+/* Boutons */
+html[data-theme="sombre"] .pub-btn-principal,
+html[data-theme="sombre"] .pub-btn-principal:hover:not(:disabled) { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .pub-btn-principal:disabled { background: var(--ps-survol); color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .pub-btn-secondaire { background: var(--ps-btn-second); color: var(--ps-texte); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .pub-btn-secondaire:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .pub-btn-blanc { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); }
+
+/* Barre de progression, champs, tuiles et pilules */
+html[data-theme="sombre"] .pub-progression span { background: var(--ps-piste); }
+html[data-theme="sombre"] .pub-progression span.is-atteint { background: var(--ps-menthe); }
+html[data-theme="sombre"] .pub-champ { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .pub-champ::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .pub-champ:focus { background: rgba(255, 255, 255, .07); border-color: var(--ps-champ-focus); }
+html[data-theme="sombre"] .pub-champ.is-invalide { background: var(--ps-champ); border-color: var(--ps-rose); }
+html[data-theme="sombre"] .pub-aide-champ { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .pub-tuile,
+html[data-theme="sombre"] .pub-pilule { background: var(--ps-btn-second); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .pub-tuile:hover:not(.is-choisi),
+html[data-theme="sombre"] .pub-pilule:hover:not(.is-choisi) { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .pub-tuile.is-choisi { background: var(--pub-sapin); border-color: rgba(95, 224, 192, .45); color: #FFFFFF; box-shadow: 0 0 0 1px rgba(95, 224, 192, .25), var(--ps-ombre-forte); }
+html[data-theme="sombre"] .pub-pilule.is-choisi { background: var(--ps-menthe-fond); border-color: var(--ps-menthe); color: var(--ps-menthe); }
+html[data-theme="sombre"] .pub-case input { accent-color: var(--ps-menthe); }
+
+/* Calendrier : jour choisi en blanc lumineux, jours passés estompés */
+html[data-theme="sombre"] .pub-cal-fleche { background: var(--ps-btn-second); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .pub-cal-fleche:hover:not(:disabled) { border-color: var(--ps-champ-focus); }
+html[data-theme="sombre"] .pub-cal-jour { color: var(--ps-texte); }
+html[data-theme="sombre"] .pub-cal-jour:hover:not(:disabled):not(.is-choisi) { background: var(--ps-survol); border-color: var(--ps-champ-focus); }
+html[data-theme="sombre"] .pub-cal-jour:disabled { color: rgba(255, 255, 255, .22); }
+html[data-theme="sombre"] .pub-cal-jour.is-choisi { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* Confirmation : la grande icône garde son vert, l'anneau passe en menthe translucide */
+html[data-theme="sombre"] .pub-validation { box-shadow: 0 0 0 12px rgba(95, 224, 192, .10), var(--ps-ombre-forte); }
