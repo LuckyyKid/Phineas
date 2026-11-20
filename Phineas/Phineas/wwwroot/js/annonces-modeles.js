@@ -1,4 +1,4 @@
-// Studio d'annonces — modèles déterministes et contrôles (prototype frontend, phase 08).
+// Studio d'annonces : modèles déterministes et contrôles (prototype frontend, phase 08).
 // Fonctions pures, utilisables dans Node. Aucune IA n'est appelée : les textes sont composés uniquement à partir des
 // champs de la fiche d'inventaire. Ce module est le point de remplacement du futur service d'annonces IA de Phineas
 // (même entrée : véhicule, objectif, style, variante ; même sortie : titre, description, points forts, sources, à vérifier).
@@ -87,7 +87,7 @@
     var base = nom(v);
     var titre, description;
     if (variante === "synthetique" || style === "concis" || objectif === "reseau-social") {
-      titre = base + (eq.length ? " — " + eq[0] : "");
+      titre = base + (eq.length ? ", " + eq[0] : "");
       description = base + ", " + etat + (v.neuf ? "" : ", " + km(v.kilometrage)) + (eq.length ? ". " + liste(eq) : "") + ". Prix affiché : " + argent(v.prixDemande) + ".";
     } else if (variante === "usage") {
       titre = (v.carrosserie || "Véhicule") + " " + etat + " pour " + usage(v);
@@ -101,7 +101,7 @@
     if (objectif === "arrivee") titre = "Nouveau en inventaire : " + titre;
     if (objectif === "prospect") description = "Voici un véhicule qui pourrait correspondre à votre recherche. " + description;
     if (style === "informatif") description += " Numéro de stock : " + v.numeroStock + ".";
-    if (style === "dynamique") titre = titre + " — à découvrir";
+    if (style === "dynamique") titre = titre + ", à découvrir";
     if (style === "premium") description = description.replace(/^/, "Une présentation soignée pour un véhicule " + etat + ". ");
     return {
       titre: titre,
