@@ -280,3 +280,50 @@ button.pf-constat:hover { background: rgba(255, 255, 255, .75); }
   .pf-colonnes { gap: 4px; }
   .pf-semaine-date { font-size: 11px; }
 }
+
+/* =========================================================
+   Thème sombre · Mes performances, sept onglets et graphiques (contrat : wwwroot/js/theme.js)
+   Couleurs des graphiques choisies pour le fond sombre et vérifiées avec le validateur dataviz :
+   Gagnées #2FA98A / Perdues #6C8CE3 (bande de luminosité, chroma, séparation daltonisme et
+   contraste ≥ 3:1 : tout passe). Les totaux restent écrits au-dessus des colonnes.
+   ========================================================= */
+html[data-theme="sombre"] .pf-page {
+  --pf-piste: var(--ps-piste);
+  --pf-barre-fine: linear-gradient(90deg, #2FA98A 0%, #5FE0C0 100%);
+  --pf-barre-epaisse: linear-gradient(90deg, #1F7F6A 0%, #3FBF9C 100%);
+  --pf-gagnees: #2FA98A;
+  --pf-perdues: #6C8CE3;
+  --pf-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23A5ACAB' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+}
+html[data-theme="sombre"] .pf-verre,
+html[data-theme="sombre"] .pf-chiffre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; backdrop-filter: var(--ps-verre-flou); -webkit-backdrop-filter: var(--ps-verre-flou); }
+html[data-theme="sombre"] .pf-chiffre:hover { border-color: var(--ps-contour-survol); }
+
+/* Menu de période et onglets */
+html[data-theme="sombre"] .pf-periode select { border-color: var(--ps-champ-contour); background-color: var(--ps-champ); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .pf-periode select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .pf-periode select:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .pf-page .pf-onglets { border-color: var(--ps-contour); background: var(--ps-verre); }
+html[data-theme="sombre"] .pf-page .pf-onglets .nav-link:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .pf-page .pf-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+
+/* Carte de résumé : verre mis en avant (plus de vert plein), étiquettes en menthe clair */
+html[data-theme="sombre"] .pf-resume-carte { background: var(--ps-verre-fort); border: 1px solid var(--ps-contour-fort); box-shadow: var(--ps-ombre-forte); color: var(--ps-texte); }
+html[data-theme="sombre"] .pf-resume-carte::before { background: radial-gradient(closest-side, rgba(95, 224, 192, .16), transparent); }
+html[data-theme="sombre"] .pf-resume-label,
+html[data-theme="sombre"] .pf-resume-chiffres > div,
+html[data-theme="sombre"] .pf-resume-valeur .pf-indispo { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .pf-resume-chiffres { border-top-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .pf-resume-valeur { color: var(--ps-texte); }
+
+/* Survol des lignes, étapes, constats et colonnes : fond clair translucide */
+html[data-theme="sombre"] .pf-ligne:hover,
+html[data-theme="sombre"] .pf-etape:hover,
+html[data-theme="sombre"] button.pf-constat:hover,
+html[data-theme="sombre"] .pf-semaine:hover { background: var(--ps-survol); }
+
+/* Anneaux des taux : les cercles portent leur couleur en attribut, le CSS l'emporte */
+html[data-theme="sombre"] .pf-anneau circle:first-of-type { stroke: var(--ps-piste); }
+html[data-theme="sombre"] .pf-anneau circle:last-of-type { stroke: var(--ps-menthe); }
+
+html[data-theme="sombre"] .pf-note { background: rgba(255, 255, 255, .03); }
