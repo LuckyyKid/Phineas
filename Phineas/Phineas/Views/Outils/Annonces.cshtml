@@ -1,3 +1,6 @@
+@* Page « Studio d'annonces » (maquettes 28 à 31) : liste des annonces et fenêtre « Nouvelle annonce » en 4 étapes.
+   Comportement : wwwroot/js/annonces-page.js (textes : annonces-modeles.js ; données : outils-store.js ; pagination : outils-pagination.js).
+   Styles : outils.css (jetons og-) et annonces-verre.css (préfixe anv-). *@
 @using Phineas.Models.ViewModels.Conseiller
 @model OutilsPageViewModel
 @{
@@ -9,144 +12,67 @@
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/annonces-verre.css" asp-append-version="true" />
 }
 
-<div class="og-page">
-<partial name="_HautOutils" />
+<div class="og-page anv-page">
 
-<header class="sv-head">
-    <div>
-        <h1>Studio d'annonces</h1>
-        <p class="text-muted mb-0">Préparer des annonces exactes à partir de l'inventaire, les relire et les valider avant toute publication.</p>
+@* Haut propre à cette page : la maquette ne montre ni « Modifiée » ni « Réinitialiser » dans la barre du haut.
+   La réinitialisation de la démo reste disponible, discrètement, dans la note du bas. *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Studio d'annonces</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
     </div>
-    <div class="sv-quick">
-        <button type="button" class="btn btn-primary btn-sm" data-an="nouvelle"><i class="bi bi-plus-lg me-1"></i>Nouvelle annonce</button>
-        <a class="btn btn-outline-primary btn-sm" asp-action="Acquisition" asp-route-onglet="publications"><i class="bi bi-diagram-3 me-1"></i>Publications</a>
+</div>
+
+<header class="anv-entete">
+    <div>
+        <p class="anv-label">Outils</p>
+        <h1 class="anv-titre">Studio d'annonces</h1>
+        <p class="anv-intro">Préparer des annonces exactes à partir de l'inventaire, les relire et les valider avant toute publication.</p>
+    </div>
+    <div class="anv-entete-boutons">
+        <a class="anv-btn-verre" asp-action="Acquisition" asp-route-onglet="publications"><i class="bi bi-megaphone" aria-hidden="true"></i>Publications</a>
+        <button type="button" class="anv-btn-sapin" data-an="nouvelle"><i class="bi bi-plus-lg" aria-hidden="true"></i>Nouvelle annonce</button>
     </div>
 </header>
 
-<div class="ov-simulation" role="note">
-    <i class="bi bi-cpu" aria-hidden="true"></i>
-    <span><strong>Générateur d'annonces IA non connecté.</strong> Les textes sont composés par des modèles déterministes à partir des seuls champs de la fiche d'inventaire. La validation humaine reste obligatoire ; aucune annonce n'est publiée par Phineas.</span>
-</div>
-
 <div id="annonces" data-annonce="@Model.AnnonceId" data-vehicule="@Model.VehiculeId">
-    <section class="card rc-bloc ov-editeur" id="editeur" hidden aria-labelledby="titre-editeur">
-        <div class="card-header sv-card-header"><span id="titre-editeur"><i class="bi bi-pencil-square me-2"></i><span data-zone="titre-editeur">Nouvelle annonce</span></span>
-            <button type="button" class="btn-close" data-an="fermer" aria-label="Fermer l'éditeur"></button></div>
-        <div class="card-body">
-            <ol class="ov-etapes" data-zone="etapes"></ol>
-            <div data-etape="1">
-                <label class="form-label" for="ed-vehicule">Véhicule de l'inventaire</label>
-                <select class="form-select" id="ed-vehicule"></select>
-                <div class="invalid-feedback" data-erreur="vehicule"></div>
-                <div class="mt-3" data-zone="fiche-vehicule"></div>
-            </div>
-            <div data-etape="2" hidden>
-                <fieldset><legend class="form-label fs-6">Objectif de l'annonce</legend>
-                    @foreach (var (cle, libelle) in ReferentielsOutils.ObjectifsAnnonce)
-                    {
-                        <div class="form-check"><input class="form-check-input" type="radio" name="objectif" id="obj-@cle" value="@cle" /><label class="form-check-label" for="obj-@cle">@libelle</label></div>
-                    }
-                </fieldset>
-            </div>
-            <div data-etape="3" hidden>
-                <fieldset><legend class="form-label fs-6">Style rédactionnel</legend>
-                    @foreach (var (cle, libelle) in ReferentielsOutils.StylesAnnonce)
-                    {
-                        <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="style" id="sty-@cle" value="@cle" /><label class="form-check-label" for="sty-@cle">@libelle</label></div>
-                    }
-                </fieldset>
-                <div class="row g-3 mt-1">
-                    <div class="col-sm-6"><label class="form-label" for="ed-canal">Canal envisagé</label>
-                        <select class="form-select" id="ed-canal">
-                            @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
-                            {
-                                <option value="@cle">@libelle</option>
-                            }
-                        </select></div>
-                    <div class="col-sm-6"><label class="form-label" for="ed-langue">Langue</label>
-                        <select class="form-select" id="ed-langue">
-                            @foreach (var (cle, libelle, dispo) in ReferentielsOutils.Langues)
-                            {
-                                <option value="@cle" disabled="@(!dispo)">@libelle@(dispo ? "" : " (à venir)")</option>
-                            }
-                        </select></div>
-                </div>
-            </div>
-            <div data-etape="4" hidden>
-                <div class="ov-edition">
-                    <div>
-                        <label class="form-label" for="ed-titre">Titre</label>
-                        <input class="form-control" id="ed-titre" maxlength="120" />
-                        <label class="form-label mt-2" for="ed-description">Description</label>
-                        <textarea class="form-control" id="ed-description" rows="5"></textarea>
-                        <label class="form-label mt-2" for="ed-points">Points forts <span class="pr-sous">(un par ligne)</span></label>
-                        <textarea class="form-control" id="ed-points" rows="3"></textarea>
-                        <label class="form-label mt-2" for="ed-appel">Appel à l'action</label>
-                        <input class="form-control" id="ed-appel" maxlength="160" />
-                        <div class="d-flex flex-wrap gap-2 mt-3">
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-an="enregistrer"><i class="bi bi-save me-1"></i>Enregistrer</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-an="variantes"><i class="bi bi-layout-three-columns me-1"></i>Comparer 3 variantes</button>
-                        </div>
-                    </div>
-                    <aside>
-                        <h2 class="ia-sous-titre">Informations de l'inventaire</h2>
-                        <dl class="ov-inventaire" data-zone="inventaire"></dl>
-                        <h2 class="ia-sous-titre">À vérifier avant validation</h2>
-                        <ul class="ov-verifier" data-zone="verifier"></ul>
-                    </aside>
-                </div>
-                <div class="ov-variantes" data-zone="variantes"></div>
-                <h2 class="ia-sous-titre">Prévisualisation</h2>
-                <div data-zone="apercu"></div>
-                <div class="ov-validation" data-zone="validation"></div>
-                <h2 class="ia-sous-titre">Historique</h2>
-                <ol class="ia-historique" data-zone="historique"></ol>
-                <div class="og-pagination-zone" data-pagination="historique"></div>
-            </div>
-            <div class="d-flex gap-2 mt-3" data-zone="navigation">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-an="precedent">Précédent</button>
-                <button type="button" class="btn btn-sm btn-primary" data-an="suivant">Suivant</button>
-            </div>
-            <p class="alert alert-danger mt-3 mb-0" data-zone="erreur" hidden></p>
-        </div>
-    </section>
-
-    <section class="card pr-module" aria-label="Bibliothèque d'annonces">
-        <div class="pr-toolbar">
-            <div class="pr-search">
+    <section class="anv-verre anv-module" aria-label="Annonces">
+        <div class="anv-outils">
+            <div class="anv-recherche">
                 <i class="bi bi-search" aria-hidden="true"></i>
-                <input type="search" class="form-control" id="f-recherche" placeholder="Référence, véhicule ou titre" aria-label="Rechercher une annonce" autocomplete="off" />
+                <input type="search" id="f-recherche" placeholder="Référence, véhicule ou titre" aria-label="Rechercher une annonce" autocomplete="off" />
             </div>
-        </div>
-        <div class="pr-filtres">
-            <select class="form-select form-select-sm" id="f-statut" aria-label="Filtrer par statut">
+            <select class="anv-select" id="f-statut" aria-label="Filtrer par statut">
                 <option value="">Tous les statuts</option>
                 @foreach (var (cle, libelle) in ReferentielsOutils.StatutsAnnonce)
                 {
                     <option value="@cle">@libelle</option>
                 }
             </select>
-            <select class="form-select form-select-sm" id="f-canal" aria-label="Filtrer par canal">
+            <select class="anv-select" id="f-canal" aria-label="Filtrer par canal">
                 <option value="">Tous les canaux</option>
                 @foreach (var (cle, libelle, _) in ReferentielsOutils.Plateformes)
                 {
                     <option value="@cle">@libelle</option>
                 }
             </select>
-            <button type="button" class="btn btn-sm btn-link pr-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+            <button type="button" class="anv-lien" data-effacer-filtres hidden>Effacer les filtres</button>
         </div>
-        <div class="pr-resultat" id="resultat" aria-live="polite"></div>
-        <div class="table-responsive">
-            <table class="table pr-table ov-table mb-0">
+        <p class="visually-hidden" id="resultat" aria-live="polite"></p>
+        <div class="anv-defile">
+            <table class="anv-table" id="table-annonces">
                 <thead>
                     <tr>
                         <th scope="col">Annonce</th>
-                        <th scope="col">Véhicule</th>
                         <th scope="col">Titre et aperçu</th>
                         <th scope="col">Canal</th>
-                        <th scope="col">Créée / modifiée</th>
+                        <th scope="col">Modifiée</th>
                         <th scope="col">Statut</th>
                         <th scope="col">Provenance</th>
                     </tr>
@@ -154,16 +80,127 @@
                 <tbody id="liste-corps"></tbody>
             </table>
         </div>
-        <div class="og-pagination-zone" data-pagination="liste-corps"></div>
-        <div class="pr-etat-vide" id="etat-vide" hidden>
-            <i class="bi bi-megaphone"></i>
-            <strong>Aucune annonce</strong>
-            <span>Aucune annonce ne correspond à ces critères.</span>
-            <button type="button" class="btn btn-sm btn-outline-primary" data-effacer-filtres>Effacer les filtres</button>
+        <p class="anv-vide" id="etat-vide" hidden>Aucune annonce ne correspond.</p>
+        <div class="anv-pied">
+            <span id="nb-annonces"></span>
+            <div class="og-pagination-zone" data-pagination="liste-corps"></div>
         </div>
     </section>
+
+    <p class="anv-note">
+        <i class="bi bi-shield-check" aria-hidden="true"></i>
+        <span>
+            Aucun générateur d'annonces par IA n'est connecté. Les textes sont composés à partir des seuls champs de la fiche d'inventaire. La validation humaine reste obligatoire, et Phineas ne publie aucune annonce.
+            <span class="anv-demo-etat" data-etat-demo hidden>Données de démonstration modifiées.</span>
+            <button type="button" class="anv-lien" data-reinitialiser hidden>Réinitialiser la démo</button>
+        </span>
+    </p>
 </div>
 
+</div>
+
+@* Fenêtre « Nouvelle annonce » (et édition d'une annonce existante). Le script la déplace à la fin du <body>
+   pour que le voile couvre toute la page, barre latérale comprise. *@
+<div class="og-page anv-fenetre-racine" id="fenetre-annonce" hidden>
+    <div class="anv-voile" data-fermer-fenetre></div>
+    <div class="anv-fenetre" role="dialog" aria-modal="true" aria-labelledby="fenetre-titre" aria-describedby="fenetre-aide">
+        <header class="anv-fenetre-tete">
+            <div class="anv-fenetre-tete-ligne">
+                <div>
+                    <h2 class="anv-fenetre-titre" id="fenetre-titre">Nouvelle annonce</h2>
+                    <p class="anv-fenetre-aide" id="fenetre-aide"></p>
+                </div>
+                <button type="button" class="anv-fermer" data-fermer-fenetre aria-label="Fermer la fenêtre"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </div>
+            <ol class="anv-etapes" data-zone="etapes" aria-label="Étapes"></ol>
+        </header>
+
+        <div class="anv-fenetre-corps">
+            <div class="anv-gauche" data-zone="gauche">
+                @* Étape 1 : véhicule *@
+                <section data-etape="1">
+                    <p class="anv-champ-label">Véhicule de l'inventaire</p>
+                    <div class="anv-tuiles anv-tuiles-deux" role="radiogroup" aria-label="Véhicule de l'inventaire" data-zone="tuiles-vehicules"></div>
+                </section>
+
+                @* Étape 2 : objectif *@
+                <section data-etape="2" hidden>
+                    <p class="anv-champ-label">Objectif de l'annonce</p>
+                    <div class="anv-tuiles anv-tuiles-deux" role="radiogroup" aria-label="Objectif de l'annonce" data-zone="tuiles-objectifs"></div>
+                </section>
+
+                @* Étape 3 : canal et ton *@
+                <section data-etape="3" hidden>
+                    <p class="anv-champ-label">Canal</p>
+                    <div class="anv-tuiles anv-tuiles-trois" role="radiogroup" aria-label="Canal" data-zone="tuiles-canaux"></div>
+                    <p class="anv-champ-label anv-champ-label-espace">Ton</p>
+                    <div class="anv-tuiles anv-tuiles-trois" role="radiogroup" aria-label="Ton" data-zone="tuiles-styles"></div>
+                    <p class="anv-aide-petite"><i class="bi bi-translate" aria-hidden="true"></i>Langue : français. L'anglais et l'espagnol arriveront plus tard.</p>
+                </section>
+
+                @* Étape 4 : édition et validation d'une nouvelle annonce *@
+                <section data-etape="4" hidden>
+                    <label class="anv-champ-label" for="ed-titre">Titre</label>
+                    <input class="anv-champ" id="ed-titre" maxlength="120" />
+                    <label class="anv-champ-label anv-champ-label-espace" for="ed-description">Texte de l'annonce</label>
+                    <textarea class="anv-zone-texte" id="ed-description" rows="6"></textarea>
+                    <label class="anv-champ-label anv-champ-label-espace" for="ed-points">Points forts <span class="anv-facultatif">(un par ligne)</span></label>
+                    <textarea class="anv-zone-texte" id="ed-points" rows="3"></textarea>
+                    <label class="anv-champ-label anv-champ-label-espace" for="ed-appel">Appel à l'action</label>
+                    <input class="anv-champ" id="ed-appel" maxlength="160" />
+                    <div data-zone="verifier-nouvelle"></div>
+                    <label class="anv-relecture">
+                        <input class="form-check-input" type="checkbox" id="ed-relu" />
+                        <span>J'ai relu l'annonce et vérifié chaque information contre la fiche d'inventaire.</span>
+                    </label>
+                </section>
+
+                @* Édition d'une annonce existante (ouverte depuis la liste) *@
+                <section data-etape="edition" hidden>
+                    <label class="anv-champ-label" for="ex-titre">Titre</label>
+                    <input class="anv-champ" id="ex-titre" maxlength="120" />
+                    <label class="anv-champ-label anv-champ-label-espace" for="ex-description">Texte de l'annonce</label>
+                    <textarea class="anv-zone-texte" id="ex-description" rows="6"></textarea>
+                    <label class="anv-champ-label anv-champ-label-espace" for="ex-points">Points forts <span class="anv-facultatif">(un par ligne)</span></label>
+                    <textarea class="anv-zone-texte" id="ex-points" rows="3"></textarea>
+                    <label class="anv-champ-label anv-champ-label-espace" for="ex-appel">Appel à l'action</label>
+                    <input class="anv-champ" id="ex-appel" maxlength="160" />
+                    <div class="anv-rangee-boutons">
+                        <button type="button" class="anv-btn-blanc" data-an="variantes"><i class="bi bi-layout-three-columns" aria-hidden="true"></i>Comparer 3 variantes</button>
+                    </div>
+                    <div data-zone="variantes"></div>
+                    <h3 class="anv-sous-titre">À vérifier avant validation</h3>
+                    <ul class="anv-verifier" data-zone="verifier"></ul>
+                    <h3 class="anv-sous-titre">Validation</h3>
+                    <div data-zone="validation"></div>
+                    <h3 class="anv-sous-titre">Historique</h3>
+                    <ol class="anv-historique" data-zone="historique"></ol>
+                    <div class="og-pagination-zone" data-pagination="historique"></div>
+                </section>
+
+                <p class="anv-erreur" data-zone="erreur" role="alert" hidden></p>
+            </div>
+
+            <aside class="anv-droite" aria-label="Aperçu de l'annonce">
+                <div class="anv-apercu-tete">
+                    <span class="anv-label">Aperçu</span>
+                    <span class="anv-apercu-canal" data-zone="apercu-canal">Canal à choisir</span>
+                </div>
+                <article class="anv-apercu" data-zone="apercu"></article>
+                <div class="anv-champs-utilises" data-zone="champs-utilises"></div>
+                <dl class="anv-inventaire" data-zone="inventaire" hidden></dl>
+                <p class="anv-apercu-note">Le texte vient uniquement de la fiche d'inventaire. Aucune IA n'est connectée et Phineas ne publie rien.</p>
+            </aside>
+        </div>
+
+        <footer class="anv-fenetre-pied">
+            <button type="button" class="anv-btn-blanc" data-an="retour">Annuler</button>
+            <div class="anv-fenetre-pied-droite">
+                <button type="button" class="anv-btn-blanc" data-an="brouillon" hidden>Enregistrer le brouillon</button>
+                <button type="button" class="anv-btn-sapin" data-an="avancer">Suivant<i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+            </div>
+        </footer>
+    </div>
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
