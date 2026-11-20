@@ -1,56 +1,126 @@
+@* Page de connexion (maquettes 67, 68 et 69) : formulaire à gauche, panneau vert de présentation à droite.
+   Page autonome (Layout = null) : _AuthLayout n'était utilisé que par cette page ; il reste intact.
+   Données : LoginViewModel (Email, Password, RememberMe), envoyé à AccountController.Login (POST).
+   Styles : wwwroot/css/connexion.css (préfixe cx-). Script : wwwroot/js/connexion.js (œil, état du bouton, carrés du panneau). *@
 @model Phineas.Models.ViewModels.Account.LoginViewModel
 @{
-    Layout = "_AuthLayout";
+    Layout = null;
     ViewData["Title"] = "Connexion";
+
+    // Les quatre points forts affichés en bas du panneau vert : icône Bootstrap et libellé.
+    var pointsForts = new[]
+    {
+        (Icone: "bi-qr-code-scan", Libelle: "Suivi par code QR"),
+        (Icone: "bi-lightning-charge", Libelle: "Tableau en temps réel"),
+        (Icone: "bi-shield-check", Libelle: "Dossiers F&A protégés"),
+        (Icone: "bi-stars", Libelle: "Annonces par IA"),
+    };
 }
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Phineas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/connexion.css" asp-append-version="true" />
+</head>
+<body class="cx-page">
+    <div class="cx-ecran">
+        @* ---------- Moitié gauche : le formulaire ---------- *@
+        <main class="cx-gauche">
+            <header class="cx-haut">
+                <a class="cx-logo" asp-controller="Home" asp-action="Index"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 32 }' />phineas</a>
+                <a class="cx-lien-accueil" asp-controller="Home" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Accueil</a>
+            </header>
 
-<h1>Bon retour</h1>
-<p class="text-muted mb-4">Connectez-vous à l'espace de votre concession.</p>
+            <div class="cx-bloc">
+                <h1 class="cx-titre">Bon retour</h1>
+                <p class="cx-sous-titre">Connectez-vous à l'espace de votre concession.</p>
 
-<form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" novalidate>
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <form class="cx-formulaire" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" novalidate data-formulaire-connexion>
+                    @* Erreurs générales (identifiants refusés, compte suspendu…) renvoyées par le contrôleur. *@
+                    <div asp-validation-summary="ModelOnly" class="cx-erreurs" role="alert"></div>
 
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control form-control-lg" autocomplete="username" autofocus />
-        <span asp-validation-for="Email" class="text-danger"></span>
+                    <div class="cx-champ">
+                        <label asp-for="Email" class="cx-libelle"></label>
+                        <input asp-for="Email" class="cx-saisie" autocomplete="username" placeholder="prenom.nom@concession.ca" autofocus data-champ-requis />
+                        <span asp-validation-for="Email" class="cx-erreur-champ"></span>
+                    </div>
+
+                    <div class="cx-champ">
+                        <label asp-for="Password" class="cx-libelle"></label>
+                        <div class="cx-saisie-mdp">
+                            <input asp-for="Password" class="cx-saisie" autocomplete="current-password" data-champ-requis />
+                            <button class="cx-oeil" type="button" id="toggle-password" aria-label="Afficher le mot de passe" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="cx-erreur-champ"></span>
+                    </div>
+
+                    <div class="cx-souvenir">
+                        <input asp-for="RememberMe" class="cx-case" />
+                        <label asp-for="RememberMe"></label>
+                    </div>
+
+                    @* Le bouton paraît gris tant que les deux champs sont vides, mais il n'est jamais bloqué :
+                       l'autoremplissage du navigateur et la touche Entrée fonctionnent toujours. *@
+                    <button type="submit" class="cx-bouton is-inactif" data-bouton-connexion>
+                        Se connecter<i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <p class="cx-note">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <span>Les comptes sont créés par votre directeur ou par l'administrateur de la plateforme. En cas d'oubli de votre mot de passe, communiquez avec votre directeur.</span>
+                </p>
+            </div>
+
+            <p class="cx-loi25"><i class="bi bi-shield-check" aria-hidden="true"></i>Conforme à la Loi 25 sur la protection des renseignements personnels.</p>
+        </main>
+
+        @* ---------- Moitié droite : panneau de présentation ---------- *@
+        <aside class="cx-panneau" aria-label="Présentation de Phineas">
+            @* Grille fine et petits carrés menthe qui pulsent : remplis par connexion.js. *@
+            <div class="cx-panneau-fond" data-carres-panneau aria-hidden="true"></div>
+
+            <div class="cx-panneau-contenu">
+                <p class="cx-pastille"><i class="bi bi-broadcast" aria-hidden="true"></i>Suivi en direct avec SignalR</p>
+                <h2 class="cx-panneau-titre">Toute votre concession, dans une seule fenêtre.</h2>
+
+                @* Aperçu du produit : une carte de véhicule et la notification de l'atelier (illustration). *@
+                <div class="cx-apercu" aria-hidden="true">
+                    <div class="cx-apercu-vehicule">
+                        <span class="cx-apercu-qr"><i class="bi bi-qr-code"></i></span>
+                        <span class="cx-apercu-nom">
+                            <strong>Honda Accord</strong>
+                            <small>STK-0042 · Baie B-04</small>
+                        </span>
+                        <span class="cx-apercu-statut"><i></i>Inspection terminée</span>
+                    </div>
+                    <div class="cx-apercu-notif">
+                        <span class="cx-apercu-avatar">LB</span>
+                        <span class="cx-apercu-notif-texte"><span><strong>Luc B.</strong> a terminé l'inspection</span><small>À l'instant</small></span>
+                    </div>
+                </div>
+
+                <ul class="cx-points">
+                    @foreach (var point in pointsForts)
+                    {
+                        <li><i class="bi @point.Icone" aria-hidden="true"></i>@point.Libelle</li>
+                    }
+                </ul>
+            </div>
+        </aside>
     </div>
 
-    <div class="mb-2">
-        <label asp-for="Password" class="form-label"></label>
-        <div class="input-group input-group-lg">
-            <input asp-for="Password" class="form-control" autocomplete="current-password" />
-            <button class="btn btn-outline-secondary" type="button" id="toggle-password" aria-label="Afficher le mot de passe">
-                <i class="bi bi-eye"></i>
-            </button>
-        </div>
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-
-    <div class="form-check mb-4">
-        <input asp-for="RememberMe" class="form-check-input" />
-        <label asp-for="RememberMe" class="form-check-label"></label>
-    </div>
-
-    <button type="submit" class="btn btn-primary btn-lg w-100">Se connecter</button>
-</form>
-
-<p class="small text-muted mt-4 mb-0">
-    <i class="bi bi-shield-lock me-1"></i>Les comptes sont créés par votre directeur ou par l'administrateur de la plateforme.
-    En cas d'oubli de votre mot de passe, communiquez avec votre directeur.
-</p>
-
-@section Scripts {
+    @* Validation côté client (mêmes messages que le modèle) : jQuery + jquery.validate + unobtrusive. *@
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            var pwd = document.getElementById('Password');
-            var toggle = document.getElementById('toggle-password');
-            toggle.addEventListener('click', function () {
-                var show = pwd.type === 'password';
-                pwd.type = show ? 'text' : 'password';
-                toggle.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
-            });
-        })();
-    </script>
-}
+    <script src="~/js/connexion.js" asp-append-version="true"></script>
+</body>
+</html>
