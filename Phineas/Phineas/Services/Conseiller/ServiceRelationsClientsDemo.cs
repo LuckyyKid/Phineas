@@ -107,11 +107,14 @@ public class ServiceRelationsClientsDemo : IServiceRelationsClients
 
         var initiales = string.Concat((moi ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(m => char.ToUpperInvariant(m[0])));
         var profil = new ProfilConseiller(
-            "Au service des clients de la concession depuis 2019, j'accompagne les familles et les travailleurs dans le choix d'un véhicule neuf ou d'occasion adapté à leurs besoins et à leur budget.",
+            "J'accompagne les familles et les travailleurs dans le choix d'un véhicule neuf ou d'occasion adapté à leurs besoins et à leur budget.",
             "514-555-0100", "conseiller.ventes@exemple.test", ["fr", "en"],
             false, true, true, true,
-            "Vous connaissez quelqu'un qui recherche un véhicule ? Vous pouvez lui partager ma carte professionnelle. Je serai heureux de l'accompagner dans ses recherches.",
-            "DEMO-" + (initiales.Length > 0 ? initiales : "CV") + "-2026");
+            "Vous connaissez quelqu'un qui recherche un véhicule ? Vous pouvez lui partager ma carte professionnelle. Je serai heureuse de l'accompagner dans ses recherches.",
+            "DEMO-" + (initiales.Length > 0 ? initiales : "CV") + "-2026",
+            FormeRole: "feminin",
+            AnneeArrivee: 2019,
+            VilleConcession: "Brossard (Québec)");
 
         var invitations = new List<InvitationReferencement>
         {

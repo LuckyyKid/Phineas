@@ -37,7 +37,7 @@
   try {
     var local = JSON.parse(window.sessionStorage.getItem(CLE_PROFIL) || "null");
     if (local) {
-      ["presentation", "telephone", "courriel", "langues"].forEach(function (cle) {
+      ["presentation", "telephone", "courriel", "langues", "formeRole", "anneeArrivee", "ville"].forEach(function (cle) {
         if (cle in local) profil[cle] = local[cle];
       });
     }
@@ -68,6 +68,23 @@
     return liste.slice(0, -1).join(", ") + " et " + liste[liste.length - 1];
   }
 
+  // Textes accordés selon la forme du rôle (« Conseillère aux ventes »…) ; sans forme choisie : formulation neutre.
+  function textesRole() {
+    var textes = profil.formesRole && profil.formesRole[profil.formeRole];
+    return textes || profil.formeRoleNeutre;
+  }
+
+  // « Brossard (Québec) » devient « Brossard » : la carte de rappel du rendez-vous n'affiche que la ville.
+  function villeSansProvince(ville) {
+    return String(ville || "").replace(/\s*\(.*\)\s*$/, "").trim();
+  }
+
+  // Concession suivie de la ville quand elle est connue : « Auto Prestige Brossard, Brossard (Québec) ».
+  function concessionEtVille(ville) {
+    if (!ville) return profil.concession || "";
+    return (profil.concession || "") + ", " + ville;
+  }
+
   function remplirTexte(nom, texte) {
     racine.querySelectorAll('[data-pub="' + nom + '"]').forEach(function (el) { el.textContent = texte; });
   }
@@ -87,7 +104,15 @@
   function remplirProfil() {
     remplirTexte("nom", profil.nom || "");
     remplirTexte("prenom", prenom);
-    remplirTexte("role", profil.role || "");
+    var textes = textesRole();
+    remplirTexte("role-long", textes.roleLong);
+    remplirTexte("interlocuteur", textes.interlocuteur);
+    remplirTexte("recommandation", textes.recommandation);
+    // Sous le nom, sur la carte : l'ancienneté si elle est connue, sinon le rôle.
+    var sousTitreCarte = textes.role;
+    if (profil.anneeArrivee) sousTitreCarte = "À la concession depuis " + profil.anneeArrivee;
+    remplirTexte("sous-titre-carte", sousTitreCarte);
+    remplirTexte("concession-ville", concessionEtVille(villeSansProvince(profil.ville)));
     remplirTexte("concession", profil.concession || "");
     remplirTexte("initiales", initiales(profil.nom));
     remplirTexte("monogramme", monogramme(profil.concession));
@@ -104,7 +129,7 @@
     if ((profil.langues || []).length) liste.appendChild(ligneCoordonnee("bi-translate", texteLangues(profil.langues)));
     if (profil.telephone) liste.appendChild(ligneCoordonnee("bi-telephone", profil.telephone));
     if (profil.courriel) liste.appendChild(ligneCoordonnee("bi-envelope", profil.courriel));
-    if (profil.concession) liste.appendChild(ligneCoordonnee("bi-geo-alt", profil.concession));
+    if (profil.concession) liste.appendChild(ligneCoordonnee("bi-geo-alt", concessionEtVille(profil.ville)));
   }
 
   // ---------- État des réponses ----------

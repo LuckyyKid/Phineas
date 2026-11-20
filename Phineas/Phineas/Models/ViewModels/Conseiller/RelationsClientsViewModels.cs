@@ -85,7 +85,13 @@ public record ProfilConseiller(
     bool AfficherCourriel,
     bool AfficherLangues,
     string MessageCarte,
-    string CodeRecommandation
+    string CodeRecommandation,
+    // Forme du rôle (« feminin » ou « masculin ») pour accorder « Conseillère / Conseiller aux ventes » ; nulle = formulation neutre.
+    string? FormeRole = null,
+    // Année d'arrivée à la concession (« À la concession depuis 2019 ») ; nulle = rien n'est affiché.
+    int? AnneeArrivee = null,
+    // Ville de la concession, ex. « Brossard (Québec) » ; nulle = seul le nom de la concession est affiché.
+    string? VilleConcession = null
 );
 
 // Invitation à recommander le conseiller, préparée par lui et déclarée « partagée » par lui (aucun envoi réel).
@@ -262,6 +268,37 @@ public static class ReferentielsRelations
         ("perdu", "Perdu"),
     ];
 
+    // Textes du profil public selon la forme du rôle choisie dans « Mon profil commercial ».
+    // Choix : libellé de la pilule ; Role : sous le nom ; RoleLong : ligne d'accueil de la page publique ;
+    // Interlocuteur : étiquette de la carte de rappel ; Recommandation : étiquette au-dessus du nom.
+    public record TextesRole(string Cle, string Choix, string Role, string RoleLong, string Interlocuteur, string Recommandation);
+
+    public static readonly IReadOnlyList<TextesRole> FormesRole =
+    [
+        new("feminin", "Conseillère", "Conseillère aux ventes", "Conseillère aux ventes automobiles", "Votre conseillère", "Recommandée par une personne de votre entourage"),
+        new("masculin", "Conseiller", "Conseiller aux ventes", "Conseiller aux ventes automobiles", "Votre conseiller", "Recommandé par une personne de votre entourage"),
+    ];
+
+    // Sans forme choisie : formulation neutre, sans accord.
+    public static readonly TextesRole FormeRoleNeutre =
+        new("", "Ne pas préciser", "Conseil aux ventes", "Conseil aux ventes automobiles", "Votre interlocuteur", "Une recommandation de votre entourage");
+
+    // Bornes de l'année d'arrivée à la concession (la borne haute est l'année en cours).
+    public const int AnneeArriveeMin = 1980;
+
+    // Textes à afficher pour une forme du rôle (forme inconnue ou absente : formulation neutre).
+    public static TextesRole TextesPour(string? formeRole)
+    {
+        foreach (var forme in FormesRole)
+        {
+            if (forme.Cle == formeRole)
+            {
+                return forme;
+            }
+        }
+        return FormeRoleNeutre;
+    }
+
     public static readonly IReadOnlyList<(string Cle, string Libelle)> Langues =
     [
         ("fr", "Français"),
@@ -290,6 +327,9 @@ public static class ReferentielsRelations
             attributions = Attributions.ToDictionary(x => x.Cle, x => x.Libelle),
             etatsRecommandation = EtatsRecommandation.ToDictionary(x => x.Cle, x => x.Libelle),
             langues = Langues.ToDictionary(x => x.Cle, x => x.Libelle),
+            formesRole = FormesRole.ToDictionary(x => x.Cle, x => x),
+            formeRoleNeutre = FormeRoleNeutre,
+            anneeArriveeMin = AnneeArriveeMin,
             config = new
             {
                 delaiSuiviSatisfactionJours = DelaiSuiviSatisfactionJours,

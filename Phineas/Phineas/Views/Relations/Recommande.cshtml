@@ -13,7 +13,12 @@
     var charge = new
     {
         nom = Model.ConseillerNom,
-        role = "Conseiller aux ventes",
+        // Forme du rôle et textes accordés (« Conseillère aux ventes »…) : une seule source, ReferentielsRelations.
+        formeRole = p?.FormeRole,
+        formesRole = ReferentielsRelations.FormesRole.ToDictionary(x => x.Cle, x => x),
+        formeRoleNeutre = ReferentielsRelations.FormeRoleNeutre,
+        anneeArrivee = p?.AnneeArrivee,
+        ville = p?.VilleConcession,
         concession = Model.Concession ?? "Concession de démonstration",
         presentation = p?.Presentation,
         telephone = p is { AfficherTelephone: true } ? p.TelephonePro : null,
@@ -60,9 +65,9 @@
             <section class="pub-ecran" data-ecran="accueil" aria-labelledby="pub-nom">
                 <div class="pub-heros">
                     <div class="pub-heros-texte">
-                        <p class="pub-etiquette">Une recommandation de votre entourage</p>
+                        <p class="pub-etiquette" data-pub="recommandation"></p>
                         <h1 class="pub-nom" id="pub-nom" data-pub="nom"></h1>
-                        <p class="pub-role"><span data-pub="role"></span> · <span data-pub="concession"></span></p>
+                        <p class="pub-role"><span data-pub="role-long"></span> · <span data-pub="concession"></span></p>
                         <p class="pub-accueil">« Bonjour, moi c'est <span data-pub="prenom"></span> ! Je vous accompagne dans la recherche d'un véhicule qui correspond à vos besoins, à votre budget et à votre style de vie. »</p>
                         <div class="pub-actions">
                             <button type="button" class="pub-btn pub-btn-principal" data-aller="recherche-1"><i class="bi bi-search" aria-hidden="true"></i>Je recherche un véhicule</button>
@@ -79,7 +84,7 @@
                         <div class="pub-carte-haut">
                             <span class="pub-avatar pub-avatar-grand" aria-hidden="true" data-pub="initiales"></span>
                             <p class="pub-carte-nom" data-pub="nom"></p>
-                            <p class="pub-carte-role" data-pub="role"></p>
+                            <p class="pub-carte-role" data-pub="sous-titre-carte"></p>
                         </div>
                         <div class="pub-carte-bas">
                             <p class="pub-presentation" data-pub="presentation"></p>
@@ -234,7 +239,7 @@
                     </div>
 
                     <aside class="pub-carte pub-rappel" aria-label="Votre interlocuteur">
-                        <p class="pub-etiquette" data-pub="role"></p>
+                        <p class="pub-etiquette" data-pub="interlocuteur"></p>
                         <div class="pub-rappel-identite">
                             <span class="pub-avatar pub-avatar-moyen" aria-hidden="true" data-pub="initiales"></span>
                             <div><strong data-pub="nom"></strong><span data-pub="concession"></span></div>
@@ -321,7 +326,7 @@
                         </dl>
                         <div class="pub-rappel-identite pub-rappel-identite-bas">
                             <span class="pub-avatar pub-avatar-moyen" aria-hidden="true" data-pub="initiales"></span>
-                            <div><strong data-pub="nom"></strong><span data-pub="concession"></span></div>
+                            <div><strong data-pub="nom"></strong><span data-pub="concession-ville"></span></div>
                         </div>
                     </aside>
                 </div>
