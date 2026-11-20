@@ -140,21 +140,25 @@
             </p>
         </div>
 
-        <div id="vue-liste-contenu" class="txv-defile">
-            <table class="txv-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Client</th>
-                        <th scope="col">Véhicule</th>
-                        <th scope="col">Montant et mode</th>
-                        <th scope="col">Étape</th>
-                        <th scope="col">Blocage et attendu de</th>
-                        <th scope="col">Prochaine action</th>
-                        <th scope="col">Livraison</th>
-                    </tr>
-                </thead>
-                <tbody id="liste-corps"></tbody>
-            </table>
+        <div id="vue-liste-contenu">
+            <div class="txv-defile">
+                <table class="txv-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Client</th>
+                            <th scope="col">Véhicule</th>
+                            <th scope="col">Montant et mode</th>
+                            <th scope="col">Étape</th>
+                            <th scope="col">Blocage et attendu de</th>
+                            <th scope="col">Prochaine action</th>
+                            <th scope="col">Livraison</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liste-corps"></tbody>
+                </table>
+            </div>
+            @* Pied de carte : « 1 à 6 sur 14 » et numéros de page (transactions-liste.js), caché si tout tient sur une page. *@
+            <nav class="txv-pagination" id="pagination-liste" aria-label="Pagination des transactions" hidden></nav>
         </div>
 
         <div id="vue-pipeline-contenu" hidden>
