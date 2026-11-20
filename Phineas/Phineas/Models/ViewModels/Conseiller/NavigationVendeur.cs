@@ -15,6 +15,7 @@ public record EntreeNavigation(
 
 public static class NavigationVendeur
 {
+    // « Centre d'actions » couvre aussi Mes suivis et Recommandations véhicules (même contrôleur Intelligence).
     public static readonly IReadOnlyList<EntreeNavigation> Menu =
     [
         new("Accueil", "bi-house", "Conseiller", "Index"),
