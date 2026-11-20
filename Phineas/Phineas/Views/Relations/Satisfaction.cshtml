@@ -1,3 +1,7 @@
+@* Page « Satisfaction et après-vente » au style verre (maquettes 33 à 35) : phrase de résumé, 5 chiffres, trois onglets
+   (Suivis après livraison, Problèmes clients, Actions après-vente).
+   Rendu : wwwroot/js/relations-satisfaction.js. Styles propres à la page : wwwroot/css/relations-satisfaction-verre.css (préfixe sa-).
+   Les fenêtres (problème, retour, détail) viennent de relations-composants.js ; les boutons d'action [data-ia] de intelligence-composants.js. *@
 @using Phineas.Models.ViewModels.Conseiller
 @model RelationsPageViewModel
 @{
@@ -6,77 +10,114 @@
 }
 
 @section Styles {
+    @* Feuilles des fenêtres partagées (problème, retour, relance), puis la feuille de la page. *@
     <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations-satisfaction-verre.css" asp-append-version="true" />
 }
 
-<div class="rc-page">
-<partial name="_HautRelations" />
+<div class="sa-page" id="satisfaction" data-transaction="@Model.TransactionId" data-rdv-url="@Url.Action("Nouveau", "RendezVous")">
 
-<header class="sv-head">
-    <div>
-        <h1>Satisfaction et après-vente</h1>
-        <p class="text-muted mb-0">Garder le lien après la livraison : vérifier la satisfaction, résoudre les problèmes et maintenir la relation.</p>
+    @* Haut propre à la page (sans « Modifiée / Réinitialiser » : la réinitialisation est en bas de page). *@
+    <div class="sa-haut">
+        <nav class="sa-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Satisfaction et après-vente</span>
+        </nav>
+        <div class="sa-puces" role="note" title="Clients, ventes et retours fictifs. Rien n'est enregistré en base.">
+            <span class="sa-chip-demo">Démo</span>
+            <span class="sa-en-ligne"><span class="sa-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
     </div>
-    <div class="sv-quick">
-        <button type="button" class="btn btn-outline-primary btn-sm" data-rc="probleme"><i class="bi bi-life-preserver me-1"></i>Enregistrer un problème</button>
-    </div>
-</header>
 
-<div id="satisfaction" data-transaction="@Model.TransactionId" data-rdv-url="@Url.Action("Nouveau", "RendezVous")">
-    <section class="card sv-kpis rc-kpis" aria-label="Résumé de l'après-vente">
-        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-key"></i>Livrés récemment</div><div class="sv-kpi-value" data-compteur="livres">—</div><div class="sv-kpi-detail" data-detail="livres">livraisons confirmées</div></div>
-        <div class="sv-kpi sv-ton-attention"><div class="sv-kpi-label"><i class="bi bi-telephone-outbound"></i>Suivis à effectuer</div><div class="sv-kpi-value" data-compteur="suivis">—</div><div class="sv-kpi-detail">recommandés par le moteur</div></div>
-        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-chat-square-heart"></i>Retours reçus</div><div class="sv-kpi-value" data-compteur="retours">—</div><div class="sv-kpi-detail">enquêtes (simulées)</div></div>
-        <div class="sv-kpi sv-ton-critique"><div class="sv-kpi-label"><i class="bi bi-life-preserver"></i>Problèmes ouverts</div><div class="sv-kpi-value" data-compteur="ouverts">—</div><div class="sv-kpi-detail">à suivre</div></div>
-        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-check2-circle"></i>Problèmes résolus</div><div class="sv-kpi-value" data-compteur="resolus">—</div><div class="sv-kpi-detail">résolus ou clôturés</div></div>
-        <div class="sv-kpi"><div class="sv-kpi-label"><i class="bi bi-share"></i>Intérêt à recommander</div><div class="sv-kpi-value" data-compteur="interet">—</div><div class="sv-kpi-detail">déclaré dans l'enquête</div></div>
+    <header class="sa-entete">
+        <div>
+            <p class="sa-label">Relations clients</p>
+            <h1 class="sa-titre">Satisfaction et après-vente</h1>
+            <p class="sa-intro">Garder le lien après la livraison : vérifier la satisfaction, résoudre les problèmes et maintenir la relation.</p>
+        </div>
+        <button type="button" class="sa-btn-verre" data-rc="probleme"><i class="bi bi-life-preserver" aria-hidden="true"></i>Enregistrer un problème</button>
+    </header>
+
+    <p class="sa-resume" data-resume aria-live="polite"></p>
+
+    <section class="sa-chiffres" aria-label="Résumé de l'après-vente">
+        <div class="sa-verre sa-chiffre">
+            <span class="sa-chiffre-valeur" data-compteur="livres">…</span>
+            <span class="sa-chiffre-libelle">Livrés récemment</span>
+            <span class="sa-chiffre-precision" data-detail="livres">Livraisons confirmées</span>
+        </div>
+        <div class="sa-verre sa-chiffre">
+            <span class="sa-chiffre-valeur" data-compteur="suivis">…</span>
+            <span class="sa-chiffre-libelle"><span data-libelle="suivis">Suivi à effectuer</span><span class="sa-point-ambre" data-alerte="suivis" hidden></span></span>
+            <span class="sa-chiffre-precision">Recommandé par le moteur</span>
+        </div>
+        <div class="sa-verre sa-chiffre">
+            <span class="sa-chiffre-valeur" data-compteur="retours">…</span>
+            <span class="sa-chiffre-libelle" data-libelle="retours">Retours reçus</span>
+            <span class="sa-chiffre-precision">Enquêtes simulées</span>
+        </div>
+        <div class="sa-verre sa-chiffre">
+            <span class="sa-chiffre-valeur" data-compteur="ouverts">…</span>
+            <span class="sa-chiffre-libelle"><span data-libelle="ouverts">Problème ouvert</span><span class="sa-point-ambre" data-alerte="ouverts" hidden></span></span>
+            <span class="sa-chiffre-precision">À suivre</span>
+        </div>
+        <div class="sa-verre sa-chiffre">
+            <span class="sa-chiffre-valeur" data-compteur="resolus">…</span>
+            <span class="sa-chiffre-libelle" data-libelle="resolus">Problème résolu</span>
+            <span class="sa-chiffre-precision">Résolu ou clôturé</span>
+        </div>
     </section>
 
-    <ul class="nav pr-onglets" role="tablist">
-        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-livraisons" data-bs-toggle="tab" data-bs-target="#panneau-livraisons" type="button" role="tab" aria-controls="panneau-livraisons" aria-selected="true">Suivis après livraison</button></li>
-        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-problemes" data-bs-toggle="tab" data-bs-target="#panneau-problemes" type="button" role="tab" aria-controls="panneau-problemes" aria-selected="false">Problèmes clients <span class="pr-compte" data-champ="nb-problemes"></span></button></li>
-        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-actions" data-bs-toggle="tab" data-bs-target="#panneau-actions" type="button" role="tab" aria-controls="panneau-actions" aria-selected="false">Actions après-vente <span class="pr-compte" data-champ="nb-actions"></span></button></li>
-    </ul>
+    <div class="sa-barre-onglets">
+        <ul class="nav sa-onglets" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-livraisons" data-bs-toggle="tab" data-bs-target="#panneau-livraisons" type="button" role="tab" aria-controls="panneau-livraisons" aria-selected="true">Suivis après livraison</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-problemes" data-bs-toggle="tab" data-bs-target="#panneau-problemes" type="button" role="tab" aria-controls="panneau-problemes" aria-selected="false">Problèmes clients <span class="sa-compte" data-champ="nb-problemes"></span></button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-actions" data-bs-toggle="tab" data-bs-target="#panneau-actions" type="button" role="tab" aria-controls="panneau-actions" aria-selected="false">Actions après-vente <span class="sa-compte" data-champ="nb-actions"></span></button></li>
+        </ul>
+        @* Filtres existants, gardés discrets : le conseiller change aussi les chiffres ; l'état ne concerne que les suivis. *@
+        <div class="sa-filtres">
+            <label class="visually-hidden" for="f-conseiller">Conseiller</label>
+            <select class="sa-select" id="f-conseiller">
+                <option value="@Model.Prospects.ConseillerConnecteId">Mes clients</option>
+                <option value="">Tous les conseillers</option>
+            </select>
+            <label class="visually-hidden" for="f-etat">État du suivi</label>
+            <select class="sa-select" id="f-etat">
+                <option value="">Tous les suivis</option>
+                <option value="a-faire">Suivi à faire</option>
+                <option value="recu">Retour reçu</option>
+                <option value="probleme">Problème ouvert</option>
+            </select>
+        </div>
+    </div>
 
     <div class="tab-content">
         <div class="tab-pane fade show active" id="panneau-livraisons" role="tabpanel" aria-labelledby="onglet-livraisons" tabindex="0">
-            <section class="card pr-module">
-                <div class="pr-filtres">
-                    <select class="form-select form-select-sm" id="f-conseiller" aria-label="Filtrer par conseiller">
-                        <option value="@Model.Prospects.ConseillerConnecteId">Mes clients</option>
-                        <option value="">Tous les conseillers</option>
-                    </select>
-                    <select class="form-select form-select-sm" id="f-etat" aria-label="Filtrer par état du suivi">
-                        <option value="">Tous les suivis</option>
-                        <option value="a-faire">Suivi à faire</option>
-                        <option value="recu">Retour reçu</option>
-                        <option value="probleme">Problème ouvert</option>
-                    </select>
-                </div>
-                <p class="pr-note px-3"><i class="bi bi-info-circle me-1"></i>Seule une livraison confirmée déclenche un suivi (règle de démonstration : @ReferentielsRelations.DelaiSuiviSatisfactionJours jours après la livraison). Une soumission acceptée ou une livraison planifiée ne suffit pas.</p>
-                <div class="rc-livraisons" id="livraisons"></div>
-                <div class="pr-etat-vide" id="livraisons-vide" hidden>
-                    <i class="bi bi-key"></i>
-                    <strong>Aucune livraison confirmée</strong>
-                    <span>Les suivis après-vente apparaîtront lorsqu'une transaction sera réellement livrée.</span>
-                </div>
-            </section>
+            <div class="sa-cartes" id="livraisons"></div>
+            <div data-pagination="livraisons"></div>
+            <div class="sa-verre sa-vide" id="livraisons-vide" hidden>
+                <i class="bi bi-key" aria-hidden="true"></i>
+                <strong>Aucune livraison confirmée</strong>
+                <span>Les suivis après-vente apparaîtront lorsqu'une transaction sera réellement livrée.</span>
+            </div>
+            <p class="sa-note">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span>Seule une livraison confirmée déclenche un suivi (règle de démonstration : @ReferentielsRelations.DelaiSuiviSatisfactionJours jours après la livraison). Chaque dimension relève d'un département différent : ces réponses ne mesurent pas la performance du conseiller.<span data-interet></span></span>
+            </p>
         </div>
+
         <div class="tab-pane fade" id="panneau-problemes" role="tabpanel" aria-labelledby="onglet-problemes" tabindex="0">
-            <section class="card pr-module">
-                <div class="table-responsive">
-                    <table class="table pr-table rc-table mb-0">
+            <section class="sa-verre sa-module">
+                <div class="sa-defile">
+                    <table class="sa-table">
                         <thead>
                             <tr>
                                 <th scope="col">Client</th>
-                                <th scope="col">Transaction et véhicule</th>
                                 <th scope="col">Problème</th>
                                 <th scope="col">Signalé le</th>
                                 <th scope="col">Département</th>
-                                <th scope="col">Priorité</th>
                                 <th scope="col">État</th>
                                 <th scope="col">Prochaine action</th>
                             </tr>
@@ -84,22 +125,30 @@
                         <tbody id="problemes-corps"></tbody>
                     </table>
                 </div>
-                <div class="pr-etat-vide" id="problemes-vide" hidden>
-                    <i class="bi bi-emoji-smile"></i>
+                <div data-pagination="problemes"></div>
+                <div class="sa-vide" id="problemes-vide" hidden>
+                    <i class="bi bi-emoji-smile" aria-hidden="true"></i>
                     <strong>Aucun problème signalé</strong>
                     <span>Les problèmes après-vente enregistrés apparaîtront ici.</span>
                 </div>
             </section>
         </div>
+
         <div class="tab-pane fade" id="panneau-actions" role="tabpanel" aria-labelledby="onglet-actions" tabindex="0">
-            <section class="card"><div class="card-body">
-                <p class="pr-note"><i class="bi bi-lightning-charge me-1"></i>Mêmes actions que dans le Centre d'actions (catégorie « Relations clients ») : aucune seconde liste de tâches.</p>
-                <div class="ia-file" id="actions"></div>
-            </div></section>
+            <div class="sa-cartes" id="actions"></div>
+            <div data-pagination="actions"></div>
+            <p class="sa-note">
+                <i class="bi bi-lightning-charge" aria-hidden="true"></i>
+                <span>Ce sont les mêmes actions que dans le Centre d'actions, catégorie « Relations clients » : il n'y a pas de seconde liste de tâches.</span>
+            </p>
         </div>
     </div>
-</div>
 
+    @* Réinitialisation des données de démonstration : n'apparaît que si la démo a été modifiée (branchée par prospects-store.js). *@
+    <p class="sa-demo" data-etat-demo hidden>
+        Données de démonstration modifiées dans cet onglet.
+        <button type="button" class="sa-lien" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Réinitialiser la démo</button>
+    </p>
 </div>
 
 <partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
