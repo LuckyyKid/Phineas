@@ -1,6 +1,6 @@
 // Page « Soumissions » (Views/Soumissions/Index.cshtml, maquette 10) : compteurs, recherche, filtres et tableau.
 // Les données viennent du store des soumissions (window.Soumissions) et des prospects (window.Prospects).
-// Le tableau s'affiche par lots de 10 : « Afficher les suivantes » ajoute le lot suivant.
+// Le tableau s'affiche 6 soumissions par page, avec une barre de pagination en pied de carte.
 (function () {
   "use strict";
 
@@ -8,10 +8,10 @@
   if (!S || !P || !UI) return;
   var esc = P.esc;
 
-  // Nombre de soumissions ajoutées à chaque clic sur « Afficher les suivantes ».
-  var TAILLE_LOT = 10;
-  // Nombre de lignes actuellement affichées ; revient à un lot à chaque nouvelle recherche ou nouveau filtre.
-  var nbAffichees = TAILLE_LOT;
+  // Nombre de soumissions par page.
+  var SOUMISSIONS_PAR_PAGE = 6;
+  // Page affichée ; revient à 1 à chaque nouvelle recherche ou nouveau filtre.
+  var pageCourante = 1;
 
   var f = {
     recherche: document.getElementById("f-recherche"),
@@ -26,7 +26,6 @@
   var vide = document.getElementById("etat-vide");
   var aucun = document.getElementById("etat-aucun");
   var resultat = document.getElementById("resultat");
-  var boutonSuivantes = document.querySelector("[data-afficher-suivantes]");
 
   function normaliser(s) {
     return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -137,30 +136,74 @@
     );
   }
 
+  // ---------- Pagination ----------
+  // Numéros affichés : toutes les pages jusqu'à 7, sinon la première, la dernière et les voisines de la page courante.
+  // Un null marque un trou entre deux numéros (affiché « … »). Exemple pour 10 pages, page 5 : 1 … 4 5 6 … 10.
+  // Même règle que la liste des prospects et le Centre d'actions.
+  function numerosPages(nbPages, page) {
+    var numeros = [];
+    var precedent = 0;
+    for (var n = 1; n <= nbPages; n++) {
+      var estAuBord = n === 1 || n === nbPages;
+      var estVoisine = Math.abs(n - page) <= 1;
+      if (nbPages <= 7 || estAuBord || estVoisine) {
+        if (n - precedent > 1) numeros.push(null);
+        numeros.push(n);
+        precedent = n;
+      }
+    }
+    return numeros;
+  }
+
+  function boutonPage(numero, libelle, contenu, desactive, courant) {
+    var classe = "sl-page-btn";
+    if (courant) classe += " is-active";
+    return '<button type="button" class="' + classe + '" data-aller-page="' + numero + '"' +
+      (desactive ? " disabled" : "") + (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
+  }
+
+  // Barre « 1 à 6 sur 24 », flèches et numéros ; vide si tout tient sur une page.
+  function htmlPagination(total, nbPages) {
+    if (nbPages <= 1) return "";
+    var debut = (pageCourante - 1) * SOUMISSIONS_PAR_PAGE + 1;
+    var fin = Math.min(total, pageCourante * SOUMISSIONS_PAR_PAGE);
+    var html = '<span class="sl-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
+      '<div class="sl-pages">' +
+      boutonPage(pageCourante - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', pageCourante === 1, false);
+    numerosPages(nbPages, pageCourante).forEach(function (numero) {
+      if (numero === null) html += '<span class="sl-pages-trou" aria-hidden="true">…</span>';
+      else html += boutonPage(numero, "Page " + numero, String(numero), false, numero === pageCourante);
+    });
+    html += boutonPage(pageCourante + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', pageCourante === nbPages, false) + "</div>";
+    return html;
+  }
+
   function rendre() {
     compteurs();
     remplirOpportunites();
     var items = S.liste().filter(correspond).sort(function (a, b) { return new Date(S.dateModification(b)) - new Date(S.dateModification(a)); });
-    var affichees = items.slice(0, nbAffichees);
-    corps.innerHTML = affichees.map(ligne).join("");
+    // La liste a pu raccourcir (filtre, statut changé) : on reste sur une page qui existe.
+    var nbPages = Math.max(1, Math.ceil(items.length / SOUMISSIONS_PAR_PAGE));
+    if (pageCourante > nbPages) pageCourante = nbPages;
+    var debut = (pageCourante - 1) * SOUMISSIONS_PAR_PAGE;
+    corps.innerHTML = items.slice(debut, debut + SOUMISSIONS_PAR_PAGE).map(ligne).join("");
 
     var aucuneSoumission = S.liste().length === 0;
     zone.hidden = items.length === 0;
     aucun.hidden = !aucuneSoumission;
     vide.hidden = aucuneSoumission || items.length > 0;
 
-    // Pied : « 10 affichées sur 24 » et le bouton tant qu'il en reste à afficher.
-    pied.hidden = items.length === 0;
-    document.querySelector("[data-compte-affichees]").textContent = affichees.length + " affichée" + (affichees.length > 1 ? "s" : "") + " sur " + items.length;
-    boutonSuivantes.hidden = affichees.length >= items.length;
+    // Pied de carte : la pagination, seulement s'il y a plus d'une page.
+    pied.innerHTML = htmlPagination(items.length, nbPages);
+    pied.hidden = nbPages <= 1;
 
     resultat.textContent = items.length + " soumission" + (items.length > 1 ? "s" : "") + (filtresActifs() ? " correspondant" + (items.length > 1 ? "s" : "") + " aux critères" : "");
     document.querySelector(".sl-outils [data-effacer-filtres]").hidden = !filtresActifs();
   }
 
-  // Une nouvelle recherche ou un nouveau filtre repart du premier lot.
+  // Une nouvelle recherche ou un nouveau filtre repart de la page 1.
   function relancer() {
-    nbAffichees = TAILLE_LOT;
+    pageCourante = 1;
     rendre();
   }
 
@@ -173,9 +216,15 @@
       f.recherche.focus();
     });
   });
-  boutonSuivantes.addEventListener("click", function () {
-    nbAffichees += TAILLE_LOT;
+  // Clic sur la pagination : change de page, garde le focus sur le numéro choisi et remonte la carte en vue.
+  pied.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-aller-page]");
+    if (!bouton || bouton.disabled) return;
+    pageCourante = Number(bouton.dataset.allerPage);
     rendre();
+    var numeroChoisi = pied.querySelector('[aria-current="page"]');
+    if (numeroChoisi) numeroChoisi.focus();
+    document.querySelector(".sl-module").scrollIntoView({ block: "start", behavior: "smooth" });
   });
   // Un clic n'importe où sur la ligne ouvre la soumission (sauf sur un lien ou pendant une sélection de texte).
   corps.addEventListener("click", function (e) {

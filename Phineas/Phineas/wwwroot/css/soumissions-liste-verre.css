@@ -200,10 +200,28 @@
 }
 .sl-ouvrir:hover { color: var(--sl-sapin-ink); border-color: rgba(11, 13, 13, .16); transform: translateX(2px); }
 
-/* ---------- Pied de carte et états vides ---------- */
-.sl-pied { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 32px 22px; border-top: 1px solid var(--sl-line-2); }
-.sl-pied[hidden] { display: none; }
-.sl-pied-compte { font-size: 14.5px; color: var(--sl-text); }
+/* ---------- Pagination (6 par page) et états vides ----------
+   Même rendu que la pagination du Centre d'actions et de la liste des prospects. */
+.sl-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 28px 20px; border-top: 1px solid var(--sl-line-2); }
+.sl-pagination[hidden] { display: none; }
+.sl-pages-info { font-family: var(--sl-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--sl-muted); }
+.sl-pages { display: flex; align-items: center; gap: 4px; }
+.sl-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 14px;
+  color: var(--sl-text);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.sl-page-btn:hover:not(:disabled) { background: rgba(11, 13, 13, .05); color: var(--sl-ink); }
+.sl-page-btn.is-active { background: #FFFFFF; border-color: var(--sl-line-2); color: var(--sl-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+.sl-page-btn:disabled { color: var(--sl-muted-2); opacity: .45; cursor: default; }
+.sl-pages-trou { padding: 0 4px; color: var(--sl-muted); }
 .sl-vide { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 48px 20px; text-align: center; }
 .sl-vide[hidden] { display: none; }
 .sl-vide p { margin: 0; font-size: 15px; color: var(--sl-muted); }
@@ -216,5 +234,5 @@
   .sl-entete { flex-direction: column; align-items: flex-start; }
   .sl-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sl-select { max-width: none; flex: 1 1 160px; }
-  .sl-pied { flex-direction: column; align-items: flex-start; padding: 18px 20px; }
+  .sl-pagination { padding: 16px 20px; }
 }
