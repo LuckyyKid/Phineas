@@ -92,7 +92,7 @@
     return fmtJourCourt.format(new Date(x));
   }
   function plage(r) {
-    return heure(debut(r)) + " – " + heure(fin(r));
+    return heure(debut(r)) + " à " + heure(fin(r));
   }
   function creneauTexte(r) {
     return jourTexte(r.debut) + ", " + plage(r);
@@ -419,7 +419,7 @@
       var lib = libelle("resultats", res.resultat) || res.resultat;
       var action = res.prochaineAction && res.prochaineAction !== "aucune" ? (libelle("prochainesActions", res.prochaineAction) || res.prochaineAction) + (res.precisionAction ? " : " + res.precisionAction : "") : null;
       historiser(r, "resultat", (premier ? "Résultat : " : "Résultat modifié : ") + lib.toLowerCase() + ".");
-      var morceaux = [type(r.type).libelle + " terminé — " + lib.toLowerCase() + "."];
+      var morceaux = [type(r.type).libelle + " terminé : " + lib.toLowerCase() + "."];
       if (res.observations) morceaux.push(res.observations);
       if (res.objections) morceaux.push("Objections : " + res.objections);
       if (res.vehiculeAlternatif) morceaux.push("Véhicule alternatif envisagé : " + res.vehiculeAlternatif + ".");
