@@ -46,58 +46,14 @@
   // Page affichée de chaque liste, rangée par id de liste (ex. pages.file = 2). Absente = page 1.
   var pages = {};
 
-  // Numéros affichés : toutes les pages jusqu'à 7, sinon la première, la dernière et les voisines de la page courante.
-  // Un null marque un trou entre deux numéros (affiché « … »). Exemple pour 10 pages, page 5 : 1 … 4 5 6 … 10.
-  // Même règle que la liste des prospects (prospects-liste.js).
-  function numerosPages(nbPages, pageCourante) {
-    var numeros = [];
-    var precedent = 0;
-    for (var page = 1; page <= nbPages; page++) {
-      var estAuBord = page === 1 || page === nbPages;
-      var estVoisine = Math.abs(page - pageCourante) <= 1;
-      if (nbPages <= 7 || estAuBord || estVoisine) {
-        if (page - precedent > 1) numeros.push(null);
-        numeros.push(page);
-        precedent = page;
-      }
-    }
-    return numeros;
-  }
-
-  function boutonPage(idListe, numero, libelle, contenu, desactive, courant) {
-    var classe = "iv-page-btn";
-    if (courant) classe += " is-active";
-    return '<button type="button" class="' + classe + '" data-liste="' + idListe + '" data-aller-page="' + numero + '"' +
-      (desactive ? " disabled" : "") + (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
-  }
-
-  function htmlPagination(idListe, total, page) {
-    var nbPages = Math.ceil(total / ACTIONS_PAR_PAGE);
-    if (nbPages <= 1) return "";
-    var debut = (page - 1) * ACTIONS_PAR_PAGE + 1;
-    var fin = Math.min(total, page * ACTIONS_PAR_PAGE);
-    var html = '<nav class="iv-pagination" aria-label="Pagination des actions">' +
-      '<span class="iv-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
-      '<div class="iv-pages">' +
-      boutonPage(idListe, page - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', page === 1, false);
-    numerosPages(nbPages, page).forEach(function (numero) {
-      if (numero === null) html += '<span class="iv-pages-trou" aria-hidden="true">…</span>';
-      else html += boutonPage(idListe, numero, "Page " + numero, String(numero), false, numero === page);
-    });
-    html += boutonPage(idListe, page + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', page === nbPages, false) +
-      "</div></nav>";
-    return html;
-  }
-
   // Lignes de la page courante de la liste, suivies de la pagination si la liste dépasse une page.
   function lignesPaginees(idListe, actions) {
-    var nbPages = Math.max(1, Math.ceil(actions.length / ACTIONS_PAR_PAGE));
     // La liste a pu raccourcir (action traitée, filtre) : on reste sur une page qui existe.
-    var page = Math.min(pages[idListe] || 1, nbPages);
+    var page = UI.pageValide(pages[idListe], actions.length, ACTIONS_PAR_PAGE);
     pages[idListe] = page;
     var debut = (page - 1) * ACTIONS_PAR_PAGE;
     var actionsDeLaPage = actions.slice(debut, debut + ACTIONS_PAR_PAGE);
-    return lignes(actionsDeLaPage) + htmlPagination(idListe, actions.length, page);
+    return lignes(actionsDeLaPage) + UI.htmlPagination(idListe, actions.length, page, ACTIONS_PAR_PAGE);
   }
 
   function liste(el, actions, vide) {

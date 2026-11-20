@@ -398,7 +398,61 @@
       '<p class="ia-couverture"><span>Couverture des informations : <strong>' + r.couverture + " %</strong></span>" + (r.score == null ? ' <span class="rv-a-verifier">Trop peu de critères connus pour un pourcentage fiable.</span>' : "") + "</p>";
   }
 
+  // ---------- Pagination des listes (Centre d'actions, Recommandations véhicules) ----------
+  // Numéros affichés : toutes les pages jusqu'à 7, sinon la première, la dernière et les voisines de la page courante.
+  // Un null marque un trou entre deux numéros (affiché « … »). Exemple pour 10 pages, page 5 : 1 … 4 5 6 … 10.
+  // Même règle que la liste des prospects (prospects-liste.js).
+  function numerosPages(nbPages, pageCourante) {
+    var numeros = [];
+    var precedent = 0;
+    for (var page = 1; page <= nbPages; page++) {
+      var estAuBord = page === 1 || page === nbPages;
+      var estVoisine = Math.abs(page - pageCourante) <= 1;
+      if (nbPages <= 7 || estAuBord || estVoisine) {
+        if (page - precedent > 1) numeros.push(null);
+        numeros.push(page);
+        precedent = page;
+      }
+    }
+    return numeros;
+  }
+
+  // Page à afficher : la page demandée, ramenée entre 1 et la dernière page (la liste a pu raccourcir).
+  function pageValide(pageDemandee, total, parPage) {
+    var nbPages = Math.max(1, Math.ceil(total / parPage));
+    return Math.min(Math.max(1, pageDemandee || 1), nbPages);
+  }
+
+  function boutonPage(idListe, numero, libelle, contenu, desactive, courant) {
+    var classe = "iv-page-btn";
+    if (courant) classe += " is-active";
+    return '<button type="button" class="' + classe + '" data-liste="' + idListe + '" data-aller-page="' + numero + '"' +
+      (desactive ? " disabled" : "") + (courant ? ' aria-current="page"' : "") + ' aria-label="' + libelle + '">' + contenu + "</button>";
+  }
+
+  // Barre de pagination d'une liste (« 1 à 6 sur 14 », flèches, numéros), ou "" si tout tient sur une page.
+  // Chaque bouton porte data-liste (id de la liste) et data-aller-page (numéro) : la page gère le clic.
+  function htmlPagination(idListe, total, page, parPage) {
+    var nbPages = Math.ceil(total / parPage);
+    if (nbPages <= 1) return "";
+    var debut = (page - 1) * parPage + 1;
+    var fin = Math.min(total, page * parPage);
+    var html = '<nav class="iv-pagination" aria-label="Pagination">' +
+      '<span class="iv-pages-info">' + debut + " à " + fin + " sur " + total + "</span>" +
+      '<div class="iv-pages">' +
+      boutonPage(idListe, page - 1, "Page précédente", '<i class="bi bi-chevron-left"></i>', page === 1, false);
+    numerosPages(nbPages, page).forEach(function (numero) {
+      if (numero === null) html += '<span class="iv-pages-trou" aria-hidden="true">…</span>';
+      else html += boutonPage(idListe, numero, "Page " + numero, String(numero), false, numero === page);
+    });
+    html += boutonPage(idListe, page + 1, "Page suivante", '<i class="bi bi-chevron-right"></i>', page === nbPages, false) +
+      "</div></nav>";
+    return html;
+  }
+
   window.IntelligenceUI = {
+    pageValide: pageValide,
+    htmlPagination: htmlPagination,
     carte: carte,
     ligne: ligne,
     pastillePriorite: pastillePriorite,
