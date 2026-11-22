@@ -42,6 +42,20 @@ html[data-theme="sombre"] .ma-carte { background: var(--ps-verre); border-color:
 html[data-theme="sombre"] .ma-page .bouton-principal { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); }
 ```
 
+## Où trouver quoi : Docker
+
+- `Dockerfile` (racine du dépôt) : construit l'image en deux étapes, compilation avec le SDK .NET 10 puis image finale avec le runtime seul.
+- `.dockerignore` : exclut `bin`, `obj`, `.vs` et `.git` de l'image.
+
+Construire et lancer (depuis la racine du dépôt, Docker Desktop démarré) :
+
+```bash
+docker build -t phineas .
+docker run -p 8080:8080 -e ConnectionStrings__DefaultConnection="Server=host.docker.internal;Port=3306;Database=phineas;User=phineas;Password=..." phineas
+```
+
+L'application répond ensuite sur `http://localhost:8080`. `host.docker.internal` désigne la machine hôte : c'est là que le conteneur trouve la base MySQL locale. Les migrations s'appliquent au démarrage.
+
 
 
 ## Getting started
