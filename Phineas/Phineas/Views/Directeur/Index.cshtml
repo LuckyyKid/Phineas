@@ -4,7 +4,7 @@
 @{ ViewData["Title"] = "Espace directeur"; }
 
 <div class="es-page">
-    <partial name="_LoginConfirmation" model="Model" />
+    <partial name="_LoginConfirmation" model="Model" view-data='new ViewDataDictionary(ViewData) { ["Embleme"] = true }' />
 
     <div class="es-section-titre"><h2>Votre concession</h2><span>Bientôt dans cet espace</span></div>
     <div class="es-tuiles">

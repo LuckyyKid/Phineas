@@ -31,7 +31,7 @@
 .es-fait { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--ph-line-2); background: rgba(255, 255, 255, .7); font-size: 14px; color: var(--ph-text); }
 .es-fait i { color: var(--ph-muted); }
 
-/* Logo qui tourne à droite de l'en-tête de l'accueil administrateur (animation lm-emblem de lumiere.css).
+/* Logo qui tourne à droite de l'en-tête des accueils administrateur, directeur et mécanicien (animation lm-emblem de lumiere.css).
    Centré verticalement sur le texte ; masqué sur téléphone pour laisser toute la largeur au texte. */
 .ph-head.es-tete-embleme { align-items: center; }
 .es-embleme { position: relative; flex: 0 0 200px; height: 200px; margin-right: 24px; perspective: 900px; display: flex; align-items: center; justify-content: center; }
