@@ -526,24 +526,45 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 .acc-securite-case:hover { background: #11483D; }
 .acc-securite-case:hover i { transform: scale(1.12); }
 
-/* ---------- Lecteur vidéo de la section À propos ---------- */
-/* Centré sur le motif de points du panneau (motif : 40 px du haut, 260 px de haut). */
-.acc-lecture {
-  position: absolute;
-  top: 170px;
-  left: 50%;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #FFFFFF;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
+/* ---------- Vidéo de la section À propos ---------- */
+/* Avec le fichier vidéo : la vidéo est centrée au-dessus du titre, sa première image sert d'aperçu.
+   Lecture automatique après 5 secondes dans la section : wwwroot/js/accueil-public.js. */
+.acc-a-propos-avec-video { justify-content: center; min-height: 0; padding: 40px 40px 44px; }
+.acc-video-cadre {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 32px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0A2F28;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 30px 60px -24px rgba(0, 0, 0, .5);
 }
+.acc-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000000; }
+
+/* Affiché quand la vidéo a démarré seule, en sourdine */
+.acc-video-son {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--acc-sapin-fonce);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .5);
+}
+.acc-video-son[hidden] { display: none; }
+.acc-video-son:hover { background: #FFFFFF; }
+.acc-video-son:focus-visible { outline: 3px solid var(--acc-menthe); outline-offset: 2px; }
+
+/* Sans fichier vidéo : message « bientôt disponible » sous le motif de points */
 .acc-lecture-rond {
   position: relative;
   display: inline-flex;
@@ -554,70 +575,18 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
   border-radius: 50%;
   background: #FFFFFF;
   color: var(--acc-sapin-fonce);
-  font-size: 40px;
+  font-size: 32px;
   box-shadow: 0 18px 40px -14px rgba(0, 0, 0, .45);
-  transition: transform .2s ease, box-shadow .2s ease;
 }
-.acc-lecture-rond i { margin-left: 5px; }
-/* Anneau qui respire autour du bouton, pour inviter au clic */
-.acc-lecture .acc-lecture-rond::after {
-  content: "";
-  position: absolute;
-  inset: -10px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, .55);
-  animation: acc-anneau 2.4s ease-out infinite;
-}
-@keyframes acc-anneau {
-  0% { opacity: .9; transform: scale(.92); }
-  100% { opacity: 0; transform: scale(1.25); }
-}
-.acc-lecture-texte { font-family: var(--acc-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .92); }
-.acc-lecture:hover .acc-lecture-rond { transform: scale(1.06); box-shadow: 0 24px 48px -14px rgba(0, 0, 0, .55); }
-.acc-lecture:focus-visible { outline: none; }
-.acc-lecture:focus-visible .acc-lecture-rond { outline: 3px solid #FFFFFF; outline-offset: 6px; }
-
-.acc-video-fenetre {
-  width: min(960px, calc(100vw - 32px));
-  padding: 0;
-  border: 0;
-  border-radius: 24px;
-  background: #0A2F28;
-  color: #FFFFFF;
-  overflow: hidden;
-  box-shadow: 0 50px 100px -30px rgba(0, 0, 0, .6);
-}
-.acc-video-fenetre::backdrop { background: rgba(10, 47, 40, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-.acc-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000000; }
-.acc-video-fermer {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .92);
-  color: var(--acc-sapin-fonce);
-  font-size: 16px;
-  cursor: pointer;
-}
-.acc-video-fermer:focus-visible { outline: 3px solid var(--acc-menthe); outline-offset: 2px; }
-.acc-video-a-venir { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; aspect-ratio: 16 / 9; padding: 32px; text-align: center; }
-.acc-video-a-venir .acc-lecture-rond { font-size: 32px; }
-.acc-video-a-venir .acc-lecture-rond i { margin-left: 0; }
+.acc-video-a-venir { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; margin-bottom: 36px; }
 .acc-video-a-venir p { font-size: 18px; font-weight: 300; color: rgba(255, 255, 255, .9); }
 
 @media (max-width: 575.98px) {
-  .acc-lecture { top: 150px; }
+  .acc-a-propos-avec-video { padding: 20px 16px 28px; }
+  .acc-video-cadre { margin-bottom: 22px; border-radius: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .acc-lecture .acc-lecture-rond::after { animation: none; opacity: .6; }
-  .acc-portrait, .acc-portrait img, .acc-lecture-rond { transition: none; }
+  .acc-portrait, .acc-portrait img { transition: none; }
 }
 
 /* =========================================================
@@ -715,8 +684,7 @@ html[data-theme="sombre"] .acc-securite-case:hover { background: #0F4137; }
 html[data-theme="sombre"] .acc-membre:hover .acc-portrait { box-shadow: 0 24px 44px -22px rgba(0, 0, 0, .85), 0 0 0 1px rgba(95, 224, 192, .18); }
 
 /* ---------- Vidéo de la section À propos ---------- */
-html[data-theme="sombre"] .acc-video-fenetre { box-shadow: 0 0 0 1px var(--ps-contour), 0 50px 100px -30px rgba(0, 0, 0, .9); }
-html[data-theme="sombre"] .acc-video-fenetre::backdrop { background: rgba(5, 7, 7, .7); }
+html[data-theme="sombre"] .acc-video-cadre { box-shadow: 0 0 0 1px var(--ps-contour), 0 40px 80px -30px rgba(0, 0, 0, .9); }
 
 /* ---------- Mascotte Boulon : route en traits clairs très discrets ---------- */
 html[data-theme="sombre"] .acc-page .acc-boulon-route::before { background: rgba(255, 255, 255, .04); }

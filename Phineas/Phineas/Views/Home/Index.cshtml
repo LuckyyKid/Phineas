@@ -4,11 +4,11 @@
    Ordre des sections : haut de page, Fonctionnalités, Fonctionnement, Rôles, À propos, Équipe,
    Sécurité, Feuille de route, appel à l'action.
    Styles : wwwroot/css/accueil-public.css (préfixe acc-).
-   Script : wwwroot/js/accueil-public.js (fond animé du haut, démonstration des statuts, fenêtre vidéo). *@
+   Script : wwwroot/js/accueil-public.js (fond animé du haut, démonstration des statuts, lecture de la vidéo). *@
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Environnement
 @{
     // Vidéo de présentation de la section À propos : déposer le fichier à cet endroit pour l'activer.
-    // Tant qu'il n'existe pas, la fenêtre vidéo affiche un message « bientôt disponible ».
+    // Tant qu'il n'existe pas, la section affiche un message « bientôt disponible ».
     const string CheminVideo = "videos/phineas-presentation.mp4";
     bool videoDisponible = System.IO.File.Exists(System.IO.Path.Combine(Environnement.WebRootPath, CheminVideo));
     Layout = null;
@@ -296,15 +296,30 @@
                     <p>Dans une concession, l'information est dispersée entre l'inventaire, l'atelier, le financement et les ventes. Phineas la réunit dans un seul dossier, toujours à jour, pour que chaque équipe sache où en est chaque véhicule et chaque client.</p>
                 </div>
 
-                <div class="acc-panneau acc-a-propos">
-                    <div class="acc-a-propos-motif" aria-hidden="true">
-                        <svg class="acc-zigzag" viewBox="0 0 340 260" preserveAspectRatio="none"><polyline points="40,250 150,140 190,140 300,20" /></svg>
-                    </div>
-                    @* Bouton de lecture : ouvre la vidéo de présentation dans une fenêtre (accueil-public.js). *@
-                    <button type="button" class="acc-lecture" data-ouvrir-video aria-haspopup="dialog" aria-controls="acc-video-fenetre">
-                        <span class="acc-lecture-rond" aria-hidden="true"><i class="bi bi-play-fill"></i></span>
-                        <span class="acc-lecture-texte">Voir la présentation</span>
-                    </button>
+                <div class="acc-panneau acc-a-propos @(videoDisponible ? "acc-a-propos-avec-video" : "")">
+                    @if (videoDisponible)
+                    {
+                        @* Vidéo affichée directement : sa première image sert d'aperçu (#t=0.1).
+                           Elle démarre seule après 5 secondes dans la section, en sourdine (accueil-public.js). *@
+                        <div class="acc-video-cadre" data-video-section>
+                            <video class="acc-video" controls playsinline preload="metadata" aria-label="Vidéo de présentation de Phineas" data-video>
+                                <source src="~/@(CheminVideo)#t=0.1" type="video/mp4" />
+                            </video>
+                            <button type="button" class="acc-video-son" data-activer-son hidden>
+                                <i class="bi bi-volume-up" aria-hidden="true"></i>Activer le son
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="acc-a-propos-motif" aria-hidden="true">
+                            <svg class="acc-zigzag" viewBox="0 0 340 260" preserveAspectRatio="none"><polyline points="40,250 150,140 190,140 300,20" /></svg>
+                        </div>
+                        <div class="acc-video-a-venir">
+                            <span class="acc-lecture-rond" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
+                            <p>La vidéo de présentation sera bientôt disponible.</p>
+                        </div>
+                    }
                     <p class="acc-a-propos-titre">Un seul dossier, de la réception à la livraison.</p>
                     <p class="acc-a-propos-texte">Moins de temps à chercher, plus de temps avec les clients.</p>
                 </div>
@@ -415,24 +430,6 @@
             </div>
         </section>
     </main>
-
-    @* Fenêtre de la vidéo de présentation (élément dialog : Échap, focus et fond gérés par le navigateur). *@
-    <dialog class="acc-video-fenetre" id="acc-video-fenetre" aria-label="Vidéo de présentation de Phineas" data-video-fenetre>
-        <button type="button" class="acc-video-fermer" data-fermer-video aria-label="Fermer la vidéo"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
-        @if (videoDisponible)
-        {
-            <video class="acc-video" controls preload="none" playsinline data-video>
-                <source src="~/@CheminVideo" type="video/mp4" />
-            </video>
-        }
-        else
-        {
-            <div class="acc-video-a-venir">
-                <span class="acc-lecture-rond" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
-                <p>La vidéo de présentation sera bientôt disponible.</p>
-            </div>
-        }
-    </dialog>
 
     <footer class="acc-pied">
         <div class="acc-conteneur acc-pied-contenu">

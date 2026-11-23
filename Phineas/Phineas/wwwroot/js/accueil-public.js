@@ -270,34 +270,83 @@
 })();
 
 // ---------- Vidéo de présentation (section À propos) ----------
-// Ouvre la fenêtre de la vidéo ; la ferme avec la croix, Échap (géré par dialog) ou un clic à côté de la vidéo.
-// La vidéo s'arrête à la fermeture.
+// La vidéo est affichée dans la section ; sa première image sert d'aperçu.
+// Si la vidéo reste visible DELAI_LECTURE_MS sans interruption, elle démarre seule, une seule fois.
+// Les navigateurs refusent le démarrage automatique avec le son : elle démarre en sourdine
+// et le bouton « Activer le son » apparaît. Elle se met en pause quand on quitte la section.
 (function () {
   "use strict";
 
-  var bouton = document.querySelector("[data-ouvrir-video]");
-  var fenetre = document.querySelector("[data-video-fenetre]");
-  if (!bouton || !fenetre || typeof fenetre.showModal !== "function") return;
-  var video = fenetre.querySelector("[data-video]");
+  var DELAI_LECTURE_MS = 5000;
+  // Part de la vidéo qui doit être à l'écran pour la considérer « dans la section ».
+  var PART_VISIBLE = 0.6;
 
-  bouton.addEventListener("click", function () {
-    fenetre.showModal();
-    if (video) video.play().catch(function () { /* lecture refusée par le navigateur : l'utilisateur appuie sur lecture */ });
-  });
+  var cadre = document.querySelector("[data-video-section]");
+  if (!cadre || !("IntersectionObserver" in window)) return;
+  var video = cadre.querySelector("[data-video]");
+  var boutonSon = cadre.querySelector("[data-activer-son]");
 
-  function fermer() {
-    fenetre.close();
+  // Respecte le réglage « réduire les animations » du système : pas de démarrage automatique.
+  var reduireAnimations = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var minuterie = null;
+  var dejaLanceeSeule = false;
+  // Vrai si la pause vient de nous (sortie de la section), pour pouvoir reprendre au retour.
+  var enPauseParLaSection = false;
+
+  function lancerEnSourdine() {
+    minuterie = null;
+    dejaLanceeSeule = true;
+    // La personne a déjà lancé la vidéo elle-même : on ne touche ni au son ni à la lecture.
+    if (!video.paused) return;
+    video.muted = true;
+    video.play()
+      .then(function () { boutonSon.hidden = false; })
+      .catch(function () { /* lecture refusée : la personne peut appuyer sur lecture */ });
   }
-  fenetre.querySelector("[data-fermer-video]").addEventListener("click", fermer);
 
-  // Un clic sur le fond voilé (en dehors du contenu de la fenêtre) ferme la vidéo.
-  fenetre.addEventListener("click", function (evenement) {
-    if (evenement.target === fenetre) fermer();
+  function entrerDansLaSection() {
+    if (enPauseParLaSection) {
+      enPauseParLaSection = false;
+      video.play().catch(function () {});
+      return;
+    }
+    if (dejaLanceeSeule || reduireAnimations || !video.paused) return;
+    minuterie = setTimeout(lancerEnSourdine, DELAI_LECTURE_MS);
+  }
+
+  function sortirDeLaSection() {
+    clearTimeout(minuterie);
+    minuterie = null;
+    if (!video.paused) {
+      video.pause();
+      enPauseParLaSection = true;
+    }
+  }
+
+  var observateur = new IntersectionObserver(function (entrees) {
+    var entree = entrees[0];
+    if (entree.isIntersecting) {
+      entrerDansLaSection();
+    } else {
+      sortirDeLaSection();
+    }
+  }, { threshold: PART_VISIBLE });
+  observateur.observe(cadre);
+
+  boutonSon.addEventListener("click", function () {
+    video.muted = false;
+    boutonSon.hidden = true;
   });
 
-  fenetre.addEventListener("close", function () {
-    if (video) video.pause();
-    bouton.focus();
+  // Si la personne remet le son avec les contrôles de la vidéo, le bouton n'a plus d'utilité.
+  video.addEventListener("volumechange", function () {
+    if (!video.muted) boutonSon.hidden = true;
+  });
+
+  // Une pause demandée par la personne n'est pas reprise automatiquement au retour dans la section.
+  video.addEventListener("pause", function () {
+    if (!enPauseParLaSection) dejaLanceeSeule = true;
   });
 })();
 
