@@ -1,0 +1,343 @@
+/* =========================================================
+   Ventes perdues en verre clair (maquette 32).
+   Chargée par Views/Relations/Pertes.cshtml après relations.css (variables --rcp- de .rc-page).
+   Tout est rangé sous .rp-page : les autres pages Relations ne sont pas touchées.
+   ========================================================= */
+
+.rp-page {
+  --rp-point-vert: #17614F;
+  --rp-point-vert-texte: #17614F;
+  --rp-point-ambre: #E09A1C;
+  --rp-point-gris: #434B4A;
+  --rp-point-gris-clair: #8A9493;
+  --rp-hauteur-champ: 40px;
+}
+
+/* ---------- Haut de page ---------- */
+.rp-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+.rp-ariane { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--rcp-muted); }
+.rp-ariane i { font-size: 11px; }
+.rp-ariane [aria-current] { color: var(--rcp-ink); font-weight: 500; }
+.rp-puces { display: flex; align-items: center; gap: 8px; }
+.rp-chip-demo { padding: 4px 10px; border-radius: 999px; background: #FBF1DE; color: var(--rcp-ambre-ink); font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
+.rp-en-ligne { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--rcp-line-2); background: rgba(255, 255, 255, .7); font-size: 13.5px; color: var(--rcp-text); }
+.rp-point-vert { width: 7px; height: 7px; border-radius: 50%; background: var(--rcp-menthe-ink); box-shadow: 0 0 0 3px rgba(95, 224, 192, .28); }
+
+/* ---------- En-tête ---------- */
+.rp-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.rp-label { margin: 0; font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--rcp-muted); }
+.rp-page .rp-titre { margin: 12px 0; font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--rcp-ink); }
+.rp-intro { max-width: 40em; margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--rcp-text); }
+.rp-boutons { display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+
+/* Bouton secondaire en verre (aucun bouton vert plein sur cette page) */
+.rp-btn-verre {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background: rgba(255, 255, 255, .7);
+  backdrop-filter: var(--rcp-flou);
+  -webkit-backdrop-filter: var(--rcp-flou);
+  box-shadow: var(--rcp-ombre);
+  font-size: 15px;
+  color: var(--rcp-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.rp-btn-verre i { color: var(--rcp-sapin-texte); }
+.rp-btn-verre:hover { color: var(--rcp-ink); background: #FFFFFF; }
+
+/* ---------- Phrase de résumé ---------- */
+.rp-resume { max-width: 46em; margin: 0 0 24px; font-size: 20px; font-weight: 300; line-height: 1.45; color: var(--rcp-ink); }
+.rp-resume:empty { display: none; }
+
+/* ---------- Cartes en verre ---------- */
+.rp-verre {
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rcp-flou);
+  -webkit-backdrop-filter: var(--rcp-flou);
+  border: 1px solid var(--rcp-line);
+  box-shadow: var(--rcp-ombre);
+}
+
+/* ---------- Six chiffres côte à côte ---------- */
+.rp-chiffres { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px; }
+.rp-chiffre { display: flex; flex-direction: column; gap: 6px; padding: 22px 20px 20px; border-radius: 20px; }
+.rp-chiffre-valeur { margin-bottom: 8px; font-size: 36px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rp-chiffre-libelle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--rcp-ink); }
+.rp-chiffre-detail { font-size: 12px; line-height: 1.4; color: var(--rcp-muted); }
+.rp-point-ambre { width: 7px; height: 7px; border-radius: 50%; background: var(--rp-point-ambre); }
+
+/* ---------- Carte du tableau ---------- */
+.rp-module { border-radius: 28px; overflow: hidden; }
+
+/* Barre d'outils sur une seule rangée */
+.rp-outils { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 20px 22px; border-bottom: 1px solid var(--rcp-line-2); }
+.rp-plus { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 22px; border-bottom: 1px solid var(--rcp-line-2); background: rgba(11, 13, 13, .02); }
+.rp-plus[hidden] { display: none; }
+.rp-recherche { position: relative; flex: 1 1 220px; min-width: 200px; }
+.rp-recherche i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--rcp-muted); pointer-events: none; }
+.rp-recherche input {
+  width: 100%;
+  height: var(--rp-hauteur-champ);
+  padding: 0 16px 0 42px;
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background: rgba(255, 255, 255, .85);
+  font-size: 14.5px;
+  color: var(--rcp-ink);
+}
+.rp-recherche input::placeholder { color: var(--rcp-muted-2); }
+.rp-recherche input:focus, .rp-select:focus { outline: none; border-color: var(--rcp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.rp-select {
+  height: var(--rp-hauteur-champ);
+  padding: 0 38px 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--rcp-line-2);
+  background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='m4 6 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 14px center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 14.5px;
+  color: var(--rcp-ink);
+}
+
+/* Interrupteurs : gris éteint, vert sapin allumé */
+.rp-interrupteur { display: inline-flex; align-items: center; gap: 10px; min-height: 0; margin: 0; padding: 0; }
+.rp-interrupteur .form-check-input { float: none; width: 36px; height: 20px; margin: 0; border-color: rgba(11, 13, 13, .12); background-color: rgba(11, 13, 13, .08); cursor: pointer; }
+.rp-interrupteur .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.rp-interrupteur .form-check-input:focus { box-shadow: 0 0 0 3px rgba(29, 154, 130, .2); border-color: var(--rcp-menthe-ink); }
+.rp-interrupteur .form-check-label { font-size: 14.5px; color: var(--rcp-text); cursor: pointer; }
+
+/* Liens discrets (Plus de filtres, Effacer, Réinitialiser) */
+.rp-lien { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; border: 0; background: none; font-size: 14px; font-weight: 500; color: var(--rcp-sapin-texte); }
+.rp-lien:hover { text-decoration: underline; }
+.rp-lien[hidden] { display: none; }
+
+/* ---------- Tableau ---------- */
+.rp-defile { overflow-x: auto; padding: 0 12px; }
+.rp-defile[hidden] { display: none; }
+.rp-table { width: 100%; min-width: 980px; border-collapse: separate; border-spacing: 0; }
+.rp-table th {
+  padding: 20px 14px 12px;
+  border-bottom: 1px solid var(--rcp-line-2);
+  font-family: var(--rcp-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--rcp-muted);
+}
+.rp-table td { padding: 18px 14px; border-bottom: 1px solid var(--rcp-line); vertical-align: top; font-size: 14.5px; line-height: 1.45; color: var(--rcp-ink); }
+.rp-table tbody tr:last-child td { border-bottom: 0; }
+.rp-table tbody tr { transition: background-color .15s ease; }
+.rp-table tbody tr:hover td { background: rgba(255, 255, 255, .85); }
+.rp-table tbody tr:hover td:first-child { border-radius: 16px 0 0 16px; }
+.rp-table tbody tr:hover td:last-child { border-radius: 0 16px 16px 0; }
+.rp-nom { font-weight: 500; color: var(--rcp-ink); text-decoration: none; }
+.rp-nom:hover { color: var(--rcp-sapin-texte); text-decoration: underline; }
+.rp-sous { display: block; margin-top: 2px; font-size: 13px; color: var(--rcp-muted); }
+.rp-motif { display: block; font-weight: 500; }
+.rp-attenue { color: var(--rcp-muted); }
+
+/* États : un point de 8 px et un libellé, sans fond ni bordure de pastille */
+.rp-etat { display: inline-flex; align-items: baseline; gap: 8px; margin-top: 4px; font-size: 12.5px; font-weight: 500; }
+.rp-motif + .rp-etat { margin-top: 6px; }
+.rp-point { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; transform: translateY(-1px); }
+.rp-etat-vert-plein { color: var(--rp-point-vert-texte); }
+.rp-etat-vert-plein .rp-point { background: var(--rp-point-vert); }
+.rp-etat-vert-creux { color: var(--rp-point-vert-texte); }
+.rp-etat-vert-creux .rp-point { border: 1.5px solid var(--rcp-menthe-ink); }
+.rp-etat-ambre-plein { color: var(--rcp-ambre-ink); }
+.rp-etat-ambre-plein .rp-point { background: var(--rp-point-ambre); }
+.rp-etat-ambre-creux { color: var(--rcp-ambre-ink); }
+.rp-etat-ambre-creux .rp-point { border: 1.5px solid var(--rp-point-ambre); }
+.rp-etat-gris-plein { color: var(--rp-point-gris); }
+.rp-etat-gris-plein .rp-point { background: var(--rp-point-gris); }
+.rp-etat-gris-creux { color: var(--rcp-muted); }
+.rp-etat-gris-creux .rp-point { border: 1.5px solid var(--rp-point-gris-clair); }
+/* Dans la colonne Récupération, l'état est la valeur principale : un peu plus grand. */
+.rp-table td:nth-child(5) .rp-etat { margin-top: 0; font-size: 14px; }
+
+/* ---------- État vide ---------- */
+.rp-vide { padding: 36px 22px; text-align: center; }
+.rp-vide[hidden] { display: none; }
+.rp-vide p { margin: 0 0 14px; font-size: 15px; color: var(--rcp-muted); }
+.rp-btn-blanc { height: 40px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--rcp-line-2); background: #FFFFFF; font-size: 14.5px; color: var(--rcp-ink); }
+.rp-btn-blanc:hover { border-color: rgba(11, 13, 13, .16); }
+
+/* ---------- Pied de carte et pagination ---------- */
+.rp-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 26px; border-top: 1px solid var(--rcp-line-2); font-size: 14px; color: var(--rcp-text); }
+.rp-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.rp-pagination[hidden] { display: none; }
+.rp-pages-info { margin-right: 10px; font-family: var(--rcp-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--rcp-muted); }
+.rp-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 14px;
+  color: var(--rcp-text);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.rp-page-btn:hover:not(:disabled) { background: rgba(11, 13, 13, .05); color: var(--rcp-ink); }
+.rp-page-btn.is-active { background: #FFFFFF; border-color: var(--rcp-line-2); color: var(--rcp-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+.rp-page-btn:disabled { color: var(--rcp-muted-2); opacity: .45; cursor: default; }
+.rp-pages-trou { padding: 0 4px; color: var(--rcp-muted); }
+
+/* ---------- Note du bas ---------- */
+.rp-note { display: flex; gap: 12px; margin-top: 24px; padding: 18px 22px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 13.5px; line-height: 1.55; color: var(--rcp-text); }
+.rp-note > i { margin-top: 2px; color: var(--rcp-sapin-texte); }
+.rp-note p { margin: 0; }
+.rp-note p + p { margin-top: 6px; }
+.rp-note p:empty, .rp-note p[hidden] { display: none; }
+.rp-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rp-demo [hidden] { display: none; }
+.rp-demo .rp-lien { padding: 0; }
+
+.rp-retour { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--rcp-sapin-texte); text-decoration: none; }
+.rp-retour:hover { text-decoration: underline; }
+
+/* ---------- Fiche d'analyse d'une vente perdue (?opportunite=…) ---------- */
+/* En mode fiche, le haut et l'en-tête de la liste sont masqués (la fiche a les siens). */
+[data-entete-liste][hidden] { display: none; }
+.rp-ariane a { color: var(--rcp-muted); text-decoration: none; }
+.rp-ariane a:hover { color: var(--rcp-ink); text-decoration: underline; }
+.rp-fiche-retour { margin: -16px 0 18px; }
+
+/* Quatre cartes clés sur une rangée */
+.rp-cles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rp-cle { gap: 8px; }
+.rp-cle-valeur { font-size: 18px; font-weight: 500; line-height: 1.3; color: var(--rcp-ink); }
+.rp-cle-valeur .rp-etat { margin-top: 0; font-size: 15px; }
+
+/* Cartes en verre de la fiche, côte à côte */
+.rp-fiche-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; align-items: start; }
+.rp-fiche-grille-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.rp-carte { padding: 24px 26px; border-radius: 28px; margin-bottom: 16px; }
+.rp-fiche-grille > .rp-carte { margin-bottom: 0; }
+.rp-carte-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.rp-page .rp-carte-titre { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 500; letter-spacing: 0; color: var(--rcp-ink); }
+.rp-carte-titre i { color: var(--rcp-sapin-texte); }
+.rp-chip-neutre { padding: 3px 10px; border-radius: 999px; background: rgba(11, 13, 13, .05); font-family: var(--rcp-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--rcp-muted); }
+
+.rp-motif-grand { margin: 0 0 4px; font-size: 22px; font-weight: 300; letter-spacing: -0.02em; color: var(--rcp-ink); }
+.rp-raison { margin: 10px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--rcp-text); }
+.rp-remarque { display: flex; gap: 8px; margin: 14px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--rcp-muted); }
+.rp-remarque i { margin-top: 2px; color: var(--rcp-muted); }
+.rp-remarque .rp-lien { padding: 0; }
+.rp-commentaire { display: flex; flex-direction: column; gap: 4px; margin: 14px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--rcp-text); }
+.rp-fiche-vide { margin: 0; font-size: 14px; color: var(--rcp-muted); }
+
+/* Tableau de définitions : libellé gris à gauche, valeur à droite, filets fins */
+.rp-def { margin: 16px 0 0; }
+.rp-def > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 0; border-top: 1px solid var(--rcp-line); }
+.rp-def dt { flex-shrink: 0; max-width: 55%; font-size: 14px; font-weight: 400; color: var(--rcp-muted); }
+.rp-def dd { margin: 0; font-size: 14px; font-weight: 500; text-align: right; color: var(--rcp-ink); }
+.rp-def dd .rp-sous { font-weight: 400; }
+
+/* Encart neutre (alternatives de financement) */
+.rp-encart { margin-top: 16px; padding: 16px 18px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 14px; line-height: 1.5; color: var(--rcp-text); }
+.rp-encart ul { margin: 8px 0; padding-left: 18px; }
+.rp-encart p { margin: 0; font-size: 13px; color: var(--rcp-muted); }
+
+/* Listes : une ligne par élément, séparées par des filets fins (pas de puces) */
+.rp-lignes { margin: 0; padding: 0; list-style: none; }
+.rp-lignes > li { padding: 10px 0; border-top: 1px solid var(--rcp-line); font-size: 14.5px; line-height: 1.5; color: var(--rcp-ink); }
+.rp-lignes > li:first-child { padding-top: 0; border-top: 0; }
+.rp-ligne-datee { display: flex; gap: 14px; }
+.rp-date { flex-shrink: 0; min-width: 64px; font-family: var(--rcp-mono); font-size: 12px; line-height: 1.9; color: var(--rcp-muted); }
+.rp-pagination-fiche { justify-content: flex-end; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rcp-line); }
+
+/* Actions : boutons blancs, un seul vert plein (Réactiver) */
+.rp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.rp-actions .rp-btn-blanc, .rp-btn-vert { display: inline-flex; align-items: center; gap: 8px; }
+.rp-actions .rp-btn-blanc i { color: var(--rcp-sapin-texte); }
+.rp-btn-vert {
+  height: 40px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 12px 24px -12px rgba(12, 59, 50, .7);
+}
+.rp-btn-vert:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 14px 28px -12px rgba(12, 59, 50, .8); }
+.rp-actions-moteur { display: flex; flex-direction: column; gap: 12px; }
+
+/* Fiche introuvable */
+.rp-fiche-absente { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 24px; text-align: center; font-size: 14.5px; color: var(--rcp-muted); }
+.rp-fiche-absente i { font-size: 24px; color: var(--rcp-muted); }
+.rp-fiche-absente strong { font-weight: 500; color: var(--rcp-ink); }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 991.98px) {
+  .rp-entete { flex-direction: column; align-items: flex-start; }
+  .rp-cles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-fiche-grille { grid-template-columns: 1fr; }
+  .rp-chiffres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 575.98px) {
+  .rp-haut { flex-direction: column; align-items: flex-start; }
+  .rp-chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-pied { flex-direction: column; align-items: flex-start; }
+}
+
+/* =========================================================
+   Thème sombre : Ventes perdues (liste et fiche d'analyse).
+   Les jetons --rcp-* sont déjà passés en sombre dans relations.css ; ici, les couleurs écrites en dur
+   et les points d'état (vert = menthe, ambre = jaune doux, gris = gris clair lisible).
+   ========================================================= */
+html[data-theme="sombre"] .rp-page {
+  --rp-point-vert: var(--ps-menthe);
+  --rp-point-vert-texte: var(--ps-menthe);
+  --rp-point-ambre: var(--ps-ambre);
+  --rp-point-gris: var(--ps-texte-courant);
+  --rp-point-gris-clair: var(--ps-texte-discret);
+}
+html[data-theme="sombre"] .rp-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .rp-en-ligne { background: var(--ps-verre); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .rp-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .rp-etat-vert-plein .rp-point { box-shadow: var(--ps-menthe-lueur); }
+
+/* Verre, boutons secondaires et action principale (blanche en sombre) */
+html[data-theme="sombre"] .rp-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .rp-chiffre:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .rp-btn-verre { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .rp-btn-verre i,
+html[data-theme="sombre"] .rp-actions .rp-btn-blanc i,
+html[data-theme="sombre"] .rp-carte-titre i,
+html[data-theme="sombre"] .rp-note > i { color: var(--ps-menthe); }
+html[data-theme="sombre"] .rp-btn-verre:hover { background: var(--ps-survol); border-color: var(--ps-contour-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-btn-blanc { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-btn-blanc:hover { border-color: var(--ps-contour-survol); background: var(--ps-survol); }
+html[data-theme="sombre"] .rp-btn-vert,
+html[data-theme="sombre"] .rp-btn-vert:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* Barre d'outils, recherche, menus et interrupteurs */
+html[data-theme="sombre"] .rp-plus { background: rgba(255, 255, 255, .02); }
+html[data-theme="sombre"] .rp-recherche input { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-recherche input::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .rp-select { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-recherche input:focus,
+html[data-theme="sombre"] .rp-select:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+html[data-theme="sombre"] .rp-interrupteur .form-check-input { background-color: var(--ps-piste); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .rp-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+
+/* Tableau, pagination, notes et encarts */
+html[data-theme="sombre"] .rp-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .rp-page-btn:hover:not(:disabled) { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rp-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .rp-note,
+html[data-theme="sombre"] .rp-encart { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .rp-chip-neutre { background: var(--ps-survol); color: var(--ps-texte-second); }

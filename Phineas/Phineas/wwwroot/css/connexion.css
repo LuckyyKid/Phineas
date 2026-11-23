@@ -1,0 +1,376 @@
+/* =========================================================
+   Page de connexion (Views/Account/Login.cshtml, maquettes 67 à 69).
+   Formulaire à gauche, panneau vert sapin à droite (grille fine + petits carrés menthe qui pulsent).
+   Tout est rangé sous .cx-page : cette feuille ne touche à aucune autre page.
+   ========================================================= */
+
+.cx-page {
+  --cx-encre: #0B0D0D;
+  --cx-texte: #434B4A;
+  --cx-gris: #566060;
+  --cx-gris-2: #6B7473;
+  --cx-filet: rgba(11, 13, 13, .08);
+  --cx-champ-fond: #F6F8F7;
+  --cx-sapin: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  --cx-sapin-plein: #17614F;
+  --cx-sapin-fonce: #0C3B32;
+  --cx-menthe: #5FE0C0;
+  --cx-vert-vif: #1D9A82;
+  --cx-rouge: #D93A2E;
+  --cx-rouge-texte: #B42318;
+  --cx-police: 'Geist', 'Inter', system-ui, sans-serif;
+  --cx-mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+
+  margin: 0;
+  background: #FFFFFF;
+  color: var(--cx-encre);
+  font-family: var(--cx-police);
+  -webkit-font-smoothing: antialiased;
+}
+.cx-page *, .cx-page *::before, .cx-page *::after { box-sizing: border-box; }
+.cx-page h1, .cx-page h2, .cx-page p, .cx-page ul { margin: 0; }
+.cx-page ul { padding: 0; list-style: none; }
+:where(.cx-page) a { color: inherit; }
+.cx-page :focus-visible { outline: 2px solid var(--cx-vert-vif); outline-offset: 2px; }
+
+/* ---------- Deux moitiés sur toute la hauteur ---------- */
+.cx-ecran {
+  display: grid;
+  grid-template-columns: minmax(0, 47fr) minmax(0, 53fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ---------- Moitié gauche ---------- */
+.cx-gauche {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 28px 44px;
+  /* Halo menthe très doux dans le coin haut gauche */
+  background: radial-gradient(60% 40% at 0% 0%, rgba(95, 224, 192, .18), transparent 70%);
+}
+.cx-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cx-logo { display: inline-flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; text-decoration: none; color: var(--cx-encre); }
+.cx-logo svg { flex-shrink: 0; }
+.cx-lien-accueil { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 500; text-decoration: none; color: var(--cx-sapin-plein); }
+.cx-lien-accueil:hover { color: var(--cx-sapin-fonce); text-decoration: underline; }
+
+/* Bloc central, centré verticalement */
+.cx-bloc { width: 100%; max-width: 400px; margin: auto; padding: 40px 0; }
+.cx-titre { font-size: 48px; font-weight: 400; letter-spacing: -0.045em; line-height: 1.05; }
+.cx-sous-titre { margin-top: 14px; font-size: 16px; color: var(--cx-texte); }
+
+.cx-formulaire { display: flex; flex-direction: column; gap: 20px; margin-top: 32px; }
+.cx-champ { display: flex; flex-direction: column; gap: 10px; }
+.cx-libelle { font-size: 14px; font-weight: 500; color: var(--cx-encre); }
+
+.cx-saisie {
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 16px;
+  border: 1px solid var(--cx-filet);
+  background: var(--cx-champ-fond);
+  font: inherit;
+  font-size: 16px;
+  color: var(--cx-encre);
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.cx-saisie::placeholder { color: var(--cx-gris-2); }
+/* Champ dans lequel on écrit : fond blanc et contour vert sapin de 1,5 px */
+.cx-saisie:focus {
+  outline: none;
+  background: #FFFFFF;
+  border-color: var(--cx-sapin-plein);
+  box-shadow: 0 0 0 .5px var(--cx-sapin-plein);
+}
+.cx-saisie.input-validation-error { border-color: var(--cx-rouge); }
+
+/* Mot de passe : le bouton œil est posé dans le champ, à droite */
+.cx-saisie-mdp { position: relative; }
+.cx-saisie-mdp .cx-saisie { padding-right: 60px; }
+.cx-oeil {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(11, 13, 13, .05);
+  color: var(--cx-texte);
+  font-size: 18px;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.cx-oeil:hover { background: rgba(11, 13, 13, .09); color: var(--cx-encre); }
+
+/* Case « Se souvenir de moi », verte quand elle est cochée */
+.cx-souvenir { display: flex; align-items: center; gap: 12px; font-size: 16px; color: var(--cx-texte); }
+.cx-case { width: 20px; height: 20px; margin: 0; accent-color: var(--cx-sapin-plein); cursor: pointer; }
+.cx-souvenir label { cursor: pointer; }
+
+/* Bouton principal : gris tant que les champs sont vides (sans être bloqué), vert sapin ensuite */
+.cx-bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 54px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cx-sapin);
+  color: #FFFFFF;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 16px 30px -14px rgba(12, 59, 50, .75);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease, transform .15s ease;
+}
+.cx-bouton:active { transform: translateY(1px); }
+.cx-bouton.is-inactif { background: #EEF1F0; color: #8A9392; box-shadow: none; }
+
+.cx-note { display: flex; gap: 10px; margin-top: 26px; font-size: 13px; line-height: 1.55; color: var(--cx-gris); }
+.cx-note i { flex-shrink: 0; margin-top: 1px; font-size: 15px; color: var(--cx-vert-vif); }
+
+.cx-loi25 { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--cx-gris); }
+.cx-loi25 i { flex-shrink: 0; font-size: 14px; color: var(--cx-vert-vif); }
+
+/* ---------- Messages d'erreur (validation du modèle et du contrôleur) ---------- */
+.cx-erreurs.validation-summary-valid { display: none; }
+.cx-erreurs {
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(217, 58, 46, .07);
+  color: var(--cx-rouge-texte);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.cx-erreurs ul { display: flex; flex-direction: column; gap: 4px; }
+.cx-erreur-champ { font-size: 13px; color: var(--cx-rouge-texte); }
+.cx-erreur-champ.field-validation-valid { display: none; }
+
+/* ---------- Moitié droite : panneau vert ---------- */
+.cx-panneau {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 14px;
+  padding: 64px 7%;
+  border-radius: 32px;
+  overflow: hidden;
+  color: #FFFFFF;
+  background:
+    radial-gradient(55% 45% at 100% 0%, rgba(95, 224, 192, .28), transparent 70%),
+    radial-gradient(50% 45% at 0% 100%, rgba(47, 143, 123, .45), transparent 70%),
+    linear-gradient(160deg, #17614F 0%, #0A2F28 100%);
+}
+/* Grille de lignes blanches très fines, cases de 68 px */
+.cx-panneau-fond {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .065) 1px, transparent 1px);
+  background-size: 68px 68px;
+}
+/* Petit carré menthe posé sur un croisement (créé par connexion.js) */
+.cx-carre {
+  position: absolute;
+  background: var(--cx-menthe);
+  opacity: .12;
+  animation: cx-pulsation var(--duree, 6s) ease-in-out var(--delai, 0s) infinite;
+}
+@keyframes cx-pulsation {
+  0%, 100% { opacity: .12; }
+  50% { opacity: .75; }
+}
+
+.cx-panneau-contenu { position: relative; display: flex; flex-direction: column; gap: 32px; width: 100%; max-width: 620px; }
+.cx-pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .14);
+  font-size: 15px;
+  color: rgba(255, 255, 255, .9);
+}
+.cx-panneau-titre { font-size: 56px; font-weight: 300; letter-spacing: -0.045em; line-height: 1.05; color: #FFFFFF; }
+
+/* Aperçu du produit dans une carte de verre translucide */
+.cx-apercu {
+  max-width: 440px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.cx-apercu-vehicule { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.cx-apercu-qr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: var(--cx-sapin-fonce);
+  font-size: 26px;
+}
+.cx-apercu-nom { display: flex; flex-direction: column; gap: 4px; margin-right: auto; }
+.cx-apercu-nom strong { font-size: 17px; font-weight: 500; }
+.cx-apercu-nom small { font-family: var(--cx-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 255, 255, .7); }
+.cx-apercu-statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: var(--cx-sapin-fonce);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cx-apercu-statut i { width: 8px; height: 8px; background: var(--cx-vert-vif); }
+.cx-apercu-notif { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .14); }
+.cx-apercu-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #A7F0DC, var(--cx-menthe));
+  color: var(--cx-sapin-fonce);
+  font-size: 13px;
+  font-weight: 500;
+}
+.cx-apercu-notif-texte { display: flex; flex-direction: column; gap: 3px; font-size: 15px; color: rgba(255, 255, 255, .92); }
+.cx-apercu-notif-texte strong { font-weight: 500; color: #FFFFFF; }
+.cx-apercu-notif-texte small { font-family: var(--cx-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .6); }
+
+/* Quatre cases séparées par des filets translucides, deux par rangée */
+.cx-points {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  overflow: hidden;
+}
+.cx-points li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, .92);
+  border-top: 1px solid rgba(255, 255, 255, .12);
+}
+.cx-points li:nth-child(-n + 2) { border-top: 0; }
+.cx-points li:nth-child(odd) { border-right: 1px solid rgba(255, 255, 255, .12); }
+.cx-points i { font-size: 19px; color: var(--cx-menthe); }
+
+/* ---------- Écrans moyens ---------- */
+@media (max-width: 1200px) {
+  .cx-panneau-titre { font-size: 44px; }
+}
+
+/* ---------- Téléphone et tablette : une seule colonne, formulaire d'abord ---------- */
+@media (max-width: 900px) {
+  .cx-ecran { grid-template-columns: minmax(0, 1fr); }
+  .cx-gauche { padding: 24px 20px 32px; }
+  .cx-bloc { max-width: 520px; margin: 0 auto; padding: 36px 0 32px; }
+  .cx-titre { font-size: 40px; }
+  .cx-panneau { margin: 0 12px 12px; padding: 40px 24px; }
+  .cx-panneau-titre { font-size: 36px; }
+  .cx-apercu { max-width: none; }
+  /* La pilule de statut passe sous le nom du véhicule : le nom occupe toute la ligne à côté de la tuile QR */
+  .cx-apercu-nom { flex: 1 1 calc(100% - 66px); }
+  /* Les quatre cases s'empilent */
+  .cx-points { grid-template-columns: minmax(0, 1fr); }
+  .cx-points li:nth-child(odd) { border-right: 0; }
+  .cx-points li:nth-child(2) { border-top: 1px solid rgba(255, 255, 255, .12); }
+}
+
+/* ---------- Moins d'animations demandées : les carrés restent fixes ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .cx-carre { animation: none; opacity: var(--opacite-fixe, .4); }
+  .cx-bouton { transition: none; }
+}
+
+/* =========================================================
+   Thème sombre (contrat : wwwroot/js/theme.js, palette --ps-* : wwwroot/css/theme-sombre.css)
+   Formulaire sur fond presque noir, champs en verre sombre, bouton principal BLANC ;
+   le panneau de droite reste vert sapin (il est déjà foncé), avec un contour discret.
+   Les carrés du panneau gardent leur pulsation (couleur menthe tirée de --cx-menthe).
+   ========================================================= */
+
+/* ---------- Couleurs de la page ---------- */
+html[data-theme="sombre"] .cx-page {
+  --cx-encre: var(--ps-texte);
+  --cx-texte: var(--ps-texte-courant);
+  --cx-gris: var(--ps-texte-second);
+  --cx-gris-2: var(--ps-texte-discret);
+  --cx-filet: var(--ps-champ-contour);
+  --cx-champ-fond: var(--ps-champ);
+  --cx-sapin-plein: var(--ps-menthe);   /* lien « Accueil » et petits accents : menthe sur fond sombre */
+  --cx-vert-vif: var(--ps-menthe);
+  --cx-rouge: var(--ps-rose);
+  --cx-rouge-texte: var(--ps-rose-texte);
+
+  background: var(--ps-fond);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .cx-page :focus-visible { outline-color: var(--ps-focus); }
+
+/* Moitié gauche : halo blanc très discret à la place du halo menthe */
+html[data-theme="sombre"] .cx-gauche { background: radial-gradient(60% 40% at 0% 0%, rgba(255, 255, 255, .07), transparent 70%); }
+html[data-theme="sombre"] .cx-lien-accueil:hover { color: #8FE9D1; }
+
+/* ---------- Champs ---------- */
+html[data-theme="sombre"] .cx-saisie:focus {
+  background: rgba(255, 255, 255, .07);
+  border-color: var(--ps-champ-focus);
+  box-shadow: 0 0 0 .5px var(--ps-champ-focus);
+}
+/* Autoremplissage du navigateur : on garde un fond sombre et un texte clair (sinon fond blanc ou jaune) */
+html[data-theme="sombre"] .cx-saisie:-webkit-autofill,
+html[data-theme="sombre"] .cx-saisie:-webkit-autofill:hover,
+html[data-theme="sombre"] .cx-saisie:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ps-texte);
+  caret-color: var(--ps-texte);
+  -webkit-box-shadow: 0 0 0 100px #151818 inset;
+  box-shadow: 0 0 0 100px #151818 inset;
+}
+html[data-theme="sombre"] .cx-oeil { background: rgba(255, 255, 255, .06); }
+html[data-theme="sombre"] .cx-oeil:hover { background: rgba(255, 255, 255, .11); color: var(--ps-texte); }
+
+/* ---------- Bouton « Se connecter » : blanc quand il est prêt, gris discret sinon ---------- */
+html[data-theme="sombre"] .cx-bouton { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .cx-bouton.is-inactif { background: rgba(255, 255, 255, .06); color: #8A9392; box-shadow: none; }
+
+/* ---------- Messages d'erreur : rose de la palette ---------- */
+html[data-theme="sombre"] .cx-erreurs { background: var(--ps-rose-fond); border: 1px solid var(--ps-rose-contour); }
+
+/* ---------- Panneau de droite : déjà vert foncé, on ajoute un contour et une ombre noire ---------- */
+html[data-theme="sombre"] .cx-panneau { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), var(--ps-ombre-forte); }

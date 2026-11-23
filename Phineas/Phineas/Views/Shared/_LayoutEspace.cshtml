@@ -1,0 +1,157 @@
+@* Coque commune à tous les espaces connectés (administrateur, directeur, vendeur, mécanicien) :
+   barre latérale en verre, thème clair ou sombre, carte de l'utilisateur.
+   Le menu vient de NavigationEspaces.MenuPour(rôle) ; elle s'insère dans _Layout.cshtml par la section « Barre ».
+   L'espace vendeur l'utilise à travers Views/Conseiller/_LayoutConseiller.cshtml. *@
+@using Phineas.Models.Constants
+@using Phineas.Models.ViewModels
+@using Phineas.Models.ViewModels.Conseiller
+@{
+    Layout = "_Layout";
+    ViewData["ClasseApp"] = "ph-espace";
+    var role = AppRoles.Of(User);
+    var menu = NavigationEspaces.MenuPour(role);
+    var estVendeur = role == AppRoles.Conseiller;
+    var controleur = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+
+    // Le logo ramène à l'accueil de l'espace du rôle connecté.
+    var controleurAccueil = AppRoles.Spaces.FirstOrDefault(s => s.Role == role).Controller ?? "Account";
+    var actionAccueil = controleurAccueil == "Account" ? "Home" : "Index";
+
+    // Une section reste active sur toutes ses pages (ex. liste et fiche des prospects).
+    bool EstActive(EntreeNavigation e) => e.Controleur is not null && e.Controleur == controleur;
+    // Dans un groupe, une seule sous-entrée est surlignée : celle de la page affichée,
+    // sinon la liste (« Index ») du même contrôleur. Ex. : la fiche d'une soumission surligne « Soumissions ».
+    EntreeNavigation? EnfantActif(IReadOnlyList<EntreeNavigation> enfants)
+    {
+        foreach (var enfant in enfants)
+        {
+            if (enfant.Controleur == controleur && enfant.Action == action)
+            {
+                return enfant;
+            }
+        }
+        foreach (var enfant in enfants)
+        {
+            if (enfant.Controleur == controleur && enfant.Action == "Index")
+            {
+                return enfant;
+            }
+        }
+        return null;
+    }
+
+    var nomComplet = User.FindFirst(AppClaims.FullName)?.Value ?? User.Identity?.Name ?? "";
+    // Sous le nom : la concession, sinon le rôle (ex. l'administrateur n'a pas de concession).
+    var sousTitre = User.FindFirst(AppClaims.DealershipName)?.Value ?? AppRoles.Label(role);
+    var initiales = string.Concat(nomComplet.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => p[0]));
+    // Nombre d'actions à traiter, fourni par la page quand elle le connaît (ex. tableau de bord du vendeur).
+    var nbActions = ViewData["NbActions"] as int?;
+}
+
+@section Styles {
+    @* Thème clair / sombre : appliqué ici, dans le <head>, avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/conseiller.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/espace-vendeur.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/espaces.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+}
+
+@section Barre {
+    <a class="ph-logo" asp-controller="@controleurAccueil" asp-action="@actionAccueil"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 30 }' />phineas</a>
+
+    <nav class="ph-nav" aria-label="Navigation de l'espace @AppRoles.Label(role)">
+        @foreach (var entree in menu)
+        {
+            if (entree.Enfants is { } enfants)
+            {
+                // Le groupe s'ouvre et passe en vert sapin quand une de ses pages est affichée.
+                var enfantActif = EnfantActif(enfants);
+                var groupeActif = enfantActif is not null;
+                <details class="ph-groupe @(groupeActif ? "is-active" : "")" open="@groupeActif">
+                    <summary><i class="bi @entree.Icone"></i>@entree.Libelle</summary>
+                    <div class="ph-sous-nav">
+                        @foreach (var enfant in enfants)
+                        {
+                            if (enfant.Disponible)
+                            {
+                                var actif = enfant == enfantActif;
+                                <a class="@(actif ? "is-active" : "")" asp-controller="@enfant.Controleur" asp-action="@enfant.Action" aria-current="@(actif ? "page" : null)">@enfant.Libelle</a>
+                            }
+                            else
+                            {
+                                <span class="is-off" aria-disabled="true" title="Disponible avec un prochain module">@enfant.Libelle</span>
+                            }
+                        }
+                    </div>
+                </details>
+                continue;
+            }
+
+            var compteur = entree.Libelle == "Centre d'actions" ? nbActions : null;
+            if (entree.Disponible)
+            {
+                var active = EstActive(entree);
+                <a class="@(active ? "is-active" : "")" asp-controller="@entree.Controleur" asp-action="@entree.Action" aria-current="@(active ? "page" : null)">
+                    <i class="bi @entree.Icone"></i>@entree.Libelle
+                    @if (compteur is not null)
+                    {
+                        <span class="ph-nav-count">@compteur</span>
+                    }
+                </a>
+            }
+            else
+            {
+                <span class="is-off" aria-disabled="true" title="Disponible avec un prochain module">
+                    <i class="bi @entree.Icone"></i>@entree.Libelle
+                    @if (compteur is not null)
+                    {
+                        <span class="ph-nav-count">@compteur</span>
+                    }
+                </span>
+            }
+        }
+    </nav>
+
+    <div class="ph-user">
+        <span class="ph-avatar" aria-hidden="true">@initiales</span>
+        <div class="ph-user-id">
+            <strong>@nomComplet</strong>
+            <small>@sousTitre</small>
+        </div>
+        @* Réglages d'affichage, mémorisés par wwwroot/js/theme.js : thème sombre pour tous, chiffres de l'accueil pour le vendeur. *@
+        <div class="dropup ph-reglages">
+            <button type="button" class="ph-user-out" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" title="Affichage" aria-label="Affichage">
+                <i class="bi bi-sliders" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu ph-reglages-menu">
+                <p class="ph-reglages-titre">Affichage</p>
+                <button type="button" class="ph-reglage" data-basculer-theme aria-pressed="false">
+                    <i class="bi bi-moon" data-theme-icone aria-hidden="true"></i>
+                    <span>Thème sombre</span>
+                    <span class="ph-reglage-interrupteur" aria-hidden="true"></span>
+                </button>
+                @if (estVendeur)
+                {
+                    <div class="form-check form-switch ph-reglage ph-reglage-case">
+                        <input class="form-check-input" type="checkbox" role="switch" id="reglage-chiffres-accueil" data-reglage-chiffres checked />
+                        <label class="form-check-label" for="reglage-chiffres-accueil">Chiffres de l'accueil</label>
+                    </div>
+                }
+            </div>
+        </div>
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit" class="ph-user-out" title="Se déconnecter" aria-label="Se déconnecter"><i class="bi bi-box-arrow-right"></i></button>
+        </form>
+    </div>
+}
+
+@RenderBody()
+
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

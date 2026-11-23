@@ -1,0 +1,94 @@
+@* Page « Mes performances commerciales » (maquettes 21 à 27) : sept onglets, une vue d'ensemble puis un onglet par domaine.
+   Chiffres : performances-calcul.js (instantané des stores, via outils-store.js) et relations-store.js pour la relation client.
+   Rendu : wwwroot/js/performances-page.js. Styles : outils.css (jetons og-) et performances-verre.css (préfixe pf-). *@
+@using Phineas.Models.ViewModels.Conseiller
+@model OutilsPageViewModel
+@{
+    ViewData["Title"] = "Mes performances commerciales";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/performances-verre.css" asp-append-version="true" />
+}
+
+<div class="og-page pf-page">
+
+@* Haut propre à cette page : la maquette ne montre ni « Modifiée » ni « Réinitialiser » (ils restent sur Studio d'annonces). *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Mes performances</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
+    </div>
+</div>
+
+<header class="pf-entete">
+    <div>
+        <p class="pf-label">Outils</p>
+        <h1 class="pf-titre">Mes performances commerciales</h1>
+        <p class="pf-intro">Comprendre vos résultats à partir de vos dossiers : des observations, sans notation ni prédiction.</p>
+    </div>
+    <div class="pf-periode">
+        <i class="bi bi-calendar3" aria-hidden="true"></i>
+        <label class="visually-hidden" for="f-periode">Période</label>
+        <select id="f-periode">
+            <option value="30">30 derniers jours</option>
+            <option value="90" selected>90 derniers jours</option>
+            <option value="365">12 derniers mois</option>
+            <option value="">Depuis le début</option>
+        </select>
+    </div>
+</header>
+
+<div id="performances" data-onglet="@Model.Onglet">
+    <ul class="nav pf-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-ensemble" data-bs-toggle="tab" data-bs-target="#panneau-ensemble" type="button" role="tab" aria-controls="panneau-ensemble" aria-selected="true">Vue d'ensemble</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-acquisition" data-bs-toggle="tab" data-bs-target="#panneau-acquisition" type="button" role="tab" aria-controls="panneau-acquisition" aria-selected="false">Acquisition</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-pipeline" data-bs-toggle="tab" data-bs-target="#panneau-pipeline" type="button" role="tab" aria-controls="panneau-pipeline" aria-selected="false">Pipeline</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-soumissions" data-bs-toggle="tab" data-bs-target="#panneau-soumissions" type="button" role="tab" aria-controls="panneau-soumissions" aria-selected="false">Soumissions</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-rendezvous" data-bs-toggle="tab" data-bs-target="#panneau-rendezvous" type="button" role="tab" aria-controls="panneau-rendezvous" aria-selected="false">Rendez-vous</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-transactions" data-bs-toggle="tab" data-bs-target="#panneau-transactions" type="button" role="tab" aria-controls="panneau-transactions" aria-selected="false">Transactions</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-relation" data-bs-toggle="tab" data-bs-target="#panneau-relation" type="button" role="tab" aria-controls="panneau-relation" aria-selected="false">Relation client</button></li>
+    </ul>
+
+    @* Chaque panneau est rempli par performances-page.js (data-zone = nom du domaine). *@
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="panneau-ensemble" role="tabpanel" aria-labelledby="onglet-ensemble" tabindex="0" data-zone="ensemble"></div>
+        <div class="tab-pane fade" id="panneau-acquisition" role="tabpanel" aria-labelledby="onglet-acquisition" tabindex="0" data-zone="acquisition"></div>
+        <div class="tab-pane fade" id="panneau-pipeline" role="tabpanel" aria-labelledby="onglet-pipeline" tabindex="0" data-zone="pipeline"></div>
+        <div class="tab-pane fade" id="panneau-soumissions" role="tabpanel" aria-labelledby="onglet-soumissions" tabindex="0" data-zone="soumissions"></div>
+        <div class="tab-pane fade" id="panneau-rendezvous" role="tabpanel" aria-labelledby="onglet-rendezvous" tabindex="0" data-zone="rendezvous"></div>
+        <div class="tab-pane fade" id="panneau-transactions" role="tabpanel" aria-labelledby="onglet-transactions" tabindex="0" data-zone="transactions"></div>
+        <div class="tab-pane fade" id="panneau-relation" role="tabpanel" aria-labelledby="onglet-relation" tabindex="0" data-zone="relation"></div>
+    </div>
+
+    <p class="pf-note" role="note"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Ces chiffres dépendent des dossiers que vous recevez : ils ne mesurent pas la compétence d'un conseiller et ne servent à aucune notation. Aucune prédiction n'est faite. Données de démonstration, calculées à partir de vos dossiers dans Sales OS.</span></p>
+</div>
+
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/performances-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/performances-page.js" asp-append-version="true"></script>
+}

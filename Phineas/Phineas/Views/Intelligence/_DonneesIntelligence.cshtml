@@ -1,0 +1,31 @@
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Phineas.Models.ViewModels.Conseiller
+@model ChargeIntelligence
+@{
+    // L'encodeur par défaut échappe < > & ' : le JSON est sûr dans une balise <script>.
+    var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
+    var charge = new
+    {
+        donnees = Model.Donnees,
+        referentiels = ReferentielsIntelligence.PourClient(),
+        conseillerNom = Model.ConseillerNom,
+        urlActions = Url.Action("Index", "Intelligence"),
+        urlSuivis = Url.Action("Suivis", "Intelligence"),
+        urlVehicules = Url.Action("Vehicules", "Intelligence"),
+    };
+}
+<script type="application/json" id="intelligence-donnees">@Html.Raw(JsonSerializer.Serialize(charge, options))</script>
+@* Phase 07 : faits des relations clients, entrées du moteur (balise distincte, libellés propres). *@
+@if (Model.Donnees.Relations is { } relations)
+{
+    <partial name="~/Views/Relations/_DonneesRelations.cshtml" model="new ChargeRelations(relations, Model.ConseillerNom, Model.Concession)" />
+}
+@* Phase 08 : outils du vendeur (annonces, provenance, prospection, assistant). *@
+@if (Model.Donnees.Outils is { } outils)
+{
+    <partial name="~/Views/Outils/_DonneesOutils.cshtml" model="new ChargeOutils(outils, Model.ConseillerNom, Model.Concession)" />
+}

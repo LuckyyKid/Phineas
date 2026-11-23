@@ -1,29 +1,32 @@
+@* Formulaire de création et de modification d'une concession. Styles : .es-formulaire dans wwwroot/css/espaces.css. *@
 @model ConcessionFormViewModel
 
-<form asp-action="@(Model.EstModification ? "Modifier" : "Creer")" asp-route-id="@Model.Id" method="post" novalidate>
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<form asp-action="@(Model.EstModification ? "Modifier" : "Creer")" asp-route-id="@Model.Id" method="post" novalidate class="es-formulaire">
+    <div asp-validation-summary="ModelOnly" class="es-alerte es-alerte-erreur"></div>
 
-    <div class="mb-3">
-        <label asp-for="Nom" class="form-label"></label>
-        <input asp-for="Nom" class="form-control" autofocus />
-        <span asp-validation-for="Nom" class="text-danger small"></span>
+    <div class="es-champ">
+        <label asp-for="Nom"></label>
+        <input asp-for="Nom" autofocus />
+        <span asp-validation-for="Nom" class="es-erreur"></span>
     </div>
 
-    <div class="form-check form-switch mb-4">
-        <input asp-for="EstActive" class="form-check-input" role="switch" />
-        <label asp-for="EstActive" class="form-check-label"></label>
-        <div class="form-text">Une concession suspendue garde ses données, mais son personnel ne peut plus se connecter.</div>
+    <div>
+        <div class="form-check form-switch es-interrupteur">
+            <input asp-for="EstActive" class="form-check-input" role="switch" />
+            <label asp-for="EstActive" class="form-check-label"></label>
+        </div>
+        <p class="es-aide mt-2">Une concession suspendue garde ses données, mais son personnel ne peut plus se connecter.</p>
     </div>
 
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">@(Model.EstModification ? "Enregistrer" : "Créer la concession")</button>
+    <div class="es-actions">
+        <button type="submit" class="es-btn-sapin">@(Model.EstModification ? "Enregistrer" : "Créer la concession")</button>
         @if (Model.EstModification)
         {
-            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Annuler</a>
+            <a class="es-btn-secondaire" asp-action="Details" asp-route-id="@Model.Id">Annuler</a>
         }
         else
         {
-            <a class="btn btn-outline-secondary" asp-action="Index">Annuler</a>
+            <a class="es-btn-secondaire" asp-action="Index">Annuler</a>
         }
     </div>
 </form>

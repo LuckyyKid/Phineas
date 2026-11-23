@@ -1,0 +1,26 @@
+@* Coque des pages vendeur : la coque commune des espaces (Views/Shared/_LayoutEspace.cshtml, menu dans NavigationVendeur.cs),
+   plus la notification (toast) et le script communs à l'espace vendeur (wwwroot/js/conseiller.js). *@
+@{
+    Layout = "~/Views/Shared/_LayoutEspace.cshtml";
+}
+
+@section Styles {
+    @await RenderSectionAsync("Styles", required: false)
+}
+
+@RenderBody()
+
+<div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3">
+    <div id="sv-toast" class="toast align-items-center border-0" role="status" aria-live="polite" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body"><span data-toast-texte></span></div>
+            <button type="button" class="btn btn-sm sv-toast-annuler d-none" data-toast-annuler>Annuler</button>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/conseiller.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+}

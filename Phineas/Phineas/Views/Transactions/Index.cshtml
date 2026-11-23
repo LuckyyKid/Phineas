@@ -1,0 +1,186 @@
+@* Page « Transactions » : où en est chaque dossier d'achat, ce qui le bloque et qui doit intervenir. Vue Liste et vue Pipeline.
+   Design : maquettes 11-transactions-liste et 12-transactions-pipeline (verre clair).
+   Données : TransactionsController.Index (store local transactions-store.js). Interactions : wwwroot/js/transactions-liste.js.
+   Styles : assistant-verre.css (haut de page commun, préfixe ns-) et transactions-liste-verre.css (préfixe txv-). *@
+@using Phineas.Models.ViewModels.Conseiller
+@model TransactionsPageViewModel
+@{
+    ViewData["Title"] = "Transactions";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/assistant-verre.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/transactions-liste-verre.css" asp-append-version="true" />
+}
+
+<div class="ns-page txv-page" id="transactions">
+    <div class="ns-haut">
+        <nav class="ns-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Transactions</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
+        <div class="ns-puces" role="note" title="Transactions de démonstration : aucune vente, aucun paiement ni aucune décision de financement réels. Les changements restent dans cet onglet.">
+            <span class="ns-chip-demo">Démo</span>
+            <span class="ns-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="ns-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="ns-en-ligne"><span class="ns-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <div class="txv-entete">
+        <div>
+            <p class="ns-label">Ventes</p>
+            <h1 class="ns-titre">Transactions</h1>
+            <p class="txv-intro">Où en est chaque dossier d'achat, ce qui le bloque et qui doit intervenir.</p>
+        </div>
+        <a class="ns-btn ns-btn-sapin txv-btn-principal" asp-action="Nouvelle"><i class="bi bi-plus-lg" aria-hidden="true"></i>Nouvelle transaction</a>
+    </div>
+
+    @* Chiffres de mes transactions, calculés par transactions-liste.js (data-compteur). Le détail est dans l'infobulle. *@
+    <section class="txv-chiffres" aria-label="Résumé de mes transactions">
+        <div class="ns-verre txv-chiffre" title="Dossiers en cours">
+            <span class="txv-chiffre-valeur" data-compteur="actives">…</span>
+            <span class="txv-chiffre-libelle">dossiers actifs</span>
+        </div>
+        <div class="ns-verre txv-chiffre" title="Vous pouvez avancer maintenant">
+            <span class="txv-chiffre-valeur" data-compteur="action">…</span>
+            <span class="txv-chiffre-libelle">action requise de votre part</span>
+        </div>
+        <div class="ns-verre txv-chiffre" title="Au moins un blocage">
+            <span class="txv-chiffre-valeur" data-compteur="bloquees">…</span>
+            <span class="txv-chiffre-libelle">bloquées <span class="txv-point txv-point-rouge" aria-hidden="true"></span></span>
+        </div>
+        <div class="ns-verre txv-chiffre" title="Décision ou conditions F&amp;A">
+            <span class="txv-chiffre-valeur" data-compteur="financement">…</span>
+            <span class="txv-chiffre-libelle">financement en attente</span>
+        </div>
+        <div class="ns-verre txv-chiffre" title="Toutes les conditions sont remplies">
+            <span class="txv-chiffre-valeur" data-compteur="pretes">…</span>
+            <span class="txv-chiffre-libelle">prêtes à livrer</span>
+        </div>
+        <div class="ns-verre txv-chiffre" title="Livrées ou clôturées">
+            <span class="txv-chiffre-valeur" data-compteur="finalisees">…</span>
+            <span class="txv-chiffre-libelle">finalisées</span>
+        </div>
+    </section>
+
+    <section class="ns-verre txv-module" aria-label="Liste des transactions">
+        <div class="txv-outils">
+            <div class="txv-ligne-outils">
+                <div class="txv-recherche">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="f-recherche" placeholder="Client, véhicule ou référence" aria-label="Rechercher une transaction" autocomplete="off" />
+                </div>
+                <div class="txv-bascule" role="group" aria-label="Mode d'affichage">
+                    <input type="radio" class="btn-check" name="vue" id="vue-liste" value="liste" checked />
+                    <label for="vue-liste"><i class="bi bi-list-ul" aria-hidden="true"></i>Liste</label>
+                    <input type="radio" class="btn-check" name="vue" id="vue-pipeline" value="pipeline" />
+                    <label for="vue-pipeline"><i class="bi bi-kanban" aria-hidden="true"></i>Pipeline</label>
+                </div>
+                <select class="txv-select" id="f-conseiller" aria-label="Filtrer par conseiller">
+                    @foreach (var c in Model.Prospects.Conseillers)
+                    {
+                        <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes transactions" : c.Nom + " (fictif)")</option>
+                    }
+                    <option value="">Tous les conseillers</option>
+                </select>
+                <select class="txv-select" id="f-mode" aria-label="Filtrer par mode d'achat">
+                    <option value="">Tous les modes d'achat</option>
+                    @foreach (var (cle, libelle) in ReferentielsTransactions.ModesAchat)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select>
+                <select class="txv-select" id="f-livraison" aria-label="Filtrer par date de livraison">
+                    <option value="">Toutes les dates de livraison</option>
+                    <option value="7j">Livraison d'ici 7 jours</option>
+                    <option value="connue">Date connue</option>
+                    <option value="inconnue">Date non déterminée</option>
+                </select>
+            </div>
+
+            <div class="txv-ligne-outils">
+                <select class="txv-select" id="f-etape" aria-label="Filtrer par étape">
+                    <option value="">Toutes les étapes</option>
+                    @foreach (var (cle, libelle) in ReferentielsTransactions.EtapesPipeline)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select>
+                <select class="txv-select" id="f-financement" aria-label="Filtrer par statut financier">
+                    <option value="">Tous les statuts financiers</option>
+                    @foreach (var (cle, libelle) in ReferentielsTransactions.StatutsFinancement)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select>
+                <select class="txv-select" id="f-departement" aria-label="Filtrer par département responsable d'un blocage">
+                    <option value="">Tous les départements</option>
+                    @foreach (var (cle, libelle, _) in ReferentielsTransactions.Departements)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select>
+                <div class="form-check form-switch txv-interrupteur">
+                    <input class="form-check-input" type="checkbox" role="switch" id="f-bloquees" />
+                    <label class="form-check-label" for="f-bloquees">Bloquées</label>
+                </div>
+                <div class="form-check form-switch txv-interrupteur">
+                    <input class="form-check-input" type="checkbox" role="switch" id="f-action" />
+                    <label class="form-check-label" for="f-action">Action requise</label>
+                </div>
+                <button type="button" class="txv-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+            </div>
+
+            <p class="txv-aide">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <strong id="resultat" aria-live="polite"></strong>
+                <span>Les quatre pastilles suivent, dans l'ordre : validation commerciale, financement, véhicule, livraison.</span>
+            </p>
+        </div>
+
+        <div id="vue-liste-contenu">
+            <div class="txv-defile">
+                <table class="txv-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Client</th>
+                            <th scope="col">Véhicule</th>
+                            <th scope="col">Montant et mode</th>
+                            <th scope="col">Étape</th>
+                            <th scope="col">Blocage et attendu de</th>
+                            <th scope="col">Prochaine action</th>
+                            <th scope="col">Livraison</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liste-corps"></tbody>
+                </table>
+            </div>
+            @* Pied de carte : « 1 à 6 sur 14 » et numéros de page (transactions-liste.js), caché si tout tient sur une page. *@
+            <nav class="txv-pagination" id="pagination-liste" aria-label="Pagination des transactions" hidden></nav>
+        </div>
+
+        <div id="vue-pipeline-contenu" hidden>
+            <div class="txv-colonnes" id="pipeline" role="list" aria-label="Pipeline des transactions"></div>
+        </div>
+
+        <div class="txv-vide" id="etat-vide" hidden>
+            <span data-vide-texte>Aucune transaction ne correspond.</span>
+            <button type="button" class="txv-effacer" data-effacer-filtres>Effacer les filtres</button>
+        </div>
+    </section>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-liste.js" asp-append-version="true"></script>
+}

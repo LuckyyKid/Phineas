@@ -1,17 +1,19 @@
 @model UtilisateurFormViewModel
 @{ ViewData["Title"] = "Ajouter une personne"; }
 
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Personnel</a></li>
-        <li class="breadcrumb-item active">Ajouter</li>
-    </ol>
-</nav>
+<div class="es-page es-page-etroite">
+    <nav class="es-ariane" aria-label="Fil d'Ariane">
+        <a asp-action="Index">Personnel</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Ajouter</span>
+    </nav>
 
-<h1 class="h3 mb-4">Ajouter une personne</h1>
+    <header class="es-entete">
+        <div>
+            <p class="es-label">Administration</p>
+            <h1 class="es-titre">Ajouter une personne</h1>
+        </div>
+    </header>
 
-<div class="card" style="max-width: 720px">
-    <div class="card-body">
+    <section class="es-verre es-carte">
         <partial name="_Formulaire" model="Model" />
-    </div>
+    </section>
 </div>

@@ -1,0 +1,366 @@
+@* Page publique d'un conseiller, en APERÇU seulement (ouverte depuis « Réseau et recommandations ») :
+   accueil, parcours « Je recherche un véhicule » en 3 étapes, demande de rendez-vous et confirmation.
+   Page autonome (sans barre latérale). Données : profil public du conseiller (ci-dessous) ; interactions : relations-public.js ;
+   styles : relations-public.css (préfixe pub-). Rien n'est envoyé : la demande reste dans l'onglet. *@
+@using System.Text.Json
+@using Phineas.Models.ViewModels.Conseiller
+@model ApercuRecommandationViewModel
+@{
+    Layout = null;
+    var p = Model.Profil;
+    var langues = p is null ? new List<string>() : p.Langues.Select(l => ReferentielsRelations.Langues.FirstOrDefault(x => x.Cle == l).Libelle ?? l).ToList();
+    // Seules les informations publiques autorisées du conseiller sont transmises à cette page.
+    var charge = new
+    {
+        nom = Model.ConseillerNom,
+        // Forme du rôle et textes accordés (« Conseillère aux ventes »…) : une seule source, ReferentielsRelations.
+        formeRole = p?.FormeRole,
+        formesRole = ReferentielsRelations.FormesRole.ToDictionary(x => x.Cle, x => x),
+        formeRoleNeutre = ReferentielsRelations.FormeRoleNeutre,
+        anneeArrivee = p?.AnneeArrivee,
+        ville = p?.VilleConcession,
+        concession = Model.Concession ?? "Concession de démonstration",
+        presentation = p?.Presentation,
+        telephone = p is { AfficherTelephone: true } ? p.TelephonePro : null,
+        courriel = p is { AfficherCourriel: true } ? p.CourrielPro : null,
+        langues = p is { AfficherLangues: true } ? langues : new List<string>(),
+        code = p?.CodeRecommandation,
+        retour = Url.Action("Reseau", "Relations"),
+    };
+}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Aperçu : votre conseiller automobile</title>
+    @* Thème clair / sombre : appliqué avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations-public.css" asp-append-version="true" />
+</head>
+<body class="pub-corps">
+    @* Bandeau propre à l'aperçu du conseiller : il n'existerait pas sur une vraie page publique. *@
+    <div class="pub-bandeau" role="note">
+        <span>Aperçu de démonstration. Ce parcours n'est pas publié : rien n'est envoyé et rien ne quitte cet onglet.</span>
+        <a href="@charge.retour"><i class="bi bi-arrow-left" aria-hidden="true"></i> Retour à mon espace</a>
+    </div>
+
+    <div class="pub-page" id="parcours">
+        <header class="pub-entete">
+            <div class="pub-marque">
+                <span class="pub-monogramme" aria-hidden="true" data-pub="monogramme"></span>
+                <span data-pub="concession"></span>
+            </div>
+            <div class="ps-entete-actions">
+                <a class="pub-lien-profil" href="#accueil" data-aller="accueil" hidden data-lien-profil>
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> Profil de <span data-pub="prenom"></span>
+                </a>
+                <button type="button" class="ps-bascule-theme" data-basculer-theme aria-pressed="false" aria-label="Thème sombre" title="Thème sombre"><i class="bi bi-moon" data-theme-icone aria-hidden="true"></i></button>
+            </div>
+        </header>
+
+        <main id="pub-contenu" tabindex="-1">
+
+            @* ---------- Accueil ---------- *@
+            <section class="pub-ecran" data-ecran="accueil" aria-labelledby="pub-nom">
+                <div class="pub-heros">
+                    <div class="pub-heros-texte">
+                        <p class="pub-etiquette" data-pub="recommandation"></p>
+                        <h1 class="pub-nom" id="pub-nom" data-pub="nom"></h1>
+                        <p class="pub-role"><span data-pub="role-long"></span> · <span data-pub="concession"></span></p>
+                        <p class="pub-accueil">« Bonjour, moi c'est <span data-pub="prenom"></span> ! Je vous accompagne dans la recherche d'un véhicule qui correspond à vos besoins, à votre budget et à votre style de vie. »</p>
+                        <div class="pub-actions">
+                            <button type="button" class="pub-btn pub-btn-principal" data-aller="recherche-1"><i class="bi bi-search" aria-hidden="true"></i>Je recherche un véhicule</button>
+                            <button type="button" class="pub-btn pub-btn-secondaire" data-aller="rendez-vous"><i class="bi bi-calendar3" aria-hidden="true"></i>Prendre rendez-vous</button>
+                        </div>
+                        <ul class="pub-mentions">
+                            <li><i class="bi bi-check-circle" aria-hidden="true"></i>Un accompagnement personnalisé</li>
+                            <li><i class="bi bi-check-circle" aria-hidden="true"></i>Sans engagement</li>
+                            <li><i class="bi bi-check-circle" aria-hidden="true"></i>Des réponses adaptées à vos besoins</li>
+                        </ul>
+                    </div>
+
+                    <aside class="pub-carte-conseiller" aria-label="Carte du conseiller">
+                        <div class="pub-carte-haut">
+                            <span class="pub-avatar pub-avatar-grand" aria-hidden="true" data-pub="initiales"></span>
+                            <p class="pub-carte-nom" data-pub="nom"></p>
+                            <p class="pub-carte-role" data-pub="sous-titre-carte"></p>
+                        </div>
+                        <div class="pub-carte-bas">
+                            <p class="pub-presentation" data-pub="presentation"></p>
+                            <ul class="pub-coordonnees" data-pub="coordonnees"></ul>
+                        </div>
+                    </aside>
+                </div>
+
+                <section class="pub-section" aria-labelledby="pub-aide-titre">
+                    <p class="pub-etiquette">Comment <span data-pub="prenom"></span> peut vous aider</p>
+                    <h2 class="pub-titre-section" id="pub-aide-titre">Votre prochain véhicule, en toute simplicité</h2>
+                    <div class="pub-etapes-aide">
+                        <article class="pub-carte pub-aide">
+                            <div class="pub-aide-tete"><span class="pub-aide-icone" aria-hidden="true"><i class="bi bi-search"></i></span><span class="pub-aide-numero">01</span></div>
+                            <h3>Trouvons votre véhicule</h3>
+                            <p>Vous expliquez vos besoins, vos préférences et votre budget.</p>
+                        </article>
+                        <article class="pub-carte pub-aide">
+                            <div class="pub-aide-tete"><span class="pub-aide-icone" aria-hidden="true"><i class="bi bi-arrow-left-right"></i></span><span class="pub-aide-numero">02</span></div>
+                            <h3>Comparons vos options</h3>
+                            <p><span data-pub="prenom"></span> vous accompagne pour découvrir les véhicules et comprendre les différentes possibilités d'achat.</p>
+                        </article>
+                        <article class="pub-carte pub-aide">
+                            <div class="pub-aide-tete"><span class="pub-aide-icone" aria-hidden="true"><i class="bi bi-calendar-check"></i></span><span class="pub-aide-numero">03</span></div>
+                            <h3>Organisons une rencontre</h3>
+                            <p>Échangez avec <span data-pub="prenom"></span> ou planifiez une visite à la concession.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="pub-rappel-bande" aria-labelledby="pub-rappel-titre">
+                    <div>
+                        <h2 id="pub-rappel-titre">Par où voulez-vous commencer ?</h2>
+                        <p>Deux minutes suffisent. <span data-pub="prenom"></span> vous répond selon le moyen que vous préférez.</p>
+                    </div>
+                    <div class="pub-rappel-actions">
+                        <button type="button" class="pub-btn pub-btn-blanc" data-aller="recherche-1">Je recherche un véhicule</button>
+                        <button type="button" class="pub-btn pub-btn-translucide" data-aller="rendez-vous">Prendre rendez-vous</button>
+                    </div>
+                </section>
+            </section>
+
+            @* ---------- Parcours « Je recherche un véhicule » (3 étapes) ---------- *@
+            <section class="pub-ecran" data-ecran="recherche" hidden>
+                <div class="pub-deux-colonnes">
+                    <div>
+                        <p class="pub-etiquette" data-champ="etape-numero">Étape 1 sur 3</p>
+                        <div class="pub-progression" aria-hidden="true"><span data-segment="1"></span><span data-segment="2"></span><span data-segment="3"></span></div>
+                        <h1 class="pub-titre-etape" data-champ="etape-titre" tabindex="-1">Parlons de votre prochain véhicule</h1>
+
+                        <form class="pub-carte pub-formulaire" id="form-recherche" novalidate>
+                            @* Étape 1 : le type de véhicule est le seul choix obligatoire. *@
+                            <div data-etape="1">
+                                <fieldset class="pub-groupe">
+                                    <legend class="pub-libelle">Quel type de véhicule ?</legend>
+                                    <div class="pub-tuiles pub-tuiles-quatre" role="radiogroup" aria-label="Type de véhicule" data-choix-unique="type">
+                                        <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="VUS"><i class="bi bi-car-front" aria-hidden="true"></i>VUS</button>
+                                        <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Berline"><i class="bi bi-car-front-fill" aria-hidden="true"></i>Berline</button>
+                                        <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Camionnette"><i class="bi bi-truck" aria-hidden="true"></i>Camionnette</button>
+                                        <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Électrique ou hybride"><i class="bi bi-ev-front" aria-hidden="true"></i>Électrique ou hybride</button>
+                                        <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Je ne sais pas encore"><i class="bi bi-question-circle" aria-hidden="true"></i>Je ne sais pas encore</button>
+                                    </div>
+                                </fieldset>
+                                <div class="pub-champs-deux">
+                                    <div class="pub-groupe">
+                                        <label class="pub-libelle" for="pub-budget">Budget approximatif <span class="pub-facultatif">(facultatif)</span></label>
+                                        <input class="pub-champ" id="pub-budget" name="budget" inputmode="numeric" autocomplete="off" placeholder="Ex. : autour de 35 000 $" />
+                                    </div>
+                                    <div class="pub-groupe">
+                                        <label class="pub-libelle" for="pub-marque">Marque ou modèle envisagé <span class="pub-facultatif">(facultatif)</span></label>
+                                        <input class="pub-champ" id="pub-marque" name="marque" autocomplete="off" placeholder="Ex. : Toyota RAV4" />
+                                    </div>
+                                </div>
+                                <fieldset class="pub-groupe">
+                                    <legend class="pub-libelle">Neuf ou d'occasion ? <span class="pub-facultatif">(facultatif)</span></legend>
+                                    <div class="pub-pilules" role="radiogroup" aria-label="Neuf ou d'occasion" data-choix-unique="etat">
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="Neuf">Neuf</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="D'occasion">D'occasion</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="Peu importe">Peu importe</button>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="pub-groupe">
+                                    <legend class="pub-libelle">Quand pensez-vous acheter ? <span class="pub-facultatif">(facultatif)</span></legend>
+                                    <div class="pub-pilules" role="radiogroup" aria-label="Moment de l'achat" data-choix-unique="horizon">
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="immediat">Dès que possible</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="1-3-mois">D'ici 3 mois</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="plus-tard">Plus tard</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="inconnu">Je ne sais pas encore</button>
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            @* Étape 2 : entièrement facultative. *@
+                            <div data-etape="2" hidden>
+                                <fieldset class="pub-groupe">
+                                    <legend class="pub-libelle">Choisissez tout ce qui s'applique</legend>
+                                    <div class="pub-tuiles pub-tuiles-trois" role="group" aria-label="Ce qui compte pour vous" data-choix-multiple="criteres">
+                                        <button type="button" class="pub-tuile" role="checkbox" aria-checked="false" data-valeur="Économie de carburant"><i class="bi bi-fuel-pump" aria-hidden="true"></i>Économie de carburant</button>
+                                        <button type="button" class="pub-tuile" role="checkbox" aria-checked="false" data-valeur="Confort"><i class="bi bi-cup-hot" aria-hidden="true"></i>Confort</button>
+                                        <button type="button" class="pub-tuile" role="checkbox" aria-checked="false" data-valeur="Espace familial"><i class="bi bi-people" aria-hidden="true"></i>Espace familial</button>
+                                        <button type="button" class="pub-tuile" role="checkbox" aria-checked="false" data-valeur="Technologie"><i class="bi bi-cpu" aria-hidden="true"></i>Technologie</button>
+                                        <button type="button" class="pub-tuile" role="checkbox" aria-checked="false" data-valeur="Fiabilité"><i class="bi bi-shield-check" aria-hidden="true"></i>Fiabilité</button>
+                                        <button type="button" class="pub-tuile" role="checkbox" aria-checked="false" data-valeur="Autre"><i class="bi bi-three-dots" aria-hidden="true"></i>Autre</button>
+                                    </div>
+                                </fieldset>
+                                <div class="pub-groupe">
+                                    <label class="pub-libelle" for="pub-projet">Parlez-moi de votre projet <span class="pub-facultatif">(facultatif)</span></label>
+                                    <textarea class="pub-champ pub-zone" id="pub-projet" name="projet" rows="4" placeholder="Ex. : nous attendons un deuxième enfant et notre berline devient trop petite."></textarea>
+                                </div>
+                            </div>
+
+                            @* Étape 3 : coordonnées. Il faut le nom et au moins un moyen de joindre la personne. *@
+                            <div data-etape="3" hidden>
+                                <div class="pub-groupe">
+                                    <label class="pub-libelle" for="pub-r-nom">Prénom et nom</label>
+                                    <input class="pub-champ" id="pub-r-nom" name="nomComplet" autocomplete="name" />
+                                    <p class="pub-aide-champ" data-erreur="nomComplet" hidden></p>
+                                </div>
+                                <div class="pub-champs-deux">
+                                    <div class="pub-groupe">
+                                        <label class="pub-libelle" for="pub-r-courriel">Courriel</label>
+                                        <input class="pub-champ" type="email" id="pub-r-courriel" name="courriel" autocomplete="email" />
+                                        <p class="pub-aide-champ" data-erreur="courriel" hidden></p>
+                                    </div>
+                                    <div class="pub-groupe">
+                                        <label class="pub-libelle" for="pub-r-tel">Téléphone</label>
+                                        <input class="pub-champ" type="tel" id="pub-r-tel" name="telephone" autocomplete="tel" />
+                                        <p class="pub-aide-champ" data-erreur="telephone" hidden></p>
+                                    </div>
+                                </div>
+                                <fieldset class="pub-groupe">
+                                    <legend class="pub-libelle">Comment préférez-vous être joint ?</legend>
+                                    <div class="pub-pilules" role="radiogroup" aria-label="Moyen de contact préféré" data-choix-unique="contactPrefere">
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="true" data-valeur="telephone"><i class="bi bi-telephone" aria-hidden="true"></i>Téléphone</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="courriel"><i class="bi bi-envelope" aria-hidden="true"></i>Courriel</button>
+                                        <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="texto"><i class="bi bi-chat-dots" aria-hidden="true"></i>Texto</button>
+                                    </div>
+                                </fieldset>
+                                @* Consentement exigé par les règles existantes (RelationsRegles.validerDemandePublique). *@
+                                <div class="pub-consentements">
+                                    <label class="pub-case"><input type="checkbox" name="consentementContact" /><span>J'accepte que <span data-pub="prenom"></span> me contacte au sujet de ma demande.</span></label>
+                                    <label class="pub-case"><input type="checkbox" name="consentementInformation" /><span>J'accepte aussi de recevoir des suggestions de véhicules correspondant à ma recherche <span class="pub-facultatif">(facultatif)</span>.</span></label>
+                                </div>
+                                <p class="pub-note"><i class="bi bi-lock" aria-hidden="true"></i>Vos coordonnées servent uniquement à ce que <span data-pub="prenom"></span> puisse vous répondre. Elles ne sont ni revendues ni utilisées pour de la publicité.</p>
+                            </div>
+
+                            <div class="pub-pied-formulaire">
+                                <button type="button" class="pub-btn pub-btn-secondaire" data-action="recherche-precedent">Retour</button>
+                                <button type="button" class="pub-btn pub-btn-principal" data-action="recherche-suivant" disabled>Continuer<i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <aside class="pub-carte pub-rappel" aria-label="Votre interlocuteur">
+                        <p class="pub-etiquette" data-pub="interlocuteur"></p>
+                        <div class="pub-rappel-identite">
+                            <span class="pub-avatar pub-avatar-moyen" aria-hidden="true" data-pub="initiales"></span>
+                            <div><strong data-pub="nom"></strong><span data-pub="concession"></span></div>
+                        </div>
+                        <p><span data-pub="prenom"></span> lira votre demande et vous répondra selon le moyen que vous aurez choisi.</p>
+                        <p class="pub-sans-engagement"><i class="bi bi-check-circle" aria-hidden="true"></i>Sans engagement</p>
+                    </aside>
+                </div>
+            </section>
+
+            @* ---------- Demande de rendez-vous ---------- *@
+            <section class="pub-ecran" data-ecran="rendez-vous" hidden>
+                <div class="pub-deux-colonnes">
+                    <div>
+                        <p class="pub-etiquette">Demande de rendez-vous</p>
+                        <h1 class="pub-titre-etape" tabindex="-1" data-champ="rdv-titre">Rencontrons-nous !</h1>
+                        <p class="pub-sous-titre">Choisissez le type de rencontre et indiquez le moment qui vous conviendrait.</p>
+
+                        <form class="pub-carte pub-formulaire" id="form-rdv" novalidate>
+                            <fieldset class="pub-groupe">
+                                <legend class="pub-libelle">Type de rencontre</legend>
+                                <div class="pub-tuiles pub-tuiles-quatre" role="radiogroup" aria-label="Type de rencontre" data-choix-unique="typeRencontre">
+                                    <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Rencontre à la concession"><i class="bi bi-building" aria-hidden="true"></i>Rencontre à la concession</button>
+                                    <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Appel téléphonique"><i class="bi bi-telephone" aria-hidden="true"></i>Appel téléphonique</button>
+                                    <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Présentation d'un véhicule"><i class="bi bi-car-front" aria-hidden="true"></i>Présentation d'un véhicule</button>
+                                    <button type="button" class="pub-tuile" role="radio" aria-checked="false" data-valeur="Essai routier"><i class="bi bi-speedometer2" aria-hidden="true"></i>Essai routier</button>
+                                </div>
+                            </fieldset>
+
+                            <div class="pub-groupe">
+                                <p class="pub-libelle" id="pub-cal-libelle">Date souhaitée</p>
+                                <div class="pub-calendrier" data-zone="calendrier" role="group" aria-labelledby="pub-cal-libelle"></div>
+                            </div>
+
+                            <fieldset class="pub-groupe">
+                                <legend class="pub-libelle">Moment de la journée</legend>
+                                <div class="pub-pilules" role="radiogroup" aria-label="Moment de la journée" data-choix-unique="moment">
+                                    <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="Matin">Matin</button>
+                                    <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="Après-midi">Après-midi</button>
+                                    <button type="button" class="pub-pilule" role="radio" aria-checked="false" data-valeur="Soir">Soir</button>
+                                </div>
+                            </fieldset>
+
+                            <div class="pub-groupe">
+                                <label class="pub-libelle" for="pub-v-vehicule">Véhicule envisagé <span class="pub-facultatif">(facultatif)</span></label>
+                                <input class="pub-champ" id="pub-v-vehicule" name="vehicule" autocomplete="off" placeholder="Ex. : Honda CR-V Hybride" />
+                            </div>
+                            <div class="pub-champs-deux">
+                                <div class="pub-groupe">
+                                    <label class="pub-libelle" for="pub-v-nom">Prénom et nom</label>
+                                    <input class="pub-champ" id="pub-v-nom" name="nomComplet" autocomplete="name" />
+                                    <p class="pub-aide-champ" data-erreur="nomComplet" hidden></p>
+                                </div>
+                                <div class="pub-groupe">
+                                    <label class="pub-libelle" for="pub-v-tel">Téléphone</label>
+                                    <input class="pub-champ" type="tel" id="pub-v-tel" name="telephone" autocomplete="tel" />
+                                    <p class="pub-aide-champ" data-erreur="telephone" hidden></p>
+                                </div>
+                            </div>
+                            <div class="pub-groupe">
+                                <label class="pub-libelle" for="pub-v-courriel">Courriel <span class="pub-facultatif">(facultatif)</span></label>
+                                <input class="pub-champ" type="email" id="pub-v-courriel" name="courriel" autocomplete="email" />
+                                <p class="pub-aide-champ" data-erreur="courriel" hidden></p>
+                            </div>
+                            <div class="pub-consentements">
+                                <label class="pub-case"><input type="checkbox" name="consentementContact" /><span>J'accepte que <span data-pub="prenom"></span> me contacte au sujet de ma demande.</span></label>
+                                <label class="pub-case"><input type="checkbox" name="consentementInformation" /><span>J'accepte aussi de recevoir des suggestions de véhicules correspondant à ma recherche <span class="pub-facultatif">(facultatif)</span>.</span></label>
+                            </div>
+                            <p class="pub-note"><i class="bi bi-info-circle" aria-hidden="true"></i>C'est une demande : le rendez-vous reste à confirmer par <span data-pub="prenom"></span>, qui vous proposera une heure précise.</p>
+
+                            <div class="pub-pied-formulaire">
+                                <button type="button" class="pub-btn pub-btn-secondaire" data-aller="accueil">Retour</button>
+                                <button type="button" class="pub-btn pub-btn-principal" data-action="rdv-envoyer" disabled>Demander mon rendez-vous<i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <aside class="pub-carte pub-rappel" aria-label="Votre demande">
+                        <p class="pub-etiquette">Votre demande</p>
+                        <dl class="pub-resume-rdv">
+                            <div><dt>Type de rencontre</dt><dd data-rappel="typeRencontre"></dd></div>
+                            <div><dt>Date souhaitée</dt><dd data-rappel="date"></dd></div>
+                            <div><dt>Moment de la journée</dt><dd data-rappel="moment"></dd></div>
+                        </dl>
+                        <div class="pub-rappel-identite pub-rappel-identite-bas">
+                            <span class="pub-avatar pub-avatar-moyen" aria-hidden="true" data-pub="initiales"></span>
+                            <div><strong data-pub="nom"></strong><span data-pub="concession-ville"></span></div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            @* ---------- Confirmation ---------- *@
+            <section class="pub-ecran pub-confirmation" data-ecran="confirmation" hidden aria-live="polite">
+                <span class="pub-validation" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <h1 class="pub-titre-confirmation" tabindex="-1" data-champ="confirmation-titre">Merci pour votre confiance !</h1>
+                <p class="pub-sous-titre">Votre demande a été enregistrée. <span data-pub="prenom"></span> pourra en prendre connaissance et vous recontacter selon vos préférences.</p>
+                <dl class="pub-carte pub-resume" data-zone="resume"></dl>
+                <div class="pub-prochaine">
+                    <span class="pub-avatar pub-avatar-petit" aria-hidden="true" data-pub="initiales"></span>
+                    <div><strong>Prochaine étape</strong><p data-zone="prochaine"></p></div>
+                </div>
+                <button type="button" class="pub-btn pub-btn-principal" data-aller="accueil">Retour au profil de <span data-pub="prenom"></span></button>
+                <p class="pub-note pub-note-centree"><i class="bi bi-info-circle" aria-hidden="true"></i>Maquette de démonstration : aucun envoi réel n'est effectué.</p>
+            </section>
+        </main>
+
+        <footer class="pub-pied">
+            <p>Vous avez reçu ce lien d'une personne de votre entourage. Vous pouvez demander de l'aide sans aucun engagement.</p>
+            <p class="pub-propulse"><span class="pub-logo-point" aria-hidden="true"></span>Page propulsée par phineas</p>
+        </footer>
+    </div>
+
+    <script type="application/json" id="profil-public">@Html.Raw(JsonSerializer.Serialize(charge, new JsonSerializerOptions(JsonSerializerDefaults.Web)))</script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-public.js" asp-append-version="true"></script>
+</body>
+</html>

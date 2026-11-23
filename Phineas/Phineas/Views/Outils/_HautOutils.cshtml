@@ -1,0 +1,13 @@
+@* Haut commun aux pages « Outils » : fil d'Ariane et pastilles DÉMO / En ligne (remplace le bandeau permanent).
+   Le titre de la page vient de ViewData["Title"]. La réinitialisation des données de démonstration est branchée par prospects-store.js. *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span>Outils</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">@ViewData["Title"]</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-demo-etat" data-etat-demo hidden>Modifiée</span>
+        <button type="button" class="og-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
+    </div>
+</div>

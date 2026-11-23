@@ -1,0 +1,298 @@
+/* =========================================================
+   Statistiques relationnelles en verre clair (maquettes 39 à 41).
+   Chargée seulement par Views/Relations/Statistiques.cshtml. Tout est rangé sous .rs-page (préfixe rs-).
+   Les halos et la barre latérale viennent de la coque commune (espace-vendeur.css).
+   ========================================================= */
+
+.rs-page {
+  --rs-ink: #0B0D0D;
+  --rs-text: #434B4A;
+  --rs-muted: #566060;
+  --rs-muted-2: #6B7473;
+  --rs-line: rgba(11, 13, 13, .06);
+  --rs-line-2: rgba(11, 13, 13, .08);
+  --rs-sapin: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  --rs-sapin-texte: #17614F;
+  --rs-menthe-ink: #1D9A82;
+  --rs-ambre-ink: #9A5C00;
+  --rs-font: 'Geist', 'Inter', system-ui, sans-serif;
+  --rs-mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --rs-flou: blur(30px) saturate(180%);
+  --rs-ombre:
+    inset 0 0 0 1px rgba(255, 255, 255, .95),
+    0 1px 2px rgba(11, 13, 13, .03),
+    0 16px 40px -12px rgba(11, 13, 13, .10);
+  /* Graphiques : une seule teinte verte */
+  --rs-barre-fine: linear-gradient(90deg, #5FE0C0 0%, #17614F 100%);
+  --rs-barre-epaisse: linear-gradient(90deg, #1D7A66 0%, #0C3B32 100%);
+  --rs-piste: rgba(11, 13, 13, .06);
+
+  max-width: 1080px;
+  margin-inline: auto;
+  font-family: var(--rs-font);
+  color: var(--rs-ink);
+}
+.rs-page :focus-visible { outline: 2px solid var(--rs-menthe-ink); outline-offset: 2px; }
+.rs-page h1, .rs-page h2 { font-family: var(--rs-font); }
+
+/* ---------- Haut de page ---------- */
+.rs-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+.rs-ariane { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; color: var(--rs-muted); }
+.rs-ariane i { font-size: 11px; }
+.rs-ariane [aria-current] { color: var(--rs-ink); font-weight: 500; }
+.rs-puces { display: flex; align-items: center; gap: 8px; }
+.rs-chip-demo { padding: 4px 10px; border-radius: 999px; background: #FBF1DE; color: var(--rs-ambre-ink); font-family: var(--rs-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
+.rs-en-ligne { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--rs-line-2); background: rgba(255, 255, 255, .7); font-size: 14px; }
+.rs-point-vert { width: 7px; height: 7px; border-radius: 50%; background: var(--rs-menthe-ink); box-shadow: 0 0 0 3px rgba(95, 224, 192, .28); }
+
+/* ---------- En-tête ---------- */
+.rs-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.rs-label { margin: 0; font-family: var(--rs-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--rs-muted); }
+.rs-page .rs-titre { margin: 12px 0; font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; }
+.rs-intro { margin: 0; max-width: 640px; font-size: 18px; line-height: 1.5; color: var(--rs-text); }
+
+/* Menu de période : pilule de verre avec icône de calendrier verte */
+.rs-periode {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 48px;
+  margin: 0;
+  padding: 0 16px 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--rs-line-2);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rs-flou);
+  -webkit-backdrop-filter: var(--rs-flou);
+  box-shadow: var(--rs-ombre);
+}
+.rs-periode i { color: var(--rs-sapin-texte); font-size: 16px; }
+.rs-periode select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' d='M3.5 6 8 10.5 12.5 6'/%3E%3C/svg%3E") no-repeat right center;
+  padding: 0 24px 0 10px;
+  font-family: var(--rs-font);
+  font-size: 15.5px;
+  color: var(--rs-ink);
+  cursor: pointer;
+}
+.rs-periode select:focus { outline: none; }
+.rs-periode:focus-within { outline: 2px solid var(--rs-menthe-ink); outline-offset: 2px; }
+
+/* ---------- Onglets ---------- */
+.rs-onglets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 32px;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid var(--rs-line);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rs-flou);
+  -webkit-backdrop-filter: var(--rs-flou);
+  box-shadow: var(--rs-ombre);
+}
+.rs-onglet {
+  padding: 9px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 15px;
+  color: var(--rs-text);
+  transition: background-color .15s ease, color .15s ease;
+}
+.rs-onglet:hover { color: var(--rs-ink); background: rgba(11, 13, 13, .04); }
+.rs-onglet.is-active,
+.rs-onglet[aria-selected="true"] {
+  background: var(--rs-sapin);
+  color: #FFFFFF;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 10px 22px -10px rgba(12, 59, 50, .65);
+}
+
+/* ---------- Phrase de résumé ---------- */
+.rs-resume { margin: 0 0 24px; max-width: 760px; font-size: 20px; font-weight: 300; line-height: 1.45; letter-spacing: -0.01em; color: var(--rs-ink); }
+
+/* ---------- Cartes de chiffres : une seule rangée ---------- */
+.rs-chiffres { display: grid; gap: 14px; margin-bottom: 18px; }
+.rs-chiffres-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rs-chiffres-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rs-chiffres-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.rs-chiffre {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 22px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--rs-line);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rs-flou);
+  -webkit-backdrop-filter: var(--rs-flou);
+  box-shadow: var(--rs-ombre);
+}
+.rs-chiffre-tete { display: flex; align-items: center; gap: 10px; }
+.rs-chiffre-valeur { font-size: 36px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--rs-ink); }
+.rs-chiffre-valeur.is-indisponible { font-size: 18px; font-weight: 400; letter-spacing: 0; color: var(--rs-muted); }
+.rs-chiffre-libelle { margin-top: 4px; font-size: 13px; color: var(--rs-ink); }
+.rs-chiffre-precision { font-size: 12px; line-height: 1.45; color: var(--rs-muted); }
+
+/* Anneau des taux (40 px) : arc vert sapin sur piste gris pâle, départ en haut */
+.rs-anneau { width: 40px; height: 40px; flex-shrink: 0; transform: rotate(-90deg); }
+.rs-anneau circle { fill: none; stroke-width: 5; }
+.rs-anneau-piste { stroke: rgba(11, 13, 13, .08); }
+.rs-anneau-arc { stroke: #17614F; stroke-linecap: round; }
+
+/* ---------- Cartes de graphique ---------- */
+.rs-graphiques { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.rs-carte {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 30px 24px;
+  border-radius: 28px;
+  border: 1px solid var(--rs-line);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--rs-flou);
+  -webkit-backdrop-filter: var(--rs-flou);
+  box-shadow: var(--rs-ombre);
+}
+.rs-page .rs-carte-titre { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.rs-carte-sous-titre { margin: 6px 0 22px; font-size: 14px; color: var(--rs-text); }
+.rs-limite { margin: auto 0 0; padding-top: 16px; border-top: 1px solid var(--rs-line-2); font-size: 12px; line-height: 1.5; color: var(--rs-muted); }
+
+/* Répartition : libellé et valeur, puis barre fine de 6 px */
+.rs-repartition { display: flex; flex-direction: column; gap: 6px; margin: 0 0 22px; padding: 0; list-style: none; }
+
+/* Ligne de graphique : survol en fond blanc translucide et infobulle (texte de data-infobulle) */
+.rs-ligne,
+.rs-etape { position: relative; border-radius: 12px; outline-offset: 2px; transition: background-color .15s ease; }
+.rs-ligne { display: flex; flex-direction: column; gap: 8px; padding: 6px 8px 8px; margin: 0 -8px; }
+.rs-ligne:hover, .rs-ligne:focus-visible,
+.rs-etape:hover, .rs-etape:focus-visible { background: rgba(255, 255, 255, .7); }
+.rs-ligne::after,
+.rs-etape::after {
+  content: attr(data-infobulle);
+  position: absolute;
+  right: 8px;
+  bottom: calc(100% + 4px);
+  z-index: 5;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #0B0D0D;
+  color: #FFFFFF;
+  font-size: 12.5px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.rs-ligne:hover::after, .rs-ligne:focus-visible::after,
+.rs-etape:hover::after, .rs-etape:focus-visible::after { opacity: 1; transform: none; }
+
+.rs-ligne-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.rs-ligne-libelle { font-size: 15px; color: var(--rs-ink); }
+.rs-ligne-precision { margin-left: 4px; font-size: 13px; color: var(--rs-muted); }
+.rs-ligne-valeur { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--rs-ink); }
+.rs-piste { display: block; height: 6px; border-radius: 999px; background: var(--rs-piste); overflow: hidden; }
+.rs-barre-fine { display: block; height: 100%; border-radius: 999px; background: var(--rs-barre-fine); }
+
+/* Parcours : barres épaisses de 24 px, extrémités arrondies de 4 px */
+.rs-parcours { display: flex; flex-direction: column; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
+.rs-etape {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 18px;
+  padding: 8px;
+  margin: 0 -8px;
+}
+.rs-etape-texte { display: flex; flex-direction: column; gap: 2px; }
+.rs-etape-libelle { font-size: 15px; color: var(--rs-ink); }
+.rs-etape-precision { font-size: 13px; color: var(--rs-muted); }
+.rs-etape-piste { display: block; height: 24px; }
+.rs-barre-epaisse { display: block; height: 100%; min-width: 2px; border-radius: 4px; background: var(--rs-barre-epaisse); }
+.rs-etape-valeur { font-size: 15px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; color: var(--rs-ink); }
+
+/* Autres chiffres */
+.rs-autres { margin-top: 18px; }
+.rs-autres-liste { margin: 16px 0 0; padding: 0; list-style: none; }
+.rs-autres-liste li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0 4px; border-top: 1px solid var(--rs-line-2); }
+.rs-autres-libelle { font-size: 15px; color: var(--rs-ink); }
+.rs-autres-precision { margin-left: 4px; font-size: 13px; color: var(--rs-muted); }
+.rs-autres-valeur { font-size: 15px; font-weight: 500; white-space: nowrap; }
+
+.rs-vide { margin: 8px 0 0; padding: 24px; border-radius: 20px; border: 1px dashed rgba(11, 13, 13, .14); text-align: center; font-size: 14px; color: var(--rs-muted); }
+
+/* ---------- Note commune du bas ---------- */
+.rs-note { display: flex; gap: 12px; margin: 28px 0 0; padding: 16px 20px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 13.5px; line-height: 1.55; color: var(--rs-text); }
+.rs-note i { margin-top: 1px; color: var(--rs-sapin-texte); }
+.rs-demo-etat { margin-left: 4px; color: var(--rs-muted); }
+.rs-demo-reset { margin-left: 4px; padding: 0; border: 0; background: none; font-size: inherit; font-weight: 500; color: var(--rs-sapin-texte); text-decoration: underline; text-underline-offset: 2px; }
+.rs-demo-etat[hidden], .rs-demo-reset[hidden] { display: none; }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 991.98px) {
+  .rs-chiffres-4, .rs-chiffres-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rs-graphiques { grid-template-columns: 1fr; }
+}
+@media (max-width: 767.98px) {
+  .rs-entete { flex-direction: column; align-items: flex-start; }
+  .rs-chiffres-3, .rs-chiffres-4, .rs-chiffres-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rs-etape { grid-template-columns: minmax(0, 1fr) 40px; }
+  .rs-etape-piste { grid-column: 1 / -1; grid-row: 2; }
+  .rs-haut { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rs-ligne::after, .rs-etape::after, .rs-onglet { transition: none; }
+}
+
+/* =========================================================
+   Thème sombre : Statistiques relationnelles.
+   Une seule teinte verte, éclaircie pour rester lisible sur le fond sombre ; anneau en menthe.
+   ========================================================= */
+html[data-theme="sombre"] .rs-page {
+  --rs-ink: var(--ps-texte);
+  --rs-text: var(--ps-texte-courant);
+  --rs-muted: var(--ps-texte-second);
+  --rs-muted-2: var(--ps-texte-discret);
+  --rs-line: var(--ps-filet);
+  --rs-line-2: var(--ps-filet-2);
+  --rs-sapin-texte: var(--ps-menthe);
+  --rs-menthe-ink: var(--ps-menthe);
+  --rs-ambre-ink: var(--ps-ambre);
+  --rs-flou: var(--ps-verre-flou);
+  --rs-ombre: none;
+  --rs-barre-fine: linear-gradient(90deg, #5FE0C0 0%, #2E9C83 100%);
+  --rs-barre-epaisse: linear-gradient(90deg, #3FB89B 0%, #1D7A66 100%);
+  --rs-piste: var(--ps-piste);
+}
+html[data-theme="sombre"] .rs-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .rs-en-ligne { background: var(--ps-verre); border-color: var(--ps-contour); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .rs-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+
+/* Période, onglets, chiffres et cartes en verre sombre */
+html[data-theme="sombre"] .rs-periode,
+html[data-theme="sombre"] .rs-onglets,
+html[data-theme="sombre"] .rs-chiffre,
+html[data-theme="sombre"] .rs-carte { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .rs-chiffre:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .rs-periode select,
+html[data-theme="sombre"] .rs-periode option { background-color: transparent; color: var(--ps-texte); }
+html[data-theme="sombre"] .rs-periode option { background: var(--ps-surface); }
+html[data-theme="sombre"] .rs-onglet:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .rs-onglet[aria-selected="true"] { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+
+/* Anneau, lignes de graphique et infobulle */
+html[data-theme="sombre"] .rs-anneau-piste { stroke: var(--ps-piste); }
+html[data-theme="sombre"] .rs-anneau-arc { stroke: var(--ps-menthe); }
+html[data-theme="sombre"] .rs-etape:hover,
+html[data-theme="sombre"] .rs-etape:focus-visible { background: var(--ps-survol); }
+html[data-theme="sombre"] .rs-etape::after { background: var(--ps-surface-2); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-contour); }
+
+/* États vides et note */
+html[data-theme="sombre"] .rs-vide { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .rs-note { background: rgba(255, 255, 255, .03); }

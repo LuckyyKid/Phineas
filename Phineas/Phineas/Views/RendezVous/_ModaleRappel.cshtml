@@ -1,0 +1,20 @@
+<div class="modal fade" id="modal-rappel" tabindex="-1" aria-labelledby="modal-rappel-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-rappel-titre">Préparer un rappel</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info d-flex gap-2 small" role="note"><i class="bi bi-info-circle"></i><span>Phineas n'envoie aucun texto ni courriel. Ce texte est un brouillon que vous transmettez vous-même, par le moyen préféré du client.</span></div>
+                <dl class="pr-liste-def pr-liste-def-compacte mb-3" data-zone="rappel-contact"></dl>
+                <label class="form-label" for="rappel-texte">Brouillon</label>
+                <textarea class="form-control" id="rappel-texte" rows="8"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-outline-primary" data-copier-rappel><i class="bi bi-clipboard me-1"></i>Copier le texte</button>
+            </div>
+        </div>
+    </div>
+</div>

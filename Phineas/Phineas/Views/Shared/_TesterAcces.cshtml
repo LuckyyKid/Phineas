@@ -1,21 +1,21 @@
+@* Bloc « Tester les accès » des accueils : un lien vers l'espace de chaque rôle.
+   Ouvrir l'espace d'un autre rôle doit afficher « Accès refusé ». *@
 @using Phineas.Models.Constants
 @model Phineas.Models.ViewModels.Account.UserSummaryViewModel
-<div class="lm-section-title"><h2>Tester les accès</h2><span>Rôle : <code>@Model.Role</code></span></div>
-<div class="card">
-    <div class="card-body">
-        <p class="text-muted small mb-3">Ouvrez l’espace d’un autre rôle : vous devriez voir « Accès refusé ».</p>
-        <div class="space-grid">
-            @foreach (var s in AppRoles.Spaces)
-            {
-                var mine = s.Role == Model.Role;
-                <a class="space-link @(mine ? "is-mine" : "")" asp-controller="@s.Controller" asp-action="Index">
-                    <i class="bi @s.Icon"></i>
-                    <span>
-                        <strong>@AppRoles.Label(s.Role)</strong>
-                        <small>@(mine ? "Votre espace" : "Devrait être refusé")</small>
-                    </span>
-                </a>
-            }
-        </div>
+<div class="es-section-titre"><h2>Tester les accès</h2><span>Rôle : <span class="es-mono">@Model.Role</span></span></div>
+<section class="es-verre es-carte" aria-label="Liens vers les espaces de chaque rôle">
+    <p class="es-aide mb-3">Ouvrez l’espace d’un autre rôle : vous devriez voir « Accès refusé ».</p>
+    <div class="es-espaces">
+        @foreach (var s in AppRoles.Spaces)
+        {
+            var mien = s.Role == Model.Role;
+            <a class="es-espace-lien @(mien ? "is-mine" : "")" asp-controller="@s.Controller" asp-action="Index">
+                <i class="bi @s.Icon" aria-hidden="true"></i>
+                <span>
+                    <strong>@AppRoles.Label(s.Role)</strong>
+                    <small>@(mien ? "Votre espace" : "Devrait être refusé")</small>
+                </span>
+            </a>
+        }
     </div>
-</div>
+</section>

@@ -1,0 +1,148 @@
+@* Page « Assistant vendeur » (maquettes 13 et 14) : contexte et historique à gauche, conversation à droite.
+   Comportement : wwwroot/js/coach-page.js (réponses simulées par coach-service.js, aucune IA).
+   Styles : outils.css (jetons og-) et assistant-vendeur-verre.css (préfixe av-). *@
+@using Phineas.Models.ViewModels.Conseiller
+@model OutilsPageViewModel
+@{
+    ViewData["Title"] = "Assistant vendeur";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/outils.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/assistant-vendeur-verre.css" asp-append-version="true" />
+}
+
+<div class="og-page av-page">
+
+@* Haut propre à cette page : la maquette ne montre ni « Modifiée » ni « Réinitialiser » (ils restent sur les autres pages Outils). *@
+<div class="og-haut">
+    <nav class="og-ariane" aria-label="Fil d'Ariane">
+        <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Assistant vendeur</span>
+    </nav>
+    <div class="og-puces" role="note" title="Données fictives. Rien n'est enregistré en base.">
+        <span class="og-chip-demo">Démo</span>
+        <span class="og-en-ligne"><span class="og-point-vert" aria-hidden="true"></span>En ligne</span>
+    </div>
+</div>
+
+<header class="av-entete">
+    <p class="av-label">Outils</p>
+    <h1 class="av-titre">Assistant vendeur</h1>
+    <p class="av-intro">Préparer un rendez-vous, comprendre un véhicule, une objection ou une procédure, à partir de vos dossiers.</p>
+</header>
+
+<div id="assistant" class="av-colonnes" data-mode="@Model.Mode" data-contexte="@Model.ContexteType" data-id="@Model.ContexteId">
+    <aside class="av-cote">
+        <section class="av-verre av-carte" aria-labelledby="titre-contexte">
+            <h2 class="av-label" id="titre-contexte">Contexte</h2>
+
+            <label class="av-champ-label" for="ctx-type">Dossier utilisé</label>
+            <div class="av-select-cadre">
+                <select class="av-select" id="ctx-type">
+                    @foreach (var (cle, libelle) in ReferentielsOutils.Contextes)
+                    {
+                        <option value="@cle">@libelle</option>
+                    }
+                </select>
+            </div>
+
+            @* Choix du dossier : visible seulement quand un type de dossier est choisi. Son libellé suit le type (Prospect, Véhicule…). *@
+            <div class="av-bloc-champ" data-bloc="choix" hidden>
+                <label class="av-champ-label" for="ctx-id" data-libelle-choix>Choix</label>
+                <div class="av-select-cadre">
+                    <select class="av-select" id="ctx-id"></select>
+                </div>
+            </div>
+
+            @* Paramètre du mode : visible seulement pour les modes qui en ont besoin (objection, procédure). *@
+            <div class="av-bloc-champ" data-bloc="objection" hidden>
+                <label class="av-champ-label" for="p-objection">Objection</label>
+                <div class="av-select-cadre">
+                    <select class="av-select" id="p-objection">
+                        <option value="">Choisir l'objection</option>
+                        @foreach (var o in ReferentielsOutils.Objections)
+                        {
+                            <option value="@o.Cle">@o.Libelle</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="av-bloc-champ" data-bloc="procedure" hidden>
+                <label class="av-champ-label" for="p-procedure">Procédure</label>
+                <div class="av-select-cadre">
+                    <select class="av-select" id="p-procedure">
+                        <option value="">Toutes les procédures</option>
+                        @foreach (var p in ReferentielsOutils.Procedures)
+                        {
+                            <option value="@p.Cle">@p.Libelle</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="av-filet"></div>
+            <h3 class="av-sous-titre">Ce que l'assistant peut lire</h3>
+            <div data-zone="mis-a-disposition"></div>
+        </section>
+
+        <section class="av-verre av-carte" aria-labelledby="titre-historique">
+            <h2 class="av-label" id="titre-historique">Historique local</h2>
+            <ol class="av-historique" data-zone="historique"></ol>
+            <div class="og-pagination-zone" data-pagination="historique"></div>
+        </section>
+    </aside>
+
+    <section class="av-verre av-conversation" aria-labelledby="titre-conversation">
+        <div class="av-zone av-zone-haut">
+            <div class="av-carte-tete">
+                <h2 class="av-label av-label-ligne" id="titre-conversation">Conversation <span class="av-chip-simulation">Simulation</span></h2>
+                <button type="button" class="av-lien" data-effacer hidden>Effacer</button>
+            </div>
+            <div class="av-modes" role="group" aria-label="Que voulez-vous faire ?">
+                @foreach (var (cle, libelle, icone) in ReferentielsOutils.ModesCoach)
+                {
+                    <button type="button" class="av-mode" data-mode-coach="@cle" aria-pressed="false"><i class="bi @icone" aria-hidden="true"></i>@libelle</button>
+                }
+            </div>
+        </div>
+
+        <div class="av-zone av-fil" data-zone="fil" aria-live="polite"></div>
+
+        <form class="av-zone av-saisie" id="form-coach" novalidate>
+            <div class="av-saisie-ligne">
+                <label class="visually-hidden" for="coach-question">Votre question</label>
+                <textarea class="av-question" id="coach-question" rows="2" placeholder="Ex. : Comment ouvrir une transaction ?"></textarea>
+                <button type="submit" class="av-demander" disabled><i class="bi bi-send" aria-hidden="true"></i>Demander</button>
+            </div>
+            <p class="av-info"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Aucune IA n'est connectée. Les réponses sont simulées à partir des données de démonstration du dossier choisi ; ce qui est inconnu reste inconnu.</span></p>
+        </form>
+    </section>
+</div>
+
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/outils-pagination.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/coach-regles.js" asp-append-version="true"></script>
+    <script src="~/js/coach-service.js" asp-append-version="true"></script>
+    <script src="~/js/coach-page.js" asp-append-version="true"></script>
+}

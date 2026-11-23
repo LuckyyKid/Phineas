@@ -1,31 +1,36 @@
+@* Messages laissés par l'action précédente (TempData) : succès, erreur, mot de passe temporaire.
+   Styles : .es-alerte dans wwwroot/css/espaces.css. *@
 @if (TempData["Succes"] is string succes)
 {
-    <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-check-circle"></i><span>@succes</span>
+    <div class="es-alerte es-alerte-ok" role="alert">
+        <i class="bi bi-check-circle" aria-hidden="true"></i><span>@succes</span>
     </div>
 }
 @if (TempData["Erreur"] is string erreur)
 {
-    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-exclamation-triangle"></i><span>@erreur</span>
+    <div class="es-alerte es-alerte-erreur" role="alert">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>@erreur</span>
     </div>
 }
 @if (TempData["MotDePasseTemporaire"] is string motDePasse)
 {
-    <div class="alert alert-warning" role="alert">
-        <div class="fw-semibold mb-1"><i class="bi bi-key me-1"></i>Mot de passe temporaire @(TempData["MotDePassePour"] is string pour ? $"pour {pour}" : "")</div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <code id="mdp-temporaire" class="fs-5 px-2 py-1 bg-white rounded border">@motDePasse</code>
-            <button type="button" class="btn btn-sm btn-outline-dark" id="copier-mdp">
-                <i class="bi bi-clipboard"></i> Copier
-            </button>
+    <div class="es-alerte es-alerte-attention" role="alert">
+        <i class="bi bi-key" aria-hidden="true"></i>
+        <div>
+            <p class="es-alerte-titre">Mot de passe temporaire @(TempData["MotDePassePour"] is string pour ? $"pour {pour}" : "")</p>
+            <div class="es-ligne-actions">
+                <code id="mdp-temporaire" class="es-code">@motDePasse</code>
+                <button type="button" class="es-btn-secondaire es-btn-petit" id="copier-mdp">
+                    <i class="bi bi-clipboard" aria-hidden="true"></i>Copier
+                </button>
+            </div>
+            <p class="es-alerte-texte">Transmettez-le à la personne : elle devra le changer à sa première connexion. Il ne sera plus affiché après cette page.</p>
         </div>
-        <div class="small mt-2">Transmettez-le à la personne : elle devra le changer à sa première connexion. Il ne sera plus affiché après cette page.</div>
     </div>
     <script>
         document.getElementById('copier-mdp').addEventListener('click', function () {
             navigator.clipboard.writeText(document.getElementById('mdp-temporaire').textContent.trim());
-            this.innerHTML = '<i class="bi bi-check2"></i> Copié';
+            this.innerHTML = '<i class="bi bi-check2" aria-hidden="true"></i>Copié';
         });
     </script>
 }

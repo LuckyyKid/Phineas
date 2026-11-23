@@ -1,0 +1,13 @@
+# Fichiers exclus de l'image Docker : sorties de compilation, réglages
+# d'éditeur et fichiers git, inutiles pour construire l'application.
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/.DS_Store
+.git/
+.gitignore
+Dockerfile
+.dockerignore

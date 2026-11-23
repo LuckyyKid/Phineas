@@ -1,0 +1,143 @@
+@* Page « Agenda et rendez-vous » : chiffres du jour, agenda (jour, semaine, mois, liste), carte « À confirmer ».
+   Données : rendez-vous, prospects et soumissions de démonstration (RendezVousController.Index).
+   Interactions : wwwroot/js/rendezvous-agenda.js (rappel : rendezvous-rappel.js). Styles : bloc « Agenda » de rendezvous.css. *@
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@{
+    ViewData["Title"] = "Agenda et rendez-vous";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+    var dateDuJour = DateTime.Now.ToString("dddd d MMMM yyyy", FormatVente.Culture);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+}
+
+<div class="ag-page">
+    <div class="ag-haut">
+        <nav class="ag-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Rendez-vous</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
+        <div class="ag-puces" role="note" title="Rendez-vous, prospects et véhicules fictifs. Rien n'est enregistré en base.">
+            <span class="ag-chip-demo">Démo</span>
+            <span class="ag-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="ag-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="ag-en-ligne"><span class="ag-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <header class="ag-entete">
+        <div>
+            <p class="ag-label">@dateDuJour · @Model.ConseillerNom</p>
+            <h1 class="ag-titre">Agenda et rendez-vous</h1>
+        </div>
+        <a class="ag-btn ag-btn-sapin" asp-action="Nouveau"><i class="bi bi-plus-lg"></i>Nouveau rendez-vous</a>
+    </header>
+
+    <section class="ag-chiffres" aria-label="Résumé de mes rendez-vous">
+        <div class="ag-verre ag-chiffre"><span class="ag-chiffre-valeur" data-compteur="aujourdhui">—</span><span>rendez-vous aujourd'hui</span></div>
+        <div class="ag-verre ag-chiffre"><span class="ag-chiffre-valeur" data-compteur="aconfirmer">—</span><span>à confirmer</span></div>
+        <div class="ag-verre ag-chiffre"><span class="ag-chiffre-valeur" data-compteur="essais">—</span><span>essais routiers</span></div>
+        <div class="ag-verre ag-chiffre" title="Absences, annulations à replanifier et résultats à saisir"><span class="ag-chiffre-valeur" data-compteur="suivis">—</span><span>suivis à faire</span></div>
+    </section>
+
+    <div class="ag-colonnes" id="agenda" data-date="@Model.Date">
+        <section class="ag-verre ag-agenda" aria-labelledby="agenda-periode">
+            <div class="ag-outils">
+                <div class="ag-nav-dates" role="group" aria-label="Naviguer dans l'agenda">
+                    <button type="button" class="ag-rond" data-naviguer="-1" aria-label="Période précédente"><i class="bi bi-chevron-left"></i></button>
+                    <button type="button" class="ag-pilule" data-aujourdhui>Aujourd'hui</button>
+                    <button type="button" class="ag-rond" data-naviguer="1" aria-label="Période suivante"><i class="bi bi-chevron-right"></i></button>
+                </div>
+                <div class="ag-bascule" role="group" aria-label="Mode d'affichage">
+                    <input type="radio" class="btn-check" name="vue" id="vue-jour" value="jour" />
+                    <label for="vue-jour">Jour</label>
+                    <input type="radio" class="btn-check" name="vue" id="vue-semaine" value="semaine" />
+                    <label for="vue-semaine">Semaine</label>
+                    <input type="radio" class="btn-check" name="vue" id="vue-mois" value="mois" />
+                    <label for="vue-mois">Mois</label>
+                    <input type="radio" class="btn-check" name="vue" id="vue-liste" value="liste" />
+                    <label for="vue-liste">Liste</label>
+                </div>
+                <button type="button" class="ag-pilule ag-filtres-btn" data-basculer-filtres aria-expanded="false" aria-controls="ag-filtres"><i class="bi bi-sliders"></i>Filtres</button>
+            </div>
+
+            <div class="ag-sous-outils">
+                <div class="form-check form-switch ag-interrupteur">
+                    <input class="form-check-input" type="checkbox" role="switch" id="f-action" />
+                    <label class="form-check-label" for="f-action">Action requise</label>
+                </div>
+                <h2 class="ag-periode" id="agenda-periode" aria-live="polite"></h2>
+            </div>
+
+            @* Filtres secondaires, repliés par défaut pour garder la barre d'outils sur une ligne. *@
+            <div class="ag-filtres" id="ag-filtres" hidden>
+                <label class="visually-hidden" for="f-date">Aller à la date</label>
+                <input type="date" class="ag-champ" id="f-date" />
+                <select class="ag-champ" id="f-type" aria-label="Filtrer par type">
+                    <option value="">Tous les types</option>
+                    @foreach (var t in Enum.GetValues<TypeRendezVous>())
+                    {
+                        <option value="@t">@ReferentielsRendezVous.Libelle(t)</option>
+                    }
+                </select>
+                <select class="ag-champ" id="f-statut" aria-label="Filtrer par statut">
+                    <option value="">Tous les statuts</option>
+                    @foreach (var s in Enum.GetValues<StatutRendezVous>())
+                    {
+                        <option value="@s">@ReferentielsRendezVous.Libelle(s)</option>
+                    }
+                </select>
+                <select class="ag-champ" id="f-conseiller" aria-label="Filtrer par conseiller">
+                    @foreach (var c in Model.Prospects.Conseillers)
+                    {
+                        <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes rendez-vous" : c.Nom + " (fictif)")</option>
+                    }
+                    <option value="">Tous les conseillers</option>
+                </select>
+                <select class="ag-champ" id="f-vehicule" aria-label="Filtrer par véhicule">
+                    <option value="">Tous les véhicules</option>
+                </select>
+                <button type="button" class="ag-lien" data-effacer-filtres hidden>Effacer les filtres</button>
+            </div>
+
+            <p class="ag-resultat" id="resultat" aria-live="polite"></p>
+            <div class="rv-calendrier ag-calendrier" id="calendrier"></div>
+            <div class="ag-vide" id="etat-vide" hidden>
+                <strong>Aucun rendez-vous sur cette période</strong>
+                <span>Changez de période ou de filtres, ou planifiez un rendez-vous.</span>
+                <a class="ag-btn ag-btn-sapin" asp-action="Nouveau">Nouveau rendez-vous</a>
+            </div>
+            <p class="ag-note"><i class="bi bi-info-circle"></i>Agenda de démonstration : aucun calendrier externe n'est lu ni synchronisé.</p>
+        </section>
+
+        <section class="ag-aconfirmer" aria-labelledby="aconfirmer-titre">
+            <h2 class="ag-label ag-label-blanc" id="aconfirmer-titre">À confirmer <span class="visually-hidden" data-zone="nb-aconfirmer"></span></h2>
+            <ul class="ag-ac-liste" data-zone="aconfirmer"></ul>
+            <p class="ag-ac-note">Aucun texto ni courriel n'est envoyé par Phineas : le rappel est un brouillon à transmettre vous-même.</p>
+        </section>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end rv-panneau" tabindex="-1" id="selection" aria-labelledby="selection-titre">
+    <div class="offcanvas-header">
+        <h2 class="offcanvas-title h5" id="selection-titre">Rendez-vous sélectionné</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+    </div>
+    <div class="offcanvas-body" data-zone="selection"></div>
+</div>
+
+<partial name="_ModaleRappel" />
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-rappel.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-agenda.js" asp-append-version="true"></script>
+}

@@ -1,3 +1,6 @@
+@* Tableau du personnel, partagé par la liste du personnel et la fiche d'une concession.
+   Statuts en « point + libellé » comme les listes vendeur ; actions dans le menu « Gérer ».
+   Styles : wwwroot/css/espaces.css (es-table, es-statut) et conseiller.css (ph-menu). *@
 @model List<EmployeResume>
 @{
     var afficherConcession = ViewData["AfficherConcession"] as bool? ?? false;
@@ -7,87 +10,90 @@
 
 @if (Model.Count == 0)
 {
-    <div class="text-center text-muted py-5">
-        <i class="bi bi-people fs-1 d-block mb-2"></i>
-        Aucune personne pour l'instant.
+    <div class="es-vide">
+        <span class="es-vide-icone" aria-hidden="true"><i class="bi bi-people"></i></span>
+        <p>Aucune personne pour l'instant.</p>
     </div>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
+    <div class="es-defile">
+        <table class="es-table">
             <thead>
                 <tr>
                     <th>Personne</th>
                     <th>Rôle</th>
-                    @if (afficherConcession) { <th>Concession</th> }
+                    @if (afficherConcession) { <th class="es-cacher-tablette">Concession</th> }
                     <th>Statut</th>
-                    <th class="d-none d-lg-table-cell">Dernière connexion</th>
-                    <th class="text-end"></th>
+                    <th class="es-cacher-tablette">Dernière connexion</th>
+                    <th class="es-droite"><span class="visually-hidden">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var p in Model)
                 {
-                    <tr class="@(p.EstActif ? "" : "text-muted")">
+                    <tr class="@(p.EstActif ? "" : "es-ligne-off")">
                         <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="avatar">@p.Initiales</span>
-                                <div class="lh-sm">
-                                    <div class="fw-semibold">@p.NomComplet</div>
-                                    <div class="small text-muted">@p.Email</div>
+                            <div class="es-personne">
+                                <span class="es-avatar" aria-hidden="true">@p.Initiales</span>
+                                <div>
+                                    <span class="es-nom">@p.NomComplet</span>
+                                    <span class="es-sous">@p.Email</span>
                                 </div>
                             </div>
                         </td>
                         <td>@p.LibelleRole</td>
                         @if (afficherConcession)
                         {
-                            <td>
+                            <td class="es-cacher-tablette">
                                 @if (p.DealershipId is not null)
                                 {
                                     <a asp-controller="Concessions" asp-action="Details" asp-route-id="@p.DealershipId">@p.NomConcession</a>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">Plateforme</span>
+                                    <span class="es-sous">Plateforme</span>
                                 }
                             </td>
                         }
                         <td>
                             @if (!p.EstActif)
                             {
-                                <span class="badge text-bg-secondary">Désactivé</span>
+                                <span class="es-statut es-st-off"><span class="es-statut-point" aria-hidden="true"></span>Désactivé</span>
                             }
                             else if (p.EstVerrouille)
                             {
-                                <span class="badge text-bg-danger">Verrouillé</span>
+                                <span class="es-statut es-st-alerte"><span class="es-statut-point" aria-hidden="true"></span>Verrouillé</span>
                             }
                             else
                             {
-                                <span class="badge text-bg-success">Actif</span>
+                                <span class="es-statut es-st-ok"><span class="es-statut-point" aria-hidden="true"></span>Actif</span>
                             }
                             @if (p.DoitChangerMotDePasse)
                             {
-                                <span class="badge text-bg-warning">Mot de passe temporaire</span>
+                                <span class="es-sous"><span class="es-statut es-st-attente"><span class="es-statut-point" aria-hidden="true"></span>Mot de passe temporaire</span></span>
                             }
                         </td>
-                        <td class="d-none d-lg-table-cell small">
-                            @(p.DerniereConnexion?.ToLocalTime().ToString("d MMM yyyy, HH:mm", culture) ?? "Jamais")
+                        <td class="es-cacher-tablette">
+                            <span class="es-sous">@(p.DerniereConnexion?.ToLocalTime().ToString("d MMM yyyy, HH:mm", culture) ?? "Jamais")</span>
                         </td>
-                        <td class="text-end">
+                        <td class="es-droite">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">Gérer</button>
-                                <ul class="dropdown-menu dropdown-menu-end">
+                                @* Position « fixed » : sinon la carte (overflow hidden) couperait le menu. *@
+                                <button class="es-btn-secondaire es-btn-petit es-menu-bouton" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                    Gérer<i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end ph-menu">
                                     <li>
                                         <a class="dropdown-item" asp-controller="Utilisateurs" asp-action="Modifier" asp-route-id="@p.Id">
-                                            <i class="bi bi-pencil me-2"></i>Modifier
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>Modifier
                                         </a>
                                     </li>
                                     <li>
                                         <form asp-controller="Utilisateurs" asp-action="ReinitialiserMotDePasse" asp-route-id="@p.Id" method="post">
                                             <input type="hidden" name="retour" value="@retour" />
                                             <input type="hidden" name="courriel" value="@p.Email" />
-                                            <button type="submit" class="dropdown-item"><i class="bi bi-key me-2"></i>Nouveau mot de passe</button>
+                                            <button type="submit" class="dropdown-item"><i class="bi bi-key" aria-hidden="true"></i>Nouveau mot de passe</button>
                                         </form>
                                     </li>
                                     <li>
@@ -96,11 +102,11 @@ else
                                             <button type="submit" class="dropdown-item">
                                                 @if (p.EstActif)
                                                 {
-                                                    <i class="bi bi-pause-circle me-2"></i><text>Désactiver</text>
+                                                    <i class="bi bi-pause-circle" aria-hidden="true"></i><text>Désactiver</text>
                                                 }
                                                 else
                                                 {
-                                                    <i class="bi bi-play-circle me-2"></i><text>Réactiver</text>
+                                                    <i class="bi bi-play-circle" aria-hidden="true"></i><text>Réactiver</text>
                                                 }
                                             </button>
                                         </form>
@@ -110,7 +116,7 @@ else
                                         <form asp-controller="Utilisateurs" asp-action="Supprimer" asp-route-id="@p.Id" method="post"
                                               onsubmit="return confirm('Supprimer définitivement ce compte?');">
                                             <input type="hidden" name="retour" value="@retour" />
-                                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Supprimer</button>
+                                            <button type="submit" class="dropdown-item es-texte-rouge"><i class="bi bi-trash" aria-hidden="true"></i>Supprimer</button>
                                         </form>
                                     </li>
                                 </ul>

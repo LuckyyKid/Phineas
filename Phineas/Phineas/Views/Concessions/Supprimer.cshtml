@@ -1,24 +1,27 @@
 @model ConcessionSuppressionViewModel
 @{ ViewData["Title"] = "Supprimer la concession"; }
 
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Concessions</a></li>
-        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Nom</a></li>
-        <li class="breadcrumb-item active">Supprimer</li>
-    </ol>
-</nav>
+<div class="es-page es-page-etroite">
+    <nav class="es-ariane" aria-label="Fil d'Ariane">
+        <a asp-action="Index">Concessions</a><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <a asp-action="Details" asp-route-id="@Model.Id">@Model.Nom</a><i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <span aria-current="page">Supprimer</span>
+    </nav>
 
-<div class="card" style="max-width: 640px">
-    <div class="card-body">
-        <h1 class="h4">Supprimer « @Model.Nom »</h1>
+    <header class="es-entete">
+        <div>
+            <p class="es-label">Administration</p>
+            <h1 class="es-titre">Supprimer « @Model.Nom »</h1>
+        </div>
+    </header>
 
+    <section class="es-verre es-carte">
         @if (Model.PeutSupprimer)
         {
             <p>Cette concession n'a ni personnel ni véhicule. La suppression est définitive.</p>
-            <form asp-action="Supprimer" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
-                <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Supprimer définitivement</button>
-                <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Annuler</a>
+            <form asp-action="Supprimer" asp-route-id="@Model.Id" method="post" class="es-actions">
+                <button type="submit" class="es-btn-secondaire es-btn-danger"><i class="bi bi-trash" aria-hidden="true"></i>Supprimer définitivement</button>
+                <a class="es-btn-secondaire" asp-action="Details" asp-route-id="@Model.Id">Annuler</a>
             </form>
         }
         else
@@ -27,8 +30,10 @@
                 Impossible de la supprimer : elle a encore
                 <strong>@Model.NbEmployes personne(s)</strong> et <strong>@Model.NbVehicules véhicule(s)</strong>.
             </p>
-            <p class="text-muted">Retirez-les d'abord, ou suspendez plutôt la concession : ses données sont gardées et son personnel ne peut plus se connecter.</p>
-            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Retour à la concession</a>
+            <p class="es-aide">Retirez-les d'abord, ou suspendez plutôt la concession : ses données sont gardées et son personnel ne peut plus se connecter.</p>
+            <div class="es-actions mt-3">
+                <a class="es-btn-secondaire" asp-action="Details" asp-route-id="@Model.Id">Retour à la concession</a>
+            </div>
         }
-    </div>
+    </section>
 </div>

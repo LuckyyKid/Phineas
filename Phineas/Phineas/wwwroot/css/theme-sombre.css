@@ -1,0 +1,216 @@
+/* =========================================================
+   Phineas · thème sombre partagé (chargé par toutes les pages refaites)
+   Contrat : voir l'en-tête de wwwroot/js/theme.js.
+   - La palette --ps-* n'existe qu'en thème sombre (sous html[data-theme="sombre"]).
+   - Chaque page écrit ses règles sombres dans SA feuille, sous html[data-theme="sombre"] .prefixe-page,
+     en reprenant ces variables pour que toutes les pages se ressemblent.
+   - Ce fichier ne contient que : la palette, le fond de page, les anciennes variables du site,
+     les composants Bootstrap génériques et le bouton de bascule.
+   ========================================================= */
+
+html[data-theme="sombre"] {
+  /* Fond et halos */
+  --ps-fond: #0B0D0D;                                   /* fond de page, presque noir (jamais #000) */
+  --ps-halos:                                           /* trois halos flous fixes, très discrets */
+    radial-gradient(42% 46% at 18% 0%, rgba(255, 255, 255, .09), transparent 70%),
+    radial-gradient(36% 50% at 100% 45%, rgba(95, 224, 192, .08), transparent 70%),
+    radial-gradient(46% 40% at 55% 100%, rgba(255, 255, 255, .05), transparent 70%);
+
+  /* Textes */
+  --ps-texte: #F4F6F5;                                  /* texte principal, titres, chiffres */
+  --ps-texte-courant: #BFC5C4;                          /* paragraphes, libellés courants */
+  --ps-texte-second: #A5ACAB;                           /* précisions, textes secondaires */
+  --ps-texte-discret: #7A8281;                          /* étiquettes mono, mentions, placeholders */
+
+  /* Verre et surfaces */
+  --ps-verre: rgba(255, 255, 255, .035);                /* fond des cartes en verre sombre */
+  --ps-verre-flou: blur(28px) saturate(140%);           /* flou des cartes en verre */
+  --ps-contour: rgba(255, 255, 255, .10);               /* contour des cartes et des pilules */
+  --ps-contour-survol: rgba(255, 255, 255, .20);        /* contour d'une carte survolée */
+  --ps-verre-fort: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .03)); /* carte mise en avant */
+  --ps-contour-fort: rgba(255, 255, 255, .16);          /* contour de la carte mise en avant */
+  --ps-ombre-forte: 0 40px 80px -30px rgba(0, 0, 0, .85); /* ombre noire profonde (aucune ombre claire) */
+  --ps-trait-lumineux: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent); /* fin trait sur le bord haut */
+  --ps-surface: #141717;                                /* surface opaque : fenêtres, menus, tiroirs */
+  --ps-surface-2: #1A1E1E;                              /* surface opaque un cran plus claire (en-tête de fenêtre, survol) */
+  --ps-filet: rgba(255, 255, 255, .07);                 /* filets entre les lignes */
+  --ps-filet-2: rgba(255, 255, 255, .08);               /* filets de séparation de zones */
+  --ps-survol: rgba(255, 255, 255, .05);                /* fond d'une ligne ou d'un lien survolé */
+  --ps-piste: rgba(255, 255, 255, .08);                 /* piste des barres de graphique et de progression */
+
+  /* Boutons, champs, éléments actifs */
+  --ps-btn-principal: linear-gradient(180deg, #FFFFFF 0%, #E2E6E5 100%); /* action principale : BLANCHE */
+  --ps-btn-principal-texte: #0B0D0D;                    /* texte noir du bouton principal */
+  --ps-btn-principal-halo: 0 10px 30px -12px rgba(255, 255, 255, .35); /* léger halo blanc du bouton principal */
+  --ps-btn-second: rgba(255, 255, 255, .04);            /* fond du bouton secondaire */
+  --ps-btn-second-contour: rgba(255, 255, 255, .16);    /* contour du bouton secondaire */
+  --ps-champ: rgba(255, 255, 255, .05);                 /* fond des champs de saisie et menus déroulants */
+  --ps-champ-contour: rgba(255, 255, 255, .14);         /* contour des champs */
+  --ps-champ-focus: rgba(255, 255, 255, .45);           /* contour d'un champ dans lequel on écrit */
+  --ps-actif: rgba(255, 255, 255, .10);                 /* fond d'un élément choisi (menu, onglet, pilule) */
+  --ps-actif-contour: rgba(255, 255, 255, .22);         /* contour d'un élément choisi */
+
+  /* Couleurs d'état (petits accents seulement) */
+  --ps-menthe: #5FE0C0;                                 /* logo, « fait », « confirmé », accents */
+  --ps-menthe-lueur: 0 0 10px rgba(95, 224, 192, .55);  /* lueur des points menthe */
+  --ps-menthe-fond: rgba(95, 224, 192, .12);            /* fond d'une étiquette menthe */
+  --ps-rose: #FF8A9A;                                   /* point « en retard » et alerte */
+  --ps-rose-texte: #FFB3BD;                             /* texte « en retard » et alerte */
+  --ps-rose-fond: rgba(255, 138, 154, .12);             /* fond d'une pastille d'alerte */
+  --ps-rose-contour: rgba(255, 138, 154, .35);          /* contour d'une pastille d'alerte */
+  --ps-ambre: #FFD28A;                                  /* « à confirmer », « en attente » (point et texte) */
+  --ps-ambre-fond: rgba(255, 210, 138, .10);            /* fond d'une pastille d'attente */
+  --ps-focus: rgba(95, 224, 192, .75);                  /* contour de focus clavier */
+
+  /* Anciennes variables du site (Lumière et phineas.css) : leurs styles suivent le thème sombre */
+  --lm-bg: var(--ps-fond);
+  --lm-surface: var(--ps-surface);
+  --lm-soft: rgba(255, 255, 255, .04);
+  --lm-line: rgba(255, 255, 255, .10);
+  --lm-line-2: rgba(255, 255, 255, .07);
+  --lm-ink: var(--ps-texte);
+  --lm-text: var(--ps-texte-courant);
+  --lm-muted: var(--ps-texte-second);
+  --lm-accent: var(--ps-menthe);
+  --lm-accent-600: #8FE9D1;
+  --lm-accent-50: rgba(95, 224, 192, .10);
+  --lm-amber: var(--ps-ambre);
+  --lm-shadow: 0 1px 0 rgba(255, 255, 255, .04), 0 18px 40px -20px rgba(0, 0, 0, .7);
+  --lm-shadow-lg: 0 40px 90px -30px rgba(0, 0, 0, .85);
+  --ph-bg: var(--ps-fond);
+  --ph-surface: var(--ps-surface);
+  --ph-border: rgba(255, 255, 255, .10);
+  --ph-primary: var(--ps-menthe);
+  --ph-primary-600: #8FE9D1;
+  --ph-primary-50: rgba(95, 224, 192, .10);
+
+  color-scheme: dark;
+}
+
+html[data-theme="sombre"],
+html[data-theme="sombre"] body {
+  background: var(--ps-fond);
+  color: var(--ps-texte);
+}
+
+/* ---------- Composants Bootstrap génériques ----------
+   data-bs-theme="dark" (posé par theme.js) fait déjà l'essentiel ; ces règles corrigent ce que
+   le thème Lumière (lumiere.css) force en blanc, et alignent les couleurs sur la palette. */
+html[data-theme="sombre"] .card { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+html[data-theme="sombre"] .card-header,
+html[data-theme="sombre"] .card-footer { background: transparent; border-color: var(--ps-filet); color: var(--ps-texte); }
+
+html[data-theme="sombre"] .dropdown-menu {
+  --bs-dropdown-bg: var(--ps-surface);
+  --bs-dropdown-border-color: var(--ps-contour);
+  --bs-dropdown-link-color: var(--ps-texte);
+  --bs-dropdown-link-hover-color: var(--ps-texte);
+  --bs-dropdown-link-hover-bg: var(--ps-survol);
+  --bs-dropdown-link-active-color: var(--ps-texte);
+  --bs-dropdown-link-active-bg: var(--ps-actif);
+  --bs-dropdown-divider-bg: var(--ps-filet-2);
+  --bs-dropdown-header-color: var(--ps-texte-discret);
+  background: var(--ps-surface);
+  border-color: var(--ps-contour);
+  color: var(--ps-texte);
+  box-shadow: var(--ps-ombre-forte);
+}
+html[data-theme="sombre"] .dropdown-item { color: var(--ps-texte); }
+html[data-theme="sombre"] .dropdown-item:hover,
+html[data-theme="sombre"] .dropdown-item:focus { background: var(--ps-survol); color: var(--ps-texte); }
+
+html[data-theme="sombre"] .modal-content { background: var(--ps-surface); border-color: var(--ps-contour); color: var(--ps-texte); box-shadow: var(--ps-ombre-forte); }
+html[data-theme="sombre"] .modal-header,
+html[data-theme="sombre"] .modal-footer { border-color: var(--ps-filet-2); }
+html[data-theme="sombre"] .modal-backdrop { --bs-backdrop-bg: #000000; --bs-backdrop-opacity: .6; }
+html[data-theme="sombre"] .offcanvas { background: var(--ps-surface); color: var(--ps-texte); }
+
+html[data-theme="sombre"] .toast { background: rgba(26, 30, 30, .96); color: var(--ps-texte); border: 1px solid var(--ps-contour); }
+html[data-theme="sombre"] .tooltip { --bs-tooltip-bg: #F4F6F5; --bs-tooltip-color: #0B0D0D; }
+html[data-theme="sombre"] .popover { --bs-popover-bg: var(--ps-surface); --bs-popover-border-color: var(--ps-contour); --bs-popover-body-color: var(--ps-texte); }
+
+html[data-theme="sombre"] .form-control,
+html[data-theme="sombre"] .form-select {
+  background-color: var(--ps-champ);
+  border-color: var(--ps-champ-contour);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .form-control::placeholder { color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .form-control:focus,
+html[data-theme="sombre"] .form-select:focus {
+  background-color: rgba(255, 255, 255, .07);
+  border-color: var(--ps-champ-focus);
+  color: var(--ps-texte);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .08);
+}
+html[data-theme="sombre"] .form-control:disabled,
+html[data-theme="sombre"] .form-select:disabled { background-color: rgba(255, 255, 255, .02); color: var(--ps-texte-discret); }
+html[data-theme="sombre"] .form-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .form-check-input { background-color: var(--ps-champ); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .form-check-input:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .18); }
+html[data-theme="sombre"] .form-text,
+html[data-theme="sombre"] .text-muted { color: var(--ps-texte-second) !important; }
+
+html[data-theme="sombre"] .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ps-texte);
+  --bs-table-border-color: var(--ps-filet);
+  --bs-table-hover-bg: var(--ps-survol);
+  --bs-table-hover-color: var(--ps-texte);
+  --bs-table-striped-bg: rgba(255, 255, 255, .02);
+}
+html[data-theme="sombre"] .table > :not(caption) > * > * { color: var(--ps-texte); }
+
+html[data-theme="sombre"] .btn-outline-primary,
+html[data-theme="sombre"] .btn-outline-secondary {
+  --bs-btn-color: var(--ps-texte);
+  --bs-btn-border-color: var(--ps-btn-second-contour);
+  --bs-btn-hover-bg: var(--ps-survol);
+  --bs-btn-hover-color: var(--ps-texte);
+  --bs-btn-hover-border-color: var(--ps-contour-survol);
+  background: var(--ps-btn-second);
+}
+html[data-theme="sombre"] .btn-ghost { color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .btn-ghost:hover { background: var(--ps-survol); border-color: var(--ps-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+html[data-theme="sombre"] hr { border-color: var(--ps-filet-2); opacity: 1; }
+html[data-theme="sombre"] :focus-visible { outline-color: var(--ps-focus); }
+
+/* Barre de défilement discrète (navigateurs qui la permettent) */
+html[data-theme="sombre"] * { scrollbar-color: rgba(255, 255, 255, .18) transparent; }
+
+/* ---------- Bouton de bascule du thème ----------
+   Bouton rond neutre, utilisable dans les deux thèmes (pages publiques, en-têtes).
+   Balisage : <button type="button" class="ps-bascule-theme" data-basculer-theme aria-pressed="false" aria-label="Thème sombre">
+                <i class="bi bi-moon" data-theme-icone aria-hidden="true"></i></button> */
+.ps-bascule-theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 13, 13, .10);
+  background: rgba(255, 255, 255, .7);
+  color: #0B0D0D;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.ps-bascule-theme:hover { background: #FFFFFF; border-color: rgba(11, 13, 13, .2); }
+.ps-bascule-theme:focus-visible { outline: 2px solid #1D9A82; outline-offset: 2px; }
+html[data-theme="sombre"] .ps-bascule-theme { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .ps-bascule-theme:hover { background: var(--ps-actif); border-color: var(--ps-actif-contour); }
+html[data-theme="sombre"] .ps-bascule-theme:focus-visible { outline-color: var(--ps-focus); }
+
+/* Regroupe le bouton de bascule avec un lien dans l'en-tête d'une page publique (connexion, page du conseiller) */
+.ps-entete-actions { display: inline-flex; align-items: center; gap: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-bascule-theme { transition: none; }
+}

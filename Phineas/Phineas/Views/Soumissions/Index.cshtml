@@ -1,0 +1,121 @@
+@* Page liste « Soumissions » (maquette 10) : haut de page, 5 chiffres, puis la carte avec la recherche,
+   les filtres et le tableau des soumissions, affiché 10 par 10.
+   Données : prospects et soumissions de démonstration (SoumissionsController.Index).
+   Interactions : wwwroot/js/soumissions-liste.js. Styles : wwwroot/css/soumissions-liste-verre.css. *@
+@using Phineas.Models.ViewModels.Conseiller
+@model SoumissionsPageViewModel
+@{
+    ViewData["Title"] = "Soumissions";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions-liste-verre.css" asp-append-version="true" />
+}
+
+<div class="sl-page">
+    <div class="sl-haut">
+        <nav class="sl-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Soumissions</span>
+        </nav>
+        @* Remplace le bandeau de démonstration : l'état et la réinitialisation restent ici (prospects-store.js). *@
+        <div class="sl-puces" role="note" title="Prospects, véhicules et montants fictifs. Rien n'est enregistré en base.">
+            <span class="sl-chip-demo">Démo</span>
+            <span class="sl-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="sl-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="sl-en-ligne"><span class="sl-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <header class="sl-entete">
+        <div>
+            <p class="sl-label">Ventes</p>
+            <h1 class="sl-titre">Soumissions</h1>
+            <p class="sl-intro">Vos propositions commerciales, leurs versions et leur statut.</p>
+        </div>
+        <a class="sl-btn-sapin" asp-action="Nouvelle"><i class="bi bi-plus-lg" aria-hidden="true"></i>Nouvelle soumission</a>
+    </header>
+
+    <section class="sl-chiffres" aria-label="Résumé des soumissions">
+        <div class="sl-verre sl-chiffre"><span class="sl-chiffre-valeur" data-compteur="total">…</span><span class="sl-chiffre-libelle">soumissions au total</span></div>
+        <div class="sl-verre sl-chiffre" title="Brouillons et soumissions prêtes à envoyer"><span class="sl-chiffre-valeur" data-compteur="preparation">…</span><span class="sl-chiffre-libelle">en préparation</span></div>
+        <div class="sl-verre sl-chiffre" title="Envoi déclaré"><span class="sl-chiffre-valeur" data-compteur="envoyees">…</span><span class="sl-chiffre-libelle">envoyées</span></div>
+        <div class="sl-verre sl-chiffre" title="Réponse du client attendue"><span class="sl-chiffre-valeur" data-compteur="attente">…</span><span class="sl-chiffre-libelle">en attente de réponse<span class="sl-point sl-point-ambre" aria-hidden="true"></span></span></div>
+        <div class="sl-verre sl-chiffre" title="Acceptation déclarée"><span class="sl-chiffre-valeur" data-compteur="acceptees">…</span><span class="sl-chiffre-libelle">acceptées</span></div>
+    </section>
+
+    <section class="sl-verre sl-module" aria-label="Liste des soumissions">
+        <div class="sl-outils">
+            <div class="sl-recherche">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" id="f-recherche" placeholder="Client, véhicule ou référence" aria-label="Rechercher une soumission" autocomplete="off" />
+            </div>
+            <select class="sl-select" id="f-statut" aria-label="Filtrer par statut">
+                <option value="">Tous les statuts</option>
+                @foreach (var s in ReferentielsSoumission.Statuts)
+                {
+                    <option value="@s">@ReferentielsSoumission.Libelle(s)</option>
+                }
+            </select>
+            <select class="sl-select" id="f-periode" aria-label="Filtrer par date de modification">
+                <option value="">Toutes les dates</option>
+                <option value="7">Modifiées depuis 7 jours</option>
+                <option value="30">Modifiées depuis 30 jours</option>
+                <option value="expire">Validité dépassée</option>
+            </select>
+            <select class="sl-select" id="f-conseiller" aria-label="Filtrer par conseiller">
+                <option value="">Tous les conseillers</option>
+                @foreach (var c in Model.Prospects.Conseillers)
+                {
+                    <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes soumissions" : c.Nom + " (fictif)")</option>
+                }
+            </select>
+            <select class="sl-select" id="f-opportunite" aria-label="Filtrer par opportunité">
+                <option value="">Toutes les opportunités</option>
+            </select>
+            <button type="button" class="sl-effacer" data-effacer-filtres hidden>Effacer les filtres</button>
+        </div>
+
+        <p class="visually-hidden" id="resultat" aria-live="polite"></p>
+
+        <div id="zone-liste" class="sl-defile">
+            <table class="sl-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Référence</th>
+                        <th scope="col">Client et opportunité</th>
+                        <th scope="col">Véhicule</th>
+                        <th scope="col" class="sl-droite">Prix proposé</th>
+                        <th scope="col">Validité</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col"><span class="visually-hidden">Ouvrir</span></th>
+                    </tr>
+                </thead>
+                <tbody id="liste-corps"></tbody>
+            </table>
+        </div>
+
+        <nav class="sl-pagination" id="pied-liste" aria-label="Pagination des soumissions" hidden></nav>
+
+        <div class="sl-vide" id="etat-vide" hidden>
+            <p>Aucune soumission ne correspond.</p>
+            <button type="button" class="sl-btn-secondaire" data-effacer-filtres>Effacer les filtres</button>
+        </div>
+        <div class="sl-vide" id="etat-aucun" hidden>
+            <p>Aucune soumission pour l'instant. Préparez une proposition à partir d'une opportunité.</p>
+        </div>
+    </section>
+</div>
+
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+<partial name="_DonneesSoumissions" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-composants.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-liste.js" asp-append-version="true"></script>
+}

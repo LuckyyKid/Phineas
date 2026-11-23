@@ -1,0 +1,280 @@
+@* Page « Mon réseau et recommandations » (maquettes 36 à 38) : résumé en mots, cinq chiffres, trois onglets
+   (résultats et historique, invitations, profil et carte de recommandation).
+   Données : _DonneesModules (prospects, transactions, relations). Rendu et interactions : wwwroot/js/relations-reseau.js.
+   Styles : wwwroot/css/relations-reseau-verre.css (préfixe rr-, tout est rangé sous .rr-page). *@
+@using Phineas.Models.ViewModels.Conseiller
+@model RelationsPageViewModel
+@{
+    ViewData["Title"] = "Mon réseau et recommandations";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations-reseau-verre.css" asp-append-version="true" />
+}
+
+<div class="rr-page">
+
+    @* Haut propre à cette page : fil d'Ariane et pastilles, sans « Modifiée / Réinitialiser » (voir la note du bas). *@
+    <div class="rr-haut">
+        <nav class="rr-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Réseau et recommandations</span>
+        </nav>
+        <div class="rr-puces" title="Clients, ventes et recommandations fictifs. Rien n'est enregistré en base.">
+            <span class="rr-chip-demo">Démo</span>
+            <span class="rr-en-ligne"><span class="rr-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <header class="rr-entete">
+        <div>
+            <p class="rr-label">Relations clients</p>
+            <h1 class="rr-titre">Mon réseau et recommandations</h1>
+            <p class="rr-intro">Développer un réseau fondé sur la recommandation volontaire de vos clients satisfaits.</p>
+        </div>
+        <a class="rr-btn-verre" data-rc-apercu href="@Url.Action("Recommande")"><i class="bi bi-eye" aria-hidden="true"></i>Prévisualiser le parcours du prospect</a>
+    </header>
+
+    <div id="reseau" data-transaction="@Model.TransactionId" data-onglet="@Model.Onglet">
+        <p class="rr-resume" data-resume aria-live="polite"></p>
+
+        <section class="rr-chiffres" aria-label="Résultats de mon réseau">
+            <div class="rr-verre rr-chiffre">
+                <span class="rr-chiffre-valeur" data-compteur="preparees">…</span>
+                <span class="rr-chiffre-libelle" data-libelle="preparees">Invitation préparée</span>
+                <span class="rr-chiffre-detail" data-detail="preparees">Par vous</span>
+            </div>
+            <div class="rr-verre rr-chiffre">
+                <span class="rr-chiffre-valeur" data-compteur="prospects">…</span>
+                <span class="rr-chiffre-libelle" data-libelle="prospects">Prospect recommandé</span>
+                <span class="rr-chiffre-detail" data-detail="doublons">Nouveaux</span>
+            </div>
+            <div class="rr-verre rr-chiffre">
+                <span class="rr-chiffre-valeur" data-compteur="rendezVous">…</span>
+                <span class="rr-chiffre-libelle">Rendez-vous</span>
+                <span class="rr-chiffre-detail" data-detail="rendezVous">Obtenus</span>
+            </div>
+            <div class="rr-verre rr-chiffre">
+                <span class="rr-chiffre-valeur" data-compteur="transactions">…</span>
+                <span class="rr-chiffre-libelle" data-libelle="transactions">Transaction conclue</span>
+                <span class="rr-chiffre-detail">Vente enregistrée</span>
+            </div>
+            <div class="rr-verre rr-chiffre">
+                <span class="rr-chiffre-valeur" data-compteur="livrees">…</span>
+                <span class="rr-chiffre-libelle" data-libelle="livrees">Vente livrée</span>
+                <span class="rr-chiffre-detail">Issue du réseau</span>
+            </div>
+        </section>
+
+        <ul class="nav rr-onglets" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-resultats" data-bs-toggle="tab" data-bs-target="#panneau-resultats" type="button" role="tab" aria-controls="panneau-resultats" aria-selected="true">Résultats et historique</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-invitations" data-bs-toggle="tab" data-bs-target="#panneau-invitations" type="button" role="tab" aria-controls="panneau-invitations" aria-selected="false">Invitations <span class="rr-onglet-compte" data-champ="nb-eligibles"></span></button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-profil" data-bs-toggle="tab" data-bs-target="#panneau-profil" type="button" role="tab" aria-controls="panneau-profil" aria-selected="false">Profil et carte</button></li>
+        </ul>
+
+        <div class="tab-content">
+
+            @* ---------- Onglet 1 : résultats et historique ---------- *@
+            <div class="tab-pane fade show active" id="panneau-resultats" role="tabpanel" aria-labelledby="onglet-resultats" tabindex="0">
+                <section class="rr-verre rr-carte" aria-labelledby="titre-parcours">
+                    <h2 class="rr-carte-titre" id="titre-parcours">Parcours des prospects recommandés</h2>
+                    <p class="rr-carte-sous-titre">Des recommandations reçues jusqu'aux transactions conclues.</p>
+                    <ol class="rr-parcours" id="entonnoir"></ol>
+                    <p class="rr-carte-pied">Chaque étape ne compte que les prospects ayant franchi les précédentes. Les visites et les clics sur la carte ne sont pas mesurés. Ces chiffres ne mesurent pas l'efficacité du conseiller.</p>
+                </section>
+
+                <section class="rr-verre rr-module" aria-labelledby="titre-historique">
+                    <div class="rr-module-tete">
+                        <h2 class="rr-label mb-0" id="titre-historique">Historique des recommandations</h2>
+                    </div>
+                    <div class="rr-defile">
+                        <table class="rr-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Référence</th>
+                                    <th scope="col">Prospect recommandé</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Opportunité et étape</th>
+                                    <th scope="col">Résultat</th>
+                                    <th scope="col">Attribution</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recommandations-corps"></tbody>
+                        </table>
+                    </div>
+                    <div class="rr-vide" id="recommandations-vide" hidden>
+                        <i class="bi bi-share" aria-hidden="true"></i>
+                        <strong>Aucune recommandation</strong>
+                        <span>Les prospects qui vous contactent grâce à votre carte apparaîtront ici.</span>
+                    </div>
+                    <div data-zone="pagination-recommandations"></div>
+                    <p class="rr-module-pied"><i class="bi bi-shield-lock" aria-hidden="true"></i>Le client qui a partagé votre carte ne reçoit jamais d'information sur le dossier de la personne recommandée.</p>
+                </section>
+            </div>
+
+            @* ---------- Onglet 2 : invitations ---------- *@
+            <div class="tab-pane fade" id="panneau-invitations" role="tabpanel" aria-labelledby="onglet-invitations" tabindex="0">
+                <div class="rr-colonnes rr-colonnes-invitations">
+                    <div class="rr-pile">
+                        <section class="rr-verre rr-carte" aria-labelledby="titre-invitables">
+                            <h2 class="rr-carte-titre" id="titre-invitables">Qui peut être invité</h2>
+                            <p class="rr-carte-sous-titre">Une invitation devient possible quand la livraison est confirmée, qu'un suivi de satisfaction a été reçu, qu'aucun problème n'est ouvert et que le client accepte d'être contacté.</p>
+                            <div id="eligibles"></div>
+                            <div data-zone="pagination-eligibles"></div>
+                            <p class="rr-carte-pied">Une excellente note n'est pas, à elle seule, un consentement : vous validez toujours la démarche.</p>
+                        </section>
+
+                        @* Préparation d'une invitation : s'ouvre depuis « Préparer l'invitation » d'un client invitable. *@
+                        <section class="rr-verre rr-carte" id="editeur-invitation" aria-labelledby="titre-editeur" hidden>
+                            <div class="rr-carte-tete">
+                                <h2 class="rr-carte-titre mb-0" id="titre-editeur">Préparer une invitation</h2>
+                                <span class="rr-chip-gris">Aucun envoi réel</span>
+                            </div>
+                            <p class="rr-editeur-client" data-zone="invitation-client"></p>
+                            <label class="rr-champ-label" for="invitation-texte">Message (modifiable)</label>
+                            <textarea class="rr-zone-texte" id="invitation-texte" rows="5"></textarea>
+                            <p class="rr-aide">Aucune récompense, aucun sentiment d'urgence. La personne recommandée manifestera elle-même son intérêt.</p>
+                            <div class="rr-boutons">
+                                <button type="button" class="rr-btn-sapin" data-reseau="preparer"><i class="bi bi-check2" aria-hidden="true"></i>Enregistrer l'invitation</button>
+                                <button type="button" class="rr-btn-blanc" data-reseau="copier-invitation"><i class="bi bi-copy" aria-hidden="true"></i>Copier le message</button>
+                                <button type="button" class="rr-btn-discret" data-reseau="fermer-editeur">Annuler</button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <section class="rr-verre rr-carte" aria-labelledby="titre-preparees">
+                        <h2 class="rr-carte-titre" id="titre-preparees">Invitations préparées</h2>
+                        <div id="invitations"></div>
+                        <div data-zone="pagination-invitations"></div>
+                    </section>
+                </div>
+            </div>
+
+            @* ---------- Onglet 3 : profil et carte ---------- *@
+            <div class="tab-pane fade" id="panneau-profil" role="tabpanel" aria-labelledby="onglet-profil" tabindex="0">
+                <div class="rr-colonnes rr-colonnes-profil">
+                    <div class="rr-colonne-carte">
+                        @* La carte est redessinée à chaque frappe dans le formulaire (relations-reseau.js, rendreCarte). *@
+                        <div id="carte-apercu" aria-live="polite"></div>
+                        <div class="rr-boutons rr-boutons-carte">
+                            <button type="button" class="rr-btn-blanc" data-reseau="copier-lien"><i class="bi bi-link-45deg" aria-hidden="true"></i>Copier le lien</button>
+                            <button type="button" class="rr-btn-blanc" data-reseau="copier-message"><i class="bi bi-copy" aria-hidden="true"></i>Copier un message de partage</button>
+                            <button type="button" class="rr-btn-discret" data-reseau="voir-recommandations">Recommandations associées</button>
+                        </div>
+                        <p class="rr-aide">Aucune infrastructure publique n'existe : le lien ne permet à personne d'accéder à Phineas. Aucune information personnelle privée n'est publiée.</p>
+                    </div>
+
+                    <section class="rr-verre rr-carte" aria-labelledby="titre-profil">
+                        <h2 class="rr-carte-titre" id="titre-profil">Mon profil commercial</h2>
+                        <p class="rr-carte-sous-titre">La carte se met à jour pendant que vous écrivez.</p>
+                        <form id="form-profil" class="rr-formulaire" novalidate>
+                            <label class="rr-champ-label" for="pf-message">Message de la carte</label>
+                            <textarea class="rr-zone-texte" id="pf-message" name="messageCarte" rows="4" maxlength="300"></textarea>
+
+                            <div class="rr-champs-deux">
+                                <div>
+                                    <label class="rr-champ-label" for="pf-telephone">Téléphone professionnel</label>
+                                    <input type="tel" class="rr-champ" id="pf-telephone" name="telephonePro" />
+                                </div>
+                                <div>
+                                    <label class="rr-champ-label" for="pf-courriel">Courriel professionnel</label>
+                                    <input type="email" class="rr-champ" id="pf-courriel" name="courrielPro" />
+                                </div>
+                            </div>
+
+                            <fieldset class="rr-groupe">
+                                <legend class="rr-champ-label">Forme du rôle <span class="rr-facultatif">(accorde « Conseillère / Conseiller aux ventes »)</span></legend>
+                                <div class="rr-bascules">
+                                    @foreach (var forme in ReferentielsRelations.FormesRole)
+                                    {
+                                        <label class="rr-bascule"><input type="radio" name="formeRole" value="@forme.Cle" /><i class="bi bi-check2" aria-hidden="true"></i>@forme.Choix</label>
+                                    }
+                                    <label class="rr-bascule"><input type="radio" name="formeRole" value="" /><i class="bi bi-check2" aria-hidden="true"></i>@ReferentielsRelations.FormeRoleNeutre.Choix</label>
+                                </div>
+                            </fieldset>
+
+                            <div class="rr-champs-deux">
+                                <div>
+                                    <label class="rr-champ-label" for="pf-annee">Arrivée à la concession <span class="rr-facultatif">(facultatif)</span></label>
+                                    <input type="number" class="rr-champ" id="pf-annee" name="anneeArrivee" inputmode="numeric" placeholder="Ex. : 2019"
+                                           min="@ReferentielsRelations.AnneeArriveeMin" max="@DateTime.Now.Year" step="1" aria-describedby="pf-annee-erreur" />
+                                    <p class="rr-erreur" id="pf-annee-erreur" hidden>Indiquez une année entre @ReferentielsRelations.AnneeArriveeMin et @DateTime.Now.Year, ou laissez vide.</p>
+                                </div>
+                                <div>
+                                    <label class="rr-champ-label" for="pf-ville">Ville de la concession <span class="rr-facultatif">(facultatif)</span></label>
+                                    <input type="text" class="rr-champ" id="pf-ville" name="villeConcession" maxlength="80" placeholder="Ex. : Brossard (Québec)" />
+                                </div>
+                            </div>
+
+                            <fieldset class="rr-groupe">
+                                <legend class="rr-champ-label">Informations présentées sur la carte</legend>
+                                <div class="rr-bascules">
+                                    <label class="rr-bascule"><input type="checkbox" name="afficherTelephone" /><i class="bi bi-check2" aria-hidden="true"></i>Téléphone</label>
+                                    <label class="rr-bascule"><input type="checkbox" name="afficherCourriel" /><i class="bi bi-check2" aria-hidden="true"></i>Courriel</label>
+                                    <label class="rr-bascule"><input type="checkbox" name="afficherLangues" /><i class="bi bi-check2" aria-hidden="true"></i>Langues parlées</label>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="rr-groupe">
+                                <legend class="rr-champ-label">Langues parlées</legend>
+                                <div class="rr-bascules">
+                                    @foreach (var (cle, libelle) in ReferentielsRelations.Langues)
+                                    {
+                                        <label class="rr-bascule"><input type="checkbox" name="langue" value="@cle" /><i class="bi bi-check2" aria-hidden="true"></i>@libelle</label>
+                                    }
+                                </div>
+                            </fieldset>
+
+                            <label class="rr-champ-label" for="pf-presentation">Présentation professionnelle <span class="rr-facultatif">(profil public)</span></label>
+                            <textarea class="rr-zone-texte" id="pf-presentation" name="presentation" rows="3" maxlength="400"></textarea>
+
+                            <p class="rr-aide">Photo professionnelle : aucune photo disponible, la carte affiche vos initiales. Le compte de connexion n'est pas modifié.</p>
+                            <button type="submit" class="rr-btn-sapin">Enregistrer le profil</button>
+                        </form>
+                    </section>
+                </div>
+
+                <section class="rr-verre rr-carte" aria-labelledby="titre-profil-public">
+                    <h2 class="rr-carte-titre" id="titre-profil-public">Aperçu du profil public</h2>
+                    <p class="rr-carte-sous-titre">Ce que la personne recommandée verrait, d'après le profil enregistré.</p>
+                    <div id="profil-apercu"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <p class="rr-note">
+        <i class="bi bi-shield-check" aria-hidden="true"></i>
+        <span>
+            Recommandation volontaire seulement : aucune récompense, aucun envoi automatique, et aucune donnée du dossier de la personne recommandée n'est partagée.
+            @* Réinitialisation de démo : n'apparaît que si les données de démonstration ont été modifiées (prospects-store.js). *@
+            <span class="rr-demo-etat" data-etat-demo hidden>Données de démonstration modifiées.</span>
+            <button type="button" class="rr-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Réinitialiser la démo</button>
+        </span>
+    </p>
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-reseau.js" asp-append-version="true"></script>
+}

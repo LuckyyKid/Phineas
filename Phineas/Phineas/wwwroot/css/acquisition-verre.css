@@ -1,0 +1,365 @@
+/* =========================================================
+   Acquisition commerciale en verre clair (maquettes 15 à 20).
+   Chargée par Views/Outils/Acquisition.cshtml après outils.css : reprend ses jetons (--ogp-*) et son haut de page (og-).
+   Tout est rangé sous .acq-page (préfixe acq-) pour ne rien changer aux autres pages Outils.
+   ========================================================= */
+
+.acq-page {
+  --acq-rayon-carte: 28px;
+  --acq-menthe: #5FE0C0;
+  --acq-menthe-pale: rgba(95, 224, 192, .12);
+  --acq-sapin-clair: #17614F;
+  --acq-gris-pale: rgba(11, 13, 13, .05);
+  --acq-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+/* ---------- Textes communs ---------- */
+.acq-page .acq-label { margin: 0; font-family: var(--ogp-mono); font-size: 11.5px; font-weight: 400; letter-spacing: .14em; text-transform: uppercase; color: var(--ogp-muted); }
+.acq-sous { display: block; margin-top: 3px; font-size: 13px; color: var(--ogp-muted); }
+.acq-sous-fonce { display: block; margin-top: 3px; font-size: 14px; color: var(--ogp-text); }
+.acq-attenue { color: var(--ogp-muted-2); }
+.acq-mono { font-family: var(--ogp-mono); font-size: 13px; letter-spacing: .02em; }
+.acq-fort { font-weight: 500; color: var(--ogp-ink); }
+.acq-droite { text-align: right; }
+
+/* ---------- En-tête ---------- */
+.acq-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.acq-page .acq-titre { margin: 12px 0 10px; font-family: var(--ogp-font); font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--ogp-ink); }
+.acq-intro { max-width: 36em; margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--ogp-text); }
+
+/* Bouton secondaire en verre « Studio d'annonces » */
+.acq-btn-verre {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid var(--ogp-line-2);
+  background: rgba(255, 255, 255, .7);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  box-shadow: var(--ogp-ombre);
+  font-size: 15px;
+  color: var(--ogp-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.acq-btn-verre i { color: var(--acq-sapin-clair); }
+.acq-btn-verre:hover { color: var(--ogp-ink); background: #FFFFFF; }
+
+/* ---------- Barre d'onglets en pilule de verre ---------- */
+.acq-page .acq-onglets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 24px;
+  padding: 5px;
+  border: 1px solid var(--ogp-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+}
+.acq-page .acq-onglets .nav-link {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 15px;
+  color: var(--ogp-text);
+}
+.acq-page .acq-onglets .nav-link:hover { color: var(--ogp-ink); background: rgba(11, 13, 13, .04); }
+.acq-page .acq-onglets .nav-link.active {
+  background: var(--ogp-sapin);
+  color: #FFFFFF;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 10px 22px -10px rgba(12, 59, 50, .65);
+}
+
+/* ---------- Cartes en verre ---------- */
+.acq-verre {
+  margin-bottom: 20px;
+  border-radius: var(--acq-rayon-carte);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  border: 1px solid var(--ogp-line);
+  box-shadow: var(--ogp-ombre);
+}
+.acq-carte { padding: 26px 30px 24px; }
+.acq-carte-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.acq-carte-tete-gauche { justify-content: flex-start; }
+.acq-compte { font-size: 14px; color: var(--ogp-text); }
+.acq-compte strong { font-weight: 500; color: var(--ogp-ink); }
+.acq-pied { margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--ogp-line-2); font-size: 13px; line-height: 1.6; color: var(--ogp-muted); }
+.acq-page .acq-titre-liste { margin-bottom: 4px; padding-bottom: 16px; border-bottom: 1px solid var(--ogp-line-2); }
+
+/* Pastille grise en mono : FICTIF, DÉMONSTRATION, DONNÉES NON CONNECTÉES */
+.acq-pastille { padding: 4px 10px; border-radius: 999px; background: var(--acq-gris-pale); font-family: var(--ogp-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ogp-muted); }
+
+/* ---------- Onglet Sources : deux cartes de répartition ---------- */
+.acq-deux { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; margin-bottom: 20px; }
+.acq-deux .acq-verre { margin-bottom: 0; }
+.acq-barres { display: flex; flex-direction: column; gap: 18px; margin: 0; padding: 0; list-style: none; }
+.acq-barre-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.acq-barre-libelle { font-size: 15px; color: var(--ogp-ink); }
+.acq-barre-libelle .acq-sous { margin-top: 2px; }
+.acq-barre-tete strong { font-size: 15px; font-weight: 500; color: var(--ogp-ink); font-variant-numeric: tabular-nums; }
+.acq-barre-piste { display: block; height: 4px; border-radius: 999px; background: rgba(11, 13, 13, .06); overflow: hidden; }
+.acq-barre-piste span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--acq-menthe) 0%, var(--acq-sapin-clair) 100%); }
+
+/* ---------- Tableaux ---------- */
+.acq-module { padding: 0 0 8px; overflow: hidden; }
+.acq-module-tete { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 26px; border-bottom: 1px solid var(--ogp-line-2); }
+.acq-defile { overflow-x: auto; padding: 4px 10px 0; }
+.acq-table { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; }
+.acq-table th {
+  padding: 18px 16px 12px;
+  border-bottom: 1px solid var(--ogp-line-2);
+  font-family: var(--ogp-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ogp-muted);
+  text-align: left;
+  white-space: nowrap;
+}
+.acq-table th.acq-droite { text-align: right; }
+.acq-table td { padding: 18px 16px; border-bottom: 1px solid var(--ogp-line); vertical-align: top; font-size: 15px; color: var(--ogp-ink); }
+.acq-table tbody tr:last-child td { border-bottom: 0; }
+.acq-table tbody tr { transition: background-color .15s ease; }
+.acq-table tbody tr:hover td { background: rgba(255, 255, 255, .85); }
+.acq-table tbody tr:hover td:first-child { border-radius: 14px 0 0 14px; }
+.acq-table tbody tr:hover td:last-child { border-radius: 0 14px 14px 0; }
+.acq-nombre { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* Prospect : avatar d'initiales et nom */
+.acq-prospect { display: inline-flex; align-items: center; gap: 12px; font-weight: 500; color: var(--ogp-ink); text-decoration: none; }
+.acq-prospect:hover { color: var(--acq-sapin-clair); }
+.acq-avatar { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: var(--acq-menthe-pale); font-size: 12.5px; font-weight: 500; letter-spacing: .02em; color: var(--acq-sapin-clair); }
+
+/* Provenance : référence mono en étiquette grise, ou « Attribution manquante » */
+.acq-ref { display: inline-block; padding: 3px 9px; border-radius: 8px; background: var(--acq-gris-pale); font-family: var(--ogp-mono); font-size: 13px; color: var(--ogp-ink); }
+.acq-ref-ligne { display: block; margin-top: 6px; }
+.acq-manquante { display: inline-flex; align-items: center; gap: 8px; color: var(--ogp-muted); }
+.acq-point-creux { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ogp-muted-2); }
+
+/* Liens : référence et lien vert « Copier » */
+.acq-ref-copie { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.acq-lien-vert { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font-size: 14.5px; color: var(--acq-sapin-clair); }
+.acq-lien-vert:hover { text-decoration: underline; }
+
+/* Publications : statut en point et libellé */
+.acq-statut { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+.acq-statut-point { width: 8px; height: 8px; border-radius: 50%; }
+.acq-statut-publiee { color: var(--ogp-sapin-ink); }
+.acq-statut-publiee .acq-statut-point { background: var(--acq-sapin-clair); }
+.acq-statut-attente { color: var(--ogp-text); }
+.acq-statut-attente .acq-statut-point { border: 1.5px solid var(--ogp-muted-2); }
+.acq-statut-retiree { color: var(--ogp-muted); }
+.acq-statut-retiree .acq-statut-point { background: var(--ogp-muted-2); }
+
+/* Boutons ronds blancs à icône verte */
+.acq-ronds { display: flex; justify-content: flex-end; gap: 8px; }
+.acq-rond {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--ogp-line-2);
+  background: #FFFFFF;
+  color: var(--acq-sapin-clair);
+  text-decoration: none;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.acq-rond:hover:not(:disabled) { border-color: rgba(11, 13, 13, .16); box-shadow: 0 4px 12px -4px rgba(11, 13, 13, .16); color: var(--acq-sapin-clair); }
+.acq-rond:disabled { color: var(--ogp-muted-2); opacity: .5; cursor: default; }
+
+/* ---------- Pagination de cette page : ronds de 34 px, page active blanche cerclée ---------- */
+.acq-page .og-pagination { padding: 16px 26px 10px; }
+.acq-page .og-pages-info { font-family: var(--ogp-font); font-size: 14px; letter-spacing: 0; color: var(--ogp-text); }
+.acq-page .og-page-btn { min-width: 34px; width: 34px; height: 34px; padding: 0; border-radius: 50%; }
+.acq-page .og-page-btn.is-active { border-color: rgba(11, 13, 13, .14); box-shadow: 0 1px 2px rgba(11, 13, 13, .06); }
+.acq-page .og-page-btn[aria-label="Page suivante"]:not(:disabled) { color: var(--acq-sapin-clair); }
+
+/* ---------- Cartes de formulaire ---------- */
+.acq-form-tete { display: flex; align-items: center; gap: 14px; padding: 24px 30px 20px; border-bottom: 1px solid var(--ogp-line-2); }
+.acq-form-corps { display: flex; flex-direction: column; gap: 18px; padding: 24px 30px 28px; }
+.acq-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 20px; }
+.acq-grille-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.acq-pleine { grid-column: 1 / -1; }
+.acq-champ-label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--ogp-ink); }
+.acq-facultatif { margin-left: 4px; font-weight: 400; color: var(--ogp-muted); }
+
+.acq-input,
+.acq-select,
+.acq-texte {
+  width: 100%;
+  border: 1px solid var(--ogp-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ogp-ink);
+}
+.acq-input, .acq-select { height: 44px; padding: 0 18px; border-radius: 999px; }
+.acq-select { padding-right: 42px; appearance: none; -webkit-appearance: none; background-image: var(--acq-chevron); background-repeat: no-repeat; background-position: right 18px center; text-overflow: ellipsis; }
+.acq-select-filtre { width: auto; min-width: 220px; }
+.acq-texte { min-height: 96px; padding: 14px 18px; border-radius: 20px; resize: vertical; }
+.acq-input::placeholder, .acq-texte::placeholder { color: var(--ogp-muted-2); }
+.acq-input:focus, .acq-select:focus, .acq-texte:focus { outline: none; border-color: var(--ogp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.acq-page .is-invalid { border-color: #D93A2E; }
+.acq-page .invalid-feedback { margin-top: 6px; padding-left: 14px; font-size: 13px; color: #B42318; }
+
+/* Rangée du bouton principal et de sa note d'aide */
+.acq-actions { display: flex; align-items: center; gap: 22px; margin-top: 4px; }
+.acq-btn-sapin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ogp-sapin);
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 14px 28px -12px rgba(12, 59, 50, .7);
+}
+.acq-btn-sapin:active { transform: translateY(1px); }
+.acq-aide { display: flex; gap: 8px; margin: 0; font-size: 12px; line-height: 1.5; color: var(--ogp-muted); }
+.acq-aide i { margin-top: 1px; color: var(--ogp-muted); }
+
+/* Bouton secondaire blanc */
+.acq-btn-blanc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--ogp-line-2);
+  background: #FFFFFF;
+  font-size: 14.5px;
+  color: var(--ogp-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.acq-btn-blanc:hover { color: var(--ogp-ink); border-color: rgba(11, 13, 13, .16); box-shadow: 0 4px 12px -4px rgba(11, 13, 13, .14); }
+.acq-btn-blanc i { color: var(--acq-sapin-clair); }
+
+/* Aperçu du lien préparé */
+.acq-apercu:empty { display: none; }
+.acq-apercu { padding: 18px 20px; border-radius: 20px; background: rgba(11, 13, 13, .03); }
+.acq-apercu-titre { margin: 0 0 8px; font-size: 14px; font-weight: 500; }
+.acq-url { display: block; padding: 10px 14px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--ogp-line-2); font-family: var(--ogp-mono); font-size: 12.5px; color: var(--ogp-ink); overflow-wrap: anywhere; }
+.acq-apercu-details { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 14px 0; }
+.acq-apercu-details dt { font-size: 12px; font-weight: 400; color: var(--ogp-muted); }
+.acq-apercu-details dd { margin: 0; font-size: 14px; color: var(--ogp-ink); }
+
+/* ---------- Onglet Prospection : contacts ---------- */
+.acq-contacts { margin: 0; padding: 0; list-style: none; }
+.acq-contact { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--ogp-line-2); }
+.acq-contact:last-child { border-bottom: 0; padding-bottom: 6px; }
+.acq-contact-corps { min-width: 0; }
+.acq-contact-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 8px; }
+.acq-contact-tete strong { font-size: 15px; font-weight: 500; color: var(--ogp-ink); }
+.acq-entreprise { font-size: 15px; color: var(--ogp-text); }
+.acq-pastille-blanche { padding: 3px 12px; border-radius: 999px; border: 1px solid var(--ogp-line-2); background: #FFFFFF; font-size: 13px; color: var(--ogp-ink); }
+.acq-contexte { margin: 0 0 12px; font-size: 15px; color: var(--ogp-text); }
+.acq-infos { display: flex; flex-wrap: wrap; gap: 10px 36px; margin: 0; }
+.acq-infos dt { font-size: 13px; font-weight: 400; color: var(--ogp-muted); }
+.acq-infos dd { margin: 2px 0 0; font-size: 15px; color: var(--ogp-ink); }
+
+/* ---------- Onglet Performance : tuiles en pointillés ---------- */
+.acq-tuiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.acq-tuile { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border: 1px dashed rgba(11, 13, 13, .16); border-radius: 18px; }
+.acq-tuile-nom { font-size: 15px; color: var(--ogp-ink); }
+.acq-tuile-etat { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ogp-muted); }
+
+/* ---------- Note commune en bas de chaque onglet ---------- */
+.acq-note { display: flex; gap: 12px; margin: 4px 0 0; padding: 18px 22px; border-radius: 16px; background: rgba(11, 13, 13, .03); font-size: 14px; line-height: 1.55; color: var(--ogp-text); }
+.acq-note i { margin-top: 1px; color: var(--acq-sapin-clair); }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 1100px) {
+  .acq-tuiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 991.98px) {
+  .acq-deux { grid-template-columns: 1fr; }
+  .acq-grille, .acq-grille-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .acq-entete { flex-direction: column; align-items: flex-start; }
+  .acq-page .acq-onglets { border-radius: 24px; }
+}
+@media (max-width: 575.98px) {
+  .acq-grille, .acq-grille-4, .acq-tuiles { grid-template-columns: 1fr; }
+  .acq-actions, .acq-contact { flex-direction: column; align-items: flex-start; }
+  .acq-module-tete { flex-direction: column; align-items: flex-start; }
+}
+
+/* =========================================================
+   Thème sombre · Acquisition commerciale, six onglets (contrat : wwwroot/js/theme.js)
+   Les textes suivent --ogp-* (outils.css).
+   ========================================================= */
+html[data-theme="sombre"] .acq-page {
+  --acq-menthe: var(--ps-menthe);
+  --acq-menthe-pale: var(--ps-menthe-fond);
+  --acq-sapin-clair: var(--ps-menthe);
+  --acq-gris-pale: rgba(255, 255, 255, .06);
+  --acq-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23A5ACAB' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+}
+html[data-theme="sombre"] .acq-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; backdrop-filter: var(--ps-verre-flou); -webkit-backdrop-filter: var(--ps-verre-flou); }
+
+/* Bouton « Studio d'annonces » et onglets */
+html[data-theme="sombre"] .acq-btn-verre { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .acq-btn-verre:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-page .acq-onglets { border-color: var(--ps-contour); background: var(--ps-verre); }
+html[data-theme="sombre"] .acq-page .acq-onglets .nav-link:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .acq-page .acq-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+
+/* Répartitions : piste claire translucide, barre menthe qui s'éclaircit vers la valeur */
+html[data-theme="sombre"] .acq-barre-piste { background: var(--ps-piste); }
+html[data-theme="sombre"] .acq-barre-piste span { background: linear-gradient(90deg, #2FA98A 0%, var(--ps-menthe) 100%); }
+
+/* Tableaux et pastilles */
+html[data-theme="sombre"] .acq-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .acq-avatar { color: #CFF5EA; }
+html[data-theme="sombre"] .acq-statut-publiee { color: #CFF5EA; }
+html[data-theme="sombre"] .acq-pastille-blanche { border-color: var(--ps-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+
+/* Boutons ronds (copier, prévisualiser) et boutons blancs secondaires */
+html[data-theme="sombre"] .acq-rond,
+html[data-theme="sombre"] .acq-btn-blanc { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); }
+html[data-theme="sombre"] .acq-btn-blanc { color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-rond:hover:not(:disabled),
+html[data-theme="sombre"] .acq-btn-blanc:hover { border-color: var(--ps-contour-survol); background: var(--ps-survol); box-shadow: none; }
+html[data-theme="sombre"] .acq-btn-blanc:hover { color: var(--ps-texte); }
+
+/* Pagination (ronds de 34 px propres à la page) */
+html[data-theme="sombre"] .acq-page .og-page-btn.is-active { border-color: var(--ps-actif-contour); box-shadow: none; }
+
+/* Formulaires : champs sombres, bouton principal blanc */
+html[data-theme="sombre"] .acq-input,
+html[data-theme="sombre"] .acq-select,
+html[data-theme="sombre"] .acq-texte { border-color: var(--ps-champ-contour); background-color: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-input:focus,
+html[data-theme="sombre"] .acq-select:focus,
+html[data-theme="sombre"] .acq-texte:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .acq-page .is-invalid { border-color: var(--ps-rose); }
+html[data-theme="sombre"] .acq-page .invalid-feedback { color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .acq-btn-sapin { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+
+/* Aperçu du lien, tuiles « Non connecté » en pointillés, notes */
+html[data-theme="sombre"] .acq-apercu,
+html[data-theme="sombre"] .acq-note { background: rgba(255, 255, 255, .03); }
+html[data-theme="sombre"] .acq-url { border-color: var(--ps-champ-contour); background: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .acq-tuile { border-color: var(--ps-contour-survol); }

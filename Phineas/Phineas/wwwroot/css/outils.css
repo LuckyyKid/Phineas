@@ -1,0 +1,713 @@
+/* Outils du vendeur (phase 08) : assistant vendeur, studio d'annonces, acquisition commerciale, performances.
+   Reprend les jetons de phineas.css et les composants des phases précédentes (pr-*, sv-*, ia-*, rc-*).
+   Les états sont toujours accompagnés d'un texte ; la couleur n'est jamais la seule information. */
+
+:root {
+  --ov-verifie: var(--ph-primary);
+  --ov-a-verifier: #b45309;
+  --ov-suggestion: #6d28d9;
+  --ov-simulation: #92400e;
+}
+
+/* ---------- Bandeaux « simulation / non connecté » ---------- */
+.ov-simulation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px dashed #d97706;
+  border-radius: 10px;
+  background: #fffdf7;
+  color: var(--ov-simulation);
+  font-size: 0.86rem;
+}
+.ov-non-connecte,
+.ov-nc {
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.ov-non-connecte {
+  padding: 0.1rem 0.5rem;
+  border: 1px dotted #94a3b8;
+  border-radius: 4px;
+  background: #f1f5f9;
+}
+
+/* ---------- Assistant vendeur ---------- */
+.ov-coach {
+  display: grid;
+  grid-template-columns: minmax(16rem, 20rem) 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+.ov-coach-cote {
+  display: grid;
+  gap: 1rem;
+}
+@media (max-width: 991.98px) {
+  .ov-coach {
+    grid-template-columns: 1fr;
+  }
+}
+.ov-conversation {
+  display: flex;
+  flex-direction: column;
+  min-height: 32rem;
+}
+.ov-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.75rem 1.15rem;
+  border-bottom: 1px solid var(--ph-border);
+}
+.ov-fil {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 60vh;
+  padding: 1rem 1.15rem;
+  overflow-y: auto;
+}
+.ov-bulle {
+  max-width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.86rem;
+}
+.ov-bulle-vendeur {
+  align-self: flex-end;
+  max-width: 80%;
+  background: var(--ph-primary-50);
+}
+.ov-bulle-assistant {
+  border: 1px solid var(--ph-border);
+  background: #fff;
+}
+.ov-bulle-assistant > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.ov-badge-simulation {
+  padding: 0.1rem 0.5rem;
+  border: 1px dashed #d97706;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: var(--ov-simulation);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.ov-section {
+  margin-bottom: 0.6rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--c, var(--ph-border));
+}
+.ov-section h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.ov-section ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.ov-verifie { --c: var(--ov-verifie); }
+.ov-a-verifier { --c: var(--ov-a-verifier); }
+.ov-suggestion { --c: var(--ov-suggestion); }
+.ov-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+  color: var(--c);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.ov-hors-contexte {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.ov-liens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ov-bulle-assistant footer {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--ph-border);
+}
+.ov-fournisseur {
+  margin: 0.3rem 0 0;
+  color: var(--ph-muted);
+  font-size: 0.74rem;
+}
+.ov-saisie {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  padding: 0.75rem 1.15rem;
+  border-top: 1px solid var(--ph-border);
+}
+.ov-parametres {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+}
+.ov-parametres select:not([hidden]) {
+  max-width: 22rem;
+}
+@media (max-width: 575.98px) {
+  .ov-saisie {
+    grid-template-columns: 1fr;
+  }
+}
+.ov-historique {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+/* ---------- Studio d'annonces ---------- */
+.ov-table td {
+  font-size: 0.84rem;
+}
+.ov-table .pr-nom,
+.ov-table .ov-code {
+  white-space: nowrap;
+}
+.ov-statut {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--c, #64748b) 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c, #64748b) 9%, #fff);
+  color: var(--c, #64748b);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ov-statut-Brouillon { --c: #64748b; }
+.ov-statut-EnRevision { --c: #b45309; }
+.ov-statut-Approuvee { --c: #15803d; }
+.ov-statut-PretePublication { --c: var(--ph-primary); }
+.ov-statut-Publiee { --c: #0e7490; }
+.ov-statut-Archivee { --c: #94a3b8; }
+.ov-code {
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: var(--ph-ink);
+  font-size: 0.76rem;
+}
+.ov-etapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+.ov-etapes li {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--ph-border);
+  border-radius: 999px;
+  color: var(--ph-muted);
+}
+.ov-etapes li.is-active {
+  border-color: var(--ph-primary);
+  background: var(--ph-primary-50);
+  color: var(--ph-primary-600);
+  font-weight: 600;
+}
+.ov-etapes li.is-fait {
+  color: #15803d;
+}
+.ov-edition {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+@media (max-width: 991.98px) {
+  .ov-edition {
+    grid-template-columns: 1fr;
+  }
+}
+.ov-inventaire {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem 1rem;
+  margin: 0;
+  font-size: 0.82rem;
+}
+.ov-inventaire dt {
+  color: var(--ph-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.ov-inventaire dd {
+  margin: 0;
+}
+.ov-source {
+  padding: 0 0.3rem;
+  border-radius: 3px;
+  background: #eaf0fd;
+  color: #1c46b0;
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.ov-manquant {
+  color: #9a3412;
+}
+.ov-verifier {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+}
+.ov-verifier li.is-alerte {
+  color: #9a3412;
+  font-weight: 500;
+}
+.ov-grille-variantes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 991.98px) {
+  .ov-grille-variantes {
+    grid-template-columns: 1fr;
+  }
+}
+.ov-variante {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--ph-border);
+  border-radius: 10px;
+  font-size: 0.84rem;
+}
+.ov-variante h3 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.ov-variante.is-retenue {
+  border-color: #15803d;
+  box-shadow: 0 0 0 2px #dcfce7;
+}
+.ov-apercu {
+  max-width: 34rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius);
+  background: #fff;
+  font-size: 0.86rem;
+}
+.ov-apercu header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  color: var(--ph-muted);
+  font-size: 0.76rem;
+}
+.ov-apercu h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.ov-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 8rem;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: var(--ph-muted);
+  font-size: 0.78rem;
+}
+.ov-photo .bi {
+  font-size: 1.6rem;
+}
+.ov-prix {
+  margin: 0 0 0.4rem;
+  font-weight: 700;
+}
+.ov-appel {
+  font-weight: 600;
+}
+.ov-apercu footer {
+  color: var(--ph-muted);
+  font-size: 0.72rem;
+}
+.ov-validation {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+/* ---------- Acquisition ---------- */
+.ov-prospection {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ov-prospection > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--ph-border);
+  font-size: 0.86rem;
+}
+
+/* ---------- Performances ---------- */
+.ov-graphique {
+  margin: 1rem 0 0;
+}
+.ov-graphique figcaption {
+  margin-bottom: 0.4rem;
+  font-size: 0.86rem;
+}
+.ov-legende-graphique {
+  margin: 0.4rem 0 0;
+  color: var(--ph-muted);
+  font-size: 0.74rem;
+}
+.ov-note {
+  font-size: 0.72rem;
+}
+.ov-axes {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+}
+.ov-axes li + li {
+  margin-top: 0.3rem;
+}
+
+/* ---------- Tableau de bord ---------- */
+.ov-tb-chiffres {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+.ov-tb-chiffres li {
+  display: grid;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--ph-border);
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+.ov-tb-chiffres strong {
+  font-size: 1.1rem;
+}
+@media (max-width: 575.98px) {
+  .ov-tb-chiffres {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   Outils · verre clair (même rendu que prospects, soumissions, rendez-vous et relations clients)
+   Limité à .og-page (préfixe og- : ov- est déjà pris par le module) : restyle les composants communs (en-tête, chiffres, cartes, filtres, tableaux, onglets)
+   sans toucher au balisage produit par les scripts du module.
+   ========================================================= */
+.og-page {
+  --ogp-ink: #0B0D0D;
+  --ogp-text: #434B4A;
+  --ogp-muted: #566060;
+  --ogp-muted-2: #6B7473;
+  --ogp-line: rgba(11, 13, 13, .06);
+  --ogp-line-2: rgba(11, 13, 13, .08);
+  --ogp-sapin: linear-gradient(160deg, #17614F 0%, #0C3B32 100%);
+  --ogp-sapin-ink: #0C3B32;
+  --ogp-sapin-texte: #17614F;
+  --ogp-menthe-ink: #1D9A82;
+  --ogp-ambre: #E09A1C;
+  --ogp-ambre-ink: #9A5C00;
+  --ogp-font: 'Geist', 'Inter', system-ui, sans-serif;
+  --ogp-mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --ogp-flou: blur(30px) saturate(180%);
+  --ogp-ombre:
+    inset 0 0 0 1px rgba(255, 255, 255, .95),
+    0 1px 2px rgba(11, 13, 13, .03),
+    0 16px 40px -12px rgba(11, 13, 13, .10);
+
+  max-width: 1080px;
+  margin-inline: auto;
+  font-family: var(--ogp-font);
+  color: var(--ogp-ink);
+}
+.og-page :focus-visible { outline: 2px solid var(--ogp-menthe-ink); outline-offset: 2px; }
+.og-page h1, .og-page h2, .og-page h3, .og-page h4 { font-family: var(--ogp-font); letter-spacing: -0.02em; }
+
+/* ---------- Haut de page (_HautOutils) ---------- */
+.og-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+.og-ariane { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; color: var(--ogp-muted); }
+.og-ariane i { font-size: 11px; }
+.og-ariane [aria-current] { color: var(--ogp-ink); font-weight: 500; }
+.og-puces { display: flex; align-items: center; gap: 8px; }
+.og-chip-demo { padding: 4px 10px; border-radius: 999px; background: #FBF1DE; color: var(--ogp-ambre-ink); font-family: var(--ogp-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
+.og-demo-etat { font-size: 13px; color: var(--ogp-muted); }
+.og-demo-reset { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 0; border-radius: 999px; background: none; font-size: 13px; color: var(--ogp-text); }
+.og-demo-reset[hidden], .og-demo-etat[hidden] { display: none; }
+.og-demo-reset:hover { background: rgba(11, 13, 13, .05); color: var(--ogp-ink); }
+.og-en-ligne { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--ogp-line-2); background: rgba(255, 255, 255, .7); font-size: 14px; }
+.og-point-vert { width: 7px; height: 7px; border-radius: 50%; background: var(--ogp-menthe-ink); box-shadow: 0 0 0 3px rgba(95, 224, 192, .28); }
+
+/* ---------- En-tête de page ---------- */
+.og-page .sv-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; padding: 0; border: 0; background: none; }
+.og-page .sv-head h1 { margin: 0 0 10px; font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--ogp-ink); }
+.og-page .sv-head p { max-width: 40em; font-size: 16.5px; line-height: 1.5; color: var(--ogp-text) !important; }
+.og-page .sv-quick { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ---------- Boutons : pilules ---------- */
+.og-page .btn { border-radius: 999px; font-weight: 500; box-shadow: none; }
+.og-page .btn-sm { padding: 8px 16px; font-size: 14px; }
+.og-page .btn-primary { border: 0; background: var(--ogp-sapin); color: #FFFFFF; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 10px 22px -10px rgba(12, 59, 50, .65); }
+.og-page .btn-primary:hover, .og-page .btn-primary:focus { background: var(--ogp-sapin); color: #FFFFFF; filter: brightness(1.08); }
+.og-page .btn-outline-primary, .og-page .btn-outline-secondary { border: 1px solid var(--ogp-line-2); background: #FFFFFF; color: var(--ogp-ink); }
+.og-page .btn-outline-primary:hover, .og-page .btn-outline-secondary:hover { border-color: rgba(11, 13, 13, .16); background: #FFFFFF; color: var(--ogp-ink); }
+.og-page .btn-link { color: var(--ogp-sapin-texte); }
+
+/* ---------- Chiffres : une carte en verre par indicateur ---------- */
+.og-page .sv-kpis { gap: 14px; margin-bottom: 24px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+.og-page .sv-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--ogp-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  box-shadow: var(--ogp-ombre);
+}
+.og-page .sv-kpi:first-child { border-left: 1px solid var(--ogp-line); }
+.og-page .sv-kpi-label { order: 2; font-size: 13.5px; font-weight: 400; color: var(--ogp-text); }
+.og-page .sv-kpi-label i { display: none; }
+.og-page .sv-kpi-value { order: 1; margin: 0; font-size: 34px; font-weight: 300; letter-spacing: -0.03em; color: var(--ogp-ink); }
+.og-page .sv-kpi-detail { order: 3; font-size: 12.5px; color: var(--ogp-muted-2); }
+.og-page .sv-ton-attention .sv-kpi-label::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--ogp-ambre); vertical-align: middle; }
+.og-page .sv-ton-attention .sv-kpi-detail, .og-page .sv-ton-critique .sv-kpi-detail { color: var(--ogp-ambre-ink); }
+
+/* ---------- Cartes : verre, grands rayons ---------- */
+.og-page .card {
+  border: 1px solid var(--ogp-line);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  box-shadow: var(--ogp-ombre);
+  overflow: hidden;
+}
+.og-page .card-header, .og-page .sv-card-header {
+  padding: 22px 26px 14px;
+  border-bottom: 1px solid var(--ogp-line-2);
+  background: none;
+  font-family: var(--ogp-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ogp-muted);
+}
+.og-page .card-header i { display: none; }
+.og-page .card-body { padding: 20px 26px; }
+
+/* ---------- Recherche, filtres et interrupteurs : pilules ---------- */
+.og-page .pr-toolbar { padding: 20px 22px 0; border: 0; background: none; }
+.og-page .pr-search .form-control, .og-page .form-control {
+  border-radius: 999px;
+  border: 1px solid var(--ogp-line-2);
+  background-color: #FFFFFF;
+  font-family: var(--ogp-font);
+}
+.og-page textarea.form-control { border-radius: 18px; }
+.og-page .pr-search .form-control { height: 44px; }
+.og-page .pr-filtres { padding: 14px 22px; gap: 8px; border-bottom: 1px solid var(--ogp-line-2); background: none; }
+.og-page .form-select { border-radius: 999px; border: 1px solid var(--ogp-line-2); background-color: #FFFFFF; font-family: var(--ogp-font); color: var(--ogp-text); }
+.og-page .form-select-sm { height: 38px; padding-left: 14px; font-size: 14px; }
+.og-page .form-control:focus, .og-page .form-select:focus { border-color: var(--ogp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.og-page .form-switch .form-check-input { width: 32px; height: 20px; border-color: var(--ogp-line-2); background-color: rgba(11, 13, 13, .06); }
+.og-page .form-switch .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.og-page .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.og-page .pr-resultat { padding: 12px 22px 0; font-size: 13px; color: var(--ogp-muted); }
+
+/* ---------- Tableaux ---------- */
+.og-page .table { margin-bottom: 0; font-size: 14.5px; color: var(--ogp-ink); }
+.og-page .table > :not(caption) > * > * { padding: 14px 16px; border-bottom-color: var(--ogp-line-2); background: transparent; }
+.og-page .table thead th {
+  font-family: var(--ogp-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ogp-muted);
+}
+.og-page .table tbody tr:hover > * { background: rgba(255, 255, 255, .7); }
+
+/* ---------- Onglets : sélecteur en pilules ---------- */
+.og-page .pr-onglets { display: inline-flex; gap: 4px; margin-bottom: 20px; padding: 4px; border: 0; border-radius: 999px; background: rgba(11, 13, 13, .05); }
+.og-page .pr-onglets .nav-link { margin: 0; padding: 8px 18px; border: 0; border-radius: 999px; font-size: 15px; color: var(--ogp-text); }
+.og-page .pr-onglets .nav-link.active { background: #FFFFFF; color: var(--ogp-ink); box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+
+/* ---------- Petits éléments ---------- */
+.og-page .badge-soft { border-radius: 999px; background: rgba(11, 13, 13, .05); color: var(--ogp-text); font-weight: 400; }
+.og-page .pr-note { font-size: 13.5px; color: var(--ogp-muted); }
+.og-page .pr-etat-vide { color: var(--ogp-muted); }
+.og-page .pr-etat-vide strong { font-weight: 500; color: var(--ogp-ink); }
+.og-page .alert { border-radius: 18px; }
+
+@media (max-width: 991.98px) {
+  .og-page .sv-head h1 { font-size: 34px; }
+}
+@media (max-width: 575.98px) {
+  .og-haut { flex-direction: column; align-items: flex-start; }
+  .og-page .card-header, .og-page .card-body { padding-left: 18px; padding-right: 18px; }
+}
+
+/* Pagination des listes des Outils (outils-pagination.js) : même rendu que le Centre d'actions */
+.og-page .og-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 8px; border-top: 1px solid var(--ogp-line-2); }
+.og-page .og-pages-info { font-family: var(--ogp-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--ogp-muted); }
+.og-page .og-pages { display: flex; align-items: center; gap: 4px; }
+.og-page .og-page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  font-size: 14px;
+  color: var(--ogp-text);
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.og-page .og-page-btn:hover:not(:disabled) { background: rgba(11, 13, 13, .05); color: var(--ogp-ink); }
+.og-page .og-page-btn.is-active { background: #FFFFFF; border-color: var(--ogp-line-2); color: var(--ogp-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(11, 13, 13, .06), 0 4px 12px -4px rgba(11, 13, 13, .12); }
+.og-page .og-page-btn:disabled { color: var(--ogp-muted-2); opacity: .45; cursor: default; }
+.og-page .og-pages-trou { padding: 0 4px; color: var(--ogp-muted); }
+
+/* Note « Aucune IA n'est connectée » : gardée, mais discrète plutôt qu'en bandeau jaune. */
+.og-page .ov-simulation {
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  border: 1px solid var(--ogp-line-2);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  font-size: 14px;
+  color: var(--ogp-text);
+}
+.og-page .ov-simulation i { color: var(--ogp-sapin-texte); }
+.og-page .ov-simulation strong { font-weight: 500; color: var(--ogp-ink); }
+
+/* =========================================================
+   Thème sombre · pages Outils (contrat : wwwroot/js/theme.js, palette : theme-sombre.css)
+   Les quatre pages (Assistant, Studio d'annonces, Acquisition, Performances) partagent
+   les variables --ogp-* de .og-page : on les redéfinit ici, puis chaque feuille de page
+   corrige ce que les variables ne couvrent pas. Les règles claires ci-dessus ne changent pas.
+   ========================================================= */
+html[data-theme="sombre"] .og-page {
+  --ogp-ink: var(--ps-texte);
+  --ogp-text: var(--ps-texte-courant);
+  --ogp-muted: var(--ps-texte-second);
+  --ogp-muted-2: var(--ps-texte-discret);
+  --ogp-line: var(--ps-filet);
+  --ogp-line-2: var(--ps-filet-2);
+  --ogp-sapin: var(--ps-actif);          /* fond d'un élément choisi (le texte est corrigé dans chaque page) */
+  --ogp-sapin-ink: #CFF5EA;              /* texte sur fond menthe pâle */
+  --ogp-sapin-texte: var(--ps-menthe);   /* liens et icônes d'accent */
+  --ogp-menthe-ink: var(--ps-menthe);
+  --ogp-ambre: var(--ps-ambre);
+  --ogp-ambre-ink: var(--ps-ambre);
+  --ogp-ombre: none;
+}
+html[data-theme="sombre"] .og-page :focus-visible { outline-color: var(--ps-focus); }
+
+/* Haut de page commun (_HautOutils et hauts propres aux pages) */
+html[data-theme="sombre"] .og-chip-demo { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .og-demo-reset:hover { background: var(--ps-survol); }
+html[data-theme="sombre"] .og-en-ligne { border-color: var(--ps-contour); background: var(--ps-btn-second); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .og-point-vert { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+
+/* Boutons Bootstrap restylés : principal blanc, secondaires en verre */
+html[data-theme="sombre"] .og-page .btn-primary,
+html[data-theme="sombre"] .og-page .btn-primary:hover,
+html[data-theme="sombre"] .og-page .btn-primary:focus { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .og-page .btn-outline-primary,
+html[data-theme="sombre"] .og-page .btn-outline-secondary { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .og-page .btn-outline-primary:hover,
+html[data-theme="sombre"] .og-page .btn-outline-secondary:hover { border-color: var(--ps-contour-survol); background: var(--ps-survol); color: var(--ps-texte); }
+
+/* Cartes, chiffres, champs, tableaux et onglets communs */
+html[data-theme="sombre"] .og-page .sv-kpi,
+html[data-theme="sombre"] .og-page .card { border-color: var(--ps-contour); background: var(--ps-verre); box-shadow: none; }
+html[data-theme="sombre"] .og-page .form-control,
+html[data-theme="sombre"] .og-page .pr-search .form-control,
+html[data-theme="sombre"] .og-page .form-select { border-color: var(--ps-champ-contour); background-color: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .og-page .form-control:focus,
+html[data-theme="sombre"] .og-page .form-select:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .og-page .form-switch .form-check-input { border-color: var(--ps-champ-contour); background-color: var(--ps-piste); }
+html[data-theme="sombre"] .og-page .form-switch .form-check-input:checked,
+html[data-theme="sombre"] .og-page .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .og-page .table tbody tr:hover > * { background: var(--ps-survol); }
+html[data-theme="sombre"] .og-page .pr-onglets { background: var(--ps-btn-second); }
+html[data-theme="sombre"] .og-page .pr-onglets .nav-link.active { background: var(--ps-actif); color: var(--ps-texte); box-shadow: inset 0 0 0 1px var(--ps-actif-contour); }
+html[data-theme="sombre"] .og-page .badge-soft { background: var(--ps-survol); color: var(--ps-texte-courant); }
+
+/* Pagination à 6 */
+html[data-theme="sombre"] .og-page .og-page-btn:hover:not(:disabled) { background: var(--ps-survol); }
+html[data-theme="sombre"] .og-page .og-page-btn.is-active { background: var(--ps-actif); border-color: var(--ps-actif-contour); color: var(--ps-texte); box-shadow: none; }
+
+/* Encadré « simulation » de la page restylée */
+html[data-theme="sombre"] .og-page .ov-simulation { border-color: var(--ps-contour); background: var(--ps-verre); }
+
+/* Anciens composants du module (ov-), encore utilisés dans les fiches prospect, soumission,
+   rendez-vous et transaction par outils-liens.js : couleurs claires écrites en dur remplacées. */
+html[data-theme="sombre"] .ov-simulation,
+html[data-theme="sombre"] .ov-badge-simulation { border-color: rgba(255, 210, 138, .45); background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .ov-non-connecte { border-color: var(--ps-contour); background: var(--ps-btn-second); }
+html[data-theme="sombre"] .ov-non-connecte,
+html[data-theme="sombre"] .ov-nc { color: var(--ps-texte-second); }
+html[data-theme="sombre"] .ov-bulle-assistant { background: var(--ps-surface); }
+html[data-theme="sombre"] .ov-hors-contexte,
+html[data-theme="sombre"] .ov-validation,
+html[data-theme="sombre"] .ov-code,
+html[data-theme="sombre"] .ov-photo { background: var(--ps-surface-2); color: var(--ps-texte-courant); }
+html[data-theme="sombre"] .ov-apercu { background: var(--ps-surface); }
+html[data-theme="sombre"] .ov-type,
+html[data-theme="sombre"] .ov-statut { background: rgba(255, 255, 255, .06); color: var(--ps-texte-courant); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .ov-source { background: var(--ps-menthe-fond); color: #CFF5EA; }
+html[data-theme="sombre"] .ov-manquant,
+html[data-theme="sombre"] .ov-verifier li.is-alerte { color: var(--ps-ambre); }
+html[data-theme="sombre"] .ov-etapes li.is-active { border-color: var(--ps-actif-contour); background: var(--ps-actif); color: var(--ps-texte); }
+html[data-theme="sombre"] .ov-etapes li.is-fait { color: var(--ps-menthe); }
+html[data-theme="sombre"] .ov-variante.is-retenue { border-color: var(--ps-menthe); box-shadow: 0 0 0 2px rgba(95, 224, 192, .2); }

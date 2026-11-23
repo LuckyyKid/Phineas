@@ -1,0 +1,441 @@
+/* =========================================================
+   Phineas · composants communs à tous les espaces (préfixe es-)
+   Chargé par Views/Shared/_LayoutEspace.cshtml, après conseiller.css et espace-vendeur.css.
+   Ce sont les mêmes blocs que les pages vendeur (ex. soumissions-liste-verre.css), rendus réutilisables :
+   en-tête de page, chiffres, carte de liste avec tableau, statuts « point + libellé », état vide,
+   formulaires, alertes et tuiles d'accueil. Les couleurs viennent des variables --ph-* de .ph-espace,
+   déjà redéfinies en thème sombre ; seules les surfaces blanches ont une règle sombre (fin du fichier).
+   ========================================================= */
+
+/* ---------- Page ---------- */
+.es-page { max-width: 1080px; margin-inline: auto; font-family: var(--ph-font); color: var(--ph-ink); }
+.es-page-etroite { max-width: 720px; }
+
+/* Fil d'Ariane */
+.es-ariane { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 28px; font-size: 15px; color: var(--ph-muted); }
+.es-ariane a { color: var(--ph-muted); text-decoration: none; }
+.es-ariane a:hover { color: var(--ph-ink); }
+.es-ariane i { font-size: 11px; }
+.es-ariane [aria-current] { color: var(--ph-ink); font-weight: 500; }
+
+/* ---------- En-tête ---------- */
+.es-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
+.es-label { margin: 0; font-family: var(--ph-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ph-muted); }
+.ph-espace .es-titre { margin: 12px 0; font-family: var(--ph-font); font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.1; color: var(--ph-ink); }
+.es-intro { margin: 0; max-width: 40em; font-size: 18px; line-height: 1.55; color: var(--ph-text); }
+.es-entete-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.es-entete-actions form { margin: 0; }
+
+/* Faits sous le titre de l'accueil (concession, courriel, dernière connexion) */
+.es-faits { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.es-fait { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--ph-line-2); background: rgba(255, 255, 255, .7); font-size: 14px; color: var(--ph-text); }
+.es-fait i { color: var(--ph-muted); }
+
+/* Logo qui tourne à droite de l'en-tête des accueils administrateur, directeur et mécanicien (animation lm-emblem de lumiere.css).
+   Centré verticalement sur le texte ; masqué sur téléphone pour laisser toute la largeur au texte. */
+.ph-head.es-tete-embleme { align-items: center; }
+.es-embleme { position: relative; flex: 0 0 200px; height: 200px; margin-right: 24px; perspective: 900px; display: flex; align-items: center; justify-content: center; }
+.es-embleme .lm-emblem { width: 150px; height: 150px; }
+.es-embleme .lm-emblem-shadow { bottom: 0; width: 110px; margin-left: -55px; }
+
+/* ---------- Boutons ---------- */
+/* Le bouton vert plein : l'action principale de la page */
+.es-btn-sapin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ph-sapin);
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 14px 28px -12px rgba(12, 59, 50, .7);
+  transition: transform .15s ease, box-shadow .2s ease;
+}
+.es-btn-sapin:hover { color: #FFFFFF; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 18px 32px -12px rgba(12, 59, 50, .8); }
+.es-btn-sapin:active { transform: translateY(1px); }
+
+.es-btn-secondaire {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--ph-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ph-ink);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.es-btn-secondaire:hover { color: var(--ph-ink); border-color: rgba(11, 13, 13, .16); }
+/* Action qui retire ou supprime : même forme, texte rouge */
+.es-btn-danger { color: var(--ph-rouge); }
+.es-btn-danger:hover { color: var(--ph-rouge); border-color: rgba(217, 58, 46, .35); }
+.es-btn-petit { height: 34px; padding: 0 14px; font-size: 14px; }
+.es-btn-plein { width: 100%; }
+
+/* ---------- Verre et cartes ---------- */
+.es-verre {
+  background: var(--ph-glass-bg);
+  backdrop-filter: var(--ph-glass-blur);
+  -webkit-backdrop-filter: var(--ph-glass-blur);
+  border: 1px solid var(--ph-line);
+  box-shadow: var(--ph-glass-shadow);
+}
+.es-carte { padding: 28px; border-radius: 24px; margin-bottom: 24px; }
+.es-carte-titre { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; color: var(--ph-ink); }
+.es-carte-titre i { color: var(--ph-muted); }
+.es-carte p { color: var(--ph-text); }
+.es-carte p:last-child { margin-bottom: 0; }
+
+/* Carte de liste : barre d'outils, tableau, état vide */
+.es-module { padding: 0; border-radius: 28px; overflow: hidden; margin-bottom: 24px; }
+.es-module-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--ph-line-2); }
+.es-module-tete h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.es-module-tete h2 i { color: var(--ph-muted); }
+
+/* ---------- Chiffres ---------- */
+.es-chiffres { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.es-chiffre { display: flex; flex-direction: column; gap: 14px; padding: 26px 26px 24px; border-radius: 20px; }
+.es-chiffre-valeur { font-size: 36px; font-weight: 300; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ph-ink); }
+/* Valeur en texte (ex. un nom) plutôt qu'en nombre */
+.es-chiffre-texte { font-size: 20px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.3; }
+.es-chiffre-libelle { font-size: 12.5px; color: var(--ph-text); }
+
+/* ---------- Barre d'outils : recherche et menus ---------- */
+.es-outils { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 20px; border-bottom: 1px solid var(--ph-line-2); }
+.es-outils.es-outils-seuls { margin-bottom: 24px; padding: 0; border: 0; }
+.es-recherche { position: relative; flex: 1 1 260px; min-width: 200px; }
+.es-recherche i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ph-muted); pointer-events: none; }
+.es-recherche input {
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 42px;
+  border-radius: 999px;
+  border: 1px solid var(--ph-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ph-ink);
+}
+.es-recherche input::placeholder { color: var(--ph-muted-2); }
+.es-select {
+  height: 40px;
+  max-width: 260px;
+  padding: 0 38px 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--ph-line-2);
+  background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' d='m3 6 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
+  font-size: 15px;
+  color: var(--ph-ink);
+  appearance: none;
+  text-overflow: ellipsis;
+}
+.es-recherche input:focus, .es-select:focus { outline: none; border-color: var(--ph-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+
+/* ---------- Tableau ---------- */
+.es-defile { overflow-x: auto; padding: 0 16px 8px; }
+/* Largeur minimale comme les listes vendeur : sur écran étroit, la carte défile au lieu d'écraser les colonnes. */
+.es-table { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; }
+.es-table th {
+  padding: 22px 16px 14px;
+  font-family: var(--ph-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ph-muted);
+  white-space: nowrap;
+  text-align: left;
+}
+.es-table td { padding: 18px 16px; vertical-align: middle; border-top: 1px solid var(--ph-line); font-size: 15px; color: var(--ph-ink); }
+.es-table tbody tr { transition: background-color .15s ease; }
+/* Survol d'une ligne : fond blanc à 85 %, coins arrondis */
+.es-table tbody tr:hover td { background: rgba(255, 255, 255, .85); }
+.es-table tbody tr:hover td:first-child { border-radius: 16px 0 0 16px; }
+.es-table tbody tr:hover td:last-child { border-radius: 0 16px 16px 0; }
+.es-table .es-droite { text-align: right; }
+.es-table .es-centre { text-align: center; }
+.es-table a { color: var(--ph-ink); text-decoration: none; }
+.es-table a:hover { color: var(--ph-sapin-ink); }
+/* Ligne d'un compte désactivé : atténuée */
+.es-table tr.es-ligne-off td { color: var(--ph-muted); }
+
+.es-nom { display: block; font-weight: 500; }
+.es-sous { display: block; margin-top: 2px; font-size: 13.5px; color: var(--ph-muted); }
+.es-chiffre-cellule { font-variant-numeric: tabular-nums; }
+.es-mono { font-family: var(--ph-mono); font-size: 14px; }
+.es-personne { display: flex; align-items: center; gap: 12px; }
+.es-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(23, 97, 79, .10);
+  color: var(--ph-sapin-ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Statut : point de 8 px et libellé, sans fond ni contour (comme les listes vendeur) */
+.es-statut { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; }
+.es-statut + .es-statut { margin-left: 14px; }
+.es-statut-point { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* Point plein vert : actif ou en ordre */
+.es-st-ok { color: var(--ph-sapin-ink); }
+.es-st-ok .es-statut-point { background: #17614F; }
+/* Point plein ambre : à surveiller (ex. mot de passe temporaire) */
+.es-st-attente { color: var(--ph-ambre); }
+.es-st-attente .es-statut-point { background: #E09A1C; }
+/* Point plein rouge : bloqué */
+.es-st-alerte { color: var(--ph-rouge); }
+.es-st-alerte .es-statut-point { background: var(--ph-rouge); }
+/* Point creux gris : suspendu ou désactivé */
+.es-st-off { color: var(--ph-muted); }
+.es-st-off .es-statut-point { border: 1.6px solid var(--ph-muted-2); }
+/* Couleur fournie par la page (ex. statut d'un véhicule : style="--c: …") */
+.es-st-couleur .es-statut-point { background: var(--c); }
+
+/* Bouton rond blanc avec une flèche verte pour ouvrir une ligne */
+.es-cellule-ouvrir { width: 60px; text-align: right; }
+.es-ouvrir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--ph-line-2);
+  background: #FFFFFF;
+  color: var(--ph-sapin-ink);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.es-table a.es-ouvrir { color: var(--ph-sapin-ink); }
+.es-ouvrir:hover { border-color: rgba(11, 13, 13, .16); transform: translateX(2px); }
+.es-ouvrir::after { display: none; }
+
+/* État vide */
+.es-vide { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 48px 20px; text-align: center; }
+.es-vide-icone { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(23, 97, 79, .08); color: var(--ph-sapin-ink); font-size: 24px; }
+.es-vide p { margin: 0; max-width: 32em; font-size: 15px; color: var(--ph-muted); }
+.es-vide h1 { margin: 0; font-size: 32px; font-weight: 300; letter-spacing: -0.03em; }
+
+/* ---------- Alertes (messages après une action) ---------- */
+.es-alerte { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; padding: 14px 18px; border-radius: 18px; border: 1px solid var(--ph-line-2); background: rgba(255, 255, 255, .7); font-size: 15px; color: var(--ph-ink); }
+.es-alerte > i { margin-top: 2px; font-size: 17px; }
+.es-alerte ul { margin: 0; padding-left: 18px; }
+.es-alerte-ok > i { color: var(--ph-sapin-ink); }
+.es-alerte-erreur { border-color: rgba(217, 58, 46, .30); color: var(--ph-rouge); }
+.es-alerte-info > i { color: var(--ph-muted); }
+.es-alerte-attention { border-color: rgba(224, 154, 28, .40); background: #FBF1DE; }
+.es-alerte-attention > i { color: var(--ph-ambre); }
+/* Résumé de validation sans erreur : rien à afficher */
+.es-alerte.validation-summary-valid { display: none; }
+.es-alerte-titre { margin: 0 0 8px; font-weight: 500; }
+.es-alerte-texte { margin: 8px 0 0; font-size: 14px; color: var(--ph-text); }
+.es-code { display: inline-block; padding: 4px 12px; border-radius: 10px; border: 1px solid var(--ph-line-2); background: #FFFFFF; font-family: var(--ph-mono); font-size: 18px; color: var(--ph-ink); }
+.es-ligne-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+/* ---------- Formulaires ---------- */
+.es-formulaire { display: flex; flex-direction: column; gap: 20px; }
+.es-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.es-grille .es-pleine-largeur { grid-column: 1 / -1; }
+.es-champ { display: flex; flex-direction: column; gap: 8px; }
+/* Seulement le libellé direct du champ : les choix en cartes (.es-choix) gardent leur propre style. */
+.es-champ > label, .es-champ > legend { margin: 0; font-family: var(--ph-mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ph-muted); }
+.es-champ input, .es-champ select, .es-champ textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--ph-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ph-ink);
+}
+.es-champ select {
+  padding-right: 38px;
+  background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23566060' stroke-width='1.6' d='m3 6 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
+  appearance: none;
+}
+.es-champ input:focus, .es-champ select:focus, .es-champ textarea:focus { outline: none; border-color: var(--ph-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.es-champ .input-validation-error { border-color: rgba(217, 58, 46, .55); }
+.es-aide { margin: 0; font-size: 13.5px; color: var(--ph-muted); }
+.es-erreur { font-size: 13.5px; color: var(--ph-rouge); }
+.es-erreur:empty { display: none; }
+.es-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+/* Interrupteur (case à cocher) : même vert que le réglage du thème */
+.es-interrupteur { display: flex; align-items: flex-start; gap: 14px; }
+.es-interrupteur .form-check-input { float: none; flex-shrink: 0; width: 40px; height: 22px; margin: 0; cursor: pointer; }
+.es-interrupteur .form-check-input:checked { background-color: #17614F; border-color: #17614F; }
+.es-interrupteur label { font-size: 15px; font-weight: 500; color: var(--ph-ink); cursor: pointer; }
+
+/* Choix en cartes (ex. nouveau statut d'un véhicule) : couleur fournie par style="--c: …" */
+.es-choix { position: relative; }
+.es-choix input { position: absolute; opacity: 0; pointer-events: none; }
+.es-choix label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 16px;
+  border: 1px solid var(--ph-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ph-ink);
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.es-choix label i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.es-choix label:hover { border-color: rgba(11, 13, 13, .16); }
+.es-choix input:checked + label { border: 2px solid var(--c); }
+.es-choix input:focus-visible + label { outline: 2px solid var(--ph-menthe-ink); outline-offset: 2px; }
+.es-liste-choix { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; border: 0; }
+
+/* ---------- Tuiles de l'accueil (administrateur, directeur, mécanicien) ---------- */
+/* Le sous-titre suit le titre (pas poussé à l'autre bout de la page, où il semblait flotter). */
+.es-section-titre { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 0 18px; }
+.es-section-titre h2 { margin: 0; font-size: 22px; font-weight: 400; letter-spacing: -0.02em; }
+.es-section-titre span { font-size: 14px; color: var(--ph-muted); }
+.es-tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 44px; }
+.es-tuile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px;
+  border-radius: 24px;
+  color: var(--ph-ink);
+  text-decoration: none;
+  transition: border-color .15s ease, transform .15s ease;
+}
+a.es-tuile:hover { color: var(--ph-ink); border-color: rgba(11, 13, 13, .14); transform: translateY(-2px); }
+.es-tuile-icone { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 6px; border-radius: 14px; background: rgba(23, 97, 79, .10); color: var(--ph-sapin-ink); font-size: 20px; }
+.es-tuile h3 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.es-tuile p { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--ph-text); }
+.es-tuile-lien { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; font-size: 14px; font-weight: 500; color: var(--ph-sapin-ink); }
+/* Module pas encore disponible : tuile atténuée avec la mention « Bientôt » */
+.es-tuile-off { opacity: .72; }
+.es-tuile-off .es-tuile-icone { background: rgba(11, 13, 13, .05); color: var(--ph-muted); }
+.es-bientot { position: absolute; top: 22px; right: 22px; padding: 3px 10px; border-radius: 999px; background: #FBF1DE; color: #9A5C00; font-family: var(--ph-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; }
+
+/* Liens vers les autres espaces (bloc « Tester les accès ») */
+.es-espaces { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.es-espace-lien { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--ph-line-2); background: #FFFFFF; color: var(--ph-ink); text-decoration: none; }
+.es-espace-lien:hover { color: var(--ph-ink); border-color: rgba(11, 13, 13, .16); }
+.es-espace-lien > i { font-size: 18px; color: var(--ph-muted); }
+.es-espace-lien strong { display: block; font-size: 14.5px; font-weight: 500; }
+.es-espace-lien small { display: block; font-size: 13px; color: var(--ph-muted); }
+.es-espace-lien.is-mine { border-color: rgba(23, 97, 79, .35); }
+.es-espace-lien.is-mine > i { color: var(--ph-sapin-ink); }
+
+/* Cellule d'actions avec menu déroulant (ph-menu vient de conseiller.css) */
+.es-menu-bouton { display: inline-flex; align-items: center; gap: 6px; }
+.ph-menu .dropdown-item.es-texte-rouge, .ph-menu .dropdown-item.es-texte-rouge i { color: var(--ph-rouge); }
+.ph-menu form { margin: 0; }
+.ph-menu .dropdown-divider { margin: 6px 4px; border-color: var(--ph-line-2); }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 767.98px) {
+  .es-entete { flex-direction: column; align-items: flex-start; }
+  .ph-espace .es-titre { font-size: 32px; }
+  .es-grille { grid-template-columns: 1fr; }
+  .es-select { max-width: none; flex: 1 1 160px; }
+  .es-carte { padding: 22px; }
+  .es-cacher-mobile { display: none; }
+  .es-embleme { display: none; }
+}
+@media (max-width: 991.98px) {
+  .es-cacher-tablette { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .es-tuile, .es-ouvrir, .es-btn-sapin { transition: none; }
+  a.es-tuile:hover, .es-ouvrir:hover { transform: none; }
+}
+
+/* =========================================================
+   Thème sombre (html[data-theme="sombre"], voir wwwroot/js/theme.js et theme-sombre.css)
+   Les textes et filets suivent déjà --ph-* ; ici, les surfaces blanches deviennent du verre sombre
+   et l'action principale devient BLANCHE, comme dans les pages vendeur.
+   ========================================================= */
+html[data-theme="sombre"] .es-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Logo qui tourne : mêmes couleurs que le logo de la barre latérale en sombre */
+html[data-theme="sombre"] .es-embleme svg path { stroke: var(--ps-texte); }
+html[data-theme="sombre"] .es-embleme svg path:last-of-type { stroke: var(--ps-menthe); }
+html[data-theme="sombre"] .es-embleme svg circle { fill: var(--ps-menthe); }
+html[data-theme="sombre"] .es-embleme .l1 svg { filter: drop-shadow(0 0 10px rgba(95, 224, 192, .35)); }
+html[data-theme="sombre"] .es-embleme .lm-emblem-shadow { background: radial-gradient(closest-side, rgba(95, 224, 192, .18), rgba(95, 224, 192, 0)); }
+html[data-theme="sombre"] .es-fait { background: var(--ps-btn-second); border-color: var(--ps-contour); }
+
+/* Boutons */
+html[data-theme="sombre"] .es-btn-sapin,
+html[data-theme="sombre"] .es-btn-sapin:hover { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .es-btn-secondaire { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .es-btn-secondaire:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .es-btn-danger,
+html[data-theme="sombre"] .es-btn-danger:hover { color: var(--ps-rose-texte); }
+
+/* Recherche, menus et champs */
+html[data-theme="sombre"] .es-recherche input,
+html[data-theme="sombre"] .es-champ input,
+html[data-theme="sombre"] .es-champ textarea { background: var(--ps-champ); border-color: var(--ps-champ-contour); color: var(--ps-texte); }
+html[data-theme="sombre"] .es-select,
+html[data-theme="sombre"] .es-champ select {
+  background: var(--ps-champ) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23A5ACAB' stroke-width='1.6' d='m3 6 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
+  border-color: var(--ps-champ-contour);
+  color: var(--ps-texte);
+}
+html[data-theme="sombre"] .es-champ select option,
+html[data-theme="sombre"] .es-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .es-recherche input:focus,
+html[data-theme="sombre"] .es-select:focus,
+html[data-theme="sombre"] .es-champ input:focus,
+html[data-theme="sombre"] .es-champ select:focus,
+html[data-theme="sombre"] .es-champ textarea:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(255, 255, 255, .08); }
+html[data-theme="sombre"] .es-interrupteur .form-check-input { background-color: var(--ps-piste); border-color: var(--ps-champ-contour); }
+html[data-theme="sombre"] .es-interrupteur .form-check-input:checked { background-color: var(--ps-menthe); border-color: var(--ps-menthe); }
+html[data-theme="sombre"] .es-choix label { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .es-choix label:hover { border-color: var(--ps-contour-survol); }
+
+/* Tableau et statuts */
+html[data-theme="sombre"] .es-table tbody tr:hover td { background: var(--ps-survol); }
+html[data-theme="sombre"] .es-table a:hover { color: var(--ps-menthe); }
+html[data-theme="sombre"] .es-avatar { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .es-st-ok .es-statut-point { background: var(--ps-menthe); box-shadow: var(--ps-menthe-lueur); }
+html[data-theme="sombre"] .es-st-attente .es-statut-point { background: var(--ps-ambre); }
+html[data-theme="sombre"] .es-ouvrir,
+html[data-theme="sombre"] .es-table a.es-ouvrir { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); color: var(--ps-menthe); }
+html[data-theme="sombre"] .es-ouvrir:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .es-vide-icone { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+
+/* Alertes */
+html[data-theme="sombre"] .es-alerte { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .es-alerte-erreur { border-color: var(--ps-rose-contour); color: var(--ps-rose-texte); }
+html[data-theme="sombre"] .es-alerte-attention { background: var(--ps-ambre-fond); border-color: rgba(255, 210, 138, .30); }
+html[data-theme="sombre"] .es-code { background: var(--ps-champ); border-color: var(--ps-champ-contour); }
+
+/* Tuiles et liens d'espaces */
+html[data-theme="sombre"] a.es-tuile:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .es-tuile-icone { background: var(--ps-menthe-fond); color: var(--ps-menthe); }
+html[data-theme="sombre"] .es-tuile-off .es-tuile-icone { background: var(--ps-survol); color: var(--ps-texte-second); }
+html[data-theme="sombre"] .es-bientot { background: var(--ps-ambre-fond); color: var(--ps-ambre); }
+html[data-theme="sombre"] .es-espace-lien { background: var(--ps-btn-second); border-color: var(--ps-btn-second-contour); }
+html[data-theme="sombre"] .es-espace-lien:hover { border-color: var(--ps-contour-survol); }
+html[data-theme="sombre"] .es-espace-lien.is-mine { border-color: rgba(95, 224, 192, .35); }
+html[data-theme="sombre"] .es-espace-lien.is-mine > i { color: var(--ps-menthe); }

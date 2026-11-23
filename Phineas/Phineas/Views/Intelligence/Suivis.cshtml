@@ -1,0 +1,91 @@
+@* Mes suivis (maquette 06-mes-suivis) : clients à relancer (tableau) et relances suspendues.
+   Données : IntelligenceController.Suivis. Interactions : wwwroot/js/intelligence-suivis.js ;
+   fenêtre « Préparer la relance » : intelligence-composants.js. Styles : intelligence-verre.css. *@
+@using Phineas.Models.ViewModels.Conseiller
+@model IntelligencePageViewModel
+@{
+    ViewData["Title"] = "Mes suivis";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    @* Les anciennes feuilles restent pour les fenêtres (relance, préférences), créées par les scripts. *@
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence-verre.css" asp-append-version="true" />
+}
+
+<div class="iv-page" id="suivis">
+    <div class="iv-haut">
+        <nav class="iv-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Mes suivis</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
+        <div class="iv-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
+            <span class="iv-chip-demo">Démo</span>
+            <span class="iv-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="iv-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="iv-en-ligne"><span class="iv-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <a class="iv-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Centre d'actions</a>
+    <h1 class="iv-titre">Mes suivis</h1>
+    <p class="iv-intro">Qui relancer, pourquoi, et comment le client préfère être contacté. Vous gardez la main sur chaque message.</p>
+
+    <section class="iv-verre iv-carte mt-4" aria-labelledby="titre-a-relancer">
+        <div class="iv-carte-tete">
+            <h2 class="iv-label" id="titre-a-relancer">À relancer · <span data-champ="nb-relances">0</span></h2>
+            <span class="iv-pastille-grise">Délais : règles de démonstration</span>
+        </div>
+        <div class="iv-defile" data-zone="tableau-relances">
+            <table class="iv-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Client</th>
+                        <th scope="col">Pourquoi</th>
+                        <th scope="col">Dernier contact</th>
+                        <th scope="col">Canal préféré</th>
+                        <th scope="col">Prochaine action</th>
+                    </tr>
+                </thead>
+                <tbody id="relances"></tbody>
+            </table>
+        </div>
+        <div data-zone="pagination-relances"></div>
+        @* Affiché à la place du tableau quand il n'y a rien : jamais un tableau avec seulement ses en-têtes. *@
+        <div class="iv-vide" id="relances-vide" hidden>
+            <i class="bi bi-check2-circle"></i>
+            <strong>Aucune relance à faire</strong>
+            <span>Les relances apparaîtront lorsqu'une situation le justifiera.</span>
+        </div>
+    </section>
+
+    <section class="iv-verre iv-carte" aria-labelledby="titre-suspendues">
+        <h2 class="iv-label mb-3" id="titre-suspendues">Relances suspendues · <span data-champ="nb-suspendues">0</span></h2>
+        <ul class="iv-suspendues" id="suspendues"></ul>
+        <div data-zone="pagination-suspendues"></div>
+        <p class="iv-encart"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Une recommandation ne conduit jamais automatiquement à une sollicitation. Les communications nécessaires au traitement d'un dossier sont distinguées des sollicitations commerciales ; cette distinction devra être validée juridiquement et techniquement. Le prototype n'assure pas à lui seul la conformité.</span></p>
+    </section>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-suivis.js" asp-append-version="true"></script>
+}

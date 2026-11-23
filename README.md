@@ -1,5 +1,73 @@
 # PHINEAS
 
+## Où trouver quoi : espace vendeur
+
+Tous les chemins partent de `Phineas/Phineas/`.
+
+- `Views/Shared/_Layout.cshtml` : squelette commun à tous les rôles. Un espace peut y remplacer la barre latérale par sa section `Barre`.
+- `Views/Conseiller/_LayoutConseiller.cshtml` : coque des pages vendeur (barre latérale en verre, notification, scripts communs).
+- `Models/ViewModels/Conseiller/NavigationVendeur.cs` : entrées du menu vendeur. Une entrée sans contrôleur s'affiche sans être cliquable.
+- `Views/Conseiller/Index.cshtml` : page d'accueil du conseiller.
+- `Services/Conseiller/ServiceTableauBordDemo.cs` : données fictives de la page d'accueil (à remplacer par la base de données).
+- `wwwroot/js/conseiller.js` : interactions de l'accueil (carte « À faire en premier », notifications).
+- `wwwroot/css/conseiller.css` : styles de l'espace vendeur et de l'accueil.
+
+Trajet d'un affichage : `/Conseiller` → `ConseillerController.Index` → `ServiceTableauBordDemo.ObtenirAsync` → `Views/Conseiller/Index.cshtml` → `conseiller.js` pour les clics.
+
+## Où trouver quoi : coque commune des espaces
+
+Tous les rôles connectés (administrateur, directeur, vendeur, mécanicien) partagent la même barre latérale en verre et les mêmes blocs d'affichage.
+
+- `Views/Shared/_LayoutEspace.cshtml` : la coque commune (barre latérale, carte de l'utilisateur, menu Affichage avec le thème sombre).
+- `Models/ViewModels/NavigationEspaces.cs` : le menu de chaque rôle (`MenuPour(rôle)`). Le menu du vendeur reste dans `NavigationVendeur.cs`.
+- `Views/Conseiller/_LayoutConseiller.cshtml` : la coque commune, plus la notification et `conseiller.js` propres au vendeur.
+- `Views/Admin`, `Concessions`, `Utilisateurs`, `Directeur`, `Mecanicien` : un `_ViewStart.cshtml` par dossier choisit la coque commune.
+- `wwwroot/css/espaces.css` (préfixe `es-`) : en-tête de page, chiffres, carte de liste avec tableau, statuts « point + libellé », état vide, formulaires, alertes et tuiles d'accueil, en clair et en sombre.
+
+Pour une nouvelle page d'un espace : `es-page`, puis `es-entete` (`es-label`, `es-titre`, `es-intro`), `es-chiffres`, et la liste dans `es-verre es-module` avec `es-table`.
+
+## Où trouver quoi : thème sombre
+
+- `wwwroot/js/theme.js` : applique le thème avant l'affichage et gère le bouton de bascule. Son en-tête décrit le contrat complet.
+- `wwwroot/css/theme-sombre.css` : palette sombre commune (variables `--ps-*`), composants Bootstrap en sombre, bouton `.ps-bascule-theme`.
+- `wwwroot/css/espace-vendeur.css` et `conseiller.css` : coque vendeur et accueil vendeur en sombre (fin de chaque fichier).
+- Chaque page refaite garde ses règles sombres dans sa propre feuille (ex. `prospects.css`, `accueil-public.css`).
+
+Le contrat en bref :
+- thème actif : `data-theme="sombre"` sur `<html>` (sans cet attribut : thème clair) ; Bootstrap reçoit aussi `data-bs-theme="dark"` ;
+- préférence : `localStorage`, clé `phineas-theme`, valeur `clair` ou `sombre` (sans préférence : clair) ;
+- `theme.js` se charge de façon synchrone dans le `<head>`, avant les feuilles de style ;
+- API : `PhineasTheme.obtenir()`, `PhineasTheme.appliquer("sombre")`, `PhineasTheme.basculer()` ; événement `phineas:theme` sur `document` ;
+- bouton : tout élément `[data-basculer-theme]` (icône `[data-theme-icone]`) ;
+- réglage « Chiffres de l'accueil » : clé `phineas-accueil-chiffres` (`affiches` ou `masques`), case `[data-reglage-chiffres]`.
+
+Où se trouvent les boutons : menu « Affichage » de la carte utilisateur (espace vendeur), barre de navigation de l'accueil public, haut de la page de connexion, en-tête de la page publique du conseiller.
+
+Pour ajouter le thème sombre à une page, dans sa feuille :
+
+```css
+html[data-theme="sombre"] .ma-page {
+  --ma-encre: var(--ps-texte);
+  --ma-filet: var(--ps-filet);
+}
+html[data-theme="sombre"] .ma-carte { background: var(--ps-verre); border-color: var(--ps-contour); }
+html[data-theme="sombre"] .ma-page .bouton-principal { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); }
+```
+
+## Où trouver quoi : Docker
+
+- `Dockerfile` (racine du dépôt) : construit l'image en deux étapes, compilation avec le SDK .NET 10 puis image finale avec le runtime seul.
+- `.dockerignore` : exclut `bin`, `obj`, `.vs` et `.git` de l'image.
+
+Construire et lancer (depuis la racine du dépôt, Docker Desktop démarré) :
+
+```bash
+docker build -t phineas .
+docker run -p 8080:8080 -e ConnectionStrings__DefaultConnection="Server=host.docker.internal;Port=3306;Database=phineas;User=phineas;Password=..." phineas
+```
+
+L'application répond ensuite sur `http://localhost:8080`. `host.docker.internal` désigne la machine hôte : c'est là que le conteneur trouve la base MySQL locale. Les migrations s'appliquent au démarrage.
+
 
 
 ## Getting started

@@ -1,201 +1,444 @@
+@* Page d'accueil publique de phineas (avant connexion), maquettes 58 à 66.
+   Page autonome (sans layout) : sa barre de navigation et son pied de page lui sont propres.
+   _PublicLayout.cshtml n'est plus utilisé par cette page et n'a pas été modifié.
+   Ordre des sections : haut de page, Fonctionnalités, Fonctionnement, Rôles, À propos, Équipe,
+   Sécurité, Feuille de route, appel à l'action.
+   Styles : wwwroot/css/accueil-public.css (préfixe acc-).
+   Script : wwwroot/js/accueil-public.js (fond animé du haut, démonstration des statuts, lecture de la vidéo). *@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Environnement
 @{
-    Layout = "_PublicLayout";
+    // Vidéo de présentation de la section À propos : déposer le fichier à cet endroit pour l'activer.
+    // Tant qu'il n'existe pas, la section affiche un message « bientôt disponible ».
+    const string CheminVideo = "videos/phineas-presentation.mp4";
+    bool videoDisponible = System.IO.File.Exists(System.IO.Path.Combine(Environnement.WebRootPath, CheminVideo));
+    Layout = null;
     ViewData["Title"] = "Phineas · Gestion des opérations en concession automobile";
 
+    // Maquette du produit dans le haut de page : colonnes du parcours des véhicules.
+    // EnAvant = la voiture encadrée en vert (celle de la notification).
     var colonnes = new[]
     {
-        (Nom: "Reçu", Couleur: "#94A3B8", Nb: 6, Autos: new[] { ("Ford F-150", "STK-0027", false), ("Kia Telluride", "STK-0049", false) }),
-        (Nom: "Inspection", Couleur: "#3B82F6", Nb: 9, Autos: new[] { ("Honda Accord", "STK-0042", true), ("Mazda CX-5", "STK-0046", false) }),
-        (Nom: "Nettoyage", Couleur: "#8B5CF6", Nb: 9, Autos: new[] { ("VW Golf GTI", "STK-0040", false), ("Subaru Outback", "STK-0035", false) }),
-        (Nom: "Prêt pour vente", Couleur: "#10B981", Nb: 17, Autos: new[] { ("Tesla Model 3", "STK-0031", false), ("Honda CR-V", "STK-0033", false) })
+        (Nom: "Reçu", Point: "acc-point-gris", Nombre: 6, Autos: new[] { (Modele: "Ford F-150", Stock: "STK-0027", EnAvant: false), (Modele: "Kia Telluride", Stock: "STK-0049", EnAvant: false) }),
+        (Nom: "Inspection", Point: "acc-point-sapin", Nombre: 9, Autos: new[] { (Modele: "Honda Accord", Stock: "STK-0042", EnAvant: true), (Modele: "Mazda CX-5", Stock: "STK-0046", EnAvant: false) }),
+        (Nom: "Nettoyage", Point: "acc-point-menthe", Nombre: 4, Autos: new[] { (Modele: "VW Golf GTI", Stock: "STK-0040", EnAvant: false), (Modele: "Subaru Outback", Stock: "STK-0035", EnAvant: false) }),
+        (Nom: "Prêt", Point: "acc-point-vert", Nombre: 7, Autos: new[] { (Modele: "Tesla Model 3", Stock: "STK-0031", EnAvant: false), (Modele: "Honda CR-V", Stock: "STK-0033", EnAvant: false) })
+    };
+
+    var metiers = new[] { "Directeurs des ventes", "Conseillers", "Mécaniciens et préparateurs", "Service F&A" };
+
+    // Démonstration de la section Fonctionnalités : « Inspection terminée » est choisi au départ.
+    var statutsDemo = new[] { "Reçu", "Inspection", "Inspection terminée", "Nettoyage", "Prêt" };
+    const string StatutDemoInitial = "Inspection terminée";
+
+    var fonctions = new[]
+    {
+        (Icone: "bi-car-front", Titre: "Inventaire centralisé", Texte: "Tous les véhicules, leurs caractéristiques et leur prix au même endroit, avec recherche et filtres."),
+        (Icone: "bi-folder2", Titre: "Dossiers de financement", Texte: "Du brouillon à l'approbation par le directeur, avec les pièces justificatives."),
+        (Icone: "bi-file-earmark-lock", Titre: "Documents sécurisés", Texte: "Réservés aux bons rôles ; chaque consultation est tracée."),
+        (Icone: "bi-stars", Titre: "Annonces générées par IA", Texte: "Une annonce soignée en quelques secondes, relue avant publication.")
+    };
+
+    var etapes = new[]
+    {
+        (Numero: "01", Titre: "Ajoutez le véhicule", Texte: "Ses caractéristiques sont saisies une fois ; son code QR unique est généré, prêt à imprimer."),
+        (Numero: "02", Titre: "Scannez sur le terrain", Texte: "Le mécanicien scanne l'étiquette avec son téléphone et choisit la nouvelle étape."),
+        (Numero: "03", Titre: "Toute l'équipe est à jour", Texte: "Chaque écran connecté change au même instant, et l'historique garde la trace.")
     };
 
     var roles = new[]
     {
-        (Icon: "bi-briefcase", Role: "Directeur des ventes / F&A", Text: "Supervise l'équipe et l'inventaire, approuve les dossiers et consulte les documents financiers."),
-        (Icon: "bi-person-vcard", Role: "Conseiller aux ventes", Text: "Crée les profils clients, monte les dossiers, téléverse les pièces et génère les annonces."),
-        (Icon: "bi-wrench-adjustable", Role: "Mécanicien / Préparateur", Text: "Scanne les véhicules et met à jour leur statut de préparation, directement depuis le terrain.")
+        (Icone: "bi-briefcase", Role: "Directeur des ventes / F&A", Texte: "Supervise l'équipe et l'inventaire, approuve les dossiers et consulte les documents financiers.", IconeAcces: "bi-unlock", Acces: "Accès aux données financières"),
+        (Icone: "bi-person-vcard", Role: "Conseiller aux ventes", Texte: "Crée les profils clients, monte les dossiers, téléverse les pièces et génère les annonces.", IconeAcces: "bi-folder2-open", Acces: "Accès à ses clients et à ses dossiers"),
+        (Icone: "bi-wrench-adjustable", Role: "Mécanicien / Préparateur", Texte: "Scanne les véhicules et met à jour leur statut de préparation, directement depuis le terrain.", IconeAcces: "bi-lock", Acces: "Aucun accès aux données financières")
     };
 
-    var fait = new[] { "Connexion sécurisée et 4 rôles", "Un espace d'accueil par rôle", "Multi-concessions : concessions, personnel, suspension", "Véhicules, codes QR et historique des statuts", "Fiche véhicule et changement de statut par scan", "Nouvelle interface « Lumière »" };
-    var enCours = new[] { "Passage à SQL Server", "Localisation FR / EN / ES", "Inventaire complet", "Tableau en direct avec SignalR", "Documents sécurisés et piste d'audit", "Double authentification" };
-    var aVenir = new[] { "Accueil administrateur en React", "Messagerie WhatsApp / Messenger et leads", "Assistant IA et annonces", "Paiements Stripe : dépôt, SAAQ, plaques", "Transferts entre concessions", "API, IdentityServer, déploiement continu" };
+    // ---------- L'équipe ----------
+    // Pour présenter une personne, remplacez une ligne de remplacement par ses vraies informations :
+    //   Initiales : affichées tant qu'il n'y a pas de photo (ex. « MT »).
+    //   Nom, Role, Parcours : textes affichés sous le portrait (le parcours tient sur une seule ligne).
+    //   Photo : nom du fichier de la photo détourée (fond transparent, PNG ou WebP, carré), à déposer
+    //           dans wwwroot/images/equipe/ (ex. "marie-tremblay.png"). null = pas encore de photo.
+    // Le fond vert de chaque portrait vient de la feuille de style (acc-portrait-1 à acc-portrait-4).
+    // Les quatre personnes ci-dessous sont FICTIVES (noms et titres choisis à la demande de l'utilisateur
+    // pour la démonstration) : à remplacer par les vraies informations de l'équipe.
+    // Nom de remplacement affiché tant que le vrai nom n'est pas fourni.
+    const string NomAVenir = "Prénom Nom";
+    var equipe = new[]
+    {
+        (Initiales: "SL", Nom: "Samuel Lemieux", Role: "Cofondateur et directeur produit", Parcours: "Dix ans comme conseiller aux ventes en concession", Photo: (string?)"equipe-1.webp"),
+        (Initiales: "LF", Nom: "Léa Fortier", Role: "Designer de l'expérience conseiller", Parcours: "Conçoit les écrans utilisés chaque jour en salle de montre", Photo: (string?)"equipe-2.webp"),
+        (Initiales: "MD", Nom: "Malik Desrosiers", Role: "Responsable technique", Parcours: "Architecture .NET, MySQL et suivi en direct avec SignalR", Photo: (string?)"equipe-3.webp"),
+        (Initiales: "YB", Nom: "Yasmine Belhadj", Role: "Responsable sécurité et données", Parcours: "Protection des dossiers F&A et conformité à la Loi 25", Photo: (string?)"equipe-4.webp")
+    };
+    const int NombreFondsPortrait = 4;
+
+    var securite = new[]
+    {
+        (Icone: "bi-shield-check", Titre: "Double authentification", Texte: "Obligatoire pour les rôles qui voient les finances."),
+        (Icone: "bi-people", Titre: "Accès selon le rôle", Texte: "Chacun n'ouvre que ce que son travail exige."),
+        (Icone: "bi-list-check", Titre: "Piste d'audit", Texte: "Qui a consulté quel document, et quand."),
+        (Icone: "bi-file-earmark-text", Titre: "Loi 25", Texte: "Consentement, minimisation et droit à l'effacement.")
+    };
+
+    // Feuille de route : Etat règle les segments de la barre (pleins, à moitié, vides) et la couleur de l'icône.
+    var feuilleDeRoute = new[]
+    {
+        (Nom: "Fait", Precision: "6 éléments", Etat: "fait", Icone: "bi-check-circle-fill",
+            Elements: new[] { "Connexion sécurisée et 4 rôles", "Un espace d'accueil par rôle", "Multi-concessions : concessions, personnel, suspension", "Véhicules, codes QR et historique des statuts", "Fiche véhicule et changement de statut par scan", "Nouvelle interface « Lumière »" }),
+        (Nom: "En cours", Precision: "Phases 2 à 5", Etat: "en-cours", Icone: "bi-circle-half",
+            Elements: new[] { "Passage à SQL Server", "Localisation FR / EN / ES", "Inventaire complet", "Tableau en direct avec SignalR", "Documents sécurisés et piste d'audit", "Double authentification" }),
+        (Nom: "À venir", Precision: "Phases 6 à 10", Etat: "a-venir", Icone: "bi-circle",
+            Elements: new[] { "Accueil administrateur en React", "Messagerie WhatsApp / Messenger et leads", "Assistant IA et annonces", "Paiements Stripe : dépôt, SAAQ, plaques", "Transferts entre concessions", "API, IdentityServer, déploiement continu" })
+    };
+    const int SegmentsFeuilleDeRoute = 6;
 }
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Phineas centralise l'inventaire, le suivi des véhicules par QR, les dossiers de financement et les annonces de votre concession." />
+    <title>@ViewData["Title"]</title>
+    @* Thème clair / sombre : appliqué avant l'affichage (contrat dans wwwroot/js/theme.js). *@
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    @* Mascotte Boulon (mascot.css / mascot.js, communes à l'application) : la petite voiture qui roule sous l'aperçu du produit. *@
+    <link rel="stylesheet" href="~/css/theme-sombre.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/mascot.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/accueil-public.css" asp-append-version="true" />
+</head>
+<body class="acc-page">
+    <a class="acc-sauter" href="#contenu">Aller au contenu</a>
 
-<!-- Hero -->
-<section class="lm-pub-hero">
-    <div class="lm-wrap text-center d-flex flex-column align-items-center">
-        <span class="lm-badge-new"><span>Nouveau</span>Le suivi en direct avec SignalR</span>
-        <h1>Toute votre concession,<br />dans une seule fenêtre.</h1>
-        <p class="lm-pub-lead">Inventaire, atelier, financement et ventes. Phineas suit chaque voiture de la réception à la livraison, et chaque écran se met à jour au même instant.</p>
-        <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
-            <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right me-2"></i>Se connecter</a>
-            <a class="btn btn-outline-secondary btn-lg" href="#fonctionnement">Voir comment ça marche</a>
-        </div>
-        <ul class="lm-pub-points">
-            <li><i class="bi bi-check2"></i>Français, anglais et espagnol</li>
-            <li><i class="bi bi-check2"></i>Web et mobile</li>
-            <li><i class="bi bi-check2"></i>Conforme à la Loi 25</li>
-        </ul>
+    @* ---------- Barre de navigation collante ---------- *@
+    <header class="acc-nav-zone">
+        <nav class="acc-nav" aria-label="Navigation principale">
+            <a class="acc-logo" asp-controller="Home" asp-action="Index"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 30 }' />phineas</a>
+            <div class="acc-nav-liens">
+                <a href="#fonctionnalites">Fonctionnalités</a>
+                <a href="#a-propos">À propos</a>
+                <a href="#fonctionnement">Fonctionnement</a>
+                <a href="#equipe">Équipe</a>
+                <a href="#securite">Sécurité</a>
+                <a href="#feuille-de-route">Feuille de route</a>
+            </div>
+            <button type="button" class="ps-bascule-theme" data-basculer-theme aria-pressed="false" aria-label="Thème sombre" title="Thème sombre"><i class="bi bi-moon" data-theme-icone aria-hidden="true"></i></button>
+            <a class="acc-btn acc-btn-sapin acc-btn-petit" asp-controller="Account" asp-action="Login">Se connecter</a>
+        </nav>
+    </header>
 
-        <!-- Aperçu de l'application, en 3D : il se redresse au défilement -->
-        <div class="lm-product" data-scroll-tilt aria-hidden="true">
-            <div class="lm-product-frame">
-                <div class="lm-product-bar">
-                    <span></span><span></span><span></span>
-                    <em>app.phineas.ca/tableau</em>
+    <main id="contenu">
+        @* ---------- Haut de page ---------- *@
+        <section class="acc-haut" aria-labelledby="titre-principal">
+            @* Fond animé : grille, petits carrés qui pulsent, quelques diagonales (accueil-public.js). Purement décoratif. *@
+            <canvas class="acc-fond-anime" data-fond-anime aria-hidden="true"></canvas>
+
+            <div class="acc-conteneur acc-haut-contenu">
+                <p class="acc-nouveau"><span>Nouveau</span>Le suivi en direct avec SignalR</p>
+                <h1 class="acc-titre-principal" id="titre-principal">Toute votre concession,<br /><span>dans une seule fenêtre.</span></h1>
+                <p class="acc-chapeau">Inventaire, atelier, financement et ventes. Phineas suit chaque voiture de la réception à la livraison, et chaque écran se met à jour au même instant.</p>
+                <div class="acc-actions">
+                    <a class="acc-btn acc-btn-sapin" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>Se connecter</a>
+                    <a class="acc-btn acc-btn-verre" href="#fonctionnement">Voir comment ça marche<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                 </div>
-                <div class="lm-product-body">
-                    <div class="lm-product-side">
-                        <b class="is-on">Tableau de bord</b><b>Inventaire</b><b>Clients</b><b>Coffre-fort F&amp;A</b><b>Annonces IA</b><b>Messagerie</b>
-                    </div>
-                    <div class="lm-product-main">
-                        <div class="d-flex align-items-center gap-2">
-                            <strong class="lm-product-title">Parcours des véhicules</strong>
-                            <span class="lm-live">Direct</span>
+                <ul class="acc-mentions">
+                    <li><i class="bi bi-check2" aria-hidden="true"></i>Français, anglais et espagnol</li>
+                    <li><i class="bi bi-check2" aria-hidden="true"></i>Web et mobile</li>
+                    <li><i class="bi bi-check2" aria-hidden="true"></i>Conforme à la Loi 25</li>
+                </ul>
+
+                @* Maquette du produit : illustration seulement, non interactive. *@
+                <div class="acc-produit" role="img" aria-label="Aperçu de l'application : le parcours des véhicules en colonnes, avec une notification d'inspection terminée.">
+                    <div class="acc-produit-fenetre" aria-hidden="true">
+                        <div class="acc-produit-barre">
+                            <span></span><span></span><span></span>
+                            <em>app.phineas.ca/tableau</em>
                         </div>
-                        <div class="lm-product-cols">
-                            @foreach (var c in colonnes)
-                            {
-                                <div class="lm-product-col">
-                                    <div class="head"><i style="background:@c.Couleur"></i>@c.Nom<span>@c.Nb</span></div>
-                                    @foreach (var (modele, stock, chaud) in c.Autos)
+                        <div class="acc-produit-corps">
+                            <div class="acc-produit-menu">
+                                <b class="is-actif">Tableau de bord</b><b>Inventaire</b><b>Clients</b><b>Coffre-fort F&amp;A</b><b>Annonces IA</b><b>Messagerie</b>
+                            </div>
+                            <div class="acc-produit-principal">
+                                <div class="acc-produit-titre">Parcours des véhicules<span class="acc-direct">Direct</span></div>
+                                <div class="acc-produit-colonnes">
+                                    @foreach (var colonne in colonnes)
                                     {
-                                        <div class="car @(chaud ? "hot" : "")"><strong>@modele</strong><small>@stock</small></div>
+                                        <div class="acc-produit-colonne">
+                                            <div class="acc-produit-tete"><i class="@colonne.Point"></i>@colonne.Nom<span>@colonne.Nombre</span></div>
+                                            @foreach (var auto in colonne.Autos)
+                                            {
+                                                <div class="acc-produit-auto @(auto.EnAvant ? "is-en-avant" : "")"><strong>@auto.Modele</strong><small>@auto.Stock</small></div>
+                                            }
+                                        </div>
                                     }
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="acc-produit-notif" aria-hidden="true">
+                        <span class="acc-produit-avatar">LB</span>
+                        <span><strong>Luc B.</strong> a terminé l'inspection de la Honda Accord<small>À l'instant · Baie B-04</small></span>
+                    </div>
+                </div>
+
+                @* Route de la mascotte Boulon : mascot.js y fait rouler la voiture (immobile si moins d'animations). *@
+                <div class="boulon-road acc-boulon-route" data-boulon-road aria-hidden="true"></div>
+
+                <div class="acc-concu">
+                    <span class="acc-concu-label">Conçu pour</span>
+                    <span class="acc-concu-filet" aria-hidden="true"></span>
+                    <ul>
+                        @foreach (var metier in metiers)
+                        {
+                            <li>@metier</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Fonctionnalités ---------- *@
+        <section class="acc-section" id="fonctionnalites" aria-labelledby="titre-fonctionnalites">
+            <div class="acc-conteneur">
+                <div class="acc-entete">
+                    <span class="acc-pastille">Fonctionnalités</span>
+                    <h2 id="titre-fonctionnalites">Tout ce dont l'équipe a besoin, rien de superflu.</h2>
+                    <p>Moins de temps à chercher un véhicule ou un dossier, plus de temps avec les clients.</p>
+                </div>
+
+                <div class="acc-panneau acc-vedette">
+                    <div class="acc-points acc-points-haut-droit" aria-hidden="true"></div>
+                    <div class="acc-vedette-texte">
+                        <p class="acc-etiquette-claire">En direct</p>
+                        <h3>Suivi par code QR, en direct</h3>
+                        <p>Chaque véhicule reçoit un QR unique. Le mécanicien le scanne, change le statut, et le tableau de toute l'équipe se met à jour sans recharger la page.</p>
+                    </div>
+                    <div class="acc-demo">
+                        <div class="acc-demo-vehicule">
+                            <span class="acc-demo-qr" aria-hidden="true"><i class="bi bi-qr-code"></i></span>
+                            <span><strong>Honda Accord</strong><small>STK-0042 · Baie B-04</small></span>
+                        </div>
+                        <p class="acc-demo-consigne" id="consigne-demo">Essayez : changez le statut du véhicule.</p>
+                        <div class="acc-demo-statuts" role="radiogroup" aria-labelledby="consigne-demo" data-demo-statuts>
+                            @foreach (var statut in statutsDemo)
+                            {
+                                bool choisi = statut == StatutDemoInitial;
+                                <button type="button" class="acc-demo-statut @(choisi ? "is-choisi" : "")" role="radio" aria-checked="@(choisi ? "true" : "false")" tabindex="@(choisi ? "0" : "-1")">@statut</button>
                             }
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="lm-product-toast">
-                <span class="lm-avatar" style="background:#ECFEFF;color:#0E7490">LB</span>
-                <span><strong>Luc B.</strong> a terminé l’inspection de la Honda Accord<br /><small>à l’instant · Baie B-04</small></span>
-            </div>
-        </div>
-        <div class="boulon-road" data-boulon-road aria-hidden="true"></div>
-    </div>
-</section>
 
-<!-- Fonctionnalités -->
-<section class="lm-pub-sec" id="fonctionnalites">
-    <div class="lm-wrap">
-        <div class="lm-pub-head" data-reveal>
-            <span>Fonctionnalités</span>
-            <h2>Tout ce dont l’équipe a besoin, rien de superflu.</h2>
-            <p>Moins de temps à chercher un véhicule ou un dossier, plus de temps avec les clients.</p>
-        </div>
-        <div class="lm-bento">
-            <article class="lm-tile wide" data-tilt="4" data-reveal>
-                <span class="ico"><i class="bi bi-qr-code-scan"></i></span>
-                <h3>Suivi par code QR, en direct</h3>
-                <p>Chaque véhicule reçoit un QR unique. Le mécanicien le scanne, change le statut, et le tableau de toute l’équipe se met à jour sans recharger la page.</p>
-                <div class="lm-mini-steps">
-                    <span style="--c:#94A3B8">Reçu</span><span style="--c:#3B82F6">Inspection</span><span class="on" style="--c:#06B6D4">Inspection terminée</span><span style="--c:#8B5CF6">Nettoyage</span><span style="--c:#10B981">Prêt</span>
+                <div class="acc-cases acc-cases-4">
+                    @foreach (var fonction in fonctions)
+                    {
+                        <article class="acc-case">
+                            <span class="acc-icone" aria-hidden="true"><i class="bi @fonction.Icone"></i></span>
+                            <h3>@fonction.Titre</h3>
+                            <p>@fonction.Texte</p>
+                        </article>
+                    }
                 </div>
-            </article>
-            <article class="lm-tile" data-tilt="5" data-reveal><span class="ico"><i class="bi bi-car-front"></i></span><h3>Inventaire centralisé</h3><p>Tous les véhicules, leurs caractéristiques et leur prix au même endroit, avec recherche et filtres.</p></article>
-            <article class="lm-tile" data-tilt="5" data-reveal><span class="ico"><i class="bi bi-folder2-open"></i></span><h3>Dossiers de financement</h3><p>Du brouillon à l’approbation par le directeur, avec les pièces justificatives.</p></article>
-            <article class="lm-tile" data-tilt="5" data-reveal><span class="ico"><i class="bi bi-file-earmark-lock"></i></span><h3>Documents sécurisés</h3><p>Réservés aux bons rôles ; chaque consultation est tracée.</p></article>
-            <article class="lm-tile" data-tilt="5" data-reveal><span class="ico"><i class="bi bi-stars"></i></span><h3>Annonces générées par IA</h3><p>Une annonce soignée en quelques secondes, relue avant publication.</p></article>
-        </div>
-    </div>
-</section>
+            </div>
+        </section>
 
-<!-- Fonctionnement -->
-<section class="lm-pub-sec" id="fonctionnement">
-    <div class="lm-wrap">
-        <div class="lm-pub-head" data-reveal>
-            <span>Fonctionnement</span>
-            <h2>Du stationnement au tableau de bord, en trois gestes.</h2>
-        </div>
-        <ol class="lm-steps">
-            <li data-reveal><b>1</b><h3>Ajoutez le véhicule</h3><p>Ses caractéristiques sont saisies une fois ; son code QR unique est généré, prêt à imprimer.</p></li>
-            <li data-reveal><b>2</b><h3>Scannez sur le terrain</h3><p>Le mécanicien scanne l’étiquette avec son téléphone et choisit la nouvelle étape.</p></li>
-            <li data-reveal><b>3</b><h3>Toute l’équipe est à jour</h3><p>Chaque écran connecté change au même instant, et l’historique garde la trace.</p></li>
-        </ol>
-    </div>
-</section>
+        @* ---------- Fonctionnement ---------- *@
+        <section class="acc-section" id="fonctionnement" aria-labelledby="titre-fonctionnement">
+            <div class="acc-conteneur">
+                <div class="acc-entete">
+                    <span class="acc-pastille">Fonctionnement</span>
+                    <h2 id="titre-fonctionnement">Du stationnement au tableau de bord, en trois gestes.</h2>
+                </div>
+                <ol class="acc-etapes">
+                    @foreach (var etape in etapes)
+                    {
+                        <li class="acc-etape">
+                            <span class="acc-etape-numero" aria-hidden="true">@etape.Numero</span>
+                            <h3>@etape.Titre</h3>
+                            <p>@etape.Texte</p>
+                        </li>
+                    }
+                </ol>
+            </div>
+        </section>
 
-<!-- Rôles -->
-<section class="lm-pub-sec">
-    <div class="lm-wrap">
-        <div class="lm-pub-head" data-reveal>
-            <span>Rôles</span>
-            <h2>Chacun voit ce dont il a besoin.</h2>
-            <p>Les accès sont définis par rôle : un mécanicien n’a jamais accès aux données financières.</p>
-        </div>
-        <div class="lm-tiles">
-            @foreach (var r in roles)
-            {
-                <article class="lm-tile" data-tilt="5" data-reveal>
-                    <span class="ico"><i class="bi @r.Icon"></i></span>
-                    <h3>@r.Role</h3>
-                    <p>@r.Text</p>
-                </article>
-            }
-        </div>
-        <div class="lm-band" data-reveal>
-            <i class="bi bi-diagram-3"></i>
-            <div><strong>Une plateforme, plusieurs concessions.</strong> Chaque concession a son propre espace : son personnel, ses véhicules et ses clients ne sont jamais visibles par une autre.</div>
-        </div>
-    </div>
-</section>
+        @* ---------- Rôles ---------- *@
+        <section class="acc-section" id="roles" aria-labelledby="titre-roles">
+            <div class="acc-conteneur">
+                <div class="acc-entete">
+                    <span class="acc-pastille">Rôles</span>
+                    <h2 id="titre-roles">Chacun voit ce dont il a besoin.</h2>
+                    <p>Les accès sont définis par rôle : un mécanicien n'a jamais accès aux données financières.</p>
+                </div>
+                <div class="acc-cases acc-cases-3">
+                    @foreach (var role in roles)
+                    {
+                        <article class="acc-case acc-case-role">
+                            <span class="acc-icone" aria-hidden="true"><i class="bi @role.Icone"></i></span>
+                            <h3>@role.Role</h3>
+                            <p>@role.Texte</p>
+                            <p class="acc-acces"><i class="bi @role.IconeAcces" aria-hidden="true"></i>@role.Acces</p>
+                        </article>
+                    }
+                </div>
+            </div>
+        </section>
 
-<!-- Sécurité -->
-<section class="lm-pub-sec" id="securite">
-    <div class="lm-wrap">
-        <div class="lm-split" data-reveal>
-            <div class="lm-split-copy">
-                <span class="lm-kicker" style="color: var(--lm-amber)">Sécurité</span>
-                <h2>Les données clients, prises au sérieux.</h2>
-                <p>Les dossiers de financement contiennent des renseignements sensibles. Phineas les protège à chaque étape.</p>
-            </div>
-            <div class="lm-sec-grid">
-                <div><i class="bi bi-shield-lock"></i><strong>Double authentification</strong><span>Obligatoire pour les rôles qui voient les finances.</span></div>
-                <div><i class="bi bi-people"></i><strong>Accès selon le rôle</strong><span>Chacun n’ouvre que ce que son travail exige.</span></div>
-                <div><i class="bi bi-journal-check"></i><strong>Piste d’audit</strong><span>Qui a consulté quel document, et quand.</span></div>
-                <div><i class="bi bi-file-earmark-check"></i><strong>Loi 25</strong><span>Consentement, minimisation et droit à l’effacement.</span></div>
-            </div>
-        </div>
-    </div>
-</section>
+        @* ---------- À propos (la seule section centrée) ---------- *@
+        <section class="acc-section" id="a-propos" aria-labelledby="titre-a-propos">
+            <div class="acc-conteneur">
+                <div class="acc-entete acc-entete-centre">
+                    <span class="acc-pastille">À propos</span>
+                    <h2 id="titre-a-propos">Phineas apporte de la clarté à chaque étape d'une vente.</h2>
+                    <p>Dans une concession, l'information est dispersée entre l'inventaire, l'atelier, le financement et les ventes. Phineas la réunit dans un seul dossier, toujours à jour, pour que chaque équipe sache où en est chaque véhicule et chaque client.</p>
+                </div>
 
-<!-- Feuille de route -->
-<section class="lm-pub-sec" id="feuille-de-route">
-    <div class="lm-wrap">
-        <div class="lm-pub-head" data-reveal>
-            <span>Feuille de route</span>
-            <h2>Où en est Phineas.</h2>
-            <p>Ce qui fonctionne déjà, ce qu’on construit maintenant, et ce qui suit.</p>
-        </div>
-        <div class="lm-road">
-            <div class="lm-road-col" data-reveal style="--c:#10B981">
-                <div class="top"><i></i>Fait<span>@fait.Length éléments</span></div>
-                <ul>@foreach (var x in fait) { <li><b>✓</b>@x</li> }</ul>
+                <div class="acc-panneau acc-a-propos @(videoDisponible ? "acc-a-propos-avec-video" : "")">
+                    @if (videoDisponible)
+                    {
+                        @* Vidéo affichée directement : sa première image sert d'aperçu (#t=0.1).
+                           Elle démarre seule après 5 secondes dans la section, en sourdine (accueil-public.js). *@
+                        <div class="acc-video-cadre" data-video-section>
+                            <video class="acc-video" controls playsinline preload="metadata" aria-label="Vidéo de présentation de Phineas" data-video>
+                                <source src="~/@(CheminVideo)#t=0.1" type="video/mp4" />
+                            </video>
+                            <button type="button" class="acc-video-son" data-activer-son hidden>
+                                <i class="bi bi-volume-up" aria-hidden="true"></i>Activer le son
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="acc-a-propos-motif" aria-hidden="true">
+                            <svg class="acc-zigzag" viewBox="0 0 340 260" preserveAspectRatio="none"><polyline points="40,250 150,140 190,140 300,20" /></svg>
+                        </div>
+                        <div class="acc-video-a-venir">
+                            <span class="acc-lecture-rond" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
+                            <p>La vidéo de présentation sera bientôt disponible.</p>
+                        </div>
+                    }
+                    <p class="acc-a-propos-titre">Un seul dossier, de la réception à la livraison.</p>
+                    <p class="acc-a-propos-texte">Moins de temps à chercher, plus de temps avec les clients.</p>
+                </div>
             </div>
-            <div class="lm-road-col" data-reveal style="--c:#0EA5E9">
-                <div class="top"><i></i>En cours<span>Phases 2 à 5</span></div>
-                <ul>@foreach (var x in enCours) { <li><b>›</b>@x</li> }</ul>
-            </div>
-            <div class="lm-road-col" data-reveal style="--c:#94A3B8">
-                <div class="top"><i></i>À venir<span>Phases 6 à 10</span></div>
-                <ul>@foreach (var x in aVenir) { <li><b>·</b>@x</li> }</ul>
-            </div>
-        </div>
-    </div>
-</section>
+        </section>
 
-<!-- Appel à l'action -->
-<section class="lm-pub-sec pb-5">
-    <div class="lm-wrap">
-        <div class="lm-cta" data-reveal>
-            <div>
-                <h2>Prêt à commencer votre journée?</h2>
-                <p>Connectez-vous avec le compte fourni par votre directeur ou par l’administrateur de la plateforme.</p>
+        @* ---------- L'équipe (juste sous À propos) ---------- *@
+        <section class="acc-section acc-section-serree" id="equipe" aria-labelledby="titre-equipe">
+            <div class="acc-conteneur">
+                <h2 class="acc-titre-equipe" id="titre-equipe">L'équipe</h2>
+                <div class="acc-equipe">
+                    @for (var i = 0; i < equipe.Length; i++)
+                    {
+                        var membre = equipe[i];
+                        var fond = "acc-portrait-" + (i % NombreFondsPortrait + 1);
+                        <article class="acc-membre">
+                            <div class="acc-portrait @fond">
+                                @if (membre.Photo is not null)
+                                {
+                                    @* Tant que le nom n'est pas renseigné (« Prénom Nom »), le texte alternatif reste neutre. *@
+                                    var textePortrait = membre.Nom == NomAVenir ? "Portrait d'un membre de l'équipe" : "Portrait de " + membre.Nom;
+                                    <img src="~/images/equipe/@membre.Photo" alt="@textePortrait" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="acc-portrait-initiales" aria-hidden="true">@membre.Initiales</span>
+                                    <span class="acc-portrait-mention">Portrait à venir</span>
+                                }
+                            </div>
+                            <h3>@membre.Nom</h3>
+                            <p class="acc-membre-role">@membre.Role</p>
+                            <p class="acc-membre-parcours">@membre.Parcours</p>
+                        </article>
+                    }
+                </div>
             </div>
-            <a class="btn btn-light btn-lg" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right me-2"></i>Se connecter</a>
+        </section>
+
+        @* ---------- Sécurité ---------- *@
+        <section class="acc-section" id="securite" aria-labelledby="titre-securite">
+            <div class="acc-conteneur">
+                <div class="acc-securite">
+                    <div class="acc-securite-haut">
+                        <div>
+                            <span class="acc-pastille acc-pastille-claire">Sécurité</span>
+                            <h2 id="titre-securite">Les données clients, prises au sérieux.</h2>
+                        </div>
+                        <p>Les dossiers de financement contiennent des renseignements sensibles. Phineas les protège à chaque étape.</p>
+                    </div>
+                    <div class="acc-securite-cases">
+                        @foreach (var point in securite)
+                        {
+                            <div class="acc-securite-case">
+                                <i class="bi @point.Icone" aria-hidden="true"></i>
+                                <h3>@point.Titre</h3>
+                                <p>@point.Texte</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Feuille de route ---------- *@
+        <section class="acc-section" id="feuille-de-route" aria-labelledby="titre-feuille">
+            <div class="acc-conteneur">
+                <div class="acc-entete">
+                    <span class="acc-pastille">Feuille de route</span>
+                    <h2 id="titre-feuille">Où en est Phineas.</h2>
+                    <p>Ce qui fonctionne déjà, ce qu'on construit maintenant, et ce qui suit.</p>
+                </div>
+                <div class="acc-cases acc-cases-3">
+                    @foreach (var colonne in feuilleDeRoute)
+                    {
+                        <article class="acc-case acc-route acc-route-@colonne.Etat">
+                            <div class="acc-route-tete">
+                                <h3>@colonne.Nom</h3>
+                                <span>@colonne.Precision</span>
+                            </div>
+                            <div class="acc-route-barre" aria-hidden="true">
+                                @for (var s = 0; s < SegmentsFeuilleDeRoute; s++)
+                                {
+                                    <i></i>
+                                }
+                            </div>
+                            <ul>
+                                @foreach (var element in colonne.Elements)
+                                {
+                                    <li><i class="bi @colonne.Icone" aria-hidden="true"></i>@element</li>
+                                }
+                            </ul>
+                        </article>
+                    }
+                </div>
+            </div>
+        </section>
+
+        @* ---------- Appel à l'action ---------- *@
+        <section class="acc-section acc-section-finale" aria-labelledby="titre-cta">
+            <div class="acc-conteneur">
+                <div class="acc-panneau acc-cta">
+                    <div class="acc-points acc-points-bas-gauche" aria-hidden="true"></div>
+                    <div class="acc-points acc-points-haut-droit" aria-hidden="true"></div>
+                    <h2 id="titre-cta">Prêt à commencer votre journée ?</h2>
+                    <p>Connectez-vous avec le compte fourni par votre directeur ou par l'administrateur de la plateforme.</p>
+                    <a class="acc-btn acc-btn-blanc" asp-controller="Account" asp-action="Login"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>Se connecter</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="acc-pied">
+        <div class="acc-conteneur acc-pied-contenu">
+            <span>© 2026 phineas</span>
+            <span class="acc-pied-mono">Fait au Québec</span>
         </div>
-    </div>
-</section>
+    </footer>
+
+    <script src="~/js/mascot.js" asp-append-version="true"></script>
+    <script src="~/js/accueil-public.js" asp-append-version="true"></script>
+</body>
+</html>

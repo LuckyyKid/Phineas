@@ -1,49 +1,52 @@
+@* Formulaire de création et de modification d'un compte. La concession est masquée pour le rôle administrateur
+   (script en bas de page). Styles : .es-formulaire dans wwwroot/css/espaces.css. *@
 @model UtilisateurFormViewModel
 
-<form asp-action="@(Model.EstModification ? "Modifier" : "Creer")" asp-route-id="@Model.Id" method="post" novalidate>
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<form asp-action="@(Model.EstModification ? "Modifier" : "Creer")" asp-route-id="@Model.Id" method="post" novalidate class="es-formulaire">
+    <div asp-validation-summary="ModelOnly" class="es-alerte es-alerte-erreur"></div>
 
-    <div class="row g-3">
-        <div class="col-sm-6">
-            <label asp-for="Prenom" class="form-label"></label>
-            <input asp-for="Prenom" class="form-control" autofocus />
-            <span asp-validation-for="Prenom" class="text-danger small"></span>
+    <div class="es-grille">
+        <div class="es-champ">
+            <label asp-for="Prenom"></label>
+            <input asp-for="Prenom" autofocus />
+            <span asp-validation-for="Prenom" class="es-erreur"></span>
         </div>
-        <div class="col-sm-6">
-            <label asp-for="Nom" class="form-label"></label>
-            <input asp-for="Nom" class="form-control" />
-            <span asp-validation-for="Nom" class="text-danger small"></span>
+        <div class="es-champ">
+            <label asp-for="Nom"></label>
+            <input asp-for="Nom" />
+            <span asp-validation-for="Nom" class="es-erreur"></span>
         </div>
-        <div class="col-12">
-            <label asp-for="Email" class="form-label"></label>
-            <input asp-for="Email" class="form-control" type="email" />
-            <div class="form-text">C'est l'identifiant de connexion de la personne.</div>
-            <span asp-validation-for="Email" class="text-danger small"></span>
+        <div class="es-champ es-pleine-largeur">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" type="email" />
+            <p class="es-aide">C'est l'identifiant de connexion de la personne.</p>
+            <span asp-validation-for="Email" class="es-erreur"></span>
         </div>
-        <div class="col-sm-6">
-            <label asp-for="Role" class="form-label"></label>
-            <select asp-for="Role" asp-items="Model.Roles" class="form-select" id="choix-role"></select>
-            <span asp-validation-for="Role" class="text-danger small"></span>
+        <div class="es-champ">
+            <label asp-for="Role"></label>
+            <select asp-for="Role" asp-items="Model.Roles" id="choix-role"></select>
+            <span asp-validation-for="Role" class="es-erreur"></span>
         </div>
-        <div class="col-sm-6" id="bloc-concession">
-            <label asp-for="DealershipId" class="form-label"></label>
-            <select asp-for="DealershipId" asp-items="Model.Concessions" class="form-select">
-                <option value="">— Choisir —</option>
+        <div class="es-champ" id="bloc-concession">
+            <label asp-for="DealershipId"></label>
+            <select asp-for="DealershipId" asp-items="Model.Concessions">
+                <option value="">Choisir une concession</option>
             </select>
-            <span asp-validation-for="DealershipId" class="text-danger small"></span>
+            <span asp-validation-for="DealershipId" class="es-erreur"></span>
         </div>
     </div>
 
     @if (!Model.EstModification)
     {
-        <div class="alert alert-info mt-4 mb-0 small">
-            <i class="bi bi-info-circle me-1"></i>Un mot de passe temporaire sera généré et affiché une seule fois. La personne devra le changer à sa première connexion.
+        <div class="es-alerte es-alerte-info mb-0">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            <span>Un mot de passe temporaire sera généré et affiché une seule fois. La personne devra le changer à sa première connexion.</span>
         </div>
     }
 
-    <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-primary">@(Model.EstModification ? "Enregistrer" : "Créer le compte")</button>
-        <a class="btn btn-outline-secondary" href="javascript:history.back()">Annuler</a>
+    <div class="es-actions">
+        <button type="submit" class="es-btn-sapin">@(Model.EstModification ? "Enregistrer" : "Créer le compte")</button>
+        <a class="es-btn-secondaire" href="javascript:history.back()">Annuler</a>
     </div>
 </form>
 

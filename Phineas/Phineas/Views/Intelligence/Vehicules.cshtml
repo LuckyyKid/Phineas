@@ -1,0 +1,185 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model IntelligencePageViewModel
+@{
+    ViewData["Title"] = "Recommandations véhicules";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@* Recommandations véhicules en verre clair (maquette 05). Le contenu des listes est produit par intelligence-vehicules.js. *@
+
+@section Styles {
+    @* Les fenêtres Bootstrap (fiche véhicule, présentation, recommandation) utilisent encore les classes pr-, rv- et ia-. *@
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/soumissions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence-verre.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence-vehicules-verre.css" asp-append-version="true" />
+}
+
+<div class="iv-page" id="matching" data-opportunite="@Model.OpportuniteId" data-vehicule="@Model.VehiculeId">
+
+    @* ---------- Haut de page : fil d'Ariane et pastilles de démonstration ---------- *@
+    <div class="iv-haut">
+        <nav class="iv-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            <span aria-current="page">Recommandations véhicules</span>
+        </nav>
+        <div class="iv-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
+            <span class="iv-chip-demo">Démo</span>
+            <span class="iv-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="iv-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Réinitialiser</button>
+            <span class="iv-en-ligne"><span class="iv-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <a class="iv-retour" asp-action="Index"><i class="bi bi-arrow-left" aria-hidden="true"></i>Centre d'actions</a>
+    <h1 class="iv-titre">Recommandations véhicules</h1>
+    <p class="iv-intro">Compatibilité entre les critères de vos clients et l'inventaire partagé. La compatibilité d'un véhicule n'est pas une probabilité d'achat.</p>
+
+    <ul class="nav iv-onglets iv-onglets-verre ivv-onglets" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-prospect" data-bs-toggle="tab" data-bs-target="#panneau-prospect" type="button" role="tab" aria-controls="panneau-prospect" aria-selected="true">Pour un prospect</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-vehicule" data-bs-toggle="tab" data-bs-target="#panneau-vehicule" type="button" role="tab" aria-controls="panneau-vehicule" aria-selected="false">Pour un véhicule</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-demandes" data-bs-toggle="tab" data-bs-target="#panneau-demandes" type="button" role="tab" aria-controls="panneau-demandes" aria-selected="false">Demandes et alertes d'inventaire <span class="iv-compte" data-champ="nb-demandes"></span></button></li>
+    </ul>
+
+    <div class="tab-content">
+        @* ---------- Mode 1 : véhicules pour un prospect ---------- *@
+        <div class="tab-pane fade show active" id="panneau-prospect" role="tabpanel" aria-labelledby="onglet-prospect" tabindex="0">
+            <div class="ivv-colonnes">
+                <section class="iv-verre iv-carte ivv-criteres" aria-labelledby="titre-criteres">
+                    <h2 class="iv-label" id="titre-criteres">Critères du client</h2>
+
+                    <label class="ivv-champ-label" for="m-opportunite">Opportunité</label>
+                    <select class="iv-select iv-select-carre" id="m-opportunite"></select>
+
+                    <div data-zone="criteres"></div>
+
+                    <div class="form-check form-switch iv-interrupteur ivv-interrupteur">
+                        <input class="form-check-input" type="checkbox" role="switch" id="m-indisponibles" />
+                        <label class="form-check-label" for="m-indisponibles">Afficher aussi les véhicules vendus ou livrés</label>
+                    </div>
+
+                    <p class="ivv-ponderations">Pondérations de démonstration : budget 30 %, catégorie 25 %, caractéristiques 20 %, état/année/kilométrage 15 %, marque 10 %. Un critère inconnu n'est jamais compté comme satisfait.</p>
+                </section>
+
+                <div class="ivv-liste">
+                    <p class="iv-resultat" id="m-resultat" aria-live="polite"></p>
+                    <div class="ivv-vehicules" id="m-vehicules"></div>
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Mode 2 : prospects pour un véhicule ---------- *@
+        <div class="tab-pane fade" id="panneau-vehicule" role="tabpanel" aria-labelledby="onglet-vehicule" tabindex="0">
+            <section class="iv-verre iv-carte" aria-labelledby="titre-vehicule">
+                <h2 class="iv-label" id="titre-vehicule">Prospects pour un véhicule</h2>
+                <div class="ivv-choix-vehicule">
+                    <label class="ivv-champ-label" for="v-vehicule">Véhicule de l'inventaire</label>
+                    <select class="iv-select iv-select-carre" id="v-vehicule"></select>
+                    <div class="ivv-fiche" data-zone="fiche-vehicule"></div>
+                </div>
+                <div class="iv-defile">
+                    <table class="iv-table ivv-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Prospect</th>
+                                <th scope="col">Besoin et budget</th>
+                                <th scope="col">Compatibilité</th>
+                                <th scope="col">Horizon et dernier contact</th>
+                                <th scope="col">Conseiller et suivi</th>
+                                <th scope="col"><span class="visually-hidden">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="v-prospects"></tbody>
+                    </table>
+                </div>
+                <div data-zone="pagination-prospects"></div>
+                <div class="iv-vide" id="v-vide" hidden><i class="bi bi-car-front" aria-hidden="true"></i><strong>Aucun prospect compatible</strong><span>Aucune opportunité active ne correspond aux caractéristiques de ce véhicule.</span></div>
+            </section>
+        </div>
+
+        @* ---------- Demandes non satisfaites et alertes d'inventaire ---------- *@
+        <div class="tab-pane fade" id="panneau-demandes" role="tabpanel" aria-labelledby="onglet-demandes" tabindex="0">
+            <div class="ivv-demandes-grille">
+                <section class="iv-verre iv-carte" aria-labelledby="titre-demandes">
+                    <h2 class="iv-label" id="titre-demandes">Demandes de recherche</h2>
+                    <div data-zone="demandes"></div>
+                </section>
+
+                <div class="ivv-pile">
+                    <section class="iv-verre iv-carte" aria-labelledby="titre-arrivees">
+                        <div class="ivv-carte-tete">
+                            <h2 class="iv-label" id="titre-arrivees">Arrivées de véhicules</h2>
+                            <span class="iv-chip-demo">Fictif</span>
+                        </div>
+                        <p class="iv-note">Simule l'arrivée d'un véhicule dans l'inventaire de cet onglet. Le moteur compare alors les demandes actives et crée, au besoin, une seule recommandation par demande et par véhicule.</p>
+                        <div data-zone="arrivees"></div>
+                    </section>
+
+                    <section class="iv-verre iv-carte" aria-labelledby="titre-nouvelle-demande">
+                        <h2 class="iv-label" id="titre-nouvelle-demande">Nouvelle demande</h2>
+                        <form class="ivv-formulaire" id="form-demande" novalidate>
+                            <div>
+                                <label class="ivv-champ-label" for="d-opportunite">Opportunité <span class="ivv-requis">*</span></label>
+                                <select class="iv-select iv-select-carre" id="d-opportunite" name="opportunite"></select>
+                                <div class="invalid-feedback">Choisissez une opportunité.</div>
+                            </div>
+                            <div class="ivv-champs-deux">
+                                <div>
+                                    <label class="ivv-champ-label" for="d-categorie">Catégorie</label>
+                                    <select class="iv-select iv-select-carre" id="d-categorie" name="categorie">
+                                        <option value="">Indifférente</option>
+                                        @foreach (var (cle, libelle) in ReferentielsVente.Categories)
+                                        {
+                                            <option value="@cle">@libelle</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="ivv-champ-label" for="d-budget">Budget maximal</label>
+                                    <input type="number" class="ivv-champ" id="d-budget" name="budget" min="1000" max="300000" step="500" />
+                                </div>
+                                <div>
+                                    <label class="ivv-champ-label" for="d-annee">Année minimale</label>
+                                    <input type="number" class="ivv-champ" id="d-annee" name="annee" min="1990" max="2030" />
+                                </div>
+                                <div>
+                                    <label class="ivv-champ-label" for="d-km">Kilométrage maximal</label>
+                                    <input type="number" class="ivv-champ" id="d-km" name="km" min="0" max="500000" step="1000" />
+                                </div>
+                            </div>
+                            <fieldset class="ivv-indispensables-demande">
+                                <legend class="ivv-champ-label">Critères indispensables</legend>
+                                <div class="form-check form-switch iv-interrupteur"><input class="form-check-input" type="checkbox" role="switch" id="d-i-budget" value="budget" name="indispensable" checked /><label class="form-check-label" for="d-i-budget">Budget</label></div>
+                                <div class="form-check form-switch iv-interrupteur"><input class="form-check-input" type="checkbox" role="switch" id="d-i-categorie" value="categorie" name="indispensable" /><label class="form-check-label" for="d-i-categorie">Catégorie</label></div>
+                            </fieldset>
+                            <div><button type="submit" class="iv-btn iv-btn-sapin iv-btn-petit">Enregistrer la demande</button></div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-vehicules.js" asp-append-version="true"></script>
+}

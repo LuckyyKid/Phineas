@@ -1,0 +1,206 @@
+@* Page « Ventes perdues » (maquette 32) : phrase de résumé, 6 chiffres côte à côte, tableau paginé des opportunités perdues ou réactivées.
+   Script : wwwroot/js/relations-pertes.js (liste, filtres, pagination, fiche d'analyse ?opportunite=…).
+   Styles : relations.css (verre commun aux pages Relations) puis relations-pertes-verre.css (propre à cette page, préfixe rp-).
+   Le haut de page est propre à cette page : la réinitialisation de la démo est dans la note du bas, visible seulement si la démo a été modifiée. *@
+@using Phineas.Models.ViewModels.Conseiller
+@model RelationsPageViewModel
+@{
+    ViewData["Title"] = "Ventes perdues";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/prospects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/intelligence.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/relations-pertes-verre.css" asp-append-version="true" />
+}
+
+<div class="rc-page rp-page">
+
+    <div class="rp-haut" data-entete-liste>
+        <nav class="rp-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Ventes perdues</span>
+        </nav>
+        <div class="rp-puces" role="note" title="Clients, ventes et recommandations fictifs. Rien n'est enregistré en base.">
+            <span class="rp-chip-demo">Démo</span>
+            <span class="rp-en-ligne"><span class="rp-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <header class="rp-entete" data-entete-liste>
+        <div>
+            <p class="rp-label">Relations clients</p>
+            <h1 class="rp-titre">Ventes perdues</h1>
+            <p class="rp-intro">Comprendre pourquoi une opportunité n'a pas abouti, et repérer celles qui pourraient être reprises si la situation change.</p>
+        </div>
+        <div class="rp-boutons">
+            <button type="button" class="rp-btn-verre" data-rc="cloturer"><i class="bi bi-x-circle" aria-hidden="true"></i>Clôturer une opportunité</button>
+            <a class="rp-btn-verre" asp-action="Statistiques"><i class="bi bi-bar-chart-line" aria-hidden="true"></i>Statistiques</a>
+        </div>
+    </header>
+
+    <div id="pertes" data-opportunite="@Model.OpportuniteId">
+        <div data-mode="liste">
+            <p class="rp-resume" data-zone="resume" aria-live="polite"></p>
+
+            <section class="rp-chiffres" aria-label="Résumé des ventes perdues">
+                <div class="rp-verre rp-chiffre">
+                    <span class="rp-chiffre-valeur" data-compteur="perdues">…</span>
+                    <span class="rp-chiffre-libelle">Perdues</span>
+                    <span class="rp-chiffre-detail">Opportunités closes</span>
+                </div>
+                <div class="rp-verre rp-chiffre">
+                    <span class="rp-chiffre-valeur" data-compteur="connus">…</span>
+                    <span class="rp-chiffre-libelle">Motif connu</span>
+                    <span class="rp-chiffre-detail" data-detail="hypotheses">Confirmés</span>
+                </div>
+                <div class="rp-verre rp-chiffre">
+                    <span class="rp-chiffre-valeur" data-compteur="inconnus">…</span>
+                    <span class="rp-chiffre-libelle">Motif inconnu<span class="rp-point-ambre" aria-hidden="true"></span></span>
+                    <span class="rp-chiffre-detail">À ne pas deviner</span>
+                </div>
+                <div class="rp-verre rp-chiffre">
+                    <span class="rp-chiffre-valeur" data-compteur="recuperables">…</span>
+                    <span class="rp-chiffre-libelle">Récupérables</span>
+                    <span class="rp-chiffre-detail">Potentiellement</span>
+                </div>
+                <div class="rp-verre rp-chiffre">
+                    <span class="rp-chiffre-valeur" data-compteur="reactivees">…</span>
+                    <span class="rp-chiffre-libelle">Réactivées</span>
+                    <span class="rp-chiffre-detail">Reprises par vous</span>
+                </div>
+                <div class="rp-verre rp-chiffre">
+                    <span class="rp-chiffre-valeur" data-compteur="recuperees">…</span>
+                    <span class="rp-chiffre-libelle" data-libelle="recuperees">Récupérées</span>
+                    <span class="rp-chiffre-detail">Avec vente livrée</span>
+                </div>
+            </section>
+
+            <section class="rp-verre rp-module" aria-label="Liste des opportunités perdues">
+                @* Barre d'outils sur une seule rangée ; les filtres moins fréquents sont dans « Plus de filtres ». *@
+                <div class="rp-outils">
+                    <div class="rp-recherche">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <input type="search" id="f-recherche" placeholder="Client, opportunité ou véhicule" aria-label="Rechercher une vente perdue" autocomplete="off" />
+                    </div>
+                    <select class="rp-select" id="f-motif" aria-label="Filtrer par motif de perte">
+                        <option value="">Tous les motifs</option>
+                        @foreach (var (cle, libelle) in ReferentielsRelations.MotifsPerte)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                    <select class="rp-select" id="f-recuperable" aria-label="Filtrer par possibilité de récupération">
+                        <option value="">Récupérables ou non</option>
+                        <option value="oui">Potentiellement récupérables</option>
+                        <option value="non">Aucune récupération envisagée</option>
+                    </select>
+                    <div class="form-check form-switch rp-interrupteur">
+                        <input class="form-check-input" type="checkbox" role="switch" id="f-reactivees" />
+                        <label class="form-check-label" for="f-reactivees">Déjà réactivées</label>
+                    </div>
+                    <div class="form-check form-switch rp-interrupteur">
+                        <input class="form-check-input" type="checkbox" role="switch" id="f-manquantes" />
+                        <label class="form-check-label" for="f-manquantes">Informations manquantes</label>
+                    </div>
+                    <button type="button" class="rp-lien" data-plus-filtres aria-expanded="false" aria-controls="plus-filtres">Plus de filtres</button>
+                </div>
+
+                <div class="rp-plus" id="plus-filtres" hidden>
+                    <select class="rp-select" id="f-periode" aria-label="Filtrer par période de clôture">
+                        <option value="">Toutes les périodes</option>
+                        <option value="30">30 derniers jours</option>
+                        <option value="90">90 derniers jours</option>
+                        <option value="365">12 derniers mois</option>
+                    </select>
+                    <select class="rp-select" id="f-origine" aria-label="Filtrer par source du motif">
+                        <option value="">Toutes les sources du motif</option>
+                        @foreach (var (cle, libelle) in ReferentielsRelations.OriginesMotif)
+                        {
+                            <option value="@cle">@libelle</option>
+                        }
+                    </select>
+                    <select class="rp-select" id="f-vehicule" aria-label="Filtrer par véhicule recherché">
+                        <option value="">Tous les véhicules</option>
+                    </select>
+                    <select class="rp-select" id="f-conseiller" aria-label="Filtrer par conseiller">
+                        @foreach (var c in Model.Prospects.Conseillers)
+                        {
+                            <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? "Mes opportunités" : c.Nom + " (fictif)")</option>
+                        }
+                        <option value="">Tous les conseillers</option>
+                    </select>
+                    <button type="button" class="rp-lien" data-effacer-filtres hidden>Effacer les filtres</button>
+                </div>
+
+                <div class="rp-defile">
+                    <table class="rp-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Client et opportunité</th>
+                                <th scope="col">Véhicule recherché</th>
+                                <th scope="col">Clôture</th>
+                                <th scope="col">Motif de perte</th>
+                                <th scope="col">Récupération</th>
+                                <th scope="col">Prochaine action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liste-corps"></tbody>
+                    </table>
+                </div>
+
+                <div class="rp-vide" id="etat-vide" hidden>
+                    <p data-vide-texte>Aucune vente perdue ne correspond.</p>
+                    <button type="button" class="rp-btn-blanc" data-effacer-filtres>Effacer les filtres</button>
+                </div>
+
+                <footer class="rp-pied">
+                    <span id="resultat" aria-live="polite"></span>
+                    <nav class="rp-pagination" data-zone="pagination" aria-label="Pagination des ventes perdues" hidden></nav>
+                </footer>
+            </section>
+
+            <div class="rp-note">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <div>
+                    <p>Aucune probabilité de récupération n'est calculée : une opportunité « récupérable » signifie seulement qu'un événement pourrait justifier une reprise, que vous décidez.</p>
+                    <p data-zone="sans-cloture"></p>
+                    @* Réinitialisation de la démo, branchée par prospects-store.js : n'apparaît que si la démo a été modifiée. *@
+                    <p class="rp-demo">
+                        <span data-etat-demo hidden>Données de démonstration modifiées.</span>
+                        <button type="button" class="rp-lien" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Réinitialiser la démo</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        @* Fiche d'analyse d'une vente perdue (?opportunite=…) : haut, en-tête et contenu rendus par relations-pertes.js. *@
+        <div data-mode="fiche" hidden>
+            <div data-zone="fiche"></div>
+        </div>
+    </div>
+
+</div>
+
+<partial name="~/Views/Intelligence/_DonneesModules.cshtml" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-calcul.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-regles.js" asp-append-version="true"></script>
+    <script src="~/js/transactions-store.js" asp-append-version="true"></script>
+    <script src="~/js/relations-regles.js" asp-append-version="true"></script>
+    <script src="~/js/relations-store.js" asp-append-version="true"></script>
+    <script src="~/js/annonces-modeles.js" asp-append-version="true"></script>
+    <script src="~/js/outils-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-matching.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-regles.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-store.js" asp-append-version="true"></script>
+    <script src="~/js/intelligence-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-composants.js" asp-append-version="true"></script>
+    <script src="~/js/relations-pertes.js" asp-append-version="true"></script>
+}

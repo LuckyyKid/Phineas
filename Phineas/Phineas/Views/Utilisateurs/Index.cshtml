@@ -1,34 +1,37 @@
+@* Liste du personnel (administrateur) : en-tête, puis la carte avec la recherche, le filtre par concession
+   et le tableau. Même présentation que les listes vendeur. Styles : wwwroot/css/espaces.css. *@
 @model UtilisateursIndexViewModel
 @{ ViewData["Title"] = "Personnel"; }
 
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-    <div>
-        <h1 class="h3 mb-0">Personnel</h1>
-        <div class="text-muted">Tous les comptes de la plateforme.</div>
-    </div>
-    <a class="btn btn-primary" asp-action="Creer" asp-route-dealershipId="@Model.DealershipId"><i class="bi bi-person-plus me-1"></i>Ajouter une personne</a>
-</div>
+<div class="es-page">
+    <header class="es-entete">
+        <div>
+            <p class="es-label">Administration</p>
+            <h1 class="es-titre">Personnel</h1>
+            <p class="es-intro">Tous les comptes de la plateforme.</p>
+        </div>
+        <a class="es-btn-sapin" asp-action="Creer" asp-route-dealershipId="@Model.DealershipId"><i class="bi bi-person-plus" aria-hidden="true"></i>Ajouter une personne</a>
+    </header>
 
-<partial name="_Alertes" />
+    <partial name="_Alertes" />
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <div class="col-md-6">
-        <input type="search" name="q" value="@Model.Recherche" class="form-control" placeholder="Rechercher un nom ou un courriel" />
-    </div>
-    <div class="col-md-4">
-        <select name="dealershipId" class="form-select">
-            <option value="">Toutes les concessions</option>
-            @foreach (var c in Model.Concessions)
-            {
-                <option value="@c.Value" selected="@(c.Value == Model.DealershipId?.ToString())">@c.Text</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
-    </div>
-</form>
+    <section class="es-verre es-module" aria-label="Liste du personnel">
+        @* Recherche et filtre envoyés au serveur (GET) : même comportement qu'avant, nouvelle présentation. *@
+        <form method="get" asp-action="Index" class="es-outils">
+            <div class="es-recherche">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" name="q" value="@Model.Recherche" placeholder="Rechercher un nom ou un courriel" aria-label="Rechercher un nom ou un courriel" />
+            </div>
+            <select name="dealershipId" class="es-select" aria-label="Filtrer par concession">
+                <option value="">Toutes les concessions</option>
+                @foreach (var c in Model.Concessions)
+                {
+                    <option value="@c.Value" selected="@(c.Value == Model.DealershipId?.ToString())">@c.Text</option>
+                }
+            </select>
+            <button type="submit" class="es-btn-secondaire"><i class="bi bi-funnel" aria-hidden="true"></i>Filtrer</button>
+        </form>
 
-<div class="card">
-    <partial name="_TableUtilisateurs" model="Model.Utilisateurs" view-data='new ViewDataDictionary(ViewData) { ["AfficherConcession"] = true }' />
+        <partial name="_TableUtilisateurs" model="Model.Utilisateurs" view-data='new ViewDataDictionary(ViewData) { ["AfficherConcession"] = true }' />
+    </section>
 </div>

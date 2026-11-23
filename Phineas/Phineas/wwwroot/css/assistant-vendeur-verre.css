@@ -1,0 +1,245 @@
+/* =========================================================
+   Assistant vendeur en verre clair (maquettes 13 et 14).
+   Chargée par Views/Outils/Assistant.cshtml après outils.css : reprend ses jetons (--ogp-*) et son haut de page (og-).
+   Tout est rangé sous .av-page (préfixe av-) pour ne rien changer aux autres pages Outils.
+   ========================================================= */
+
+.av-page {
+  --av-menthe-pale: rgba(95, 224, 192, .12);
+  --av-menthe-etiquette: rgba(29, 154, 130, .10);
+  --av-ambre-fond: rgba(214, 150, 30, .1);
+  --av-ambre-texte: #8A5A00;
+  --av-rayon-carte: 28px;
+
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+/* ---------- En-tête ---------- */
+.av-entete { margin-bottom: 32px; }
+.av-page .av-label { margin: 0; font-family: var(--ogp-mono); font-size: 11.5px; font-weight: 400; letter-spacing: .14em; text-transform: uppercase; color: var(--ogp-muted); }
+.av-page .av-titre { margin: 12px 0 10px; font-family: var(--ogp-font); font-size: 40px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; color: var(--ogp-ink); }
+.av-intro { max-width: 40em; margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--ogp-text); }
+
+/* ---------- Deux colonnes (empilées sous 900 px) ---------- */
+.av-colonnes { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.av-cote { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.av-verre {
+  border-radius: var(--av-rayon-carte);
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: var(--ogp-flou);
+  -webkit-backdrop-filter: var(--ogp-flou);
+  border: 1px solid var(--ogp-line);
+  box-shadow: var(--ogp-ombre);
+}
+.av-carte { padding: 26px 26px 22px; }
+.av-page .av-carte > .av-label { margin-bottom: 18px; }
+.av-carte-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* ---------- Champs du contexte ---------- */
+.av-champ-label { display: block; margin: 0 0 8px; font-size: 15px; font-weight: 500; color: var(--ogp-ink); }
+.av-bloc-champ { margin-top: 18px; }
+.av-bloc-champ[hidden] { display: none; }
+.av-select-cadre { position: relative; }
+.av-select-cadre::after {
+  content: "\F282"; /* chevron Bootstrap Icons */
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: "bootstrap-icons";
+  font-size: 12px;
+  color: var(--ogp-muted);
+  pointer-events: none;
+}
+.av-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 44px 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--ogp-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ogp-ink);
+  appearance: none;
+  -webkit-appearance: none;
+  text-overflow: ellipsis;
+}
+.av-select:focus { outline: none; border-color: var(--ogp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+
+.av-filet { height: 1px; margin: 22px 0 18px; background: var(--ogp-line-2); }
+.av-page .av-sous-titre { margin: 0 0 12px; font-family: var(--ogp-font); font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--ogp-ink); }
+
+/* « Ce que l'assistant peut lire » */
+.av-vide-pointille { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 20px; border: 1px dashed rgba(11, 13, 13, .16); border-radius: 20px; text-align: center; font-size: 14.5px; color: var(--ogp-text); }
+.av-vide-pointille i { font-size: 22px; color: var(--ogp-muted); }
+.av-lecture { margin: 0; }
+.av-lecture div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 11px 0; border-top: 1px solid var(--ogp-line-2); }
+.av-lecture div:first-child { border-top: 0; padding-top: 4px; }
+.av-lecture dt { font-size: 14.5px; font-weight: 400; color: var(--ogp-muted); }
+.av-lecture dd { margin: 0; font-size: 14.5px; font-weight: 500; text-align: right; color: var(--ogp-ink); }
+.av-inconnu { font-weight: 400; color: var(--ogp-muted-2); }
+.av-jamais { margin: 12px 0 0; font-size: 12.5px; color: var(--ogp-muted); }
+
+/* Historique local */
+.av-historique { margin: 0; padding: 0; list-style: none; }
+.av-historique li { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-top: 1px solid var(--ogp-line-2); }
+.av-historique li:first-child { border-top: 0; padding-top: 0; }
+.av-historique-question { font-size: 14.5px; color: var(--ogp-ink); }
+.av-historique-detail { font-size: 12.5px; color: var(--ogp-muted); }
+.av-page .av-historique .av-historique-vide { border-top: 0; padding: 0; font-size: 14.5px; line-height: 1.55; color: var(--ogp-text); }
+.av-lien { padding: 0; border: 0; background: none; font-size: 14px; font-weight: 500; color: var(--ogp-sapin-texte); }
+.av-lien:hover { text-decoration: underline; }
+.av-lien[hidden] { display: none; }
+
+/* ---------- Carte de conversation : trois zones séparées par des filets ---------- */
+.av-conversation { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.av-zone { padding: 22px 26px; }
+.av-zone + .av-zone { border-top: 1px solid var(--ogp-line-2); }
+.av-label-ligne { display: inline-flex; align-items: center; gap: 10px; }
+.av-chip-simulation { padding: 3px 10px; border-radius: 999px; background: var(--av-ambre-fond); color: var(--av-ambre-texte); font-family: var(--ogp-mono); font-size: 11px; letter-spacing: .1em; }
+
+.av-modes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.av-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--ogp-line-2);
+  background: #FFFFFF;
+  font-size: 14.5px;
+  color: var(--ogp-ink);
+  transition: background-color .15s ease, box-shadow .2s ease;
+}
+.av-mode i { color: var(--ogp-sapin-texte); }
+.av-mode:hover { background: rgba(255, 255, 255, .7); box-shadow: 0 4px 12px -6px rgba(11, 13, 13, .15); }
+.av-mode.is-active { border-color: transparent; background: var(--ogp-sapin); color: #FFFFFF; font-weight: 500; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 10px 22px -10px rgba(12, 59, 50, .65); }
+.av-mode.is-active i { color: #FFFFFF; }
+
+/* Fil : état vide, bulles de question, cartes de réponse */
+.av-fil { display: flex; flex-direction: column; gap: 14px; min-height: 320px; max-height: 640px; overflow-y: auto; }
+.av-fil-vide { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 1; min-height: 270px; text-align: center; color: var(--ogp-text); }
+.av-fil-vide p { max-width: 26em; margin: 0; font-size: 15px; line-height: 1.5; }
+.av-fil-icone { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 8px; border-radius: 50%; background: var(--av-menthe-pale); color: var(--ogp-sapin-texte); font-size: 18px; }
+.av-page .av-fil-vide .av-fil-titre { font-size: 17px; font-weight: 300; color: var(--ogp-ink); }
+
+.av-echange-question { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.av-question-bulle { max-width: 80%; margin: 0; padding: 10px 18px; border-radius: 18px 18px 4px 18px; background: var(--av-menthe-pale); color: var(--ogp-sapin-ink); font-size: 14.5px; line-height: 1.45; }
+.av-question-contexte { font-size: 12px; color: var(--ogp-muted); }
+
+.av-reponse { align-self: flex-start; max-width: 92%; padding: 18px 22px; border-radius: 18px 18px 18px 4px; border: 1px solid var(--ogp-line); background: #FFFFFF; box-shadow: 0 1px 2px rgba(11, 13, 13, .04), 0 8px 24px -14px rgba(11, 13, 13, .18); font-size: 14px; line-height: 1.55; color: var(--ogp-ink); }
+.av-rep-texte { margin: 0; }
+.av-rep-section + .av-rep-section { margin-top: 12px; }
+.av-rep-titre { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 4px; font-weight: 500; }
+.av-rep-type { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 400; color: var(--ogp-muted); }
+.av-rep-verifie .av-rep-type i { color: var(--ogp-sapin-texte); }
+.av-rep-a-verifier .av-rep-type i { color: var(--av-ambre-texte); }
+.av-rep-liste { margin: 0; padding-left: 18px; }
+.av-rep-liste li + li { margin-top: 2px; }
+.av-rep-vide { margin: 0; font-size: 13.5px; color: var(--ogp-muted); }
+.av-avertissement { display: flex; gap: 8px; margin: 0 0 10px; font-size: 13.5px; color: var(--av-ambre-texte); }
+
+.av-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.av-bouton { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ogp-line-2); background: #FFFFFF; font-size: 13.5px; color: var(--ogp-ink); text-decoration: none; }
+.av-bouton:hover { color: var(--ogp-ink); background: rgba(11, 13, 13, .03); }
+.av-bouton i { color: var(--ogp-sapin-texte); }
+
+.av-rep-pied { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--ogp-line-2); }
+.av-donnees { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.av-donnees-libelle { margin-right: 2px; font-size: 13px; color: var(--ogp-muted); }
+.av-etiquette { padding: 3px 10px; border-radius: 999px; background: var(--av-menthe-etiquette); color: #127463; font-size: 12.5px; text-decoration: none; }
+.av-etiquette:hover { color: var(--ogp-sapin-ink); text-decoration: underline; }
+.av-etiquette-neutre { background: rgba(11, 13, 13, .04); color: var(--ogp-muted); }
+.av-manque { display: flex; gap: 6px; margin: 8px 0 0; font-size: 12.5px; color: var(--ogp-muted); }
+.av-transmis { margin-top: 8px; font-size: 12.5px; color: var(--ogp-muted); }
+.av-transmis summary { width: fit-content; cursor: pointer; }
+.av-transmis ul { margin: 6px 0 0; padding-left: 18px; }
+.av-fournisseur { margin: 6px 0 0; font-size: 12px; color: var(--ogp-muted-2); }
+
+/* Saisie */
+.av-saisie-ligne { display: flex; align-items: flex-end; gap: 12px; }
+.av-question {
+  flex: 1;
+  min-height: 72px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--ogp-line-2);
+  background: #FFFFFF;
+  font-size: 15px;
+  color: var(--ogp-ink);
+  resize: none;
+}
+.av-question::placeholder { color: var(--ogp-muted-2); }
+.av-question:focus { outline: none; border-color: var(--ogp-menthe-ink); box-shadow: 0 0 0 3px rgba(29, 154, 130, .15); }
+.av-question.is-invalid { border-color: #D93A2E; }
+.av-demander {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ogp-sapin);
+  color: #FFFFFF;
+  font-size: 15.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 14px 28px -12px rgba(12, 59, 50, .7);
+}
+.av-demander:disabled { background: rgba(11, 13, 13, .06); color: var(--ogp-muted); box-shadow: none; cursor: default; }
+.av-info { display: flex; gap: 8px; margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: var(--ogp-muted); }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 899.98px) {
+  .av-colonnes { grid-template-columns: 1fr; }
+}
+@media (max-width: 575.98px) {
+  .av-page .av-titre { font-size: 34px; }
+  .av-saisie-ligne { flex-direction: column; align-items: stretch; }
+  .av-reponse { max-width: 100%; }
+}
+
+/* =========================================================
+   Thème sombre · Assistant vendeur (contrat : wwwroot/js/theme.js)
+   Les textes suivent --ogp-* (redéfinies dans outils.css) ; ici, le verre, les champs,
+   les modes, les bulles et le bouton « Demander » (blanc, seul bouton principal).
+   ========================================================= */
+html[data-theme="sombre"] .av-page {
+  --av-menthe-pale: var(--ps-menthe-fond);
+  --av-menthe-etiquette: var(--ps-menthe-fond);
+  --av-ambre-fond: var(--ps-ambre-fond);
+  --av-ambre-texte: var(--ps-ambre);
+}
+html[data-theme="sombre"] .av-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; backdrop-filter: var(--ps-verre-flou); -webkit-backdrop-filter: var(--ps-verre-flou); }
+
+/* Champs (dossier, menu du mode, question) */
+html[data-theme="sombre"] .av-select,
+html[data-theme="sombre"] .av-question { border-color: var(--ps-champ-contour); background: var(--ps-champ); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-select option { background: var(--ps-surface); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-select:focus,
+html[data-theme="sombre"] .av-question:focus { border-color: var(--ps-champ-focus); box-shadow: 0 0 0 3px rgba(95, 224, 192, .15); }
+html[data-theme="sombre"] .av-question.is-invalid { border-color: var(--ps-rose); }
+html[data-theme="sombre"] .av-vide-pointille { border-color: var(--ps-contour-survol); }
+
+/* Modes en pilules : le mode choisi est une pilule claire translucide */
+html[data-theme="sombre"] .av-mode { border-color: var(--ps-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-mode:hover { background: var(--ps-survol); border-color: var(--ps-contour-survol); box-shadow: none; }
+html[data-theme="sombre"] .av-mode.is-active { border-color: var(--ps-actif-contour); background: var(--ps-actif); color: var(--ps-texte); box-shadow: none; }
+html[data-theme="sombre"] .av-mode.is-active i { color: var(--ps-menthe); }
+
+/* Conversation : question en menthe translucide, réponse en surface sombre */
+html[data-theme="sombre"] .av-question-bulle { background: var(--ps-menthe-fond); color: #CFF5EA; }
+html[data-theme="sombre"] .av-reponse { border-color: var(--ps-contour); background: var(--ps-surface); box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .8); }
+html[data-theme="sombre"] .av-bouton { border-color: var(--ps-btn-second-contour); background: var(--ps-btn-second); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-bouton:hover { background: var(--ps-survol); color: var(--ps-texte); }
+html[data-theme="sombre"] .av-etiquette { background: var(--ps-menthe-fond); color: #CFF5EA; }
+html[data-theme="sombre"] .av-etiquette:hover { color: var(--ps-texte); }
+html[data-theme="sombre"] .av-etiquette-neutre { background: var(--ps-survol); color: var(--ps-texte-second); }
+
+/* Bouton « Demander » : blanc quand il est actif, éteint sinon */
+html[data-theme="sombre"] .av-demander { background: var(--ps-btn-principal); color: var(--ps-btn-principal-texte); box-shadow: var(--ps-btn-principal-halo); }
+html[data-theme="sombre"] .av-demander:disabled { background: rgba(255, 255, 255, .06); color: var(--ps-texte-discret); box-shadow: none; }

@@ -1,0 +1,199 @@
+@* Assistant « Nouveau rendez-vous » (et replanification) en 4 étapes : client et contexte, type, planification, véhicule,
+   puis écran de confirmation. Données : RendezVousController.Nouveau (prospects, soumissions et rendez-vous de démonstration).
+   Interactions : wwwroot/js/rendezvous-nouveau.js. Styles : bloc « Nouveau rendez-vous » de rendezvous.css. *@
+@using Phineas.Models.ViewModels.Conseiller
+@model RendezVousPageViewModel
+@{
+    var replanification = !string.IsNullOrEmpty(Model.Replanifier);
+    ViewData["Title"] = replanification ? "Replanifier un rendez-vous" : "Nouveau rendez-vous";
+    Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/rendezvous.css" asp-append-version="true" />
+}
+
+<div class="nr-page" id="parcours" data-opportunite="@Model.OpportuniteId" data-prospect="@Model.ProspectId" data-soumission="@Model.SoumissionId"
+     data-replanifier="@Model.Replanifier" data-date="@Model.Date" data-type="@Model.Type" data-vehicule="@Model.VehiculeId">
+    <div class="nr-haut">
+        <nav class="nr-ariane" aria-label="Fil d'Ariane">
+            <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">@ViewData["Title"]</span>
+        </nav>
+        @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
+        <div class="nr-puces" role="note" title="Prospects, véhicules et rendez-vous fictifs. Rien n'est enregistré en base.">
+            <span class="nr-chip-demo">Démo</span>
+            <span class="nr-demo-etat" data-etat-demo hidden>Modifiée</span>
+            <button type="button" class="nr-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
+            <span class="nr-en-ligne"><span class="nr-point-vert" aria-hidden="true"></span>En ligne</span>
+        </div>
+    </div>
+
+    <a class="nr-retour" asp-action="Index"><i class="bi bi-arrow-left"></i>Agenda</a>
+    <h1 class="nr-titre">@ViewData["Title"]</h1>
+    <p class="nr-intro">@(replanification ? "L'ancien créneau est conservé dans l'historique." : "Les informations déjà connues du dossier sont reprises automatiquement.")</p>
+
+    <div data-assistant>
+        <p class="nr-replan" data-zone="replanification" hidden></p>
+
+        <ol class="nr-etapes" aria-label="Étapes de planification">
+            <li><button type="button" data-aller="1"><span class="nr-num">1</span>Client et contexte</button></li>
+            <li><button type="button" data-aller="2"><span class="nr-num">2</span>Type</button></li>
+            <li><button type="button" data-aller="3"><span class="nr-num">3</span>Planification</button></li>
+            <li><button type="button" data-aller="4"><span class="nr-num">4</span>Véhicule</button></li>
+        </ol>
+
+        @* ---------- Étape 1 : client et contexte ---------- *@
+        <section class="nr-etape nr-deux-cartes" data-etape="1" aria-labelledby="titre-etape-1">
+            <h2 class="visually-hidden" id="titre-etape-1">Étape 1 : client et contexte</h2>
+            <div class="nr-verre nr-carte">
+                <p class="nr-label">Client</p>
+                <div class="nr-recherche">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="n-recherche-client" placeholder="Rechercher un prospect" aria-label="Rechercher un prospect" autocomplete="off" />
+                </div>
+                <div class="nr-clients" role="radiogroup" aria-label="Prospect" data-zone="clients"></div>
+            </div>
+            <div class="nr-verre nr-carte">
+                <p class="nr-label">Opportunité</p>
+                <div data-zone="opportunite"></div>
+            </div>
+        </section>
+
+        @* ---------- Étape 2 : type ---------- *@
+        <section class="nr-etape" data-etape="2" aria-labelledby="titre-etape-2" hidden>
+            <div class="nr-verre nr-carte">
+                <div class="nr-question">
+                    <h2 id="titre-etape-2">Quel type de rendez-vous ?</h2>
+                    <span data-zone="pour-client-2"></span>
+                </div>
+                <div class="nr-tuiles nr-tuiles-5" role="radiogroup" aria-label="Type de rendez-vous" data-zone="types"></div>
+                <p class="nr-note">Les rencontres avec le service financement et les livraisons sont de simples événements d'agenda dans cette version : aucun dossier de financement ni de livraison n'est créé.</p>
+            </div>
+        </section>
+
+        @* ---------- Étape 3 : planification ---------- *@
+        <section class="nr-etape" data-etape="3" aria-labelledby="titre-etape-3" hidden>
+            <div class="nr-verre nr-carte">
+                <div class="nr-question">
+                    <h2 id="titre-etape-3">Quand le rencontrer ?</h2>
+                    <span data-zone="pour-client-3"></span>
+                </div>
+                <div class="nr-tuiles" role="radiogroup" aria-label="Créneau" data-zone="creneaux"></div>
+
+                <form id="form-planification" novalidate>
+                    @* Date et heure libres : visibles seulement avec la tuile « Autre moment ». *@
+                    <div class="nr-autre" data-zone="autre-moment" hidden>
+                        <div class="nr-champ">
+                            <label for="p-date">Date</label>
+                            <input type="date" id="p-date" name="date" required />
+                            <span class="nr-erreur" data-message="date"></span>
+                        </div>
+                        <div class="nr-champ">
+                            <label for="p-heure">Heure de début</label>
+                            <input type="time" id="p-heure" name="heure" step="900" required />
+                        </div>
+                        <div class="nr-champ">
+                            <span class="nr-champ-titre">Heure de fin</span>
+                            <output class="nr-fin" id="p-fin" for="p-heure p-duree" aria-live="polite">—</output>
+                        </div>
+                    </div>
+
+                    <div class="nr-verification" data-zone="verification" aria-live="polite"></div>
+
+                    <details class="nr-details">
+                        <summary>Durée, lieu, conseiller et objectif</summary>
+                        <div class="nr-details-grille">
+                            <div class="nr-champ">
+                                <label for="p-duree">Durée</label>
+                                <select id="p-duree" name="duree">
+                                    @foreach (var d in ReferentielsRendezVous.Durees)
+                                    {
+                                        <option value="@d">@(d < 60 ? $"{d} min" : d % 60 == 0 ? $"{d / 60} h" : $"{d / 60} h {d % 60}")</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="nr-champ">
+                                <label for="p-conseiller">Conseiller responsable</label>
+                                <select id="p-conseiller" name="conseiller">
+                                    @foreach (var c in Model.Prospects.Conseillers)
+                                    {
+                                        <option value="@c.Id">@(c.Id == Model.Prospects.ConseillerConnecteId ? c.Nom + " (moi)" : c.Nom + " (fictif)")</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="nr-champ nr-champ-large">
+                                <span class="nr-champ-titre" id="p-mode-titre">Moyen de rencontre</span>
+                                <div class="nr-segment" role="radiogroup" aria-labelledby="p-mode-titre">
+                                    @foreach (var (cle, libelle) in ReferentielsRendezVous.Modes)
+                                    {
+                                        <input type="radio" class="btn-check" name="mode" id="p-mode-@cle" value="@cle" />
+                                        <label for="p-mode-@cle">@libelle</label>
+                                    }
+                                </div>
+                            </div>
+                            <div class="nr-champ nr-champ-large">
+                                <label for="p-lieu">Lieu</label>
+                                <input id="p-lieu" name="lieu" maxlength="120" />
+                            </div>
+                            <div class="nr-champ nr-champ-large">
+                                <label for="p-objectif">Objectif du rendez-vous</label>
+                                <input id="p-objectif" name="objectif" maxlength="200" placeholder="Ex. : comparer le coût total avec un CR-V" />
+                            </div>
+                            <div class="nr-champ nr-champ-large">
+                                <label for="p-commentaire">Commentaire (facultatif)</label>
+                                <textarea id="p-commentaire" name="commentaire" rows="2" maxlength="500"></textarea>
+                            </div>
+                        </div>
+                    </details>
+                </form>
+            </div>
+        </section>
+
+        @* ---------- Étape 4 : véhicule ---------- *@
+        <section class="nr-etape" data-etape="4" aria-labelledby="titre-etape-4" hidden>
+            <div class="nr-verre nr-carte">
+                <div class="nr-question">
+                    <h2 id="titre-etape-4">Quel véhicule présenter ?</h2>
+                    <span data-zone="pour-client-4"></span>
+                </div>
+                <p class="nr-rappel" data-zone="rappel-vehicule"></p>
+                <div class="nr-recherche nr-recherche-vehicule">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="n-recherche-vehicule" placeholder="Marque, modèle, année ou n° d'inventaire" aria-label="Rechercher un véhicule" autocomplete="off" />
+                </div>
+                <div class="nr-tuiles" role="radiogroup" aria-label="Véhicule" data-zone="vehicules"></div>
+                <nav class="nr-pagination" data-zone="pagination-vehicules" aria-label="Pages de véhicules" hidden></nav>
+                <p class="nr-note">Inventaire de démonstration (le même que pour les soumissions) : aucun véhicule n'est réellement réservé.</p>
+            </div>
+        </section>
+
+        <div class="nr-boutons">
+            <button type="button" class="nr-btn nr-btn-verre" data-precedent>Précédent</button>
+            <button type="button" class="nr-btn nr-btn-sapin" data-suivant disabled>Suivant<i class="bi bi-arrow-right"></i></button>
+            <button type="button" class="nr-btn nr-btn-sapin" data-creer disabled hidden>@(replanification ? "Replanifier" : "Créer le rendez-vous")</button>
+            <span class="nr-aide" data-aide aria-live="polite"></span>
+        </div>
+    </div>
+
+    @* ---------- Écran final ---------- *@
+    <section class="nr-fin-carte" data-fin hidden aria-labelledby="titre-fin" tabindex="-1">
+        <span class="nr-fin-icone" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+        <h2 class="nr-fin-titre" id="titre-fin">@(replanification ? "Rendez-vous replanifié" : "Rendez-vous créé")</h2>
+        <dl class="nr-fin-recap" data-zone="recap"></dl>
+        <div class="nr-fin-boutons">
+            <a class="nr-btn nr-btn-blanc" asp-action="Index">Retour : Agenda</a>
+            <a class="nr-btn nr-btn-translucide" href="#" data-ouvrir>Ouvrir le rendez-vous</a>
+            <a class="nr-btn nr-btn-translucide" asp-action="Nouveau">Recommencer</a>
+        </div>
+    </section>
+</div>
+
+<partial name="_DonneesModules" model="Model" />
+
+@section Scripts {
+    <script src="~/js/prospects-store.js" asp-append-version="true"></script>
+    <script src="~/js/soumissions-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-store.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-composants.js" asp-append-version="true"></script>
+    <script src="~/js/rendezvous-nouveau.js" asp-append-version="true"></script>
+}

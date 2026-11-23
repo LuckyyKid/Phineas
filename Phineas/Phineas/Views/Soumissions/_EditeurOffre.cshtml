@@ -1,0 +1,171 @@
+@using Phineas.Models.ViewModels.Conseiller
+@model SoumissionsPageViewModel
+@{
+    var p = Model.Soumissions.Parametres;
+    var avecChoixVehicule = ViewData["ChoixVehicule"] is true;
+}
+<form id="form-offre" class="so-editeur" novalidate>
+    <div class="alert alert-danger small d-none" role="alert" data-resume-erreurs></div>
+
+    <fieldset class="pr-section">
+        <legend><span class="pr-section-num">1</span>Véhicule et prix</legend>
+        @if (avecChoixVehicule)
+        {
+            <div class="mb-3">
+                <label class="form-label" for="e-vehicule">Véhicule proposé</label>
+                <select class="form-select" id="e-vehicule" name="vehiculeId" data-choix-vehicule></select>
+                <div class="form-text">Changer de véhicule reprend son prix d'inventaire actuel.</div>
+            </div>
+        }
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="form-label" for="e-prix">Prix annoncé du véhicule <span class="pr-requis">*</span></label>
+                <div class="input-group has-validation">
+                    <input class="form-control" id="e-prix" name="prixAnnonce" type="number" min="1" step="1" inputmode="decimal" required />
+                    <span class="input-group-text">$</span>
+                    <div class="invalid-feedback" data-erreur="prixAnnonce"></div>
+                </div>
+                <button type="button" class="btn btn-link btn-sm p-0 mt-1" data-prix-inventaire hidden></button>
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label" for="e-remise">Remise</label>
+                <div class="input-group has-validation">
+                    <span class="input-group-text">−</span>
+                    <input class="form-control" id="e-remise" name="remise" type="number" min="0" step="1" inputmode="decimal" />
+                    <span class="input-group-text">$</span>
+                    <div class="invalid-feedback" data-erreur="remise"></div>
+                </div>
+            </div>
+            <div class="col-12" data-si-remise hidden>
+                <label class="form-label" for="e-motif">Motif de la remise <span class="pr-requis">*</span></label>
+                <input class="form-control" id="e-motif" name="motifRemise" maxlength="120" placeholder="Ex. : ajustement négocié" />
+                <div class="invalid-feedback" data-erreur="motifRemise"></div>
+            </div>
+            <div class="col-12 form-text mt-1">
+                <i class="bi bi-info-circle me-1"></i>Le prix annoncé inclut tous les frais du commerçant (transport, préparation, administration). Seules la TPS et la TVQ s'y ajoutent ; les produits ci-dessous ne s'ajoutent que s'ils sont choisis par le client.
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="pr-section">
+        <legend><span class="pr-section-num">2</span>Options et accessoires facultatifs</legend>
+        <div class="so-options">
+            @foreach (var o in Model.Soumissions.Options)
+            {
+                <input type="checkbox" class="btn-check" name="options" id="e-opt-@o.Code" value="@o.Code" />
+                <label class="so-option" for="e-opt-@o.Code"><span>@o.Libelle</span><strong>@o.Prix.ToString("C0", FormatVente.Culture)</strong></label>
+            }
+        </div>
+        <div class="form-text">Prix des produits indiqués à titre d'exemple.</div>
+    </fieldset>
+
+    <fieldset class="pr-section">
+        <legend><span class="pr-section-num">3</span>Frais et taxes</legend>
+        <ul class="so-frais">
+            <li><i class="bi bi-check2"></i><span>Transport et préparation</span><em>Inclus dans le prix annoncé</em></li>
+            <li><i class="bi bi-check2"></i><span>Frais d'administration du commerçant</span><em>Inclus dans le prix annoncé</em></li>
+            <li><i class="bi bi-question-circle"></i><span>Droits et frais gouvernementaux (immatriculation, etc.)</span><em>À confirmer, non calculés</em></li>
+        </ul>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="e-taxes" name="inclureTaxes" />
+            <label class="form-check-label" for="e-taxes">Inclure une estimation de la TPS et de la TVQ</label>
+        </div>
+        <div class="form-text">@p.AvertissementTaxes</div>
+    </fieldset>
+
+    <fieldset class="pr-section">
+        <legend><span class="pr-section-num">4</span>Reprise</legend>
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" role="switch" id="e-reprise" name="avecReprise" />
+            <label class="form-check-label" for="e-reprise">Le client propose un véhicule en reprise</label>
+        </div>
+        <div class="row g-3" data-si-reprise hidden>
+            <div class="col-12">
+                <label class="form-label" for="e-reprise-vehicule">Véhicule repris <span class="pr-requis">*</span></label>
+                <input class="form-control" id="e-reprise-vehicule" name="repriseVehicule" maxlength="120" placeholder="Marque, modèle, année, kilométrage" />
+                <div class="invalid-feedback" data-erreur="repriseVehicule"></div>
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label" for="e-reprise-valeur">Valeur de reprise estimée</label>
+                <div class="input-group has-validation">
+                    <input class="form-control" id="e-reprise-valeur" name="repriseValeur" type="number" min="0" step="1" inputmode="decimal" placeholder="Inconnue" />
+                    <span class="input-group-text">$</span>
+                    <div class="invalid-feedback" data-erreur="repriseValeur"></div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label" for="e-reprise-solde">Solde de prêt existant</label>
+                <div class="input-group has-validation">
+                    <input class="form-control" id="e-reprise-solde" name="repriseSolde" type="number" min="0" step="1" inputmode="decimal" placeholder="Inconnu" />
+                    <span class="input-group-text">$</span>
+                    <div class="invalid-feedback" data-erreur="repriseSolde"></div>
+                </div>
+            </div>
+            <div class="col-12 form-text mt-1">Laissez vide ce qui n'est pas connu : le montant net ne sera pas déduit tant qu'il reste à confirmer. Aucun avantage fiscal n'est supposé.</div>
+        </div>
+    </fieldset>
+
+    <fieldset class="pr-section">
+        <legend><span class="pr-section-num">5</span>Mode d'achat et paiements</legend>
+        <div class="pr-segment mb-3" role="radiogroup" aria-label="Mode d'achat">
+            <input type="radio" class="btn-check" name="modeAchat" id="e-mode-comptant" value="comptant" />
+            <label class="btn btn-sm" for="e-mode-comptant">Comptant</label>
+            <input type="radio" class="btn-check" name="modeAchat" id="e-mode-financement" value="financement" />
+            <label class="btn btn-sm" for="e-mode-financement">Financement</label>
+        </div>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="form-label" for="e-acompte">Montant déjà versé (acompte)</label>
+                <div class="input-group has-validation">
+                    <input class="form-control" id="e-acompte" name="acompteVerse" type="number" min="0" step="1" inputmode="decimal" />
+                    <span class="input-group-text">$</span>
+                    <div class="invalid-feedback" data-erreur="acompteVerse"></div>
+                </div>
+            </div>
+            <div class="col-sm-6" data-si-financement>
+                <label class="form-label" for="e-mise">Mise de fonds</label>
+                <div class="input-group has-validation">
+                    <input class="form-control" id="e-mise" name="miseDeFonds" type="number" min="0" step="1" inputmode="decimal" />
+                    <span class="input-group-text">$</span>
+                    <div class="invalid-feedback" data-erreur="miseDeFonds"></div>
+                </div>
+            </div>
+            <div class="col-sm-6" data-si-financement>
+                <label class="form-label" for="e-duree">Durée envisagée</label>
+                <select class="form-select" id="e-duree" name="dureeMois">
+                    @foreach (var duree in p.Durees)
+                    {
+                        <option value="@duree">@duree mois</option>
+                    }
+                </select>
+                <div class="invalid-feedback" data-erreur="dureeMois"></div>
+            </div>
+            <div class="col-sm-6" data-si-financement>
+                <label class="form-label" for="e-taux">Taux annuel hypothétique</label>
+                <div class="input-group has-validation">
+                    <input class="form-control" id="e-taux" name="tauxAnnuel" type="number" min="0" max="30" step="0.01" inputmode="decimal" placeholder="À saisir" />
+                    <span class="input-group-text">%</span>
+                    <div class="invalid-feedback" data-erreur="tauxAnnuel"></div>
+                </div>
+            </div>
+            <div class="col-12 form-text mt-1" data-si-financement>
+                <i class="bi bi-exclamation-triangle me-1"></i>Taux saisi par le conseiller pour la simulation. Ce n'est ni un taux offert ni une approbation de crédit.
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="pr-section mb-0">
+        <legend><span class="pr-section-num">6</span>Validité et commentaires</legend>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="form-label" for="e-validite">Proposition valide jusqu'au <span class="pr-requis">*</span></label>
+                <input class="form-control" id="e-validite" name="dateValidite" type="date" required />
+                <div class="invalid-feedback" data-erreur="dateValidite"></div>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="e-commentaires">Commentaires commerciaux</label>
+                <textarea class="form-control" id="e-commentaires" name="commentaires" rows="2" maxlength="500" placeholder="Visibles par le client sur la proposition."></textarea>
+            </div>
+        </div>
+    </fieldset>
+</form>
