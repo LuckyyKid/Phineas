@@ -569,7 +569,8 @@
     if (b.dataset.allerOnglet) return onglet(b.dataset.allerOnglet);
     switch (b.dataset.action) {
       case "modifier":
-        window.ProspectsTiroir.ouvrirModification(contactId);
+        // Le premier intérêt modifié est celui de l'opportunité choisie dans l'onglet Qualification.
+        window.ProspectsTiroir.ouvrirModification(contactId, null, oppQualif);
         break;
       case "note":
         var bouton = document.getElementById("onglet-historique");

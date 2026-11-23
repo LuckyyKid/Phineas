@@ -1,3 +1,8 @@
+using System.Data;
+using System.Data.Common;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Phineas.Data;
@@ -16,6 +21,14 @@ public interface IServiceProspects
     // Valide la saisie du tiroir « Nouveau prospect » et enregistre le prospect et son opportunité.
     // Retourne l'identifiant du prospect créé, ou les erreurs (Champ = name du champ du formulaire).
     Task<ResultatService<int>> CreerAsync(string utilisateurId, NouveauProspectSaisie saisie);
+
+    // Vérifie qu'un prospect enregistré (id « pe-12 ») est consultable par ce conseiller.
+    // NonTrouve : id invalide, inexistant ou hors de son dossier (même réponse, rien n'est révélé).
+    // Échec : la base n'a pas pu être lue.
+    Task<ResultatService> ConsulterAsync(string utilisateurId, string? prospectId);
+
+    // Modifie le contact d'un prospect enregistré et, si OpportuniteId est fourni, le premier intérêt de cette opportunité.
+    Task<ResultatService> ModifierAsync(string utilisateurId, ModificationProspectSaisie saisie);
 }
 
 // Prospects réels du conseiller (table Prospects et OpportunitesVente), ajoutés aux données fictives.
@@ -102,7 +115,8 @@ public class ServiceProspects : IServiceProspects
             p.SourceDetail,
             ServiceProspectsDemo.IdConseillerConnecte,
             HeureLocale(p.DateCreation),
-            Enregistre: true
+            Enregistre: true,
+            Version: Empreinte(p)
         );
 
     private static Opportunite VersOpportunite(OpportuniteVente o)
@@ -160,25 +174,23 @@ public class ServiceProspects : IServiceProspects
     public async Task<ResultatService<int>> CreerAsync(string utilisateurId, NouveauProspectSaisie saisie)
     {
         // La concession vient du compte en base, jamais du formulaire.
-        var conseiller = await _db.Users.Include(u => u.Dealership).FirstOrDefaultAsync(u => u.Id == utilisateurId);
-        bool compteUtilisable = conseiller is not null
-            && conseiller.IsActive
-            && conseiller.Dealership is not null
-            && conseiller.Dealership.IsActive;
-        if (!compteUtilisable)
-            return ResultatService<int>.Echec(
-                "Votre compte n'est rattaché à aucune concession active : le prospect ne peut pas être enregistré."
-            );
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
 
         var valeurs = Nettoyer(saisie);
-        var resultat = Valider(valeurs, utilisateurId);
+        var resultat = new ResultatService<int>();
+        ValiderContact(valeurs, resultat);
+        ValiderInteret(valeurs, resultat);
+        ValiderAttribution(valeurs, utilisateurId, resultat);
+        ValiderChampsDeCreation(valeurs, resultat);
         if (!resultat.Succes)
             return resultat;
 
-        int concessionId = conseiller!.DealershipId!.Value;
-        var doublon = await ChercherDoublonAsync(concessionId, valeurs);
-        if (doublon is not null)
-            return doublon;
+        int concessionId = conseiller.DealershipId!.Value;
+        await ChercherDoublonAsync(concessionId, valeurs, null, resultat);
+        if (!resultat.Succes)
+            return resultat;
 
         var prospect = CreerEntites(valeurs, utilisateurId, concessionId);
         _db.Prospects.Add(prospect);
@@ -196,6 +208,174 @@ public class ServiceProspects : IServiceProspects
         }
 
         return ResultatService<int>.Ok(prospect.Id);
+    }
+
+    private const string MessageCompteInutilisable =
+        "Votre compte n'est rattaché à aucune concession active : le prospect ne peut pas être enregistré.";
+
+    // Le conseiller, s'il est actif et rattaché à une concession active ; sinon null.
+    private async Task<ApplicationUser?> CompteUtilisableAsync(string utilisateurId)
+    {
+        var conseiller = await _db.Users.Include(u => u.Dealership).FirstOrDefaultAsync(u => u.Id == utilisateurId);
+        bool compteUtilisable = conseiller is not null
+            && conseiller.IsActive
+            && conseiller.Dealership is not null
+            && conseiller.Dealership.IsActive;
+        return compteUtilisable ? conseiller : null;
+    }
+
+    // ---------- Consultation et modification ----------
+
+    public async Task<ResultatService> ConsulterAsync(string utilisateurId, string? prospectId)
+    {
+        int? id = LireId(prospectId, PrefixeProspect);
+        if (id is null)
+            return ResultatService.NonTrouve();
+
+        try
+        {
+            var prospect = await TrouverDansSonDossierAsync(utilisateurId, id.Value, suivre: false);
+            return prospect is null ? ResultatService.NonTrouve() : ResultatService.Ok();
+        }
+        catch (DbException)
+        {
+            return ResultatService.Echec("Le dossier n'a pas pu être lu. Réessayez dans un instant.");
+        }
+    }
+
+    public async Task<ResultatService> ModifierAsync(string utilisateurId, ModificationProspectSaisie saisie)
+    {
+        // 1. Le prospect et l'opportunité visés doivent être dans le dossier du conseiller.
+        int? id = LireId(saisie.ProspectId, PrefixeProspect);
+        if (id is null)
+            return ResultatService.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService.Echec(MessageCompteInutilisable);
+
+        // Transaction + verrou de la ligne du prospect (SELECT … FOR UPDATE) : deux enregistrements simultanés
+        // du même prospect passent l'un après l'autre. Le second relit donc les valeurs du premier, et son
+        // empreinte ne correspond plus : il est refusé. Sans ce verrou, les deux pourraient passer la vérification.
+        // Si la méthode se termine sans CommitAsync, la transaction est annulée (rien n'est écrit).
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Prospects WHERE Id = {id.Value} FOR UPDATE");
+
+        var prospect = await TrouverDansSonDossierAsync(utilisateurId, id.Value, suivre: true);
+        if (prospect is null)
+            return ResultatService.NonTrouve();
+
+        OpportuniteVente? opportunite = null;
+        if (saisie.OpportuniteId is not null)
+        {
+            int? opportuniteId = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+            opportunite = prospect.Opportunites.FirstOrDefault(o => o.Id == opportuniteId);
+            if (opportunite is null)
+                return ResultatService.NonTrouve();
+        }
+
+        // 2. Refus si le dossier a changé depuis l'ouverture du formulaire (autre onglet, autre poste).
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService.Echec(MessageConflit);
+
+        // 3. Mêmes règles qu'à la création, et doublons cherchés parmi les autres prospects seulement.
+        var valeurs = Nettoyer(saisie);
+        var resultat = new ResultatService();
+        ValiderContact(valeurs, resultat);
+        ValiderAttribution(valeurs, utilisateurId, resultat);
+        if (opportunite is not null)
+            ValiderInteret(valeurs, resultat);
+        if (!resultat.Succes)
+            return resultat;
+
+        await ChercherDoublonAsync(prospect.DealershipId, valeurs, prospect.Id, resultat);
+        if (!resultat.Succes)
+            return resultat;
+
+        // 4. Seuls ces champs changent : id, concession, conseiller, dates, statut et historique restent intacts.
+        prospect.Prenom = valeurs.Prenom!;
+        prospect.Nom = valeurs.Nom!;
+        prospect.Courriel = valeurs.Courriel;
+        prospect.Telephone = valeurs.Telephone;
+        prospect.TelephoneChiffres = TelephoneEnChiffres(valeurs.Telephone);
+        prospect.ContactPrefere = valeurs.ContactPrefere!;
+        prospect.Source = valeurs.Source!;
+        prospect.SourceDetail = valeurs.SourceDetail;
+
+        if (opportunite is not null)
+        {
+            // Un titre égal à celui que la règle donne pour les valeurs actuelles est automatique : il suit le
+            // nouveau premier intérêt. Tout autre titre a été choisi par quelqu'un : il est conservé.
+            bool titreAutomatique = opportunite.Titre == TitreAutomatique(opportunite.Modele, opportunite.Categorie);
+
+            opportunite.Categorie = valeurs.Categorie;
+            opportunite.Modele = valeurs.Modele;
+            opportunite.BudgetTotal = valeurs.Budget;
+            opportunite.Horizon = valeurs.Horizon;
+
+            if (titreAutomatique)
+                opportunite.Titre = TitreAutomatique(valeurs.Modele, valeurs.Categorie);
+        }
+
+        // Un seul SaveChanges dans la transaction : le contact et l'opportunité sont enregistrés ensemble, ou pas du tout.
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService.Echec("L'enregistrement a échoué : les modifications n'ont pas été enregistrées. Réessayez dans un instant.");
+        }
+        return ResultatService.Ok();
+    }
+
+    private const string MessageConflit =
+        "Ce prospect a été modifié entre-temps : vos changements n'ont pas été enregistrés. "
+        + "Fermez ce formulaire et cliquez sur « Modifier » pour repartir des valeurs actuelles, puis refaites vos changements.";
+
+    // Titre donné automatiquement à une opportunité : le modèle, sinon le type de véhicule, sinon « Premier intérêt ».
+    // Même règle que prospects-store.js (ajouterProspect).
+    public static string TitreAutomatique(string? modele, string? categorie) =>
+        modele ?? Libelle(ReferentielsVente.Categories, categorie) ?? "Premier intérêt";
+
+    // Même règle que la liste (ObtenirAsync) : prospect du conseiller, dans sa concession actuelle.
+    private async Task<Prospect?> TrouverDansSonDossierAsync(string utilisateurId, int id, bool suivre)
+    {
+        var requete = _db.Prospects.Include(p => p.Opportunites).Where(p =>
+            p.Id == id && p.ConseillerId == utilisateurId && p.DealershipId == p.Conseiller!.DealershipId);
+        if (!suivre)
+            requete = requete.AsNoTracking();
+        return await requete.FirstOrDefaultAsync();
+    }
+
+    // « pe-12 » avec le préfixe « pe- » donne 12 ; tout autre texte donne null.
+    public static int? LireId(string? id, string prefixe)
+    {
+        if (id is null || !id.StartsWith(prefixe, StringComparison.Ordinal))
+            return null;
+        bool lisible = int.TryParse(id.Substring(prefixe.Length), NumberStyles.None, CultureInfo.InvariantCulture, out int valeur);
+        if (!lisible || valeur <= 0)
+            return null;
+        return valeur;
+    }
+
+    // Empreinte courte des valeurs enregistrées d'un prospect et de ses opportunités.
+    // Elle change dès qu'une de ces valeurs change : c'est ce qui permet de détecter une modification concurrente.
+    public static string Empreinte(Prospect p)
+    {
+        var texte = new StringBuilder();
+        texte.AppendJoin('|', p.Prenom, p.Nom, p.Courriel, p.Telephone, p.ContactPrefere, p.Source, p.SourceDetail);
+        foreach (var o in p.Opportunites.OrderBy(o => o.Id))
+        {
+            texte.Append('#');
+            texte.AppendJoin('|', o.Id, o.Titre, o.Etape, o.Categorie, o.Modele,
+                o.BudgetTotal?.ToString(CultureInfo.InvariantCulture), o.Horizon, o.ProchaineAction,
+                o.DateProchaineAction?.ToString("O", CultureInfo.InvariantCulture));
+        }
+        byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte.ToString()));
+        return Convert.ToHexString(hachage, 0, 8);
     }
 
     // Copie de la saisie avec les espaces retirés et les champs vides remplacés par null.
@@ -224,12 +404,13 @@ public class ServiceProspects : IServiceProspects
         string.IsNullOrWhiteSpace(valeur) ? null : valeur.Trim();
 
     // Mêmes règles que le tiroir (prospects-tiroir.js), vérifiées ici sans dépendre du JavaScript.
-    private static ResultatService<int> Valider(NouveauProspectSaisie s, string utilisateurId)
+    // Chaque méthode ajoute ses erreurs au résultat ; Champ = attribut name du champ du formulaire.
+
+    // Informations du contact et provenance (création et modification).
+    private static void ValiderContact(NouveauProspectSaisie s, ResultatService resultat)
     {
-        var resultat = new ResultatService<int>();
         void Erreur(string champ, string message) => resultat.Erreurs.Add(new ErreurChamp(champ, message));
 
-        // Contact
         if (s.Prenom is null)
             Erreur("prenom", "Indiquez le prénom.");
         else if (s.Prenom.Length > LongueurNom)
@@ -261,13 +442,17 @@ public class ServiceProspects : IServiceProspects
         else if ((s.ContactPrefere == "telephone" || s.ContactPrefere == "texto") && s.Telephone is null)
             Erreur("telephone", "Requis : le téléphone est le moyen de contact préféré.");
 
-        // Provenance
         if (!EstDansListe(ReferentielsVente.Sources, s.Source))
             Erreur("source", "Choisissez la provenance.");
         if (s.SourceDetail is not null && s.SourceDetail.Length > LongueurPrecision)
             Erreur("sourceDetail", $"La précision ne doit pas dépasser {LongueurPrecision} caractères.");
+    }
 
-        // Premier intérêt (tous facultatifs)
+    // Premier intérêt d'une opportunité (tous les champs sont facultatifs).
+    private static void ValiderInteret(NouveauProspectSaisie s, ResultatService resultat)
+    {
+        void Erreur(string champ, string message) => resultat.Erreurs.Add(new ErreurChamp(champ, message));
+
         if (s.Categorie is not null && !EstDansListe(ReferentielsVente.Categories, s.Categorie))
             Erreur("categorie", "Type de véhicule inconnu.");
         if (s.Modele is not null && s.Modele.Length > LongueurModele)
@@ -276,22 +461,30 @@ public class ServiceProspects : IServiceProspects
             Erreur("budget", "Montant entre 0 et 500 000 $.");
         if (s.Horizon is not null && !EstDansListe(ReferentielsVente.Horizons, s.Horizon))
             Erreur("horizon", "Horizon d'achat inconnu.");
-        if (s.Commentaire is not null && s.Commentaire.Length > LongueurCommentaire)
-            Erreur("commentaire", $"Le commentaire ne doit pas dépasser {LongueurCommentaire} caractères.");
+    }
 
-        // Attribution : le seul conseiller réel proposé par le formulaire est le conseiller connecté.
+    // Le seul conseiller réel proposé par le formulaire est le conseiller connecté (pas de transfert pour l'instant).
+    private static void ValiderAttribution(NouveauProspectSaisie s, string utilisateurId, ResultatService resultat)
+    {
         bool conseillerAutorise = s.ConseillerId == ServiceProspectsDemo.IdConseillerConnecte || s.ConseillerId == utilisateurId;
         if (!conseillerAutorise)
-            Erreur("conseillerId", "Un prospect enregistré ne peut être attribué qu'à vous : les conseillers fictifs de la démonstration ne peuvent pas le recevoir.");
+            resultat.Erreurs.Add(new ErreurChamp("conseillerId",
+                "Un prospect enregistré ne peut être attribué qu'à vous : les conseillers fictifs de la démonstration ne peuvent pas le recevoir."));
+    }
 
+    // Champs présents seulement à la création : commentaire initial, statut initial et prochain suivi.
+    private static void ValiderChampsDeCreation(NouveauProspectSaisie s, ResultatService resultat)
+    {
+        void Erreur(string champ, string message) => resultat.Erreurs.Add(new ErreurChamp(champ, message));
+
+        if (s.Commentaire is not null && s.Commentaire.Length > LongueurCommentaire)
+            Erreur("commentaire", $"Le commentaire ne doit pas dépasser {LongueurCommentaire} caractères.");
         if (LireEtape(s.Etape) is null)
             Erreur("etape", "Choisissez le statut initial.");
         if (s.ProchaineAction is not null && s.ProchaineAction.Length > LongueurProchaineAction)
             Erreur("prochaineAction", $"La prochaine action ne doit pas dépasser {LongueurProchaineAction} caractères.");
         if (s.DateSuivi is not null && s.DateSuivi.Value.Date < DateTime.Today)
             Erreur("dateSuivi", "La date ne peut pas être passée.");
-
-        return resultat;
     }
 
     // 514-555-0100, (514) 555-0100 ou 1 514 555 0100 donnent « 5145550100 » ; sinon null.
@@ -322,15 +515,17 @@ public class ServiceProspects : IServiceProspects
         liste.FirstOrDefault(x => x.Cle == cle).Libelle;
 
     // Doublon = même courriel ou même téléphone dans la concession. Le nom seul ne suffit jamais :
-    // deux personnes peuvent s'appeler pareil. On refuse la création, sans rien fusionner.
-    private async Task<ResultatService<int>?> ChercherDoublonAsync(int concessionId, NouveauProspectSaisie s)
+    // deux personnes peuvent s'appeler pareil. On refuse l'enregistrement, sans rien fusionner.
+    // exclureId : le prospect en cours de modification, qui ne peut pas être son propre doublon.
+    private async Task ChercherDoublonAsync(int concessionId, NouveauProspectSaisie s, int? exclureId, ResultatService resultat)
     {
-        var resultat = new ResultatService<int>();
+        var autres = _db.Prospects.AsNoTracking().Where(p => p.DealershipId == concessionId);
+        if (exclureId is not null)
+            autres = autres.Where(p => p.Id != exclureId.Value);
 
         if (s.Courriel is not null)
         {
-            var existant = await _db.Prospects.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.DealershipId == concessionId && p.Courriel == s.Courriel);
+            var existant = await autres.FirstOrDefaultAsync(p => p.Courriel == s.Courriel);
             if (existant is not null)
                 resultat.Erreurs.Add(new ErreurChamp("courriel",
                     $"Ce courriel appartient déjà à {existant.Prenom} {existant.Nom}, un prospect de votre concession."));
@@ -339,14 +534,11 @@ public class ServiceProspects : IServiceProspects
         string? chiffres = TelephoneEnChiffres(s.Telephone);
         if (chiffres is not null)
         {
-            var existant = await _db.Prospects.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.DealershipId == concessionId && p.TelephoneChiffres == chiffres);
+            var existant = await autres.FirstOrDefaultAsync(p => p.TelephoneChiffres == chiffres);
             if (existant is not null)
                 resultat.Erreurs.Add(new ErreurChamp("telephone",
                     $"Ce téléphone appartient déjà à {existant.Prenom} {existant.Nom}, un prospect de votre concession."));
         }
-
-        return resultat.Succes ? null : resultat;
     }
 
     // Le prospect et son unique opportunité, enregistrés ensemble par le même SaveChanges.
@@ -354,7 +546,7 @@ public class ServiceProspects : IServiceProspects
     {
         var maintenant = DateTime.UtcNow;
 
-        string titre = s.Modele ?? Libelle(ReferentielsVente.Categories, s.Categorie) ?? "Premier intérêt";
+        string titre = TitreAutomatique(s.Modele, s.Categorie);
 
         // Comme le JavaScript : une date de suivi sans action devient « Premier contact ».
         string? prochaineAction = s.ProchaineAction;

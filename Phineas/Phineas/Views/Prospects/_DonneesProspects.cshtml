@@ -15,12 +15,16 @@
         fictives = Model.DonneesFictives,
         urlFiche = Url.Action("Fiche", "Prospects", new { id = "__id__" }),
         urlListe = Url.Action("Index", "Prospects"),
-        // Résultat de ProspectsController.Creer, lu par prospects-tiroir.js (message ou tiroir rouvert avec les erreurs).
+        // Résultat de ProspectsController.Creer ou Modifier, lu par prospects-tiroir.js (message ou tiroir rouvert avec les erreurs).
+        // prospectId rempli : la saisie refusée vient du mode « Modifier » de ce prospect.
         enregistrement = new
         {
             confirmation = Model.Confirmation,
             saisie = Model.SaisieRefusee,
             erreurs = Model.ErreursCreation,
+            prospectId = Model.ModificationProspectId,
+            opportuniteId = Model.ModificationOpportuniteId,
+            version = Model.ModificationVersion,
         },
     };
 }

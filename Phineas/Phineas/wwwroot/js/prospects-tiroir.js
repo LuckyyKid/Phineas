@@ -1,6 +1,8 @@
 // Tiroir « Nouveau prospect » / « Modifier le prospect ».
 // Création : validation ici, puis envoi réel du formulaire à ProspectsController.Creer (enregistrement en base).
-// Modification : validation ici, puis écriture locale dans le store (pas encore de backend).
+// Modification d'un prospect enregistré : validation ici, puis envoi réel à ProspectsController.Modifier
+//   (contact, et premier intérêt de l'opportunité visée).
+// Modification d'un prospect fictif : validation ici, puis écriture locale dans le store (rien n'est enregistré).
 (function () {
   "use strict";
 
@@ -14,7 +16,12 @@
   var titre = el.querySelector("#tiroir-titre");
   var soumettre = el.querySelector('button[type="submit"]');
   var modeModification = null; // id du contact modifié, sinon création
+  var modificationEnregistree = false; // true : le contact modifié est enregistré en base
+  var interetVisible = false; // section « Premier intérêt » affichée (création, ou opportunité enregistrée)
   var apresEnregistrement = null;
+  var actionCreation = form.getAttribute("action");
+  var actionModification = form.dataset.actionModification;
+  var opportuniteCiblee = form.querySelector("[data-opportunite-ciblee]");
 
   function champ(nom) {
     return form.elements[nom];
@@ -24,13 +31,18 @@
     return c ? String(c.value || "").trim() : "";
   }
 
-  function definirMode(contactId) {
+  // enregistre : le contact modifié vient de la base ; avecInteret : une opportunité enregistrée est visée.
+  function definirMode(contactId, enregistre, avecInteret) {
     modeModification = contactId || null;
     var creation = !modeModification;
+    modificationEnregistree = !creation && !!enregistre;
+    interetVisible = creation || !!avecInteret;
     titre.textContent = creation ? titre.dataset.titreCreation : titre.dataset.titreModification;
     soumettre.textContent = creation ? soumettre.dataset.libelleCreation : soumettre.dataset.libelleModification;
     form.querySelectorAll("[data-creation-seulement]").forEach(function (x) { x.hidden = !creation; });
-    form.querySelector("[data-num-attribution]").textContent = creation ? "4" : "3";
+    form.querySelector("[data-premier-interet]").hidden = !interetVisible;
+    form.querySelector("[data-num-attribution]").textContent = interetVisible ? "4" : "3";
+    form.setAttribute("action", modificationEnregistree ? actionModification : actionCreation);
   }
 
   function reinitialiserFormulaire() {
@@ -45,17 +57,37 @@
 
   function ouvrirCreation(callback) {
     reinitialiserFormulaire();
-    definirMode(null);
+    definirMode(null, false, false);
+    opportuniteCiblee.hidden = true;
     apresEnregistrement = callback || null;
     tiroir.show();
   }
 
-  function ouvrirModification(contactId, callback) {
+  // opportuniteId : opportunité dont le premier intérêt sera modifié (sinon l'opportunité principale).
+  function ouvrirModification(contactId, callback, opportuniteId) {
     var c = P.contact(contactId);
     if (!c) return;
     reinitialiserFormulaire();
-    definirMode(contactId);
+
+    // Seule une opportunité enregistrée (id « oe-… ») d'un prospect enregistré a un premier intérêt modifiable.
+    var o = opportuniteId ? P.opportunite(opportuniteId) : P.principale(contactId);
+    var opportuniteEnregistree = !!(c.enregistre && o && o.prospectId === contactId && o.id.indexOf("oe-") === 0);
+    definirMode(contactId, c.enregistre, opportuniteEnregistree);
     apresEnregistrement = callback || null;
+
+    champ("prospectId").value = c.enregistre ? c.id : "";
+    champ("version").value = c.enregistre ? c.version || "" : "";
+    champ("opportuniteId").value = opportuniteEnregistree ? o.id : "";
+    opportuniteCiblee.hidden = !opportuniteEnregistree;
+    if (opportuniteEnregistree) {
+      var q = o.qualification || {};
+      opportuniteCiblee.textContent = "Opportunité modifiée : " + o.titre;
+      champ("categorie").value = q.categorie || "";
+      champ("modele").value = (q.modeles || []).join(", ");
+      champ("budget").value = q.budgetTotal == null ? "" : q.budgetTotal;
+      champ("horizon").value = q.horizon || "";
+    }
+
     champ("prenom").value = c.prenom;
     champ("nom").value = c.nom;
     champ("courriel").value = c.courriel || "";
@@ -107,11 +139,13 @@
 
     if (!valeur("source")) erreurs.push(invalider("source", "Choisissez la provenance."));
 
-    if (creation) {
+    if (interetVisible) {
       var budget = valeur("budget");
       if (budget !== "" && (isNaN(+budget) || +budget < 0 || +budget > 500000)) {
         erreurs.push(invalider("budget", "Montant entre 0 et 500 000 $."));
       }
+    }
+    if (creation) {
       var date = valeur("dateSuivi");
       if (date && date < P.aujourdhuiChamp()) erreurs.push(invalider("dateSuivi", "La date ne peut pas être passée."));
     }
@@ -143,7 +177,8 @@
       conseillerId: valeur("conseillerId"),
     };
 
-    if (modeModification) {
+    // Prospect fictif : la modification reste dans cet onglet, et le message le dit.
+    if (modeModification && !modificationEnregistree) {
       P.modifierContact(modeModification, commun);
       tiroir.hide();
       P.notifier("Prospect mis à jour (modification locale, non enregistrée).");
@@ -151,15 +186,24 @@
       return;
     }
 
-    // Création : le serveur valide à nouveau, enregistre, puis renvoie vers la liste (ou rouvre ce tiroir avec ses erreurs).
-    // form.submit() n'émet pas d'autre événement « submit » ; le bouton est désactivé contre le double envoi.
+    // Création ou prospect enregistré : le serveur valide à nouveau, enregistre, puis renvoie vers la liste ou la fiche
+    // (ou rouvre ce tiroir avec ses erreurs). form.submit() n'émet pas d'autre événement « submit » ;
+    // le bouton est désactivé contre le double envoi.
     soumettre.disabled = true;
     form.submit();
   });
 
-  // Création refusée par le serveur : on rouvre le tiroir avec la saisie envoyée et les messages reçus.
-  function afficherRefusServeur(saisie, erreurs) {
-    ouvrirCreation();
+  // Envoi refusé par le serveur : on rouvre le tiroir (création ou modification) avec la saisie envoyée et les messages reçus.
+  // version : empreinte envoyée avec la saisie refusée. On la remet telle quelle, et non celle des valeurs actuelles :
+  // après un conflit, cliquer de nouveau sur « Enregistrer » reste refusé. Pour repartir des valeurs actuelles,
+  // l'utilisateur ferme le tiroir et clique sur « Modifier » (ouvrirModification lit alors la nouvelle empreinte).
+  function afficherRefusServeur(saisie, erreurs, prospectId, opportuniteId, version) {
+    if (prospectId) {
+      ouvrirModification(prospectId, null, opportuniteId);
+      champ("version").value = version || "";
+    } else {
+      ouvrirCreation();
+    }
     Object.keys(saisie).forEach(function (nom) {
       var v = saisie[nom];
       if (v == null) return;
@@ -188,7 +232,9 @@
   }
 
   var retour = P.enregistrement;
-  if (retour.saisie && retour.erreurs && retour.erreurs.length) afficherRefusServeur(retour.saisie, retour.erreurs);
+  if (retour.saisie && retour.erreurs && retour.erreurs.length) {
+    afficherRefusServeur(retour.saisie, retour.erreurs, retour.prospectId, retour.opportuniteId, retour.version);
+  }
   if (retour.confirmation) P.notifier(retour.confirmation);
 
   // Correction en direct : le message disparaît dès que le champ est modifié.

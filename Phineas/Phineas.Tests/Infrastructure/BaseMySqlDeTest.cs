@@ -89,3 +89,29 @@ public sealed class PanneEnregistrement : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 }
+
+// Simule une base illisible, seulement pour les requêtes qui lisent la table Prospects
+// (la connexion et le chargement du compte continuent de fonctionner). Active quand EnPanne vaut true.
+public sealed class PanneLectureProspects : DbCommandInterceptor
+{
+    public bool EnPanne { get; set; }
+
+    public override ValueTask<InterceptionResult<System.Data.Common.DbDataReader>> ReaderExecutingAsync(
+        System.Data.Common.DbCommand command,
+        CommandEventData eventData,
+        InterceptionResult<System.Data.Common.DbDataReader> result,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (EnPanne && command.CommandText.Contains("`Prospects`"))
+            throw new ErreurBaseSimulee();
+        return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
+    }
+}
+
+// DbException est abstraite : cette sous-classe représente l'erreur renvoyée par MySQL.
+public sealed class ErreurBaseSimulee : System.Data.Common.DbException
+{
+    public ErreurBaseSimulee()
+        : base("Lecture impossible (panne simulée par le test).") { }
+}

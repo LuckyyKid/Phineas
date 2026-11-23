@@ -210,8 +210,10 @@ public class ProspectsControllerTests : IClassFixture<ApplicationDeTest>
         var hugo = await _app.ConnecterAsync(courrielConseiller);
         string pageHugo = await hugo.GetStringAsync("/Prospects");
         Assert.DoesNotContain(nom, pageHugo);
-        string ficheVolee = await hugo.GetStringAsync("/Prospects/Fiche?id=pe-" + (await TrouverAsync(courriel))!.Id);
-        Assert.DoesNotContain(courriel, ficheVolee);
+        // Depuis la fonctionnalité 02, la fiche d'un prospect hors de son dossier répond 404, sans ses données.
+        var ficheVolee = await hugo.GetAsync("/Prospects/Fiche?id=pe-" + (await TrouverAsync(courriel))!.Id);
+        Assert.Equal(HttpStatusCode.NotFound, ficheVolee.StatusCode);
+        Assert.DoesNotContain(courriel, await ficheVolee.Content.ReadAsStringAsync());
 
         // Le même courriel dans l'autre concession n'est pas un doublon : Hugo peut créer son propre prospect.
         var envoiHugo = await hugo.PostAsync("/Prospects/Creer", new FormUrlEncodedContent(Formulaire("Autre" + nom, courriel, "514-555-0144", await JetonDeLaPageAsync(hugo))));

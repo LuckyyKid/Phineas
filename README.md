@@ -24,10 +24,12 @@ Trajet d'un affichage : `/Conseiller` → `ConseillerController.Index` → `Serv
 
 Trajet d'une création : clic sur « Créer le prospect » → `prospects-tiroir.js` (vérification dans le navigateur) → `POST /Prospects/Creer` (`ProspectsController.Creer`, jeton antiforgery) → `ServiceProspects.CreerAsync` → base MySQL → retour à `/Prospects` avec un message (ou tiroir rouvert avec les erreurs).
 
+Trajet d'une modification (prospect enregistré seulement) : bouton « Modifier » de la fiche → `prospects-tiroir.js` (tiroir prérempli, opportunité visée et empreinte dans des champs cachés) → `POST /Prospects/Modifier` (`ProspectsController.Modifier`) → `ServiceProspects.ModifierAsync` → base MySQL → retour à la fiche avec un message. La modification d'un prospect fictif reste locale à l'onglet. La fiche d'un prospect enregistré est vérifiée par `ServiceProspects.ConsulterAsync` (404 s'il n'est pas dans le dossier du conseiller).
+
 ## Tests
 
 - `Phineas/Phineas.Tests/` : tests xUnit du service et de la chaîne MVC complète, sur une base MySQL jetable (`phineas_test_xxxxxxxx`, supprimée à la fin). Serveur : variable `PHINEAS_TEST_MYSQL`, sinon le conteneur MySQL local (port 3307).
-- `Phineas/Phineas.Tests/E2E/creation-prospect.e2e.js` : parcours Playwright dans un vrai navigateur (application lancée sur une base de test, voir l'en-tête du fichier).
+- `Phineas/Phineas.Tests/E2E/creation-prospect.e2e.js`, `modification-prospect.e2e.js` et `conflit-prospect.e2e.js` : parcours Playwright dans un vrai navigateur (application lancée sur une base de test, voir l'en-tête de chaque fichier).
 - Sur un poste où le Contrôle intelligent des applications de Windows bloque les DLL compilées, lancer les tests dans le conteneur `mcr.microsoft.com/dotnet/sdk:10.0` au lieu de désactiver la protection.
 
 ## Où trouver quoi : coque commune des espaces

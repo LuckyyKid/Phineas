@@ -13,9 +13,15 @@
     </div>
 
     @* Création : envoi réel à ProspectsController.Creer (jeton antiforgery ajouté par asp-action).
-       Modification : reste locale au navigateur (prospects-tiroir.js intercepte l'envoi). *@
-    <form class="offcanvas-body" id="form-prospect" method="post" asp-controller="Prospects" asp-action="Creer" novalidate>
+       Modification d'un prospect enregistré : prospects-tiroir.js envoie à l'adresse data-action-modification.
+       Modification d'un prospect fictif : reste locale au navigateur (prospects-tiroir.js intercepte l'envoi). *@
+    <form class="offcanvas-body" id="form-prospect" method="post" asp-controller="Prospects" asp-action="Creer"
+          data-action-modification="@Url.Action("Modifier", "Prospects")" novalidate>
         <div class="alert alert-danger small d-none" role="alert" data-resume-erreurs></div>
+        @* Remplis par prospects-tiroir.js en mode « Modifier » : prospect, opportunité visée et empreinte des valeurs lues. *@
+        <input type="hidden" name="prospectId" />
+        <input type="hidden" name="opportuniteId" />
+        <input type="hidden" name="version" />
 
         <fieldset class="pr-section">
             <legend><span class="pr-section-num">1</span>Informations de contact</legend>
@@ -78,9 +84,11 @@
             </div>
         </fieldset>
 
-        <fieldset class="pr-section" data-creation-seulement>
+        @* Affiché à la création, et en modification pour une opportunité enregistrée (voir data-premier-interet dans prospects-tiroir.js). *@
+        <fieldset class="pr-section" data-premier-interet>
             <legend><span class="pr-section-num">3</span>Premier intérêt</legend>
             <div class="row g-3">
+                <div class="col-12 form-text mt-0" data-opportunite-ciblee hidden></div>
                 <div class="col-sm-6">
                     <label class="form-label" for="p-categorie">Type de véhicule</label>
                     <select class="form-select" id="p-categorie" name="categorie">
@@ -113,7 +121,7 @@
                         }
                     </select>
                 </div>
-                <div class="col-12">
+                <div class="col-12" data-creation-seulement>
                     <label class="form-label" for="p-commentaire">Commentaire initial</label>
                     <textarea class="form-control" id="p-commentaire" name="commentaire" rows="2" maxlength="500" placeholder="Ce que la personne a exprimé lors du premier échange."></textarea>
                 </div>

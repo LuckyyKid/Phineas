@@ -16,8 +16,9 @@ public sealed class ApplicationDeTest : WebApplicationFactory<Program>, IAsyncLi
 {
     public BaseMySqlDeTest Base { get; } = new();
 
-    // Désactivée par défaut ; un test l'active pour simuler une panne de la base.
+    // Désactivées par défaut ; un test les active pour simuler une panne de la base.
     public PanneEnregistrement Panne { get; } = new() { EnPanne = false };
+    public PanneLectureProspects PanneLecture { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -26,7 +27,7 @@ public sealed class ApplicationDeTest : WebApplicationFactory<Program>, IAsyncLi
         {
             // Remplace la base de l'application par la base de test, et ajoute la panne simulée.
             services.ConfigureDbContext<ApplicationDbContext>(options =>
-                options.UseMySql(Base.ChaineConnexion, BaseMySqlDeTest.VersionMySql).AddInterceptors(Panne)
+                options.UseMySql(Base.ChaineConnexion, BaseMySqlDeTest.VersionMySql).AddInterceptors(Panne, PanneLecture)
             );
         });
     }

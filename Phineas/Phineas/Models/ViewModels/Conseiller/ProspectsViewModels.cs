@@ -16,7 +16,10 @@ public record ContactProspect(
     string ConseillerId,
     DateTime DateCreation,
     // true : enregistré en base (ServiceProspects) ; false : donnée fictive de démonstration.
-    bool Enregistre = false
+    bool Enregistre = false,
+    // Empreinte des valeurs enregistrées (prospect enregistré seulement) : renvoyée avec une modification
+    // pour détecter un changement fait entre-temps ailleurs (voir ServiceProspects.Empreinte).
+    string? Version = null
 );
 
 // Qualification propre à une opportunité : deux opportunités d'un même contact ne partagent rien.
@@ -101,6 +104,15 @@ public class ProspectsPageViewModel
     public NouveauProspectSaisie? SaisieRefusee { get; init; }
     // Champ = attribut name du champ du formulaire ("" = erreur générale).
     public IReadOnlyList<ErreurChamp> ErreursCreation { get; init; } = [];
+
+    // Modification refusée : le tiroir se rouvre en mode « Modifier » sur ce prospect et cette opportunité.
+    public string? ModificationProspectId { get; init; }
+    public string? ModificationOpportuniteId { get; init; }
+
+    // Empreinte envoyée avec la saisie refusée, renvoyée telle quelle au tiroir (jamais l'empreinte actuelle) :
+    // après un conflit, un nouveau clic sur « Enregistrer » est donc refusé lui aussi, tant que l'utilisateur
+    // n'a pas rouvert le formulaire sur les valeurs actuelles.
+    public string? ModificationVersion { get; init; }
 }
 
 // Champs postés par le tiroir « Nouveau prospect » (_TiroirProspect.cshtml).
@@ -123,6 +135,17 @@ public class NouveauProspectSaisie
     public string? Etape { get; set; }
     public string? ProchaineAction { get; set; }
     public DateTime? DateSuivi { get; set; }
+}
+
+// Champs postés par le tiroir en mode « Modifier » pour un prospect enregistré.
+// Seuls le contact et le premier intérêt de l'opportunité visée sont pris en compte (voir ServiceProspects.ModifierAsync) ;
+// les champs propres à la création (statut, suivi, commentaire) sont ignorés.
+public class ModificationProspectSaisie : NouveauProspectSaisie
+{
+    // Ids envoyés au navigateur : « pe-12 » pour le prospect, « oe-34 » pour l'opportunité (facultative).
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? Version { get; set; }
 }
 
 // Libellés métier : une seule source pour les vues Razor et le JavaScript.
