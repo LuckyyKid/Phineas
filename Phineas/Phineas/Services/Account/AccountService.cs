@@ -96,6 +96,7 @@ public class AccountService : IAccountService
 
         return new UserSummaryViewModel
         {
+            Id = user.Id,
             FirstName = user.FirstName,
             FullName = user.FullName,
             Email = user.Email ?? "",

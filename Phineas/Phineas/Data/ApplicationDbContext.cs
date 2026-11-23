@@ -13,6 +13,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Vehicule> Vehicules => Set<Vehicule>();
     public DbSet<CodeQR> CodesQR => Set<CodeQR>();
     public DbSet<HistoriqueStatut> HistoriquesStatut => Set<HistoriqueStatut>();
+    public DbSet<Prospect> Prospects => Set<Prospect>();
+    public DbSet<OpportuniteVente> OpportunitesVente => Set<OpportuniteVente>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -68,6 +70,35 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(h => h.UtilisateurId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Prospect>(e =>
+        {
+            // Index pour la recherche de doublons dans une concession.
+            e.HasIndex(p => new { p.DealershipId, p.Courriel });
+            e.HasIndex(p => new { p.DealershipId, p.TelephoneChiffres });
+            e.HasIndex(p => new { p.DealershipId, p.ConseillerId });
+
+            e.HasOne(p => p.Dealership)
+                .WithMany()
+                .HasForeignKey(p => p.DealershipId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(p => p.Conseiller)
+                .WithMany()
+                .HasForeignKey(p => p.ConseillerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<OpportuniteVente>(e =>
+        {
+            e.Property(o => o.Etape).HasConversion<string>().HasMaxLength(30);
+            e.Property(o => o.BudgetTotal).HasPrecision(10, 2);
+
+            e.HasOne(o => o.Prospect)
+                .WithMany(p => p.Opportunites)
+                .HasForeignKey(o => o.ProspectId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

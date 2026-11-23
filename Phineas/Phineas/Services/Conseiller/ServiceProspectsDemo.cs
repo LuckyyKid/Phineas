@@ -56,10 +56,12 @@ public static class IdsProspectsDemo
 
 // DONNÉES FICTIVES — phase frontend uniquement.
 // Personnes, coordonnées (domaine réservé exemple.test, numéros 555-01xx) et véhicules sont inventés,
-// datés par rapport à « maintenant ». À remplacer par une implémentation de IServiceProspects branchée sur la base.
-public class ServiceProspectsDemo : IServiceProspects
+// datés par rapport à « maintenant ». ServiceProspects y ajoute les prospects enregistrés en base.
+public class ServiceProspectsDemo
 {
-    private const string Moi = "moi";
+    // Identifiant du conseiller connecté dans les données envoyées au navigateur (ConseillerConnecteId).
+    public const string IdConseillerConnecte = "moi";
+    private const string Moi = IdConseillerConnecte;
     private const string Antoine = "c-antoine";
     private const string MarieEve = "c-marie-eve";
     private const string Systeme = "Phineas";

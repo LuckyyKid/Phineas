@@ -15,6 +15,13 @@
         fictives = Model.DonneesFictives,
         urlFiche = Url.Action("Fiche", "Prospects", new { id = "__id__" }),
         urlListe = Url.Action("Index", "Prospects"),
+        // Résultat de ProspectsController.Creer, lu par prospects-tiroir.js (message ou tiroir rouvert avec les erreurs).
+        enregistrement = new
+        {
+            confirmation = Model.Confirmation,
+            saisie = Model.SaisieRefusee,
+            erreurs = Model.ErreursCreation,
+        },
     };
 }
 <script type="application/json" id="prospects-donnees">@Html.Raw(JsonSerializer.Serialize(charge, options))</script>

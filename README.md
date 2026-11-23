@@ -14,6 +14,22 @@ Tous les chemins partent de `Phineas/Phineas/`.
 
 Trajet d'un affichage : `/Conseiller` → `ConseillerController.Index` → `ServiceTableauBordDemo.ObtenirAsync` → `Views/Conseiller/Index.cshtml` → `conseiller.js` pour les clics.
 
+## Où trouver quoi : prospects (création réelle)
+
+- `Services/Conseiller/ServiceProspects.cs` : lecture (prospects fictifs + prospects enregistrés du conseiller) et création (validation, doublons, attribution à la concession et au conseiller).
+- `Services/Conseiller/ServiceProspectsDemo.cs` : prospects fictifs de démonstration, ajoutés à la liste par `ServiceProspects`.
+- `Models/Entities/Prospect.cs` et `OpportuniteVente.cs` : tables `Prospects` et `OpportunitesVente` (migration `AjoutProspects`).
+- `Views/Prospects/_TiroirProspect.cshtml` et `wwwroot/js/prospects-tiroir.js` : formulaire « Nouveau prospect ».
+- `wwwroot/js/prospects-store.js` : état de la page ; les prospects enregistrés viennent toujours du serveur.
+
+Trajet d'une création : clic sur « Créer le prospect » → `prospects-tiroir.js` (vérification dans le navigateur) → `POST /Prospects/Creer` (`ProspectsController.Creer`, jeton antiforgery) → `ServiceProspects.CreerAsync` → base MySQL → retour à `/Prospects` avec un message (ou tiroir rouvert avec les erreurs).
+
+## Tests
+
+- `Phineas/Phineas.Tests/` : tests xUnit du service et de la chaîne MVC complète, sur une base MySQL jetable (`phineas_test_xxxxxxxx`, supprimée à la fin). Serveur : variable `PHINEAS_TEST_MYSQL`, sinon le conteneur MySQL local (port 3307).
+- `Phineas/Phineas.Tests/E2E/creation-prospect.e2e.js` : parcours Playwright dans un vrai navigateur (application lancée sur une base de test, voir l'en-tête du fichier).
+- Sur un poste où le Contrôle intelligent des applications de Windows bloque les DLL compilées, lancer les tests dans le conteneur `mcr.microsoft.com/dotnet/sdk:10.0` au lieu de désactiver la protection.
+
 ## Où trouver quoi : coque commune des espaces
 
 Tous les rôles connectés (administrateur, directeur, vendeur, mécanicien) partagent la même barre latérale en verre et les mêmes blocs d'affichage.

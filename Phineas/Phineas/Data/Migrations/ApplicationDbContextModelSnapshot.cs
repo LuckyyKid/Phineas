@@ -340,6 +340,135 @@ namespace Phineas.Data.Migrations
                     b.ToTable("HistoriquesStatut");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.OpportuniteVente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("BudgetTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Categorie")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DateProchaineAction")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DerniereActivite")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Etape")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("Horizon")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("Modele")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<string>("ProchaineAction")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<int>("ProspectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Titre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProspectId");
+
+                    b.ToTable("OpportunitesVente");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.Prospect", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CommentaireInitial")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("ConseillerId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<string>("ContactPrefere")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Courriel")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DealershipId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("SourceDetail")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("Telephone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("TelephoneChiffres")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConseillerId");
+
+                    b.HasIndex("DealershipId", "ConseillerId");
+
+                    b.HasIndex("DealershipId", "Courriel");
+
+                    b.HasIndex("DealershipId", "TelephoneChiffres");
+
+                    b.ToTable("Prospects");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
                 {
                     b.Property<int>("Id")
@@ -510,6 +639,36 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Vehicule");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.OpportuniteVente", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.Prospect", "Prospect")
+                        .WithMany("Opportunites")
+                        .HasForeignKey("ProspectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prospect");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.Prospect", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.ApplicationUser", "Conseiller")
+                        .WithMany()
+                        .HasForeignKey("ConseillerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.Dealership", "Dealership")
+                        .WithMany()
+                        .HasForeignKey("DealershipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conseiller");
+
+                    b.Navigation("Dealership");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.Dealership", "Dealership")
@@ -524,6 +683,11 @@ namespace Phineas.Data.Migrations
             modelBuilder.Entity("Phineas.Models.Entities.Dealership", b =>
                 {
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.Prospect", b =>
+                {
+                    b.Navigation("Opportunites");
                 });
 
             modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>

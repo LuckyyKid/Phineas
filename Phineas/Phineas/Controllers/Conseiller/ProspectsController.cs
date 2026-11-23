@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Phineas.Models.Constants;
 using Phineas.Models.ViewModels.Conseiller;
 using Phineas.Services.Account;
+using Phineas.Services.Commun;
 using Phineas.Services.Conseiller;
 
 namespace Phineas.Controllers.Conseiller;
 
-// Phase frontend : les pages reçoivent les données de démonstration en JSON
-// et toutes les modifications restent locales au navigateur (aucune écriture serveur).
+// Les pages reçoivent les prospects en JSON : données de démonstration + prospects enregistrés du conseiller.
+// La création d'un prospect (POST Creer) est réelle et enregistrée en base par IServiceProspects ;
+// les autres modifications (étape, notes, édition) restent locales au navigateur pour l'instant.
 [Authorize(Roles = AppRoles.Conseiller)]
 public class ProspectsController : Controller
 {
@@ -42,6 +44,39 @@ public class ProspectsController : Controller
         return modele is null ? Challenge() : View(modele);
     }
 
+    // Tiroir « Nouveau prospect » : enregistrement réel, puis Post/Redirect/Get vers la liste.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Creer(NouveauProspectSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.CreerAsync(me.Id, saisie);
+
+        // Une valeur illisible (ex. budget non numérique) arrive vide dans la saisie : on le signale aussi.
+        var erreurs = new List<ErreurChamp>(resultat.Erreurs);
+        foreach (var (cle, entree) in ModelState)
+        {
+            if (entree.Errors.Count > 0)
+                erreurs.Add(new ErreurChamp(NomDuChamp(cle), "Valeur invalide."));
+        }
+
+        if (resultat.Succes && erreurs.Count == 0)
+        {
+            TempData[CleConfirmation] = $"{saisie.Prenom?.Trim()} {saisie.Nom?.Trim()} a été enregistré dans vos prospects.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var modele = await ConstruireAsync(null, false, saisieRefusee: saisie, erreurs: erreurs);
+        return modele is null ? Challenge() : View(nameof(Index), modele);
+    }
+
+    // "Budget" (clé du ModelState) devient "budget" (attribut name du formulaire).
+    private static string NomDuChamp(string cle) =>
+        cle.Length == 0 ? "" : char.ToLowerInvariant(cle[0]) + cle.Substring(1);
+
     public async Task<IActionResult> Fiche(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -51,7 +86,15 @@ public class ProspectsController : Controller
         return modele is null ? Challenge() : View(modele);
     }
 
-    private async Task<ProspectsPageViewModel?> ConstruireAsync(string? prospectId, bool ouvrirCreation, bool avecModules = false)
+    private const string CleConfirmation = "ConfirmationProspect";
+
+    private async Task<ProspectsPageViewModel?> ConstruireAsync(
+        string? prospectId,
+        bool ouvrirCreation,
+        bool avecModules = false,
+        NouveauProspectSaisie? saisieRefusee = null,
+        List<ErreurChamp>? erreurs = null
+    )
     {
         var me = await _account.GetSummaryAsync(User);
         if (me is null)
@@ -67,6 +110,9 @@ public class ProspectsController : Controller
             RendezVous = avecModules ? await _rendezVous.ObtenirAsync(me) : null,
             Transactions = avecModules ? await _transactions.ObtenirAsync(me) : null,
             Intelligence = avecModules ? await _intelligence.ObtenirAsync(me) : null,
+            Confirmation = TempData[CleConfirmation] as string,
+            SaisieRefusee = saisieRefusee,
+            ErreursCreation = erreurs ?? [],
         };
     }
 }

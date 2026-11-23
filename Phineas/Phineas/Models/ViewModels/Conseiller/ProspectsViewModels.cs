@@ -1,3 +1,5 @@
+using Phineas.Services.Commun;
+
 namespace Phineas.Models.ViewModels.Conseiller;
 
 // Contact / profil client. Les besoins d'achat ne sont PAS ici : ils appartiennent à chaque opportunité.
@@ -12,7 +14,9 @@ public record ContactProspect(
     string Source,
     string? SourceDetail,
     string ConseillerId,
-    DateTime DateCreation
+    DateTime DateCreation,
+    // true : enregistré en base (ServiceProspects) ; false : donnée fictive de démonstration.
+    bool Enregistre = false
 );
 
 // Qualification propre à une opportunité : deux opportunités d'un même contact ne partagent rien.
@@ -89,6 +93,36 @@ public class ProspectsPageViewModel
 
     // Phase 06 : données du moteur d'intelligence commerciale (actions liées au dossier affiché).
     public DonneesIntelligence? Intelligence { get; init; }
+
+    // Message affiché après une création réussie (Post/Redirect/Get, via TempData).
+    public string? Confirmation { get; init; }
+
+    // Création refusée par le serveur : le tiroir se rouvre avec la saisie et les erreurs.
+    public NouveauProspectSaisie? SaisieRefusee { get; init; }
+    // Champ = attribut name du champ du formulaire ("" = erreur générale).
+    public IReadOnlyList<ErreurChamp> ErreursCreation { get; init; } = [];
+}
+
+// Champs postés par le tiroir « Nouveau prospect » (_TiroirProspect.cshtml).
+// Les noms suivent les attributs name du formulaire ; toute la validation se fait dans ServiceProspects.
+public class NouveauProspectSaisie
+{
+    public string? Prenom { get; set; }
+    public string? Nom { get; set; }
+    public string? Courriel { get; set; }
+    public string? Telephone { get; set; }
+    public string? ContactPrefere { get; set; }
+    public string? Source { get; set; }
+    public string? SourceDetail { get; set; }
+    public string? Categorie { get; set; }
+    public string? Modele { get; set; }
+    public decimal? Budget { get; set; }
+    public string? Horizon { get; set; }
+    public string? Commentaire { get; set; }
+    public string? ConseillerId { get; set; }
+    public string? Etape { get; set; }
+    public string? ProchaineAction { get; set; }
+    public DateTime? DateSuivi { get; set; }
 }
 
 // Libellés métier : une seule source pour les vues Razor et le JavaScript.

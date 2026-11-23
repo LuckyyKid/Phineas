@@ -12,7 +12,9 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
     </div>
 
-    <form class="offcanvas-body" id="form-prospect" novalidate>
+    @* Création : envoi réel à ProspectsController.Creer (jeton antiforgery ajouté par asp-action).
+       Modification : reste locale au navigateur (prospects-tiroir.js intercepte l'envoi). *@
+    <form class="offcanvas-body" id="form-prospect" method="post" asp-controller="Prospects" asp-action="Creer" novalidate>
         <div class="alert alert-danger small d-none" role="alert" data-resume-erreurs></div>
 
         <fieldset class="pr-section">
@@ -151,7 +153,7 @@
             </div>
         </fieldset>
 
-        <p class="small text-muted mb-0"><i class="bi bi-cone-striped me-1"></i>Démonstration : le prospect est ajouté aux données locales de cet onglet, pas à la base de données.</p>
+        <p class="small text-muted mb-0" data-creation-seulement><i class="bi bi-check2-circle me-1"></i>Le prospect est enregistré dans votre dossier et reste disponible à votre prochaine connexion.</p>
     </form>
 
     <div class="pr-tiroir-pied">

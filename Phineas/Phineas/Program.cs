@@ -64,7 +64,9 @@ builder.Services.AddScoped<IServiceUtilisateurs, ServiceUtilisateurs>();
 builder.Services.AddScoped<IServiceConcessions, ServiceConcessions>();
 // Données fictives (phase frontend vendeur) : remplacer par l'implémentation réelle.
 builder.Services.AddScoped<IServiceTableauBordConseiller, ServiceTableauBordDemo>();
-builder.Services.AddScoped<IServiceProspects, ServiceProspectsDemo>();
+// Prospects : données fictives + prospects réellement enregistrés en base (création réelle).
+builder.Services.AddScoped<ServiceProspectsDemo>();
+builder.Services.AddScoped<IServiceProspects, ServiceProspects>();
 builder.Services.AddScoped<IServiceSoumissions, ServiceSoumissionsDemo>();
 builder.Services.AddScoped<IServiceRendezVous, ServiceRendezVousDemo>();
 builder.Services.AddScoped<IServiceTransactions, ServiceTransactionsDemo>();
@@ -94,3 +96,6 @@ app.UseAuthorization();
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+// Rend la classe visible pour les tests d'intégration (WebApplicationFactory<Program>).
+public partial class Program { }

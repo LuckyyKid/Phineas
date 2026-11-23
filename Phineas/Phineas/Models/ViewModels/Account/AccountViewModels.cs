@@ -20,6 +20,8 @@ public class LoginViewModel
 
 public class UserSummaryViewModel
 {
+    // Identifiant Identity de l'utilisateur (ex. pour retrouver ses prospects enregistrés).
+    public string Id { get; set; } = "";
     public string FirstName { get; set; } = "";
     public string FullName { get; set; } = "";
     public string Email { get; set; } = "";

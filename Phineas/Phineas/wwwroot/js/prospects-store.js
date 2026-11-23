@@ -1,7 +1,7 @@
 // Module Prospects : état local de démonstration.
-// Le serveur fournit les données fictives (balise #prospects-donnees) ; toutes les modifications restent
-// dans le sessionStorage de l'onglet. Aucun appel réseau. Lorsque le backend existera, seule cette couche
-// devra être remplacée par de vrais appels de service.
+// Le serveur fournit les données (balise #prospects-donnees) : prospects fictifs et prospects enregistrés en base
+// (contacts avec « enregistre: true », créés par le tiroir via ProspectsController.Creer). Les autres modifications
+// restent dans le sessionStorage de l'onglet ; les prospects enregistrés, eux, viennent toujours du serveur.
 (function () {
   "use strict";
 
@@ -34,8 +34,32 @@
       window.sessionStorage.setItem(CLE, JSON.stringify(etat));
     } catch (e) {}
   }
-  var etat = lire() || cloner(donneesInitiales);
-  var modifie = !!lire();
+  // Les prospects enregistrés en base viennent toujours du serveur : on retire de l'état sauvegardé ceux
+  // qu'il contenait (copie peut-être périmée) puis on ajoute ceux que le serveur vient d'envoyer.
+  function avecProspectsEnregistres(sauvegarde) {
+    var anciens = {};
+    sauvegarde.contacts.forEach(function (c) { if (c.enregistre) anciens[c.id] = true; });
+    var gardes = {
+      contacts: sauvegarde.contacts.filter(function (c) { return !anciens[c.id]; }),
+      opportunites: sauvegarde.opportunites.filter(function (o) { return !anciens[o.prospectId]; }),
+      interactions: sauvegarde.interactions.filter(function (i) { return !anciens[i.prospectId]; }),
+    };
+
+    var nouveaux = {};
+    donneesInitiales.contacts.forEach(function (c) { if (c.enregistre) nouveaux[c.id] = true; });
+    donneesInitiales.contacts.forEach(function (c) { if (nouveaux[c.id]) gardes.contacts.push(cloner(c)); });
+    donneesInitiales.opportunites.forEach(function (o) { if (nouveaux[o.prospectId]) gardes.opportunites.push(cloner(o)); });
+    donneesInitiales.interactions.forEach(function (i) { if (nouveaux[i.prospectId]) gardes.interactions.push(cloner(i)); });
+
+    sauvegarde.contacts = gardes.contacts;
+    sauvegarde.opportunites = gardes.opportunites;
+    sauvegarde.interactions = gardes.interactions;
+    return sauvegarde;
+  }
+
+  var sauvegarde = lire();
+  var etat = sauvegarde ? avecProspectsEnregistres(sauvegarde) : cloner(donneesInitiales);
+  var modifie = !!sauvegarde;
   var abonnes = [];
   // Autres modules locaux (ex. soumissions) partageant le bandeau de démonstration.
   var modules = [];
@@ -441,6 +465,8 @@
     moiId: moiId,
     urlFiche: function (id) { return charge.urlFiche.replace("__id__", encodeURIComponent(id)); },
     urlListe: charge.urlListe,
+    // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).
+    enregistrement: charge.enregistrement || {},
     abonner: function (f) { abonnes.push(f); },
     enregistrerModule: function (m) { modules.push(m); rafraichir(); },
     rafraichir: rafraichir,

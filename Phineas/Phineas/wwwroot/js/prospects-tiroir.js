@@ -1,4 +1,6 @@
-// Tiroir « Nouveau prospect » / « Modifier le prospect » : validation et écriture locale.
+// Tiroir « Nouveau prospect » / « Modifier le prospect ».
+// Création : validation ici, puis envoi réel du formulaire à ProspectsController.Creer (enregistrement en base).
+// Modification : validation ici, puis écriture locale dans le store (pas encore de backend).
 (function () {
   "use strict";
 
@@ -36,6 +38,7 @@
     form.classList.remove("was-validated");
     form.querySelectorAll(".is-invalid").forEach(function (x) { x.classList.remove("is-invalid"); });
     resumeErreurs.classList.add("d-none");
+    soumettre.disabled = false;
     champ("conseillerId").value = P.moiId;
     champ("dateSuivi").min = P.aujourdhuiChamp();
   }
@@ -148,20 +151,45 @@
       return;
     }
 
-    commun.categorie = valeur("categorie") || null;
-    commun.modele = valeur("modele") || null;
-    commun.budget = valeur("budget") === "" ? null : +valeur("budget");
-    commun.horizon = valeur("horizon") || null;
-    commun.commentaire = valeur("commentaire") || null;
-    commun.etape = valeur("etape");
-    commun.prochaineAction = valeur("prochaineAction") || null;
-    commun.dateSuivi = P.depuisChampDate(valeur("dateSuivi"));
-
-    var c = P.ajouterProspect(commun);
-    tiroir.hide();
-    P.notifier(c.prenom + " " + c.nom + " ajouté aux données de démonstration (non enregistré en base).");
-    if (apresEnregistrement) apresEnregistrement(c.id);
+    // Création : le serveur valide à nouveau, enregistre, puis renvoie vers la liste (ou rouvre ce tiroir avec ses erreurs).
+    // form.submit() n'émet pas d'autre événement « submit » ; le bouton est désactivé contre le double envoi.
+    soumettre.disabled = true;
+    form.submit();
   });
+
+  // Création refusée par le serveur : on rouvre le tiroir avec la saisie envoyée et les messages reçus.
+  function afficherRefusServeur(saisie, erreurs) {
+    ouvrirCreation();
+    Object.keys(saisie).forEach(function (nom) {
+      var v = saisie[nom];
+      if (v == null) return;
+      if (nom === "contactPrefere") {
+        var radio = form.querySelector('input[name="contactPrefere"][value="' + v + '"]');
+        if (radio) radio.checked = true;
+        return;
+      }
+      // champ() renvoie un élément unique ; les groupes de boutons radio (sans tagName) sont traités plus haut.
+      var c = champ(nom);
+      if (!c || !c.tagName) return;
+      // Une date arrive au format « 2026-11-30T00:00:00 » : le champ date attend « 2026-11-30 ».
+      c.value = nom === "dateSuivi" ? String(v).slice(0, 10) : v;
+    });
+
+    var generales = [];
+    erreurs.forEach(function (e) {
+      var c = e.champ ? champ(e.champ) : null;
+      if (c && c.tagName) invalider(e.champ, e.message);
+      else generales.push(e.message);
+    });
+    resumeErreurs.textContent = generales.length
+      ? generales.join(" ")
+      : (erreurs.length === 1 ? "Un champ est à corriger avant d'enregistrer." : erreurs.length + " champs sont à corriger avant d'enregistrer.");
+    resumeErreurs.classList.remove("d-none");
+  }
+
+  var retour = P.enregistrement;
+  if (retour.saisie && retour.erreurs && retour.erreurs.length) afficherRefusServeur(retour.saisie, retour.erreurs);
+  if (retour.confirmation) P.notifier(retour.confirmation);
 
   // Correction en direct : le message disparaît dès que le champ est modifié.
   form.addEventListener("input", function (e) {
