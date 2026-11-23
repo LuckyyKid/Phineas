@@ -65,6 +65,9 @@
 }
 /* Le menu ouvert doit passer devant la carte suivante (le flou crée un contexte d'empilement) */
 .ivv-vehicule:focus-within { position: relative; z-index: 3; }
+/* Pendant que le menu « Proposer » est ouvert, la carte perd son flou : sinon le flou retient le menu
+   (stratégie « fixed ») dans la bande qui défile, qui le coupe et le place de travers. */
+.ivv-vehicule:has(.dropdown-menu.show) { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
 .ivv-score { display: flex; flex-direction: column; gap: 8px; }
 .ivv-score-chiffre { font-size: 32px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: var(--iv-ink); font-variant-numeric: tabular-nums; }

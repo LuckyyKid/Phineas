@@ -56,8 +56,11 @@ a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
 code, .font-monospace { font-family: var(--lm-mono); }
 :focus-visible { outline: 2px solid var(--lm-accent); outline-offset: 2px; }
 
-/* Apparition douce du contenu */
-.lm-enter > * { animation: lm-rise .5s cubic-bezier(.2,.8,.2,1) both; }
+/* Apparition douce du contenu.
+   « backwards » et non « both » : avec « both », chaque bloc garde un transform après l'animation,
+   ce qui l'isole en couche ; un menu déroulant ouvert dans un bloc passait alors sous le bloc suivant
+   (ex. menu « Créer » de l'accueil vendeur caché par la carte des chiffres). */
+.lm-enter > * { animation: lm-rise .5s cubic-bezier(.2,.8,.2,1) backwards; }
 .lm-enter > *:nth-child(2) { animation-delay: .06s; }
 .lm-enter > *:nth-child(3) { animation-delay: .12s; }
 .lm-enter > *:nth-child(4) { animation-delay: .18s; }

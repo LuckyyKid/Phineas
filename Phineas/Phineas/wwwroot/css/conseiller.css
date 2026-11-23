@@ -230,7 +230,8 @@ html[data-accueil-chiffres="masques"] .ph-stats { display: none; }
 .ph-steps i.is-current { background: #FFFFFF; }
 .ph-steps span { margin-left: 8px; font-family: var(--ph-mono); font-size: 12px; color: rgba(255, 255, 255, .75); }
 
-.ph-focus-item, .ph-focus-fin { flex: 1; display: flex; flex-direction: column; animation: ph-entree .35s cubic-bezier(.2, .8, .2, 1) both; }
+/* « backwards » : ne garde aucun transform après l'animation, pour ne pas cacher les menus déroulants (voir .lm-enter dans lumiere.css). */
+.ph-focus-item, .ph-focus-fin { flex: 1; display: flex; flex-direction: column; animation: ph-entree .35s cubic-bezier(.2, .8, .2, 1) backwards; }
 .ph-focus-item[hidden], .ph-focus-fin[hidden] { display: none; }
 @keyframes ph-entree { from { opacity: 0; transform: translateY(6px); } }
 
