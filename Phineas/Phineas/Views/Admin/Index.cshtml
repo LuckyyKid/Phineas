@@ -1,28 +1,32 @@
+@* Accueil de l'administrateur : en-tête, accès aux concessions et au personnel, test des accès.
+   Styles : wwwroot/css/espaces.css (tuiles es-tuile). *@
 @model Phineas.Models.ViewModels.Account.UserSummaryViewModel
 @{ ViewData["Title"] = "Espace administrateur"; }
 
-<partial name="_LoginConfirmation" model="Model" />
+<div class="es-page">
+    <partial name="_LoginConfirmation" model="Model" />
 
-<div class="lm-section-title"><h2>Administration</h2><span>Toute la plateforme</span></div>
-<div class="lm-tiles">
-    <a class="lm-tile" data-tilt asp-controller="Concessions" asp-action="Index">
-        <span class="ico"><i class="bi bi-buildings"></i></span>
-        <h3>Concessions</h3>
-        <p>Créer, modifier et suspendre les concessions de la plateforme.</p>
-        <span class="go">Ouvrir <i class="bi bi-arrow-right"></i></span>
-    </a>
-    <a class="lm-tile" data-tilt asp-controller="Utilisateurs" asp-action="Index">
-        <span class="ico"><i class="bi bi-people"></i></span>
-        <h3>Personnel</h3>
-        <p>Directeurs, conseillers et mécaniciens de chaque concession.</p>
-        <span class="go">Ouvrir <i class="bi bi-arrow-right"></i></span>
-    </a>
-    <div class="lm-tile is-soon" data-tilt>
-        <span class="soon">Bientôt</span>
-        <span class="ico"><i class="bi bi-graph-up"></i></span>
-        <h3>Statistiques en direct</h3>
-        <p>Connectés maintenant, changements de statut du jour, activité de chaque concession.</p>
+    <div class="es-section-titre"><h2>Administration</h2><span>Toute la plateforme</span></div>
+    <div class="es-tuiles">
+        <a class="es-verre es-tuile" asp-controller="Concessions" asp-action="Index">
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-buildings"></i></span>
+            <h3>Concessions</h3>
+            <p>Créer, modifier et suspendre les concessions de la plateforme.</p>
+            <span class="es-tuile-lien">Ouvrir <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <a class="es-verre es-tuile" asp-controller="Utilisateurs" asp-action="Index">
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-people"></i></span>
+            <h3>Personnel</h3>
+            <p>Directeurs, conseillers et mécaniciens de chaque concession.</p>
+            <span class="es-tuile-lien">Ouvrir <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-graph-up"></i></span>
+            <h3>Statistiques en direct</h3>
+            <p>Connectés maintenant, changements de statut du jour, activité de chaque concession.</p>
+        </div>
     </div>
-</div>
 
-<partial name="_TesterAcces" model="Model" />
+    <partial name="_TesterAcces" model="Model" />
+</div>

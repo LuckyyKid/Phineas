@@ -1,18 +1,32 @@
+@* Accueil du mécanicien : en-tête, scan des véhicules et modules à venir, test des accès.
+   Styles : wwwroot/css/espaces.css (tuiles es-tuile). *@
 @model Phineas.Models.ViewModels.Account.UserSummaryViewModel
 @{ ViewData["Title"] = "Espace mécanicien"; }
 
-<partial name="_LoginConfirmation" model="Model" />
+<div class="es-page">
+    <partial name="_LoginConfirmation" model="Model" />
 
-<div class="lm-section-title"><h2>À l’atelier</h2><span>Scannez l’étiquette QR d’un véhicule pour ouvrir sa fiche</span></div>
-<div class="lm-tiles">
-    <div class="lm-tile" data-tilt>
-        <span class="ico"><i class="bi bi-qr-code-scan"></i></span>
-        <h3>Scanner un véhicule</h3>
-        <p>Avec l’appareil photo du téléphone, scannez l’étiquette sur le pare-brise : la fiche s’ouvre et vous pouvez changer le statut.</p>
-        <span class="go"><i class="bi bi-check-circle"></i>Disponible</span>
+    <div class="es-section-titre"><h2>À l’atelier</h2><span>Scannez l’étiquette QR d’un véhicule pour ouvrir sa fiche</span></div>
+    <div class="es-tuiles">
+        <div class="es-verre es-tuile">
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-qr-code-scan"></i></span>
+            <h3>Scanner un véhicule</h3>
+            <p>Avec l’appareil photo du téléphone, scannez l’étiquette sur le pare-brise : la fiche s’ouvre et vous pouvez changer le statut.</p>
+            <span class="es-tuile-lien"><i class="bi bi-check-circle" aria-hidden="true"></i>Disponible</span>
+        </div>
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-list-check"></i></span>
+            <h3>Ma file de travail</h3>
+            <p>Les véhicules qui attendent une inspection ou un nettoyage.</p>
+        </div>
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
+            <h3>Mes derniers scans</h3>
+            <p>Ce que vous avez fait aujourd’hui, avec l’heure.</p>
+        </div>
     </div>
-    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-list-check"></i></span><h3>Ma file de travail</h3><p>Les véhicules qui attendent une inspection ou un nettoyage.</p></div>
-    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-clock-history"></i></span><h3>Mes derniers scans</h3><p>Ce que vous avez fait aujourd’hui, avec l’heure.</p></div>
-</div>
 
-<partial name="_TesterAcces" model="Model" />
+    <partial name="_TesterAcces" model="Model" />
+</div>

@@ -1,14 +1,38 @@
+@* Accueil du directeur : en-tête et modules à venir, test des accès.
+   Styles : wwwroot/css/espaces.css (tuiles es-tuile). *@
 @model Phineas.Models.ViewModels.Account.UserSummaryViewModel
 @{ ViewData["Title"] = "Espace directeur"; }
 
-<partial name="_LoginConfirmation" model="Model" />
+<div class="es-page">
+    <partial name="_LoginConfirmation" model="Model" />
 
-<div class="lm-section-title"><h2>Votre concession</h2><span>Bientôt dans cet espace</span></div>
-<div class="lm-tiles">
-    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-kanban"></i></span><h3>Tableau en direct</h3><p>Chaque véhicule par étape, mis à jour à chaque scan.</p></div>
-    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-shield-lock"></i></span><h3>Dossiers de financement</h3><p>Approuver ou refuser, avec double authentification.</p></div>
-    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-people"></i></span><h3>Mon équipe</h3><p>Ajouter et gérer les conseillers et mécaniciens.</p></div>
-    <div class="lm-tile is-soon" data-tilt><span class="soon">Bientôt</span><span class="ico"><i class="bi bi-journal-text"></i></span><h3>Piste d’audit</h3><p>Qui a ouvert quel document, et quand.</p></div>
+    <div class="es-section-titre"><h2>Votre concession</h2><span>Bientôt dans cet espace</span></div>
+    <div class="es-tuiles">
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-kanban"></i></span>
+            <h3>Tableau en direct</h3>
+            <p>Chaque véhicule par étape, mis à jour à chaque scan.</p>
+        </div>
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
+            <h3>Dossiers de financement</h3>
+            <p>Approuver ou refuser, avec double authentification.</p>
+        </div>
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-people"></i></span>
+            <h3>Mon équipe</h3>
+            <p>Ajouter et gérer les conseillers et mécaniciens.</p>
+        </div>
+        <div class="es-verre es-tuile es-tuile-off">
+            <span class="es-bientot">Bientôt</span>
+            <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-journal-text"></i></span>
+            <h3>Piste d’audit</h3>
+            <p>Qui a ouvert quel document, et quand.</p>
+        </div>
+    </div>
+
+    <partial name="_TesterAcces" model="Model" />
 </div>
-
-<partial name="_TesterAcces" model="Model" />

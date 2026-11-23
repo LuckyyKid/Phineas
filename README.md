@@ -14,6 +14,18 @@ Tous les chemins partent de `Phineas/Phineas/`.
 
 Trajet d'un affichage : `/Conseiller` → `ConseillerController.Index` → `ServiceTableauBordDemo.ObtenirAsync` → `Views/Conseiller/Index.cshtml` → `conseiller.js` pour les clics.
 
+## Où trouver quoi : coque commune des espaces
+
+Tous les rôles connectés (administrateur, directeur, vendeur, mécanicien) partagent la même barre latérale en verre et les mêmes blocs d'affichage.
+
+- `Views/Shared/_LayoutEspace.cshtml` : la coque commune (barre latérale, carte de l'utilisateur, menu Affichage avec le thème sombre).
+- `Models/ViewModels/NavigationEspaces.cs` : le menu de chaque rôle (`MenuPour(rôle)`). Le menu du vendeur reste dans `NavigationVendeur.cs`.
+- `Views/Conseiller/_LayoutConseiller.cshtml` : la coque commune, plus la notification et `conseiller.js` propres au vendeur.
+- `Views/Admin`, `Concessions`, `Utilisateurs`, `Directeur`, `Mecanicien` : un `_ViewStart.cshtml` par dossier choisit la coque commune.
+- `wwwroot/css/espaces.css` (préfixe `es-`) : en-tête de page, chiffres, carte de liste avec tableau, statuts « point + libellé », état vide, formulaires, alertes et tuiles d'accueil, en clair et en sombre.
+
+Pour une nouvelle page d'un espace : `es-page`, puis `es-entete` (`es-label`, `es-titre`, `es-intro`), `es-chiffres`, et la liste dans `es-verre es-module` avec `es-table`.
+
 ## Où trouver quoi : thème sombre
 
 - `wwwroot/js/theme.js` : applique le thème avant l'affichage et gère le bouton de bascule. Son en-tête décrit le contrat complet.

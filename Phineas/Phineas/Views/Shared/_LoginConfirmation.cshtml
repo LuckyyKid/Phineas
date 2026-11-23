@@ -1,30 +1,22 @@
+@* En-tête des accueils administrateur, directeur et mécanicien : même forme que l'accueil vendeur
+   (date, « Bonjour Prénom », phrase de résumé), suivie des informations du compte connecté. *@
 @using Phineas.Models.Constants
+@using Phineas.Models.ViewModels.Conseiller
 @model Phineas.Models.ViewModels.Account.UserSummaryViewModel
 @{
     var fr = new System.Globalization.CultureInfo("fr-CA");
-    var heure = DateTime.Now.Hour;
-    var salut = heure < 12 ? "Bonjour" : heure < 18 ? "Bon après-midi" : "Bonsoir";
+    var maintenant = DateTime.Now;
+    var derniereConnexion = Model.LastLoginAt?.ToLocalTime().ToString("d MMMM, HH:mm", fr) ?? "première fois";
 }
-<section class="lm-hero">
-    <div class="lm-hero-copy">
-        <span class="lm-eyebrow"><i class="bi bi-check-circle"></i>Connexion réussie · @Model.RoleLabel</span>
-        <h1>@salut @Model.FirstName</h1>
-        <p>Voici votre espace @Model.RoleLabel.ToLower(fr). Tout ce dont vous avez besoin aujourd’hui est ici.</p>
-        <div class="lm-facts">
-            <span class="lm-fact"><i class="bi bi-buildings"></i>@(Model.DealershipName ?? "Toute la plateforme")</span>
-            <span class="lm-fact"><i class="bi bi-envelope"></i>@Model.Email</span>
-            <span class="lm-fact"><i class="bi bi-clock-history"></i>Dernière connexion : @(Model.LastLoginAt?.ToLocalTime().ToString("d MMMM, HH:mm", fr) ?? "première fois")</span>
+<header class="ph-head">
+    <div>
+        <p class="ph-label">@FormatVente.DateDuJour(maintenant)</p>
+        <h1 class="ph-hello">Bonjour @Model.FirstName</h1>
+        <p class="ph-resume">Voici votre espace @Model.RoleLabel.ToLower(fr). Tout ce dont vous avez besoin aujourd’hui est ici.</p>
+        <div class="es-faits">
+            <span class="es-fait"><i class="bi bi-buildings" aria-hidden="true"></i>@(Model.DealershipName ?? "Toute la plateforme")</span>
+            <span class="es-fait"><i class="bi bi-envelope" aria-hidden="true"></i>@Model.Email</span>
+            <span class="es-fait"><i class="bi bi-clock-history" aria-hidden="true"></i>Dernière connexion : @derniereConnexion</span>
         </div>
     </div>
-    <div class="lm-emblem-stage" aria-hidden="true">
-        <div style="position: relative">
-            <div class="lm-emblem">
-                <div class="layer l4"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 170 }' /></div>
-                <div class="layer l3"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 170 }' /></div>
-                <div class="layer l2"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 170 }' /></div>
-                <div class="layer l1"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 170 }' /></div>
-            </div>
-            <div class="lm-emblem-shadow"></div>
-        </div>
-    </div>
-</section>
+</header>

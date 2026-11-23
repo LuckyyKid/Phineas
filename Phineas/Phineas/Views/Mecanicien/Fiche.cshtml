@@ -1,67 +1,74 @@
+@* Fiche d'un véhicule ouverte par le scan de son étiquette QR (mécanicien) : informations, statut actuel,
+   puis le formulaire de changement de statut. Couleurs des statuts : variables --st-* de lumiere.css.
+   Styles : wwwroot/css/espaces.css. *@
 @using Phineas.Models.Entities
 @model Phineas.Models.ViewModels.Vehicules.FicheVehiculeViewModel
 @{ ViewData["Title"] = $"Véhicule {Model.NumeroStock}"; }
 
-<div class="mx-auto lm-enter" style="max-width: 560px">
-    <a asp-action="Index" class="btn btn-ghost btn-sm mb-3"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+<div class="es-page es-page-etroite">
+    <nav class="es-ariane" aria-label="Fil d'Ariane">
+        <a asp-action="Index">Atelier</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Véhicule @Model.NumeroStock</span>
+    </nav>
 
     @if (TempData["Succes"] is string succes)
     {
-        <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>@succes</div>
+        <div class="es-alerte es-alerte-ok" role="alert"><i class="bi bi-check-circle" aria-hidden="true"></i><span>@succes</span></div>
     }
     @if (TempData["Erreur"] is string erreur)
     {
-        <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@erreur</div>
+        <div class="es-alerte es-alerte-erreur" role="alert"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>@erreur</span></div>
     }
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <h1 class="h4 mb-1">@Model.Marque @Model.Modele @Model.Annee</h1>
-            <div class="text-muted small font-monospace">@Model.NumeroStock · NIV @Model.NIV</div>
+    <header class="es-entete">
+        <div>
+            <p class="es-label">@Model.NumeroStock · NIV @Model.NIV</p>
+            <h1 class="es-titre">@Model.Marque @Model.Modele @Model.Annee</h1>
             @if (Model.Emplacement is not null)
             {
-                <div class="text-muted small mt-1"><i class="bi bi-geo-alt me-1"></i>@Model.Emplacement</div>
+                <p class="es-intro"><i class="bi bi-geo-alt" aria-hidden="true"></i> @Model.Emplacement</p>
             }
-            <div class="d-flex justify-content-between align-items-center mt-3 p-3 rounded-3" style="background: var(--lm-soft)">
-                <span class="text-muted">Statut actuel</span>
-                <span class="lm-status" style="--c: var(--st-@Model.StatutActuel, #64748B)"><i></i>@Model.StatutActuel.Libelle()</span>
-            </div>
         </div>
-    </div>
+    </header>
 
-    <div class="card">
-        <div class="card-header"><i class="bi bi-arrow-repeat me-2"></i>Changer le statut</div>
-        <div class="card-body">
-            @if (Model.StatutsPermis.Count == 0)
-            {
-                <p class="text-muted mb-0">Aucun changement de statut n'est possible pour votre rôle à cette étape.</p>
-            }
-            else
-            {
-                <form asp-action="ChangerStatut" method="post">
-                    <input type="hidden" name="VehiculeId" value="@Model.Id" />
-                    <input type="hidden" name="Jeton" value="@Model.Jeton" />
+    <section class="es-chiffres" aria-label="Statut du véhicule">
+        <div class="es-verre es-chiffre">
+            <span class="es-statut es-st-couleur es-chiffre-texte" style="--c: var(--st-@Model.StatutActuel, #64748B)"><span class="es-statut-point" aria-hidden="true"></span>@Model.StatutActuel.Libelle()</span>
+            <span class="es-chiffre-libelle">statut actuel</span>
+        </div>
+    </section>
 
-                    <fieldset class="mb-3">
-                        <legend class="form-label">Nouveau statut</legend>
+    <section class="es-verre es-carte">
+        <h2 class="es-carte-titre"><i class="bi bi-arrow-repeat" aria-hidden="true"></i>Changer le statut</h2>
+        @if (Model.StatutsPermis.Count == 0)
+        {
+            <p class="es-aide">Aucun changement de statut n'est possible pour votre rôle à cette étape.</p>
+        }
+        else
+        {
+            <form asp-action="ChangerStatut" method="post" class="es-formulaire">
+                <input type="hidden" name="VehiculeId" value="@Model.Id" />
+                <input type="hidden" name="Jeton" value="@Model.Jeton" />
+
+                <fieldset class="es-champ">
+                    <legend>Nouveau statut</legend>
+                    <div class="es-liste-choix">
                         @foreach (var s in Model.StatutsPermis)
                         {
-                            <div class="lm-choice" style="--c: var(--st-@s, #0F766E)">
+                            <div class="es-choix" style="--c: var(--st-@s, #0F766E)">
                                 <input type="radio" name="NouveauStatut" id="statut-@s" value="@s" required />
-                                <label for="statut-@s"><i></i>@s.Libelle()</label>
+                                <label for="statut-@s"><i aria-hidden="true"></i>@s.Libelle()</label>
                             </div>
                         }
-                    </fieldset>
-
-                    <div class="mb-3">
-                        <label for="Commentaire" class="form-label">Commentaire (optionnel)</label>
-                        <textarea class="form-control" id="Commentaire" name="Commentaire"
-                                  rows="3" maxlength="500" placeholder="Ex. pneus avant à surveiller"></textarea>
                     </div>
+                </fieldset>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2">Confirmer le changement</button>
-                </form>
-            }
-        </div>
-    </div>
+                <div class="es-champ">
+                    <label for="Commentaire">Commentaire (optionnel)</label>
+                    <textarea id="Commentaire" name="Commentaire" rows="3" maxlength="500" placeholder="Ex. pneus avant à surveiller"></textarea>
+                </div>
+
+                <button type="submit" class="es-btn-sapin es-btn-plein">Confirmer le changement</button>
+            </form>
+        }
+    </section>
 </div>

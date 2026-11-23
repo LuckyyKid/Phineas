@@ -1,14 +1,24 @@
+@* Page « Accès refusé » : affichée dans la coque des espaces quand la personne est connectée,
+   sinon dans la mise en page de base. Styles : wwwroot/css/espaces.css (état vide). *@
 @using Phineas.Models.Constants
 @{
     ViewData["Title"] = "Accès refusé";
     var role = AppRoles.Label(AppRoles.Of(User));
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        Layout = "_LayoutEspace";
+    }
 }
-<div class="empty-state">
-    <span class="empty-icon"><i class="bi bi-sign-stop"></i></span>
-    <h1>Accès refusé</h1>
-    <p class="text-muted">
-        Cette page n'est pas accessible à votre rôle (<strong>@role</strong>).
-        C'est normal : chacun ne voit que ce dont son travail a besoin.
-    </p>
-    <a class="btn btn-primary" asp-controller="Account" asp-action="Home"><i class="bi bi-house me-1"></i>Retour à mon espace</a>
+<div class="es-page">
+    <section class="es-verre es-carte">
+        <div class="es-vide">
+            <span class="es-vide-icone" aria-hidden="true"><i class="bi bi-sign-stop"></i></span>
+            <h1>Accès refusé</h1>
+            <p>
+                Cette page n'est pas accessible à votre rôle (<strong>@role</strong>).
+                C'est normal : chacun ne voit que ce dont son travail a besoin.
+            </p>
+            <a class="es-btn-sapin" asp-controller="Account" asp-action="Home"><i class="bi bi-house" aria-hidden="true"></i>Retour à mon espace</a>
+        </div>
+    </section>
 </div>

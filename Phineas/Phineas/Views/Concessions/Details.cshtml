@@ -1,79 +1,67 @@
+@* Fiche d'une concession (administrateur) : en-tête avec actions, chiffres, puis la carte du personnel.
+   Styles : wwwroot/css/espaces.css. *@
 @model ConcessionDetailsViewModel
 @{
     var c = Model.Concession;
     ViewData["Title"] = c.Nom;
 }
 
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Concessions</a></li>
-        <li class="breadcrumb-item active">@c.Nom</li>
-    </ol>
-</nav>
+<div class="es-page">
+    <nav class="es-ariane" aria-label="Fil d'Ariane">
+        <a asp-action="Index">Concessions</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">@c.Nom</span>
+    </nav>
 
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-    <h1 class="h3 mb-0 d-flex align-items-center gap-2">
-        @c.Nom
-        @if (c.EstActive)
-        {
-            <span class="badge text-bg-success fs-6">Active</span>
-        }
-        else
-        {
-            <span class="badge text-bg-secondary fs-6">Suspendue</span>
-        }
-    </h1>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-secondary" asp-action="Modifier" asp-route-id="@c.Id"><i class="bi bi-pencil me-1"></i>Modifier</a>
-        <form asp-action="BasculerActivation" asp-route-id="@c.Id" method="post"
-              onsubmit="@(c.EstActive ? "return confirm('Suspendre cette concession? Tout son personnel sera déconnecté.');" : "")">
-            @if (c.EstActive)
-            {
-                <button type="submit" class="btn btn-outline-warning"><i class="bi bi-pause-circle me-1"></i>Suspendre</button>
-            }
-            else
-            {
-                <button type="submit" class="btn btn-outline-success"><i class="bi bi-play-circle me-1"></i>Réactiver</button>
-            }
-        </form>
-        <a class="btn btn-outline-danger" asp-action="Supprimer" asp-route-id="@c.Id"><i class="bi bi-trash me-1"></i>Supprimer</a>
-    </div>
-</div>
+    <header class="es-entete">
+        <div>
+            <p class="es-label">
+                @if (c.EstActive)
+                {
+                    <span class="es-statut es-st-ok"><span class="es-statut-point" aria-hidden="true"></span>Active</span>
+                }
+                else
+                {
+                    <span class="es-statut es-st-off"><span class="es-statut-point" aria-hidden="true"></span>Suspendue</span>
+                }
+            </p>
+            <h1 class="es-titre">@c.Nom</h1>
+        </div>
+        <div class="es-entete-actions">
+            <a class="es-btn-secondaire" asp-action="Modifier" asp-route-id="@c.Id"><i class="bi bi-pencil" aria-hidden="true"></i>Modifier</a>
+            <form asp-action="BasculerActivation" asp-route-id="@c.Id" method="post"
+                  onsubmit="@(c.EstActive ? "return confirm('Suspendre cette concession? Tout son personnel sera déconnecté.');" : "")">
+                @if (c.EstActive)
+                {
+                    <button type="submit" class="es-btn-secondaire"><i class="bi bi-pause-circle" aria-hidden="true"></i>Suspendre</button>
+                }
+                else
+                {
+                    <button type="submit" class="es-btn-secondaire"><i class="bi bi-play-circle" aria-hidden="true"></i>Réactiver</button>
+                }
+            </form>
+            <a class="es-btn-secondaire es-btn-danger" asp-action="Supprimer" asp-route-id="@c.Id"><i class="bi bi-trash" aria-hidden="true"></i>Supprimer</a>
+        </div>
+    </header>
 
-<partial name="_Alertes" />
+    <partial name="_Alertes" />
 
-@if (!c.EstActive)
-{
-    <div class="alert alert-secondary"><i class="bi bi-info-circle me-1"></i>Cette concession est suspendue : son personnel ne peut pas se connecter.</div>
-}
+    @if (!c.EstActive)
+    {
+        <div class="es-alerte es-alerte-info"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Cette concession est suspendue : son personnel ne peut pas se connecter.</span></div>
+    }
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-4">
-        <div class="card h-100"><div class="card-body">
-            <div class="small text-muted">Personnel</div>
-            <div class="fs-3 fw-bold">@c.NbEmployes</div>
-        </div></div>
-    </div>
-    <div class="col-sm-4">
-        <div class="card h-100"><div class="card-body">
-            <div class="small text-muted">Véhicules</div>
-            <div class="fs-3 fw-bold">@c.NbVehicules</div>
-        </div></div>
-    </div>
-    <div class="col-sm-4">
-        <div class="card h-100"><div class="card-body">
-            <div class="small text-muted">Directeur</div>
-            <div class="fw-semibold mt-2">@(c.NomDirecteur ?? "Aucun pour l'instant")</div>
-        </div></div>
-    </div>
-</div>
+    <section class="es-chiffres" aria-label="Résumé de la concession">
+        <div class="es-verre es-chiffre"><span class="es-chiffre-valeur">@c.NbEmployes</span><span class="es-chiffre-libelle">personnes</span></div>
+        <div class="es-verre es-chiffre"><span class="es-chiffre-valeur">@c.NbVehicules</span><span class="es-chiffre-libelle">véhicules</span></div>
+        <div class="es-verre es-chiffre"><span class="es-chiffre-valeur es-chiffre-texte">@(c.NomDirecteur ?? "Aucun pour l'instant")</span><span class="es-chiffre-libelle">directeur</span></div>
+    </section>
 
-<div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
-        <span><i class="bi bi-people me-2"></i>Personnel</span>
-        <a class="btn btn-primary btn-sm" asp-controller="Utilisateurs" asp-action="Creer" asp-route-dealershipId="@c.Id">
-            <i class="bi bi-person-plus me-1"></i>Ajouter une personne
-        </a>
-    </div>
-    <partial name="_TableUtilisateurs" model="Model.Employes" />
+    <section class="es-verre es-module" aria-label="Personnel de la concession">
+        <div class="es-module-tete">
+            <h2><i class="bi bi-people" aria-hidden="true"></i>Personnel</h2>
+            <a class="es-btn-sapin" asp-controller="Utilisateurs" asp-action="Creer" asp-route-dealershipId="@c.Id">
+                <i class="bi bi-person-plus" aria-hidden="true"></i>Ajouter une personne
+            </a>
+        </div>
+        <partial name="_TableUtilisateurs" model="Model.Employes" />
+    </section>
 </div>
