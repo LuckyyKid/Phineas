@@ -1,5 +1,6 @@
 @* En-tête des accueils administrateur, directeur et mécanicien : même forme que l'accueil vendeur
-   (date, « Bonjour Prénom », phrase de résumé), suivie des informations du compte connecté. *@
+   (date, « Bonjour Prénom », phrase de résumé), suivie des informations du compte connecté.
+   ViewData["Embleme"] = true ajoute à droite le logo qui tourne (animation lm-emblem de lumiere.css). *@
 @using Phineas.Models.Constants
 @using Phineas.Models.ViewModels.Conseiller
 @model Phineas.Models.ViewModels.Account.UserSummaryViewModel
@@ -7,8 +8,9 @@
     var fr = new System.Globalization.CultureInfo("fr-CA");
     var maintenant = DateTime.Now;
     var derniereConnexion = Model.LastLoginAt?.ToLocalTime().ToString("d MMMM, HH:mm", fr) ?? "première fois";
+    var afficherEmbleme = ViewData["Embleme"] as bool? ?? false;
 }
-<header class="ph-head">
+<header class="ph-head @(afficherEmbleme ? "es-tete-embleme" : "")">
     <div>
         <p class="ph-label">@FormatVente.DateDuJour(maintenant)</p>
         <h1 class="ph-hello">Bonjour @Model.FirstName</h1>
@@ -19,4 +21,17 @@
             <span class="es-fait"><i class="bi bi-clock-history" aria-hidden="true"></i>Dernière connexion : @derniereConnexion</span>
         </div>
     </div>
+    @if (afficherEmbleme)
+    {
+        @* Quatre couches du logo décalées en profondeur : en tournant, elles donnent l'effet 3D. *@
+        <div class="es-embleme" aria-hidden="true">
+            <div class="lm-emblem">
+                <div class="layer l4"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 150 }' /></div>
+                <div class="layer l3"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 150 }' /></div>
+                <div class="layer l2"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 150 }' /></div>
+                <div class="layer l1"><partial name="_Logo" view-data='new ViewDataDictionary(ViewData) { ["Taille"] = 150 }' /></div>
+            </div>
+            <div class="lm-emblem-shadow"></div>
+        </div>
+    }
 </header>

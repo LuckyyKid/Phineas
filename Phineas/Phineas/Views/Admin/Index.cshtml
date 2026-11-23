@@ -4,9 +4,9 @@
 @{ ViewData["Title"] = "Espace administrateur"; }
 
 <div class="es-page">
-    <partial name="_LoginConfirmation" model="Model" />
+    <partial name="_LoginConfirmation" model="Model" view-data='new ViewDataDictionary(ViewData) { ["Embleme"] = true }' />
 
-    <div class="es-section-titre"><h2>Administration</h2><span>Toute la plateforme</span></div>
+    <div class="es-section-titre"><h2>Administration</h2></div>
     <div class="es-tuiles">
         <a class="es-verre es-tuile" asp-controller="Concessions" asp-action="Index">
             <span class="es-tuile-icone" aria-hidden="true"><i class="bi bi-buildings"></i></span>

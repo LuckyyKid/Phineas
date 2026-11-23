@@ -31,6 +31,13 @@
 .es-fait { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--ph-line-2); background: rgba(255, 255, 255, .7); font-size: 14px; color: var(--ph-text); }
 .es-fait i { color: var(--ph-muted); }
 
+/* Logo qui tourne à droite de l'en-tête de l'accueil administrateur (animation lm-emblem de lumiere.css).
+   Centré verticalement sur le texte ; masqué sur téléphone pour laisser toute la largeur au texte. */
+.ph-head.es-tete-embleme { align-items: center; }
+.es-embleme { position: relative; flex: 0 0 200px; height: 200px; margin-right: 24px; perspective: 900px; display: flex; align-items: center; justify-content: center; }
+.es-embleme .lm-emblem { width: 150px; height: 150px; }
+.es-embleme .lm-emblem-shadow { bottom: 0; width: 110px; margin-left: -55px; }
+
 /* ---------- Boutons ---------- */
 /* Le bouton vert plein : l'action principale de la page */
 .es-btn-sapin {
@@ -301,7 +308,8 @@
 .es-liste-choix { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; border: 0; }
 
 /* ---------- Tuiles de l'accueil (administrateur, directeur, mécanicien) ---------- */
-.es-section-titre { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin: 0 0 18px; }
+/* Le sous-titre suit le titre (pas poussé à l'autre bout de la page, où il semblait flotter). */
+.es-section-titre { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 0 18px; }
 .es-section-titre h2 { margin: 0; font-size: 22px; font-weight: 400; letter-spacing: -0.02em; }
 .es-section-titre span { font-size: 14px; color: var(--ph-muted); }
 .es-tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 44px; }
@@ -350,6 +358,7 @@ a.es-tuile:hover { color: var(--ph-ink); border-color: rgba(11, 13, 13, .14); tr
   .es-select { max-width: none; flex: 1 1 160px; }
   .es-carte { padding: 22px; }
   .es-cacher-mobile { display: none; }
+  .es-embleme { display: none; }
 }
 @media (max-width: 991.98px) {
   .es-cacher-tablette { display: none; }
@@ -365,6 +374,13 @@ a.es-tuile:hover { color: var(--ph-ink); border-color: rgba(11, 13, 13, .14); tr
    et l'action principale devient BLANCHE, comme dans les pages vendeur.
    ========================================================= */
 html[data-theme="sombre"] .es-verre { background: var(--ps-verre); border-color: var(--ps-contour); box-shadow: none; }
+
+/* Logo qui tourne : mêmes couleurs que le logo de la barre latérale en sombre */
+html[data-theme="sombre"] .es-embleme svg path { stroke: var(--ps-texte); }
+html[data-theme="sombre"] .es-embleme svg path:last-of-type { stroke: var(--ps-menthe); }
+html[data-theme="sombre"] .es-embleme svg circle { fill: var(--ps-menthe); }
+html[data-theme="sombre"] .es-embleme .l1 svg { filter: drop-shadow(0 0 10px rgba(95, 224, 192, .35)); }
+html[data-theme="sombre"] .es-embleme .lm-emblem-shadow { background: radial-gradient(closest-side, rgba(95, 224, 192, .18), rgba(95, 224, 192, 0)); }
 html[data-theme="sombre"] .es-fait { background: var(--ps-btn-second); border-color: var(--ps-contour); }
 
 /* Boutons */
