@@ -247,11 +247,18 @@ async function regles(page, oppId) {
     // ---------- Commandes locales sur un dossier réel ----------
     c = await carteObligation(page, oppB);
     s1 = await raison(page, c, "premiere-reponse");
+    // Fonctionnalité 15 : sur un dossier réel, « Ignorer », « Commencer » et « Confier » (statuts locaux sans effet en
+    // base) ne sont plus proposés ; une explication les remplace dans le menu.
     await s1.locator(".dropdown-toggle").click();
-    await s1.locator('[data-ia="ignorer"]').click();
-    await page.waitForSelector("#ia-modale.show");
-    verifier((await page.locator("#ia-modale .modal-body").innerText()).includes("rien n'est enregistré dans le dossier"), "« Ignorer » sur un dossier réel : signalé comme propre au navigateur");
-    await fermerFenetre(page);
+    await s1.locator("[data-statuts-indisponibles]").waitFor({ state: "visible" });
+    verifier(await s1.locator('[data-ia="ignorer"], [data-ia="commencer"], [data-ia="transferer"]').count() === 0,
+      "« Ignorer », « Commencer » et « Confier » ne sont plus proposés sur un dossier réel ; une explication les remplace");
+    // Les commandes enregistrées restent : « Mettre en veille » (fonctionnalité 14) et « Déclarer le contact dans la fiche ».
+    verifier(await s1.locator('.dropdown-menu [data-ia="veille"]').count() === 1 && await s1.locator("[data-declarer-contact]").count() === 1,
+      "commandes enregistrées toujours proposées : « Mettre en veille » et « Déclarer le contact dans la fiche »");
+    verifier(await page.evaluate(function (id) { return window.Intelligence.action("premiere-reponse:oe-" + id).statut; }, oppB) === "ATraiter" &&
+      (await carteObligation(page, oppB)) !== null, "l'obligation reste à traiter (aucune commande ne l'a considérée terminée)");
+    await s1.locator(".dropdown-toggle").click();
     s1 = await raison(page, await carteObligation(page, oppB), "premiere-reponse");
     await s1.locator('[data-ia="relance"]').click();
     await page.waitForSelector("#ia-modale.show");
@@ -270,6 +277,8 @@ async function regles(page, oppId) {
     verifier(demo.ines === 2 && demo.commande === "realiser-local", "démonstration : rendez-vous et première réponse d'Inès restent deux cartes ; commande locale conservée");
     c = await carte(page, '[data-action-id="' + demo.local + '"]');
     if ((await c.locator(".iv-action-detail").getAttribute("hidden")) !== null) await c.locator("[data-iv-ouvrir]").click();
+    verifier(await c.locator('.dropdown-menu [data-ia="ignorer"]').count() === 1 && await c.locator('.dropdown-menu [data-ia="transferer"]').count() === 1 &&
+      await c.locator("[data-statuts-indisponibles]").count() === 0, "démonstration : « Ignorer » et « Confier » restent proposés (comportement local conservé)");
     await c.locator('[data-ia="terminer"]').click();
     verifier((await messageAffiche(page)).includes("Action marquée comme réalisée") && envois.length === avant, "démonstration : réalisation locale, aucun envoi au serveur");
 

@@ -325,18 +325,15 @@
   function enrichir(x) {
     var a = etat.actions[x.id] || {};
     var o = cloner(x);
-    o.statut = a.statut || "ATraiter";
-    // Veille enregistrée encore active : la recommandation quitte les priorités (statut « En veille »), sans être
-    // terminée. À la fin prévue, elle revient d'elle-même si le moteur la produit toujours.
-    var veille = Regles.veilleActive(veilles, x.id, new Date());
-    o.veille = null;
-    if (veille) {
-      o.statut = "EnVeille";
-      o.veille = { depuis: veille.depuis, jusqua: veille.jusqua };
-    }
-    o.reporteJusqua = a.reporteJusqua || null;
-    o.motifEtat = a.motif || null;
-    o.assignation = a.assignation || null;
+    // Statut, report local et assignation : ceux du navigateur pour la démonstration, aucun pour un dossier réel
+    // (fonctionnalité 15) ; puis la veille enregistrée encore active (« En veille », jamais « Terminée »), qui revient
+    // d'elle-même à la fin prévue (fonctionnalité 14). Règle unique : Regles.statutPresente.
+    var presente = Regles.statutPresente(x, a, veilles, new Date());
+    o.statut = presente.statut;
+    o.veille = presente.veille;
+    o.reporteJusqua = presente.reporteJusqua;
+    o.motifEtat = presente.motif;
+    o.assignation = presente.assignation;
     o.historique = a.historique || [];
     o.detecteLe = o.detecteLe || a.detecteLe;
     return o;
@@ -370,8 +367,15 @@
     });
   }
   // Actions hors de la file active (reportées, terminées, ignorées, obsolètes), y compris celles qui ne sont plus détectées.
+  // Un dossier réel n'apparaît jamais comme terminé, ignoré ou reporté par un statut local (fonctionnalité 15) ;
+  // « Devenue obsolète » (situation résolue, calculée par le moteur) reste listée.
+  function statutLocalVisible(id, statut) {
+    var a = etat.actions[id];
+    if (a.statut !== statut) return false;
+    return statut === "Obsolete" || !Regles.estDossierReel(a.snapshot || {});
+  }
   function horsFile(statut) {
-    return Object.keys(etat.actions).filter(function (id) { return etat.actions[id].statut === statut; }).map(action);
+    return Object.keys(etat.actions).filter(function (id) { return statutLocalVisible(id, statut); }).map(action);
   }
   function parProspect(pid) {
     return actives().filter(function (a) { return a.prospectId === pid; });
@@ -395,7 +399,7 @@
       prioritaires: c.prioritaires,
       echeance: c.echeance,
       retard: c.retard,
-      terminees: Object.keys(etat.actions).filter(function (id) { var a = etat.actions[id]; return a.statut === "Terminee" && aujourdhui(a.termineeLe); }).length,
+      terminees: Object.keys(etat.actions).filter(function (id) { return statutLocalVisible(id, "Terminee") && aujourdhui(etat.actions[id].termineeLe); }).length,
       reportees: horsFile("Reportee").length,
       enVeille: enVeille(conseiller).length,
     };
@@ -428,9 +432,15 @@
   }
 
   // ---------- Cycle de vie (actions du conseiller, locales) ----------
+  // Statut local refusé sur un dossier réel : il n'aurait aucun effet métier (fonctionnalité 15).
+  function estReel(id) {
+    var a = etat.actions[id];
+    var x = resultat.actions.filter(function (r) { return r.id === id; })[0] || (a && a.snapshot) || {};
+    return Regles.estDossierReel(x);
+  }
   function transition(id, vers, texte, patch) {
     var a = etat.actions[id];
-    if (!a) return null;
+    if (!a || estReel(id)) return null;
     var avant = cloner(a);
     historiser(a, vers, texte);
     Object.keys(patch || {}).forEach(function (k) { a[k] = patch[k]; });
@@ -449,7 +459,7 @@
   function terminer(id, note) {
     var a = etat.actions[id];
     var x = action(id);
-    if (!a || ACTIVES.indexOf(a.statut) < 0) return null;
+    if (!a || estReel(id) || ACTIVES.indexOf(a.statut) < 0) return null;
     var nbI = x && x.prospectId ? P.interactionsDe(x.prospectId).length : 0;
     var annuler = transition(id, "Terminee", "Marquée comme réalisée" + (note ? " : " + note : "") + ".", { termineeLe: iso() });
     if (x && x.prospectId && P.contact(x.prospectId)) P.ajouterNote(x.prospectId, { type: "action", opportuniteId: x.opportuniteId, resume: "Action réalisée : " + x.regleLibelle.toLowerCase() + (note ? " — " + note : "") + "." });
@@ -590,9 +600,9 @@
   }
   // Conditions empêchant une sollicitation : renvoie le motif, ou null.
   function suspensionContact(prospectId, opportuniteId, nature, horsPipeline) {
-    var pref = etat.preferences[prospectId];
+    var pref = preferenceLocale(prospectId);
     if (pref && (pref.nePlusContacter || pref.consentement === "retire") && nature !== "dossier") return "Le client a demandé à ne plus être sollicité.";
-    var p = etat.pauses[opportuniteId];
+    var p = pauseLocale(opportuniteId);
     if (p && new Date(p.jusqua) > new Date() && nature !== "dossier") return P.terminerPhrase("Suivi en pause jusqu'au " + P.dateCourte(p.jusqua));
     var o = P.opportunite(opportuniteId);
     if (o && ["Gagne", "Perdu"].indexOf(o.etape) >= 0 && !horsPipeline) return "L'opportunité est clôturée.";
@@ -630,15 +640,26 @@
     P.planifierSuivi(x.opportuniteId, String(texte).trim(), new Date(date));
     return true;
   }
-  // Préférences de contact (déclarées par le conseiller) et pause du suivi.
+  // Préférences de contact (déclarées par le conseiller) et pause du suivi : locales, donc réservées aux dossiers
+  // de démonstration. Pour un dossier réel, elles ne sont ni lues ni enregistrées (fonctionnalité 15).
+  function preferenceLocale(prospectId) {
+    if (String(prospectId || "").indexOf("pe-") === 0) return null;
+    return etat.preferences[prospectId] || null;
+  }
+  function pauseLocale(oppId) {
+    if (P.estEnregistree(oppId || "")) return null;
+    return etat.pauses[oppId] || null;
+  }
   function definirPreferences(prospectId, patch) {
+    if (String(prospectId || "").indexOf("pe-") === 0) return false;
     var p = etat.preferences[prospectId] || (etat.preferences[prospectId] = { prospectId: prospectId, consentement: "inconnu", nePlusContacter: false, demandeArretLe: null, note: null });
     Object.keys(patch).forEach(function (k) { p[k] = patch[k]; });
     if (patch.nePlusContacter) p.demandeArretLe = iso();
     changer();
+    return true;
   }
   function mettreEnPause(oppId, jusqua, motif) {
-    if (!oppId || !jusqua || new Date(jusqua) <= new Date()) return false;
+    if (!oppId || P.estEnregistree(oppId) || !jusqua || new Date(jusqua) <= new Date()) return false;
     etat.pauses[oppId] = { jusqua: new Date(jusqua).toISOString(), motif: motif || "À la demande du client", depuis: iso() };
     changer();
     return true;
@@ -763,8 +784,8 @@
     enregistrerBrouillon: enregistrerBrouillon,
     declarerContact: declarerContact,
     programmerSuivi: programmerSuivi,
-    preferences: function (pid) { return etat.preferences[pid] || null; },
-    pause: function (oppId) { return etat.pauses[oppId] || null; },
+    preferences: preferenceLocale,
+    pause: pauseLocale,
     definirPreferences: definirPreferences,
     mettreEnPause: mettreEnPause,
     leverPause: leverPause,

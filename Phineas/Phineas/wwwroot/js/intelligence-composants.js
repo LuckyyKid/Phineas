@@ -80,6 +80,15 @@
   // reactiverVisible : la ligne affiche déjà « Réactiver » en bouton ; le menu ne le répète pas.
   function boutonsSecondaires(a, reactiverVisible) {
     var actif = estActive(a);
+    // Dossier réel : seules les commandes enregistrées en base (veille, report du suivi) sont proposées. Commencer,
+    // ignorer, confier et le report local n'auraient aucun effet métier : ils sont remplacés par une explication
+    // (fonctionnalité 15). L'historique reste consultable.
+    if (actif && estDossierEnregistre(a)) {
+      var miseDeCote = window.IntelligenceRegles.commandeMiseDeCote(a, (ref.veille || {}).regles) === "report-local" ? "" : boutonMiseDeCote(a);
+      return miseDeCote +
+        '<p class="dropdown-item-text small mb-0" data-statuts-indisponibles>Dossier enregistré : « Commencer », « Ignorer » et « Confier » ne sont pas encore enregistrés en base, ils ne sont donc pas proposés.</p>' +
+        '<button type="button" class="dropdown-item" data-ia="historique" data-id="' + esc(a.id) + '"><i class="bi bi-clock-history"></i>Historique de l\'action</button>';
+    }
     var secondaires = actif ? [
       a.statut === "ATraiter" ? '<button type="button" class="dropdown-item" data-ia="commencer" data-id="' + esc(a.id) + '"><i class="bi bi-play-circle"></i>Commencer le traitement</button>' : "",
       boutonMiseDeCote(a),
@@ -327,6 +336,11 @@
     var a = I.action(id);
     if (a && a.regle === "suivi-echeance" && P.estEnregistree(a.opportuniteId)) {
       ouvrirReportSuivi(a.opportuniteId, a.regleLibelle, a.client);
+      return;
+    }
+    // Dossier réel sans suivi enregistré : pas de report local, il n'aurait aucun effet (fonctionnalité 15).
+    if (a && estDossierEnregistre(a)) {
+      P.notifier("Ce dossier est enregistré : seul un suivi planifié se reporte, ou la recommandation se met en veille.");
       return;
     }
     courant = { type: "reporter", id: id };

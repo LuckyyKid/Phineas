@@ -98,6 +98,23 @@
   function estEnregistree(id) {
     return String(id).indexOf("oe-") === 0;
   }
+
+  // ---------- Dossier réel et états locaux (fonctionnalité 15) ----------
+  // Dossier réel : opportunité « oe- » ou prospect « pe- » enregistrés en base. Ses obligations viennent du serveur
+  // (suivi, contacts déclarés, étape) : un état gardé dans le navigateur (statut « Ignorée », « Commencée »,
+  // « Confiée », « Terminée » ou report local, préférence de contact, pause) n'a aucun effet métier durable et ne doit
+  // jamais masquer, suspendre ou clôturer une de ses obligations. Seules les opérations enregistrées en base
+  // (réalisation, report du suivi, note, veille) changent ce qui est dû.
+  function estDossierReel(x) {
+    return estEnregistree((x && x.opportuniteId) || "") || String((x && x.prospectId) || "").indexOf("pe-") === 0;
+  }
+
+  // État local applicable à une recommandation : celui du navigateur pour un dossier de démonstration, aucun pour un
+  // dossier réel (même un état enregistré avant cette règle). local : { statut, reporteJusqua, motif, assignation }.
+  function etatLocalApplicable(x, local) {
+    if (!local || estDossierReel(x)) return { statut: "ATraiter", reporteJusqua: null, motif: null, assignation: null };
+    return { statut: local.statut || "ATraiter", reporteJusqua: local.reporteJusqua || null, motif: local.motif || null, assignation: local.assignation || null };
+  }
   Moteur.prototype.premiereReponse = function (o) {
     var types = this.ctx.typesContact || [];
     return this.interactions(o.prospectId, o.id).filter(function (i) { return estPremiereReponse(i, o, types); })[0] || null;
@@ -116,8 +133,10 @@
     x.client = this.nomClient(x.prospectId);
     x.conseillerId = x.conseillerId || (this.opps[x.opportuniteId] || {}).conseillerId || (this.contacts[x.prospectId] || {}).conseillerId;
     x.departement = x.departement || "conseiller";
-    var pref = (this.ctx.preferences || {})[x.prospectId];
-    var pause = (this.ctx.pauses || {})[x.opportuniteId];
+    // Préférences et pauses : locales au navigateur, elles ne suspendent que les dossiers de démonstration.
+    var reel = estDossierReel(x);
+    var pref = reel ? null : (this.ctx.preferences || {})[x.prospectId];
+    var pause = reel ? null : (this.ctx.pauses || {})[x.opportuniteId];
     var pauseActive = pause && new Date(pause.jusqua) > this.m;
     var arret = pref && (pref.nePlusContacter || pref.consentement === "retire");
     // Sollicitations commerciales et rappels internes : suspendus si le client l'a demandé.
@@ -381,6 +400,8 @@
     });
     c.opportunites.forEach(function (o) {
       if (!mo.oppActive(o.id)) return;
+      // Une pause locale ne crée pas d'obligation sur un dossier réel (fonctionnalité 15).
+      if (estEnregistree(o.id)) return;
       var pause = (c.pauses || {})[o.id];
       if (pause && new Date(pause.jusqua) <= m) {
         mo.ajouter({ id: "achat-reporte:" + o.id + ":" + cleJour(pause.jusqua), regle: "achat-reporte", prospectId: o.prospectId, opportuniteId: o.id, objet: { type: "opportunite", id: o.id },
@@ -559,6 +580,20 @@
     return "aucune";
   }
 
+  // Statut présenté au conseiller pour une recommandation : l'état local applicable (etatLocalApplicable), puis la
+  // veille enregistrée (fonctionnalité 14), qui reste la seule mise de côté valable pour un dossier réel.
+  // Retour : { statut, reporteJusqua, motif, assignation, veille }. Utilisé par intelligence-store.js (enrichir).
+  function statutPresente(x, local, veilles, maintenant) {
+    var r = etatLocalApplicable(x, local);
+    var v = veilleActive(veilles, x.id, maintenant);
+    r.veille = null;
+    if (v) {
+      r.statut = "EnVeille";
+      r.veille = { depuis: v.depuis, jusqua: v.jusqua };
+    }
+    return r;
+  }
+
   // ---------- Mise en veille enregistrée (fonctionnalité 14) ----------
   // Une veille est enregistrée en base pour UNE recommandation, par son identifiant exact (ServiceVeillesRecommandations).
   // veilles : { identifiant: { depuis, jusqua } }, déjà filtrées par le serveur (non réactivées, étape inchangée).
@@ -728,7 +763,8 @@
   var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse,
     estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares, commandeRealisation: commandeRealisation, compterObligations: compterObligations,
     commandesObligation: commandesObligation, prioritesAccueil: prioritesAccueil,
-    veilleActive: veilleActive, separerVeilles: separerVeilles, commandeMiseDeCote: commandeMiseDeCote };
+    veilleActive: veilleActive, separerVeilles: separerVeilles, commandeMiseDeCote: commandeMiseDeCote,
+    estDossierReel: estDossierReel, etatLocalApplicable: etatLocalApplicable, statutPresente: statutPresente };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);

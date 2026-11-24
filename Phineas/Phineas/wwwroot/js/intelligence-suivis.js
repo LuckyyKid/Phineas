@@ -117,8 +117,11 @@
       ? '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(suivi.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>' +
         '<button type="button" class="iv-btn iv-btn-discret" data-ia="reporter" data-id="' + esc(suivi.id) + '"><i class="bi bi-clock" aria-hidden="true"></i>Reporter</button>'
       : "";
-    var prochaine = '<span class="iv-cellule-boutons">' + realiser +
-      '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button>' +
+    // Préférences et pause : locales, donc réservées aux dossiers de démonstration (fonctionnalité 15). Sur un dossier
+    // réel, elles ne suspendraient plus rien : le bouton n'est pas proposé.
+    var preferences = window.IntelligenceRegles.estDossierReel(a) ? "" :
+      '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button>';
+    var prochaine = '<span class="iv-cellule-boutons">' + realiser + preferences +
       '<button type="button" class="iv-btn iv-btn-sapin iv-btn-petit" data-ia="relance" data-id="' + esc(a.id) + '">Préparer le message</button></span>' +
       '<span class="iv-sous">' + esc(prevu) + "</span>";
 
