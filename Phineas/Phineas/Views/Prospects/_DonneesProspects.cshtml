@@ -30,6 +30,8 @@
             prospectId = Model.ModificationProspectId,
             opportuniteId = Model.ModificationOpportuniteId,
             version = Model.ModificationVersion,
+            // Note refusée par ProspectsController.AjouterNote : relue par prospects-fiche.js.
+            note = Model.NoteRefusee is null ? null : new { saisie = Model.NoteRefusee, erreurs = Model.ErreursNote },
         },
     };
 }

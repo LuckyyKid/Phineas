@@ -309,7 +309,12 @@
         <div class="tab-pane fade" id="panneau-historique" role="tabpanel" aria-labelledby="onglet-historique" tabindex="0">
             <div class="row g-4">
                 <div class="col-lg-5 order-lg-2">
-                    <form class="card" id="form-note" novalidate>
+                    @* Prospect enregistré : envoi réel à ProspectsController.AjouterNote (jeton antiforgery ajouté par asp-action).
+                       Prospect fictif : prospects-fiche.js intercepte l'envoi et garde la note dans l'onglet.
+                       jeton : identifiant unique de ce formulaire affiché, pour qu'un double envoi ne crée qu'une note. *@
+                    <form class="card" id="form-note" method="post" asp-controller="Prospects" asp-action="AjouterNote" novalidate>
+                        <input type="hidden" name="prospectId" value="@Model.ProspectId" />
+                        <input type="hidden" name="jeton" value="@Guid.NewGuid().ToString("N")" />
                         <div class="card-header sv-card-header"><span><i class="bi bi-journal-plus me-2"></i>Ajouter une note</span></div>
                         <div class="card-body">
                             <div class="row g-3">
@@ -341,6 +346,8 @@
                                     <input class="form-control" id="n-date" name="date" type="date" />
                                     <div class="invalid-feedback" data-message-date>Indiquez une date à venir.</div>
                                 </div>
+                                @* Prospect enregistré : prospects-fiche.js désactive les deux champs de suivi et affiche cette phrase. *@
+                                <div class="col-12 form-text mt-0" data-suivi-indisponible hidden>La planification des suivis n'est pas encore disponible pour ce prospect.</div>
                             </div>
                         </div>
                         <div class="pr-form-pied">

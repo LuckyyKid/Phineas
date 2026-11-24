@@ -350,6 +350,14 @@
     var p = P.principale(contactId);
     sel.value = actuel && opps.some(function (o) { return o.id === actuel; }) ? actuel : p ? p.id : "";
     formNote.elements.date.min = P.aujourdhuiChamp();
+
+    // Prospect enregistré : les suivis ne sont pas encore enregistrés (le serveur les refuse aussi),
+    // donc les deux champs sont désactivés avec une courte explication.
+    var c = P.contact(contactId);
+    var suiviIndisponible = !!(c && c.enregistre);
+    formNote.elements.prochaineAction.disabled = suiviIndisponible;
+    formNote.elements.date.disabled = suiviIndisponible;
+    formNote.querySelector("[data-suivi-indisponible]").hidden = !suiviIndisponible;
   }
   formNote.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -370,6 +378,17 @@
     }
     if (!ok) { formNote.querySelector(".is-invalid").focus(); return; }
 
+    // Prospect enregistré : la note est envoyée au serveur (ProspectsController.AjouterNote), qui l'enregistre
+    // puis rouvre l'historique de la fiche. Les suivis (prochaine action, date) ne sont pas encore enregistrés.
+    var c = P.contact(contactId);
+    if (c && c.enregistre) {
+      if (!validerNoteEnregistree(resume, action, date)) return;
+      formNote.querySelector('button[type="submit"]').disabled = true; // contre le double clic
+      formNote.submit();
+      return;
+    }
+
+    // Prospect fictif : la note reste dans cet onglet (le message le dit).
     P.ajouterNote(contactId, {
       type: formNote.elements.type.value,
       opportuniteId: formNote.elements.opportuniteId.value || null,
@@ -382,6 +401,51 @@
     P.notifier("Note ajoutée à l'historique (locale, non enregistrée).");
   });
   formNote.addEventListener("input", function (e) { e.target.classList.remove("is-invalid"); });
+
+  // Même limite que le serveur (ServiceProspects.AjouterNoteAsync) : 600 caractères, fins de ligne comptées pour 1.
+  var LONGUEUR_NOTE = 600;
+  var MESSAGE_SUIVI = "Les suivis ne sont pas encore enregistrés pour un prospect enregistré : laissez « Prochaine action » et « Pour le » vides.";
+
+  // Contrôles propres à une note enregistrée ; le serveur refait les mêmes vérifications.
+  function validerNoteEnregistree(resume, action, date) {
+    if (resume.value.trim().length > LONGUEUR_NOTE) {
+      marquerChampNote(resume, "La note ne doit pas dépasser " + LONGUEUR_NOTE + " caractères.");
+      resume.focus();
+      return false;
+    }
+    if (action.value.trim() || date.value) {
+      marquerChampNote(action.value.trim() ? action : date, MESSAGE_SUIVI);
+      P.notifier(MESSAGE_SUIVI);
+      return false;
+    }
+    return true;
+  }
+
+  // Met le champ en erreur avec son message (sous le champ s'il a une zone prévue, sinon dans la notification).
+  function marquerChampNote(champ, message) {
+    champ.classList.add("is-invalid");
+    var zoneMessage = champ.parentElement.querySelector(".invalid-feedback");
+    if (zoneMessage) zoneMessage.textContent = message;
+  }
+
+  // Note refusée par le serveur : on rouvre l'historique avec la saisie envoyée et les messages reçus.
+  function afficherNoteRefusee(retour) {
+    onglet("historique");
+    var saisie = retour.saisie || {};
+    if (saisie.type) formNote.elements.type.value = saisie.type;
+    if (saisie.opportuniteId != null) formNote.elements.opportuniteId.value = saisie.opportuniteId;
+    formNote.elements.resume.value = saisie.resume || "";
+    formNote.elements.prochaineAction.value = saisie.prochaineAction || "";
+    formNote.elements.date.value = saisie.date ? String(saisie.date).slice(0, 10) : "";
+    var generales = [];
+    (retour.erreurs || []).forEach(function (e) {
+      var champ = e.champ ? formNote.elements[e.champ] : null;
+      if (champ && champ.tagName) marquerChampNote(champ, e.message);
+      else generales.push(e.message);
+    });
+    var messages = (retour.erreurs || []).map(function (e) { return e.message; });
+    P.notifier("Note non enregistrée. " + (generales.length ? generales.join(" ") : messages[0] || ""));
+  }
 
   // ---------- Opportunités ----------
   function rendreOpportunites(opps) {
@@ -633,4 +697,5 @@
   rendre();
   var hash = window.location.hash.replace("#", "");
   if (["qualification", "historique", "opportunites"].indexOf(hash) >= 0 && !racine.hidden) onglet(hash);
+  if (P.enregistrement.note && !racine.hidden) afficherNoteRefusee(P.enregistrement.note);
 })();

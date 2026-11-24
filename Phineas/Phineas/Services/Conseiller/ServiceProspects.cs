@@ -34,6 +34,10 @@ public interface IServiceProspects
     // version : empreinte du prospect lue par la page (voir Empreinte). Valeur du résultat : true si l'étape a changé,
     // false si l'opportunité était déjà à cette étape (rien n'est écrit, aucun historique).
     Task<ResultatService<bool>> ChangerEtapeAsync(string utilisateurId, string? opportuniteId, string? etape, string? version);
+
+    // Ajoute une note au dossier d'un prospect enregistré (id « pe-12 »), éventuellement liée à une de ses opportunités.
+    // Valeur du résultat : true si la note a été créée, false si ce même formulaire avait déjà été enregistré (aucun doublon).
+    Task<ResultatService<bool>> AjouterNoteAsync(string utilisateurId, NoteSaisie saisie);
 }
 
 // Prospects réels du conseiller (table Prospects et OpportunitesVente), ajoutés aux données fictives.
@@ -90,6 +94,9 @@ public class ServiceProspects : IServiceProspects
             .Include(p => p.Opportunites)
             .ThenInclude(o => o.HistoriqueEtapes)
             .ThenInclude(h => h.Utilisateur)
+            .Include(p => p.Notes)
+            .ThenInclude(n => n.Auteur)
+            .AsSplitQuery()
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
             .ToListAsync();
@@ -169,6 +176,14 @@ public class ServiceProspects : IServiceProspects
         };
         if (p.CommentaireInitial is not null)
             liste.Add(new(PrefixeInteraction + p.Id + "-note", contactId, opportuniteId, date, "note", auteur, p.CommentaireInitial));
+
+        // Notes enregistrées (NoteProspect) : type = catégorie choisie (note, appel, courriel, visite), texte tel que saisi.
+        foreach (var n in p.Notes)
+        {
+            string redacteur = n.Auteur is null ? auteur : n.Auteur.FullName;
+            string? opportuniteDeLaNote = n.OpportuniteId is null ? null : PrefixeOpportunite + n.OpportuniteId;
+            liste.Add(new(PrefixeInteraction + "n" + n.Id, contactId, opportuniteDeLaNote, HeureLocale(n.DateCreation), n.Type, redacteur, n.Contenu));
+        }
 
         // Changements d'étape enregistrés (HistoriqueEtapeOpportunite), même type « etape » que les changements locaux.
         foreach (var o in p.Opportunites)
@@ -439,6 +454,146 @@ public class ServiceProspects : IServiceProspects
 
     private const string MessageConflitEtape =
         "Ce prospect a été modifié entre-temps : l'étape n'a pas été changée. La page affiche maintenant ses valeurs actuelles ; refaites votre choix si besoin.";
+
+    // ---------- Notes ----------
+
+    // Même limite que l'attribut maxlength du champ « Résumé » de la fiche.
+    private const int LongueurNote = 600;
+    private const int LongueurJeton = 64;
+
+    public async Task<ResultatService<bool>> AjouterNoteAsync(string utilisateurId, NoteSaisie saisie)
+    {
+        int? id = LireId(saisie.ProspectId, PrefixeProspect);
+        if (id is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<bool>.Echec(MessageCompteInutilisable);
+
+        // Même transaction et même verrou que ModifierAsync et ChangerEtapeAsync : la note peut mettre à jour
+        // l'activité de l'opportunité, et deux envois du même formulaire passent l'un après l'autre.
+        // Pas de contrôle d'empreinte : une note n'écrase rien (l'empreinte ne contient ni les notes ni l'activité).
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, id.Value);
+        if (prospect is null)
+            return ResultatService<bool>.NonTrouve();
+
+        // Validation (sans dépendre du JavaScript) : le texte, puis l'opportunité, qui doit être une de ce prospect.
+        var resultat = new ResultatService<bool>();
+        resultat.Erreurs.AddRange(ErreursDeSaisieNote(saisie));
+
+        OpportuniteVente? opportunite = null;
+        if (!string.IsNullOrEmpty(saisie.OpportuniteId))
+        {
+            int? opportuniteId = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+            opportunite = prospect.Opportunites.FirstOrDefault(o => o.Id == opportuniteId);
+            if (opportunite is null)
+                resultat.Erreurs.Add(new ErreurChamp("opportuniteId", "Cette opportunité n'appartient pas à ce prospect."));
+        }
+
+        if (!resultat.Succes)
+            return resultat;
+
+        string contenu = NormaliserNote(saisie.Resume);
+        string type = saisie.Type!;
+        string jeton = saisie.Jeton!.Trim();
+
+        // Même formulaire déjà enregistré (double clic, renvoi) : aucune nouvelle note.
+        if (await NoteDejaEnregistreeAsync(prospect.Id, jeton))
+            return ResultatService<bool>.Ok(false);
+
+        var maintenant = DateTime.UtcNow;
+        prospect.Notes.Add(new NoteProspect
+        {
+            OpportuniteId = opportunite?.Id,
+            AuteurId = utilisateurId,
+            Type = type,
+            Contenu = contenu,
+            DateCreation = maintenant,
+            JetonSoumission = jeton,
+        });
+        // Une note sur une opportunité est une activité de cette opportunité (comme dans prospects-store.js).
+        if (opportunite is not null)
+            opportunite.DerniereActivite = maintenant;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            // L'index unique (prospect, jeton) a pu refuser un double envoi arrivé en même temps : ce n'est pas un échec.
+            if (await NoteDejaEnregistreeAsync(prospect.Id, jeton))
+                return ResultatService<bool>.Ok(false);
+            return ResultatService<bool>.Echec("L'enregistrement a échoué : la note n'a pas été enregistrée. Réessayez dans un instant.");
+        }
+        return ResultatService<bool>.Ok(true);
+    }
+
+    // Erreurs de saisie d'une note, sans lire la base (texte, type, champs de suivi, jeton du formulaire).
+    public static List<ErreurChamp> ErreursDeSaisieNote(NoteSaisie saisie)
+    {
+        var erreurs = new List<ErreurChamp>();
+        void Erreur(string champ, string message) => erreurs.Add(new ErreurChamp(champ, message));
+
+        string contenu = NormaliserNote(saisie.Resume);
+        if (contenu.Length == 0)
+            Erreur("resume", "Écrivez le résumé de l'échange.");
+        else if (contenu.Length > LongueurNote)
+            Erreur("resume", $"La note ne doit pas dépasser {LongueurNote} caractères (elle en compte {contenu.Length}).");
+
+        if (!EstDansListe(ReferentielsVente.TypesNote, saisie.Type))
+            Erreur("type", "Type de note inconnu.");
+
+        // Les suivis (prochaine action et date) feront l'objet d'une fonctionnalité à part : refusés plutôt qu'ignorés.
+        const string MessageSuivi = "Les suivis ne sont pas encore enregistrés pour un prospect enregistré : laissez « Prochaine action » et « Pour le » vides.";
+        if (!string.IsNullOrWhiteSpace(saisie.ProchaineAction))
+            Erreur("prochaineAction", MessageSuivi);
+        if (saisie.Date is not null)
+            Erreur("date", MessageSuivi);
+
+        string jeton = saisie.Jeton?.Trim() ?? "";
+        if (jeton.Length == 0 || jeton.Length > LongueurJeton)
+            Erreur("", "Le formulaire est incomplet : rechargez la fiche, puis écrivez de nouveau la note.");
+        return erreurs;
+    }
+
+    // Erreurs de saisie de la création (NouveauProspectSaisie) ou de la modification (ModificationProspectSaisie),
+    // sans lire ni écrire la base (les doublons ne sont donc pas cherchés ici).
+    // Utilisées par le contrôleur quand une valeur est illisible : toutes les erreurs s'affichent, rien n'est enregistré.
+    public static List<ErreurChamp> ErreursDeSaisie(NouveauProspectSaisie saisie, string utilisateurId)
+    {
+        var valeurs = Nettoyer(saisie);
+        var resultat = new ResultatService();
+        ValiderContact(valeurs, resultat);
+        ValiderAttribution(valeurs, utilisateurId, resultat);
+        if (saisie is ModificationProspectSaisie modification)
+        {
+            if (modification.OpportuniteId is not null)
+                ValiderInteret(valeurs, resultat);
+        }
+        else
+        {
+            ValiderInteret(valeurs, resultat);
+            ValiderChampsDeCreation(valeurs, resultat);
+        }
+        return resultat.Erreurs;
+    }
+
+    private Task<bool> NoteDejaEnregistreeAsync(int prospectId, string jeton) =>
+        _db.NotesProspect.AsNoTracking().AnyAsync(n => n.ProspectId == prospectId && n.JetonSoumission == jeton);
+
+    // Le texte est gardé tel quel, sauf : fins de ligne Windows (\r\n, envoyées par les navigateurs) ramenées à \n,
+    // et espaces retirés au début et à la fin. Aucun autre changement (pas d'encodage HTML : il se fait à l'affichage).
+    private static string NormaliserNote(string? texte)
+    {
+        if (texte is null)
+            return "";
+        return texte.Replace("\r\n", "\n").Replace('\r', '\n').Trim();
+    }
 
     // « Negociation » donne EtapeVente.Negociation ; un nombre ou un texte inconnu donne null.
     private static EtapeVente? LireEtapeConnue(string? valeur)

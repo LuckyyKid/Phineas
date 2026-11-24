@@ -378,6 +378,55 @@ namespace Phineas.Data.Migrations
                     b.ToTable("HistoriquesStatut");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.NoteProspect", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuteurId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<string>("Contenu")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("varchar(600)");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("JetonSoumission")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int?>("OpportuniteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProspectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuteurId");
+
+                    b.HasIndex("OpportuniteId");
+
+                    b.HasIndex("ProspectId", "JetonSoumission")
+                        .IsUnique();
+
+                    b.ToTable("NotesProspect");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.OpportuniteVente", b =>
                 {
                     b.Property<int>("Id")
@@ -696,6 +745,32 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Vehicule");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.NoteProspect", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.ApplicationUser", "Auteur")
+                        .WithMany()
+                        .HasForeignKey("AuteurId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
+                        .WithMany()
+                        .HasForeignKey("OpportuniteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Phineas.Models.Entities.Prospect", "Prospect")
+                        .WithMany("Notes")
+                        .HasForeignKey("ProspectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Auteur");
+
+                    b.Navigation("Opportunite");
+
+                    b.Navigation("Prospect");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.OpportuniteVente", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.Prospect", "Prospect")
@@ -749,6 +824,8 @@ namespace Phineas.Data.Migrations
 
             modelBuilder.Entity("Phineas.Models.Entities.Prospect", b =>
                 {
+                    b.Navigation("Notes");
+
                     b.Navigation("Opportunites");
                 });
 

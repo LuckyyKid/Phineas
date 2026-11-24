@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Prospect> Prospects => Set<Prospect>();
     public DbSet<OpportuniteVente> OpportunitesVente => Set<OpportuniteVente>();
     public DbSet<HistoriqueEtapeOpportunite> HistoriquesEtapeOpportunite => Set<HistoriqueEtapeOpportunite>();
+    public DbSet<NoteProspect> NotesProspect => Set<NoteProspect>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -115,6 +116,28 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne(h => h.Utilisateur)
                 .WithMany()
                 .HasForeignKey(h => h.UtilisateurId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<NoteProspect>(e =>
+        {
+            // Un même formulaire envoyé deux fois ne crée qu'une note (voir ServiceProspects.AjouterNoteAsync).
+            e.HasIndex(n => new { n.ProspectId, n.JetonSoumission }).IsUnique();
+
+            e.HasOne(n => n.Prospect)
+                .WithMany(p => p.Notes)
+                .HasForeignKey(n => n.ProspectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Si l'opportunité disparaît, la note reste sur le prospect comme note générale (et ne bloque aucune suppression).
+            e.HasOne(n => n.Opportunite)
+                .WithMany()
+                .HasForeignKey(n => n.OpportuniteId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(n => n.Auteur)
+                .WithMany()
+                .HasForeignKey(n => n.AuteurId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

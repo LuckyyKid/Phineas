@@ -53,4 +53,7 @@ public class Prospect
     public DateTime DateCreation { get; set; } = DateTime.UtcNow;
 
     public ICollection<OpportuniteVente> Opportunites { get; set; } = new List<OpportuniteVente>();
+
+    // Notes ajoutées depuis l'onglet Historique (voir NoteProspect).
+    public ICollection<NoteProspect> Notes { get; set; } = new List<NoteProspect>();
 }

@@ -116,6 +116,10 @@ public class ProspectsPageViewModel
     // après un conflit, un nouveau clic sur « Enregistrer » est donc refusé lui aussi, tant que l'utilisateur
     // n'a pas rouvert le formulaire sur les valeurs actuelles.
     public string? ModificationVersion { get; init; }
+
+    // Note refusée par le serveur : l'onglet Historique se rouvre avec la saisie et les erreurs (prospects-fiche.js).
+    public NoteSaisie? NoteRefusee { get; init; }
+    public IReadOnlyList<ErreurChamp> ErreursNote { get; init; } = [];
 }
 
 // Champs postés par le tiroir « Nouveau prospect » (_TiroirProspect.cshtml).
@@ -138,6 +142,21 @@ public class NouveauProspectSaisie
     public string? Etape { get; set; }
     public string? ProchaineAction { get; set; }
     public DateTime? DateSuivi { get; set; }
+}
+
+// Champs postés par le formulaire « Ajouter une note » de la fiche (onglet Historique) pour un prospect enregistré.
+// Les noms suivent les attributs name du formulaire ; toute la validation se fait dans ServiceProspects.AjouterNoteAsync.
+public class NoteSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? Type { get; set; }
+    public string? Resume { get; set; }
+    // Champs de suivi du formulaire : pas encore enregistrés pour un prospect enregistré (refusés s'ils sont remplis).
+    public string? ProchaineAction { get; set; }
+    public DateTime? Date { get; set; }
+    // Jeton unique du formulaire affiché : un double envoi ne crée qu'une note.
+    public string? Jeton { get; set; }
 }
 
 // Champs postés par le tiroir en mode « Modifier » pour un prospect enregistré.

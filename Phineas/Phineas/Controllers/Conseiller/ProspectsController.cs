@@ -10,10 +10,10 @@ using Phineas.Services.Conseiller;
 namespace Phineas.Controllers.Conseiller;
 
 // Les pages reçoivent les prospects en JSON : données de démonstration + prospects enregistrés du conseiller.
-// La création (POST Creer), la modification d'un prospect enregistré (POST Modifier) et le changement d'étape
-// d'une opportunité enregistrée (POST ChangerEtape) sont réels, enregistrés en base par IServiceProspects ;
-// les autres actions (notes, suivis, qualification complète, clôture comme perdue) et toute modification
-// d'un prospect fictif restent locales au navigateur pour l'instant.
+// La création (POST Creer), la modification d'un prospect enregistré (POST Modifier), le changement d'étape
+// d'une opportunité enregistrée (POST ChangerEtape) et l'ajout d'une note (POST AjouterNote) sont réels,
+// enregistrés en base par IServiceProspects ; les autres actions (suivis, qualification complète, clôture
+// comme perdue) et toute modification d'un prospect fictif restent locales au navigateur pour l'instant.
 [Authorize(Roles = AppRoles.Conseiller)]
 public class ProspectsController : Controller
 {
@@ -56,15 +56,20 @@ public class ProspectsController : Controller
         if (me is null)
             return Challenge();
 
-        var resultat = await _prospects.CreerAsync(me.Id, saisie);
-
-        var erreurs = new List<ErreurChamp>(resultat.Erreurs);
-        AjouterErreursDeLecture(erreurs);
-
-        if (resultat.Succes && erreurs.Count == 0)
+        // Une valeur illisible (ex. budget non numérique) est refusée avant tout enregistrement,
+        // avec les autres erreurs de saisie pour que tout s'affiche d'un coup.
+        var erreurs = ErreursDeLecture();
+        if (erreurs.Count > 0)
+            erreurs.AddRange(ServiceProspects.ErreursDeSaisie(saisie, me.Id));
+        else
         {
-            TempData[CleConfirmation] = $"{saisie.Prenom?.Trim()} {saisie.Nom?.Trim()} a été enregistré dans vos prospects.";
-            return RedirectToAction(nameof(Index));
+            var resultat = await _prospects.CreerAsync(me.Id, saisie);
+            if (resultat.Succes)
+            {
+                TempData[CleConfirmation] = $"{saisie.Prenom?.Trim()} {saisie.Nom?.Trim()} a été enregistré dans vos prospects.";
+                return RedirectToAction(nameof(Index));
+            }
+            erreurs = resultat.Erreurs;
         }
 
         var modele = await ConstruireAsync(null, false, saisieRefusee: saisie, erreurs: erreurs);
@@ -109,17 +114,22 @@ public class ProspectsController : Controller
         if (me is null)
             return Challenge();
 
-        var resultat = await _prospects.ModifierAsync(me.Id, saisie);
-        if (resultat.Introuvable)
-            return await FicheIntrouvableAsync(saisie.ProspectId ?? "");
-
-        var erreurs = new List<ErreurChamp>(resultat.Erreurs);
-        AjouterErreursDeLecture(erreurs);
-
-        if (resultat.Succes && erreurs.Count == 0)
+        // Une valeur illisible (ex. budget non numérique) est refusée avant tout enregistrement,
+        // avec les autres erreurs de saisie pour que tout s'affiche d'un coup.
+        var erreurs = ErreursDeLecture();
+        if (erreurs.Count > 0)
+            erreurs.AddRange(ServiceProspects.ErreursDeSaisie(saisie, me.Id));
+        else
         {
-            TempData[CleConfirmation] = "Modifications enregistrées.";
-            return RedirectToAction(nameof(Fiche), new { id = saisie.ProspectId });
+            var resultat = await _prospects.ModifierAsync(me.Id, saisie);
+            if (resultat.Introuvable)
+                return await FicheIntrouvableAsync(saisie.ProspectId ?? "");
+            if (resultat.Succes)
+            {
+                TempData[CleConfirmation] = "Modifications enregistrées.";
+                return RedirectToAction(nameof(Fiche), new { id = saisie.ProspectId });
+            }
+            erreurs = resultat.Erreurs;
         }
 
         var modele = await ConstruireAsync(
@@ -161,6 +171,41 @@ public class ProspectsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // Formulaire « Ajouter une note » (onglet Historique) d'un prospect enregistré : enregistrement réel,
+    // puis Post/Redirect/Get vers l'historique de la fiche ; en cas de refus, la fiche se rouvre avec la saisie.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AjouterNote(NoteSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        // Une valeur illisible (ex. date mal formée) est refusée avant tout enregistrement,
+        // avec les autres erreurs de saisie pour que tout s'affiche d'un coup.
+        var erreurs = ErreursDeLecture();
+        if (erreurs.Count > 0)
+            erreurs.AddRange(ServiceProspects.ErreursDeSaisieNote(saisie));
+        else
+        {
+            var resultat = await _prospects.AjouterNoteAsync(me.Id, saisie);
+            if (resultat.Introuvable)
+                return await FicheIntrouvableAsync(saisie.ProspectId ?? "");
+            if (resultat.Succes)
+            {
+                TempData[CleConfirmation] = resultat.Valeur
+                    ? "Note enregistrée."
+                    : "Cette note était déjà enregistrée : aucun doublon n'a été créé.";
+                string fiche = Url.Action(nameof(Fiche), new { id = saisie.ProspectId })!;
+                return Redirect(fiche + "#historique");
+            }
+            erreurs = resultat.Erreurs;
+        }
+
+        var modele = await ConstruireAsync(saisie.ProspectId, false, avecModules: true, noteRefusee: saisie, erreursNote: erreurs);
+        return modele is null ? Challenge() : View(nameof(Fiche), modele);
+    }
+
     private static string LibelleEtape(string? etape) =>
         Enum.TryParse<EtapeVente>(etape, out var valeur) ? FormatVente.Libelle(valeur) : etape ?? "";
 
@@ -182,14 +227,17 @@ public class ProspectsController : Controller
         return View("Error", erreur);
     }
 
-    // Une valeur illisible (ex. budget non numérique) arrive vide dans la saisie : on le signale aussi.
-    private void AjouterErreursDeLecture(List<ErreurChamp> erreurs)
+    // Valeurs que MVC n'a pas pu lire (ex. budget non numérique) : elles arrivent vides dans la saisie.
+    // Les actions les vérifient AVANT d'appeler le service, sinon le reste serait enregistré malgré l'erreur affichée.
+    private List<ErreurChamp> ErreursDeLecture()
     {
+        var erreurs = new List<ErreurChamp>();
         foreach (var (cle, entree) in ModelState)
         {
             if (entree.Errors.Count > 0)
                 erreurs.Add(new ErreurChamp(NomDuChamp(cle), "Valeur invalide."));
         }
+        return erreurs;
     }
 
     private const string CleConfirmation = "ConfirmationProspect";
@@ -201,7 +249,9 @@ public class ProspectsController : Controller
         bool avecModules = false,
         NouveauProspectSaisie? saisieRefusee = null,
         List<ErreurChamp>? erreurs = null,
-        string? modificationOpportuniteId = null
+        string? modificationOpportuniteId = null,
+        NoteSaisie? noteRefusee = null,
+        List<ErreurChamp>? erreursNote = null
     )
     {
         var me = await _account.GetSummaryAsync(User);
@@ -226,6 +276,8 @@ public class ProspectsController : Controller
             ModificationProspectId = saisieRefusee is ModificationProspectSaisie ? prospectId : null,
             ModificationOpportuniteId = modificationOpportuniteId,
             ModificationVersion = (saisieRefusee as ModificationProspectSaisie)?.Version,
+            NoteRefusee = noteRefusee,
+            ErreursNote = erreursNote ?? [],
         };
     }
 }
