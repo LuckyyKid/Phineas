@@ -122,19 +122,18 @@ async function messageAffiche(page) {
       "en base : une note, texte exact, type appel, opportunité " + oppId + ", auteur Sophie");
     verifier(sql("SELECT Etape FROM OpportunitesVente WHERE Id = " + oppId) === "Negociation", "en base : l'étape n'a pas changé");
 
-    // Suivis : pas encore disponibles pour un prospect enregistré. Champs désactivés et expliqués dans la page…
-    verifier(await page.isDisabled("#n-action") && await page.isDisabled("#n-date"), "suivi : « Prochaine action » et « Pour le » sont désactivés");
-    verifier(await page.locator("[data-suivi-indisponible]").isVisible(), "suivi : l'explication est affichée");
-    // …et refusés par le serveur si on contourne la page (envoi direct avec ces champs remplis).
+    // Suivis (fonctionnalité 05) : les champs « Prochaine action » et « Pour le » sont actifs…
+    verifier(await page.isEnabled("#n-action") && await page.isEnabled("#n-date"), "suivi : « Prochaine action » et « Pour le » sont actifs");
+    // …et une date sans action reste refusée par le serveur, sans note (envoi direct qui contourne la page).
     const contournement = await page.request.post(BASE_URL + "/Prospects/AjouterNote", {
       form: {
-        prospectId: "pe-" + prospectId, jeton: "contournement-" + suffixe, type: "note", opportuniteId: "",
-        resume: "Note avec suivi " + suffixe, prochaineAction: "Rappeler", date: "2030-01-15",
+        prospectId: "pe-" + prospectId, jeton: "contournement-" + suffixe, type: "note", opportuniteId: "oe-" + oppId,
+        resume: "Note avec date seule " + suffixe, prochaineAction: "", date: "2030-01-15",
         __RequestVerificationToken: await page.inputValue('#form-note input[name="__RequestVerificationToken"]'),
       },
       maxRedirects: 0,
     });
-    verifier(contournement.status() === 200 && (await contournement.text()).includes("\"champ\":\"prochaineAction\""), "suivi : envoi direct refusé par le serveur");
+    verifier(contournement.status() === 200 && (await contournement.text()).includes("\"champ\":\"date\""), "suivi : une date sans action est refusée par le serveur");
     verifier(sql("SELECT COUNT(*) FROM NotesProspect WHERE ProspectId = " + prospectId) === "1", "suivi : aucune note ajoutée en base");
 
     // Double envoi du même formulaire (même jeton) : une seule note.

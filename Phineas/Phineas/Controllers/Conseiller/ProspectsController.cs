@@ -11,9 +11,10 @@ namespace Phineas.Controllers.Conseiller;
 
 // Les pages reçoivent les prospects en JSON : données de démonstration + prospects enregistrés du conseiller.
 // La création (POST Creer), la modification d'un prospect enregistré (POST Modifier), le changement d'étape
-// d'une opportunité enregistrée (POST ChangerEtape) et l'ajout d'une note (POST AjouterNote) sont réels,
-// enregistrés en base par IServiceProspects ; les autres actions (suivis, qualification complète, clôture
-// comme perdue) et toute modification d'un prospect fictif restent locales au navigateur pour l'instant.
+// d'une opportunité enregistrée (POST ChangerEtape), l'ajout d'une note (POST AjouterNote) et la planification
+// du prochain suivi (POST PlanifierSuivi, ou avec une note) sont réels, enregistrés en base par IServiceProspects ;
+// les autres actions (qualification complète, clôture comme perdue, actions de « Mes suivis ») et toute
+// modification d'un prospect fictif restent locales au navigateur pour l'instant.
 [Authorize(Roles = AppRoles.Conseiller)]
 public class ProspectsController : Controller
 {
@@ -206,6 +207,41 @@ public class ProspectsController : Controller
         return modele is null ? Challenge() : View(nameof(Fiche), modele);
     }
 
+    // Fenêtre « Planifier un suivi » de la fiche : la prochaine action de l'opportunité choisie est remplacée,
+    // puis Post/Redirect/Get vers la fiche ; en cas de refus, la fiche se rouvre avec la fenêtre et la saisie.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    // [FromForm] : le champ « action » du formulaire ne doit jamais être rempli par la valeur de route « action ».
+    public async Task<IActionResult> PlanifierSuivi([FromForm] SuiviSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        // Une valeur illisible (ex. date mal formée) est refusée avant tout enregistrement,
+        // avec les autres erreurs de saisie pour que tout s'affiche d'un coup.
+        var erreurs = ErreursDeLecture();
+        if (erreurs.Count > 0)
+            erreurs.AddRange(ServiceProspects.ErreursDeSuivi(saisie.Action, saisie.Date, "action", "date", dateObligatoire: true));
+        else
+        {
+            var resultat = await _prospects.PlanifierSuiviAsync(me.Id, saisie);
+            if (resultat.Introuvable)
+                return await FicheIntrouvableAsync(saisie.ProspectId ?? "");
+            if (resultat.Succes)
+            {
+                TempData[CleConfirmation] = resultat.Valeur
+                    ? "Suivi planifié : il remplace la prochaine action de l'opportunité. Aucun rappel automatique n'est envoyé."
+                    : "Ce suivi était déjà planifié : rien n'a changé.";
+                return RedirectToAction(nameof(Fiche), new { id = saisie.ProspectId });
+            }
+            erreurs = resultat.Erreurs;
+        }
+
+        var modele = await ConstruireAsync(saisie.ProspectId, false, avecModules: true, suiviRefuse: saisie, erreursSuivi: erreurs);
+        return modele is null ? Challenge() : View(nameof(Fiche), modele);
+    }
+
     private static string LibelleEtape(string? etape) =>
         Enum.TryParse<EtapeVente>(etape, out var valeur) ? FormatVente.Libelle(valeur) : etape ?? "";
 
@@ -251,7 +287,9 @@ public class ProspectsController : Controller
         List<ErreurChamp>? erreurs = null,
         string? modificationOpportuniteId = null,
         NoteSaisie? noteRefusee = null,
-        List<ErreurChamp>? erreursNote = null
+        List<ErreurChamp>? erreursNote = null,
+        SuiviSaisie? suiviRefuse = null,
+        List<ErreurChamp>? erreursSuivi = null
     )
     {
         var me = await _account.GetSummaryAsync(User);
@@ -278,6 +316,8 @@ public class ProspectsController : Controller
             ModificationVersion = (saisieRefusee as ModificationProspectSaisie)?.Version,
             NoteRefusee = noteRefusee,
             ErreursNote = erreursNote ?? [],
+            SuiviRefuse = suiviRefuse,
+            ErreursSuivi = erreursSuivi ?? [],
         };
     }
 }

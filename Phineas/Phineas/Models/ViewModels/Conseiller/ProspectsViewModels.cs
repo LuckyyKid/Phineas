@@ -120,6 +120,10 @@ public class ProspectsPageViewModel
     // Note refusée par le serveur : l'onglet Historique se rouvre avec la saisie et les erreurs (prospects-fiche.js).
     public NoteSaisie? NoteRefusee { get; init; }
     public IReadOnlyList<ErreurChamp> ErreursNote { get; init; } = [];
+
+    // Suivi refusé par le serveur : la fenêtre « Planifier un suivi » se rouvre avec la saisie et les erreurs.
+    public SuiviSaisie? SuiviRefuse { get; init; }
+    public IReadOnlyList<ErreurChamp> ErreursSuivi { get; init; } = [];
 }
 
 // Champs postés par le tiroir « Nouveau prospect » (_TiroirProspect.cshtml).
@@ -152,11 +156,24 @@ public class NoteSaisie
     public string? OpportuniteId { get; set; }
     public string? Type { get; set; }
     public string? Resume { get; set; }
-    // Champs de suivi du formulaire : pas encore enregistrés pour un prospect enregistré (refusés s'ils sont remplis).
+    // Suivi facultatif planifié avec la note (« Prochaine action », « Pour le ») : il faut alors choisir l'opportunité.
     public string? ProchaineAction { get; set; }
     public DateTime? Date { get; set; }
     // Jeton unique du formulaire affiché : un double envoi ne crée qu'une note.
     public string? Jeton { get; set; }
+    // Empreinte du prospect lue par la page : vérifiée seulement si un suivi est planifié avec la note.
+    public string? Version { get; set; }
+}
+
+// Champs postés par la fenêtre « Planifier un suivi » de la fiche, pour une opportunité enregistrée.
+public class SuiviSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? Action { get; set; }
+    public DateTime? Date { get; set; }
+    // Empreinte du prospect lue par la page (voir ServiceProspects.Empreinte).
+    public string? Version { get; set; }
 }
 
 // Champs postés par le tiroir en mode « Modifier » pour un prospect enregistré.

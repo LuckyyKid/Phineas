@@ -31,6 +31,13 @@
   font-family: var(--ph-font);
 }
 
+/* Fenêtre modale Bootstrap placée dans la page (ex. « Planifier un suivi ») : la coque est isolée (isolation: isolate,
+   pour garder les halos derrière le contenu), donc la fenêtre restait sous le fond gris que Bootstrap ajoute dans <body>
+   et ne recevait aucun clic. Pendant qu'elle est ouverte, la coque passe au-dessus de ce fond (1050 dans Bootstrap)
+   et la fenêtre assombrit elle-même la page, avec la même opacité que le fond de Bootstrap. Version sombre en fin de feuille. */
+.ph-espace:has(.modal.show) { z-index: 1051; }
+.ph-espace .modal.show { background-color: rgba(var(--bs-black-rgb), .5); }
+
 /* Halos fixes derrière le contenu */
 .ph-espace::before {
   content: "";
@@ -416,3 +423,6 @@ html[data-theme="sombre"] .sv-lien-fiche:hover { color: var(--ps-menthe); }
 @media (prefers-reduced-motion: reduce) {
   html[data-theme="sombre"] .ph-stat { transition: none; }
 }
+
+/* Fenêtre modale dans la page : même opacité que le fond de Bootstrap en sombre (theme-sombre.css, .modal-backdrop). */
+html[data-theme="sombre"] .ph-espace .modal.show { background-color: rgba(var(--bs-black-rgb), .6); }

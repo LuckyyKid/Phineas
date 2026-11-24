@@ -35,9 +35,14 @@ public interface IServiceProspects
     // false si l'opportunité était déjà à cette étape (rien n'est écrit, aucun historique).
     Task<ResultatService<bool>> ChangerEtapeAsync(string utilisateurId, string? opportuniteId, string? etape, string? version);
 
-    // Ajoute une note au dossier d'un prospect enregistré (id « pe-12 »), éventuellement liée à une de ses opportunités.
+    // Ajoute une note au dossier d'un prospect enregistré (id « pe-12 »), éventuellement liée à une de ses opportunités,
+    // et, si « Prochaine action » est remplie, planifie ce suivi sur cette opportunité (tout ou rien).
     // Valeur du résultat : true si la note a été créée, false si ce même formulaire avait déjà été enregistré (aucun doublon).
     Task<ResultatService<bool>> AjouterNoteAsync(string utilisateurId, NoteSaisie saisie);
+
+    // Planifie la prochaine action d'une opportunité enregistrée (elle remplace l'action courante).
+    // Valeur du résultat : true si le suivi a changé, false s'il était déjà planifié à l'identique (double envoi).
+    Task<ResultatService<bool>> PlanifierSuiviAsync(string utilisateurId, SuiviSaisie saisie);
 }
 
 // Prospects réels du conseiller (table Prospects et OpportunitesVente), ajoutés aux données fictives.
@@ -479,7 +484,12 @@ public class ServiceProspects : IServiceProspects
         if (prospect is null)
             return ResultatService<bool>.NonTrouve();
 
-        // Validation (sans dépendre du JavaScript) : le texte, puis l'opportunité, qui doit être une de ce prospect.
+        // Même formulaire déjà enregistré (double clic, renvoi) : rien de nouveau, ni note ni suivi.
+        string? jetonRecu = saisie.Jeton?.Trim();
+        if (!string.IsNullOrEmpty(jetonRecu) && await NoteDejaEnregistreeAsync(prospect.Id, jetonRecu))
+            return ResultatService<bool>.Ok(false);
+
+        // Validation de toute la soumission (sans dépendre du JavaScript) avant la moindre écriture.
         var resultat = new ResultatService<bool>();
         resultat.Erreurs.AddRange(ErreursDeSaisieNote(saisie));
 
@@ -492,16 +502,23 @@ public class ServiceProspects : IServiceProspects
                 resultat.Erreurs.Add(new ErreurChamp("opportuniteId", "Cette opportunité n'appartient pas à ce prospect."));
         }
 
+        // Suivi planifié avec la note : il porte sur l'opportunité choisie dans « Concerne ».
+        bool avecSuivi = !string.IsNullOrWhiteSpace(saisie.ProchaineAction);
+        if (avecSuivi && string.IsNullOrEmpty(saisie.OpportuniteId))
+            resultat.Erreurs.Add(new ErreurChamp("opportuniteId", "Choisissez l'opportunité concernée pour planifier ce suivi."));
+        if (avecSuivi && opportunite is not null && !EstActive(opportunite))
+            resultat.Erreurs.Add(new ErreurChamp("opportuniteId", MessageOpportuniteCloturee));
+
         if (!resultat.Succes)
             return resultat;
 
+        // Le suivi remplace la prochaine action : la page doit montrer l'état actuel du dossier.
+        if (avecSuivi && saisie.Version != Empreinte(prospect))
+            return ResultatService<bool>.Echec(MessageConflitSuivi);
+
         string contenu = NormaliserNote(saisie.Resume);
         string type = saisie.Type!;
-        string jeton = saisie.Jeton!.Trim();
-
-        // Même formulaire déjà enregistré (double clic, renvoi) : aucune nouvelle note.
-        if (await NoteDejaEnregistreeAsync(prospect.Id, jeton))
-            return ResultatService<bool>.Ok(false);
+        string jeton = jetonRecu!;
 
         var maintenant = DateTime.UtcNow;
         prospect.Notes.Add(new NoteProspect
@@ -516,6 +533,9 @@ public class ServiceProspects : IServiceProspects
         // Une note sur une opportunité est une activité de cette opportunité (comme dans prospects-store.js).
         if (opportunite is not null)
             opportunite.DerniereActivite = maintenant;
+        // Même SaveChanges que la note : la note et le suivi sont enregistrés ensemble, ou pas du tout.
+        if (avecSuivi)
+            AppliquerSuivi(opportunite!, saisie.ProchaineAction!.Trim(), saisie.Date);
 
         try
         {
@@ -548,12 +568,16 @@ public class ServiceProspects : IServiceProspects
         if (!EstDansListe(ReferentielsVente.TypesNote, saisie.Type))
             Erreur("type", "Type de note inconnu.");
 
-        // Les suivis (prochaine action et date) feront l'objet d'une fonctionnalité à part : refusés plutôt qu'ignorés.
-        const string MessageSuivi = "Les suivis ne sont pas encore enregistrés pour un prospect enregistré : laissez « Prochaine action » et « Pour le » vides.";
-        if (!string.IsNullOrWhiteSpace(saisie.ProchaineAction))
-            Erreur("prochaineAction", MessageSuivi);
-        if (saisie.Date is not null)
-            Erreur("date", MessageSuivi);
+        // Suivi facultatif (mêmes règles que le formulaire) : une date demande une action ; l'action peut être sans date.
+        if (string.IsNullOrWhiteSpace(saisie.ProchaineAction))
+        {
+            if (saisie.Date is not null)
+                Erreur("date", "Précisez la prochaine action liée à cette date.");
+        }
+        else
+        {
+            erreurs.AddRange(ErreursDeSuivi(saisie.ProchaineAction, saisie.Date, "prochaineAction", "date", dateObligatoire: false));
+        }
 
         string jeton = saisie.Jeton?.Trim() ?? "";
         if (jeton.Length == 0 || jeton.Length > LongueurJeton)
@@ -582,6 +606,113 @@ public class ServiceProspects : IServiceProspects
         }
         return resultat.Erreurs;
     }
+
+    // ---------- Suivis ----------
+
+    private const string MessageOpportuniteCloturee = "Cette opportunité est clôturée : planifiez le suivi sur une opportunité active.";
+    private const string MessageConflitSuivi =
+        "Ce prospect a été modifié entre-temps : le suivi n'a pas été enregistré. La page affiche maintenant ses valeurs actuelles ; refaites la planification si besoin.";
+
+    public async Task<ResultatService<bool>> PlanifierSuiviAsync(string utilisateurId, SuiviSaisie saisie)
+    {
+        int? id = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        if (id is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<bool>.Echec(MessageCompteInutilisable);
+
+        // Même transaction et même verrou (ligne du prospect parent) que les autres écritures du dossier.
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        int? prospectId = await _db.OpportunitesVente.Where(o => o.Id == id.Value).Select(o => (int?)o.ProspectId).FirstOrDefaultAsync();
+        if (prospectId is null)
+            return ResultatService<bool>.NonTrouve();
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, prospectId.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == id.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var resultat = new ResultatService<bool>();
+        resultat.Erreurs.AddRange(ErreursDeSuivi(saisie.Action, saisie.Date, "action", "date", dateObligatoire: true));
+        if (!EstActive(opportunite))
+            resultat.Erreurs.Add(new ErreurChamp("opportuniteId", MessageOpportuniteCloturee));
+        if (!resultat.Succes)
+            return resultat;
+
+        string action = saisie.Action!.Trim();
+        DateTime date = DateDuSuivi(saisie.Date)!.Value;
+
+        // Déjà planifié à l'identique (double clic, renvoi) : rien à écrire, et ce n'est pas un conflit.
+        if (opportunite.ProchaineAction == action && opportunite.DateProchaineAction == date)
+            return ResultatService<bool>.Ok(false);
+
+        // Le suivi remplace la prochaine action : la page doit montrer l'état actuel du dossier.
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService<bool>.Echec(MessageConflitSuivi);
+
+        AppliquerSuivi(opportunite, action, saisie.Date);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<bool>.Echec("L'enregistrement a échoué : le suivi n'a pas été planifié. Réessayez dans un instant.");
+        }
+        return ResultatService<bool>.Ok(true);
+    }
+
+    // Erreurs d'un suivi, sans lire la base : action obligatoire (120 caractères au plus), date d'aujourd'hui ou à venir.
+    // La date d'un suivi déjà échu n'est jamais revérifiée : seule une nouvelle planification passe par ici.
+    public static List<ErreurChamp> ErreursDeSuivi(string? action, DateTime? date, string champAction, string champDate, bool dateObligatoire)
+    {
+        var erreurs = new List<ErreurChamp>();
+        string texte = action?.Trim() ?? "";
+        if (texte.Length == 0)
+            erreurs.Add(new ErreurChamp(champAction, "Décrivez l'action à faire."));
+        else if (texte.Length > LongueurProchaineAction)
+            erreurs.Add(new ErreurChamp(champAction, $"L'action ne doit pas dépasser {LongueurProchaineAction} caractères."));
+
+        if (date is null)
+        {
+            if (dateObligatoire)
+                erreurs.Add(new ErreurChamp(champDate, "Choisissez la date du suivi."));
+        }
+        else if (!EstJourAccepte(date.Value, DateTime.Today))
+        {
+            erreurs.Add(new ErreurChamp(champDate, "Choisissez aujourd'hui ou une date à venir."));
+        }
+        return erreurs;
+    }
+
+    // ---------- Dates civiles (règle unique) ----------
+    // Un jour choisi dans un formulaire (« Pour le », date du prochain suivi à la création) est un jour civil, sans heure.
+    // Le navigateur impose « aujourd'hui ou plus tard » dans le fuseau de l'utilisateur. L'application ne connaît pas
+    // le fuseau de chaque concession (aucun réglage n'existe) : le serveur, qui peut être dans un autre fuseau (ex. UTC),
+    // accepte donc à partir de la veille de SON aujourd'hui, pour ne jamais refuser l'« aujourd'hui » d'un utilisateur.
+    // Limite connue : un envoi direct qui contourne la page peut planifier la veille. Une règle exacte demandera un
+    // fuseau par concession (réglage à ajouter). Utilisée par la création (Creer) et par les suivis (PlanifierSuivi, notes).
+    public static bool EstJourAccepte(DateTime jourChoisi, DateTime aujourdhuiServeur) =>
+        jourChoisi.Date >= aujourdhuiServeur.Date.AddDays(-1);
+
+    // Jour choisi dans le formulaire (sans heure) : même convention que prospects-store.js (depuisChampDate), à 9 h,
+    // sans conversion UTC, pour que le jour affiché ne se décale jamais.
+    private static DateTime? DateDuSuivi(DateTime? jour) =>
+        jour is null ? null : jour.Value.Date.AddHours(HeureDuSuivi);
+
+    // Remplace la prochaine action courante de l'opportunité (une seule action courante par opportunité).
+    private static void AppliquerSuivi(OpportuniteVente opportunite, string action, DateTime? jour)
+    {
+        opportunite.ProchaineAction = action;
+        opportunite.DateProchaineAction = DateDuSuivi(jour);
+        opportunite.DerniereActivite = DateTime.UtcNow;
+    }
+
+    // Même règle que prospects-store.js (estActive) : une opportunité gagnée ou perdue est clôturée.
+    private static bool EstActive(OpportuniteVente o) => o.Etape != EtapeVente.Gagne && o.Etape != EtapeVente.Perdu;
 
     private Task<bool> NoteDejaEnregistreeAsync(int prospectId, string jeton) =>
         _db.NotesProspect.AsNoTracking().AnyAsync(n => n.ProspectId == prospectId && n.JetonSoumission == jeton);
@@ -758,7 +889,7 @@ public class ServiceProspects : IServiceProspects
             Erreur("etape", "Choisissez le statut initial.");
         if (s.ProchaineAction is not null && s.ProchaineAction.Length > LongueurProchaineAction)
             Erreur("prochaineAction", $"La prochaine action ne doit pas dépasser {LongueurProchaineAction} caractères.");
-        if (s.DateSuivi is not null && s.DateSuivi.Value.Date < DateTime.Today)
+        if (s.DateSuivi is not null && !EstJourAccepte(s.DateSuivi.Value, DateTime.Today))
             Erreur("dateSuivi", "La date ne peut pas être passée.");
     }
 

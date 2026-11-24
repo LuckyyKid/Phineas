@@ -315,6 +315,8 @@
                     <form class="card" id="form-note" method="post" asp-controller="Prospects" asp-action="AjouterNote" novalidate>
                         <input type="hidden" name="prospectId" value="@Model.ProspectId" />
                         <input type="hidden" name="jeton" value="@Guid.NewGuid().ToString("N")" />
+                        @* Empreinte du prospect, remplie par prospects-fiche.js : vérifiée si un suivi est planifié avec la note. *@
+                        <input type="hidden" name="version" />
                         <div class="card-header sv-card-header"><span><i class="bi bi-journal-plus me-2"></i>Ajouter une note</span></div>
                         <div class="card-body">
                             <div class="row g-3">
@@ -346,8 +348,6 @@
                                     <input class="form-control" id="n-date" name="date" type="date" />
                                     <div class="invalid-feedback" data-message-date>Indiquez une date à venir.</div>
                                 </div>
-                                @* Prospect enregistré : prospects-fiche.js désactive les deux champs de suivi et affiche cette phrase. *@
-                                <div class="col-12 form-text mt-0" data-suivi-indisponible hidden>La planification des suivis n'est pas encore disponible pour ce prospect.</div>
                             </div>
                         </div>
                         <div class="pr-form-pied">
@@ -383,7 +383,11 @@
 @* ---------- Planifier un suivi ---------- *@
 <div class="modal fade" id="modal-suivi" tabindex="-1" aria-labelledby="modal-suivi-titre" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form class="modal-content" id="form-suivi" novalidate>
+        @* Opportunité enregistrée : envoi réel à ProspectsController.PlanifierSuivi (jeton antiforgery ajouté par asp-action).
+           Opportunité fictive : prospects-fiche.js intercepte l'envoi et garde le suivi dans l'onglet. *@
+        <form class="modal-content" id="form-suivi" method="post" asp-controller="Prospects" asp-action="PlanifierSuivi" novalidate>
+            <input type="hidden" name="prospectId" value="@Model.ProspectId" />
+            <input type="hidden" name="version" />
             <div class="modal-header">
                 <h2 class="modal-title h5" id="modal-suivi-titre">Planifier un suivi</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
@@ -406,6 +410,8 @@
                         <div class="invalid-feedback">Choisissez aujourd'hui ou une date à venir.</div>
                     </div>
                 </div>
+                @* Rempli par prospects-fiche.js : la prochaine action actuelle, qui sera remplacée. *@
+                <p class="small text-muted mt-3 mb-0" data-suivi-actuel hidden></p>
                 <p class="small text-muted mt-3 mb-0">Ce suivi devient la prochaine action de l'opportunité. Aucun rappel automatique n'est envoyé.</p>
             </div>
             <div class="modal-footer">

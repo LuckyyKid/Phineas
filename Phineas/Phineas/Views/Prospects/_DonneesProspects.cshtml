@@ -32,6 +32,8 @@
             version = Model.ModificationVersion,
             // Note refusée par ProspectsController.AjouterNote : relue par prospects-fiche.js.
             note = Model.NoteRefusee is null ? null : new { saisie = Model.NoteRefusee, erreurs = Model.ErreursNote },
+            // Suivi refusé par ProspectsController.PlanifierSuivi : relu par prospects-fiche.js.
+            suivi = Model.SuiviRefuse is null ? null : new { saisie = Model.SuiviRefuse, erreurs = Model.ErreursSuivi },
         },
     };
 }

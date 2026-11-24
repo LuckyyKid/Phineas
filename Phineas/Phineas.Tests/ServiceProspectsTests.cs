@@ -276,7 +276,8 @@ public class ServiceProspectsTests : IClassFixture<BaseMySqlDeTest>
     {
         var conseiller = await _base.CreerConseillerAsync();
         var saisie = SaisieValide();
-        saisie.DateSuivi = DateTime.Today.AddDays(-1);
+        // Règle unique des dates civiles (fonctionnalité 05) : la veille du serveur est tolérée, l'avant-veille est refusée.
+        saisie.DateSuivi = DateTime.Today.AddDays(-2);
         saisie.Budget = 600000;
 
         var resultat = await CreerAsync(conseiller, saisie);

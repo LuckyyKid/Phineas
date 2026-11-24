@@ -351,13 +351,9 @@
     sel.value = actuel && opps.some(function (o) { return o.id === actuel; }) ? actuel : p ? p.id : "";
     formNote.elements.date.min = P.aujourdhuiChamp();
 
-    // Prospect enregistré : les suivis ne sont pas encore enregistrés (le serveur les refuse aussi),
-    // donc les deux champs sont désactivés avec une courte explication.
+    // Prospect enregistré : empreinte lue par la page, vérifiée par le serveur si un suivi est planifié avec la note.
     var c = P.contact(contactId);
-    var suiviIndisponible = !!(c && c.enregistre);
-    formNote.elements.prochaineAction.disabled = suiviIndisponible;
-    formNote.elements.date.disabled = suiviIndisponible;
-    formNote.querySelector("[data-suivi-indisponible]").hidden = !suiviIndisponible;
+    formNote.elements.version.value = c && c.enregistre ? c.version || "" : "";
   }
   formNote.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -404,7 +400,6 @@
 
   // Même limite que le serveur (ServiceProspects.AjouterNoteAsync) : 600 caractères, fins de ligne comptées pour 1.
   var LONGUEUR_NOTE = 600;
-  var MESSAGE_SUIVI = "Les suivis ne sont pas encore enregistrés pour un prospect enregistré : laissez « Prochaine action » et « Pour le » vides.";
 
   // Contrôles propres à une note enregistrée ; le serveur refait les mêmes vérifications.
   function validerNoteEnregistree(resume, action, date) {
@@ -413,9 +408,12 @@
       resume.focus();
       return false;
     }
-    if (action.value.trim() || date.value) {
-      marquerChampNote(action.value.trim() ? action : date, MESSAGE_SUIVI);
-      P.notifier(MESSAGE_SUIVI);
+    // Un suivi planifié avec la note porte sur une opportunité : « Le contact (général) » ne suffit pas.
+    if (action.value.trim() && !formNote.elements.opportuniteId.value) {
+      var message = "Choisissez l'opportunité concernée pour planifier ce suivi.";
+      formNote.elements.opportuniteId.classList.add("is-invalid");
+      P.notifier(message);
+      formNote.elements.opportuniteId.focus();
       return false;
     }
     return true;
@@ -586,8 +584,27 @@
     sel.value = oppId || (p && P.estActive(p) ? p.id : actives[0] ? actives[0].id : "");
     formSuivi.elements.date.min = P.aujourdhuiChamp();
     formSuivi.elements.date.value = P.aujourdhuiChamp();
+    var c = P.contact(contactId);
+    formSuivi.elements.version.value = c && c.enregistre ? c.version || "" : "";
+    afficherSuiviActuel();
+    formSuivi.querySelector('button[type="submit"]').disabled = false;
     modalSuivi.show();
   }
+
+  // Indique la prochaine action actuelle de l'opportunité choisie : la planification la remplacera.
+  function afficherSuiviActuel() {
+    var zoneActuel = formSuivi.querySelector("[data-suivi-actuel]");
+    var o = P.opportunite(formSuivi.elements.opportuniteId.value);
+    if (!o || !o.prochaineAction) {
+      zoneActuel.hidden = true;
+      return;
+    }
+    // La date courte peut finir par un point (« 23 nov. ») : elle est mise entre parenthèses.
+    var quand = o.dateProchaineAction ? " (prévue le " + P.dateCourte(o.dateProchaineAction) + ")" : "";
+    zoneActuel.textContent = "Prochaine action actuelle, remplacée par ce suivi : « " + o.prochaineAction + " »" + quand + ".";
+    zoneActuel.hidden = false;
+  }
+  formSuivi.elements.opportuniteId.addEventListener("change", afficherSuiviActuel);
   formSuivi.addEventListener("submit", function (e) {
     e.preventDefault();
     var ok = true;
@@ -597,6 +614,13 @@
     if (!el.action.value.trim()) { el.action.classList.add("is-invalid"); ok = false; }
     if (!el.date.value || el.date.value < P.aujourdhuiChamp()) { el.date.classList.add("is-invalid"); ok = false; }
     if (!ok) { formSuivi.querySelector(".is-invalid").focus(); return; }
+    // Opportunité enregistrée : le serveur valide, remplace la prochaine action et recharge la fiche.
+    if (P.estEnregistree(el.opportuniteId.value)) {
+      formSuivi.querySelector('button[type="submit"]').disabled = true; // contre le double clic
+      formSuivi.submit();
+      return;
+    }
+    // Opportunité fictive : le suivi reste dans cet onglet (le message le dit).
     P.planifierSuivi(el.opportuniteId.value, el.action.value.trim(), P.depuisChampDate(el.date.value));
     modalSuivi.hide();
     P.notifier("Suivi planifié (local, aucun rappel automatique).");
@@ -698,4 +722,27 @@
   var hash = window.location.hash.replace("#", "");
   if (["qualification", "historique", "opportunites"].indexOf(hash) >= 0 && !racine.hidden) onglet(hash);
   if (P.enregistrement.note && !racine.hidden) afficherNoteRefusee(P.enregistrement.note);
+  if (P.enregistrement.suivi && !racine.hidden) afficherSuiviRefuse(P.enregistrement.suivi);
+
+  // Suivi refusé par le serveur (ProspectsController.PlanifierSuivi) : on rouvre la fenêtre avec la saisie envoyée.
+  // L'empreinte reprend celle de la page rechargée : la fiche affiche maintenant les valeurs actuelles du dossier.
+  function afficherSuiviRefuse(retour) {
+    var saisie = retour.saisie || {};
+    ouvrirSuivi(saisie.opportuniteId);
+    formSuivi.elements.action.value = saisie.action || "";
+    formSuivi.elements.date.value = saisie.date ? String(saisie.date).slice(0, 10) : "";
+    var generales = [];
+    (retour.erreurs || []).forEach(function (e) {
+      var champ = e.champ ? formSuivi.elements[e.champ] : null;
+      if (champ && champ.tagName) {
+        champ.classList.add("is-invalid");
+        var zoneMessage = champ.parentElement.querySelector(".invalid-feedback");
+        if (zoneMessage) zoneMessage.textContent = e.message;
+      } else {
+        generales.push(e.message);
+      }
+    });
+    var messages = (retour.erreurs || []).map(function (e) { return e.message; });
+    P.notifier("Suivi non enregistré. " + (generales.length ? generales.join(" ") : messages[0] || ""));
+  }
 })();

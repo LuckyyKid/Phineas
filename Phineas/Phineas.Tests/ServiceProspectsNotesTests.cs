@@ -344,7 +344,9 @@ public class ServiceProspectsNotesTests : IClassFixture<BaseMySqlDeTest>
     }
 
     [Fact]
-    public async Task Les_champs_de_suivi_un_type_inconnu_ou_un_jeton_absent_sont_refuses()
+    // Depuis la fonctionnalité 05, un suivi peut accompagner la note, mais il doit viser une opportunité :
+    // « Le contact (général) » est refusé (ServiceProspectsSuivisTests couvre les suivis eux-mêmes).
+    public async Task Un_suivi_sans_opportunite_un_type_inconnu_ou_un_jeton_absent_sont_refuses()
     {
         var conseiller = await _base.CreerConseillerAsync();
         int id = await CreerProspectAsync(conseiller);
@@ -359,8 +361,7 @@ public class ServiceProspectsNotesTests : IClassFixture<BaseMySqlDeTest>
         var r2 = await AjouterAsync(conseiller, typeInconnu);
         var r3 = await AjouterAsync(conseiller, sansJeton);
 
-        Assert.Contains(r1.Erreurs, e => e.Champ == "prochaineAction");
-        Assert.Contains(r1.Erreurs, e => e.Champ == "date");
+        Assert.Contains(r1.Erreurs, e => e.Champ == "opportuniteId");
         Assert.Contains(r2.Erreurs, e => e.Champ == "type");
         Assert.False(r3.Succes);
         Assert.Empty((await LireEnBaseAsync(id)).Notes);
