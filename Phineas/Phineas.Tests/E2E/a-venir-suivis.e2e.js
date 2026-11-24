@@ -187,7 +187,10 @@ async function pageCourante(page, liste) {
     verifier((await ligneAVenir(apresMinuit, demain.oppId)) === null, "00 h 00 le lendemain : il quitte « À venir », sans modification en base");
     await apresMinuit.click("#onglet-a-traiter");
     ligne = await ligneATraiter(apresMinuit, demain.oppId);
-    verifier(ligne !== null && !(await ligne.innerText()).includes("En retard"), "… et rejoint « À traiter » (dû aujourd'hui, pas en retard)");
+    // Depuis la fonctionnalité 09, la ligne peut regrouper le suivi et la première réponse (même prise de contact) :
+    // c'est la raison « suivi » elle-même qui doit être due aujourd'hui, pas en retard.
+    const raisonSuivi = ligne ? await ligne.locator('[data-raison="suivi-echeance"]').innerText() : "";
+    verifier(ligne !== null && raisonSuivi.includes("Aujourd'hui") && !raisonSuivi.includes("En retard"), "… et rejoint « À traiter » (le suivi est dû aujourd'hui, pas en retard)");
     verifier(sql("SELECT DATE(DateProchaineAction) FROM OpportunitesVente WHERE Id = " + demain.oppId) === jour(1), "la date en base n'a pas changé");
 
     // ---------- Décalage entre le jour du serveur et celui du conseiller ----------

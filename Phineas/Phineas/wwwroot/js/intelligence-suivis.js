@@ -4,9 +4,9 @@
 (function () {
   "use strict";
 
-  var I = window.Intelligence, P = window.Prospects, UI = window.IntelligenceUI;
+  var I = window.Intelligence, P = window.Prospects, UI = window.IntelligenceUI, Regles = window.IntelligenceRegles;
   var racine = document.getElementById("suivis");
-  if (!I || !P || !UI || !racine) return;
+  if (!I || !P || !UI || !Regles || !racine) return;
   var esc = P.esc;
 
   // Au-delà de LIGNES_PAR_PAGE, les listes (relances, relances suspendues) se découpent en pages.
@@ -79,7 +79,11 @@
   // Icône du canal préféré (clés de ReferentielsProspects.MoyensContact).
   var ICONES_CANAL = { courriel: "bi-envelope", texto: "bi-chat-dots", telephone: "bi-telephone" };
 
-  function ligneRelance(a) {
+  // Une ligne par obligation (IntelligenceRegles.regrouperObligations) : la raison principale donne le client, la
+  // priorité, le contact et « Préparer le message » ; toutes les raisons restent listées dans « Pourquoi », avec leur
+  // échéance quand elles sont plusieurs. L'échéance affichée est la plus proche de toutes les raisons.
+  function ligneRelance(g) {
+    var a = g.principale;
     var ctx = I.contexteRelance(a.id);
     var derniere = ctx.derniere;
     var o = ctx.opportunite;
@@ -87,10 +91,15 @@
 
     var client = '<a class="iv-nom" href="' + esc(P.urlFiche(a.prospectId)) + '">' + esc(a.client) + "</a>";
     if (a.vehicule) client += '<span class="iv-sous">' + esc(a.vehicule) + "</span>";
-    client += '<span class="iv-sous">Priorité : ' + esc(I.ref.libellesPriorite[a.priorite] || a.priorite) + "</span>";
+    client += '<span class="iv-sous">Priorité : ' + esc(I.ref.libellesPriorite[g.priorite] || g.priorite) + "</span>";
 
-    var raison = esc(a.regleLibelle) + '<span class="iv-sous">' + esc(a.motif) + "</span>";
-    if (a.avertissement) raison += '<span class="iv-sous iv-a-verifier">' + esc(a.avertissement) + "</span>";
+    var raison = g.raisons.map(function (r, i) {
+      var texte = '<span class="d-block' + (i > 0 ? " mt-2" : "") + '" data-raison="' + esc(r.regle) + '">' + esc(r.regleLibelle);
+      texte += '<span class="iv-sous">' + esc(r.motif) + (g.regroupee ? " · " + esc(UI.echeanceTexte(r.echeance)) : "") + "</span>";
+      if (r.avertissement) texte += '<span class="iv-sous iv-a-verifier">' + esc(r.avertissement) + "</span>";
+      return texte + "</span>";
+    }).join("");
+    if (g.regroupee) raison += '<span class="iv-sous mt-2">Même prise de contact : ' + g.raisons.length + " raisons, une seule action.</span>";
 
     var contact = '<span class="iv-gris">Aucun échange enregistré</span>';
     if (derniere) contact = '<span class="iv-gris">' + esc(P.relatif(derniere.date)) + '</span><span class="iv-sous">' + esc(derniere.resume) + "</span>";
@@ -98,21 +107,21 @@
     var canal = '<span class="iv-canal"><i class="bi ' + icone + '" aria-hidden="true"></i>' + esc(ctx.canal) + "</span>";
     if (ctx.coordonnee) canal += '<span class="iv-sous">' + esc(ctx.coordonnee) + "</span>";
 
-    var prevu = a.actionProposee + " · " + UI.echeanceTexte(a.echeance);
+    var prevu = a.actionProposee + " · " + UI.echeanceTexte(g.echeance);
     if (o && o.prochaineAction) prevu += " · prévu : " + o.prochaineAction;
-    // Suivi planifié et enregistré en base : il peut être marqué comme réalisé ou reporté (écritures serveur réelles).
-    // « Reporter » ouvre la fenêtre de intelligence-composants.js (ouvrirReport), qui change la date en base.
-    var suiviEnregistre = a.regle === "suivi-echeance" && P.estEnregistree(a.opportuniteId);
-    var realiser = suiviEnregistre
-      ? '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(a.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>' +
-        '<button type="button" class="iv-btn iv-btn-discret" data-ia="reporter" data-id="' + esc(a.id) + '"><i class="bi bi-clock" aria-hidden="true"></i>Reporter</button>'
+    // Suivi planifié et enregistré en base parmi les raisons : il peut être marqué comme réalisé ou reporté (écritures
+    // serveur réelles, sur ce suivi seulement). « Reporter » ouvre la fenêtre de intelligence-composants.js (ouvrirReport).
+    var suivi = g.raisons.filter(function (r) { return r.regle === "suivi-echeance" && P.estEnregistree(r.opportuniteId); })[0];
+    var realiser = suivi
+      ? '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(suivi.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>' +
+        '<button type="button" class="iv-btn iv-btn-discret" data-ia="reporter" data-id="' + esc(suivi.id) + '"><i class="bi bi-clock" aria-hidden="true"></i>Reporter</button>'
       : "";
     var prochaine = '<span class="iv-cellule-boutons">' + realiser +
       '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button>' +
       '<button type="button" class="iv-btn iv-btn-sapin iv-btn-petit" data-ia="relance" data-id="' + esc(a.id) + '">Préparer le message</button></span>' +
       '<span class="iv-sous">' + esc(prevu) + "</span>";
 
-    return '<tr data-action-id="' + esc(a.id) + '">' +
+    return '<tr data-action-id="' + esc(a.id) + '" data-obligation="' + esc(g.id) + '" data-nb-raisons="' + g.raisons.length + '">' +
       "<td>" + client + "</td><td>" + raison + "</td><td>" + contact + "</td><td>" + canal + "</td><td>" + prochaine + "</td></tr>";
   }
 
@@ -134,7 +143,9 @@
   }
 
   function rendre() {
-    var relances = I.actives({ conseiller: P.moiId }).filter(function (a) { return a.relance; });
+    // Une obligation par ligne : les recommandations qui expriment la même prise de contact sont regroupées
+    // (le compteur et la pagination portent sur les obligations, pas sur les recommandations).
+    var relances = Regles.regrouperObligations(I.actives({ conseiller: P.moiId }).filter(function (a) { return a.relance; }));
     var pageRelances = paginer("relances", relances);
     document.getElementById("relances").innerHTML = pageRelances.elements.map(ligneRelance).join("");
     racine.querySelector('[data-zone="pagination-relances"]').innerHTML = pageRelances.pagination;

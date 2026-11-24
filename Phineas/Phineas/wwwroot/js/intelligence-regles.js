@@ -131,6 +131,8 @@
     var c = mo.ctx, cfg = mo.cfg;
     c.opportunites.forEach(function (o) {
       if (!mo.oppActive(o.id)) return;
+      // Seul un échange déclaré (ECHANGES, ex. note « Appel effectué ») satisfait la première réponse. Un suivi réalisé,
+      // remplacé ou reporté n'est pas une prise de contact : une tâche accomplie n'est pas forcément un contact client.
       var echange = mo.dernierEchange(o.prospectId, null, o.dateCreation);
       // Un rendez-vous déjà confirmé, tenu ou annulé par le client prouve un premier contact.
       if (o.etape === "Nouveau" && !echange && !o.rdvContact) {
@@ -496,6 +498,70 @@
     var x = new Date(d); x.setHours(23, 59, 0, 0); return x.toISOString();
   }
 
+  // ---------- Regroupement des obligations (« Mes suivis », vue « À traiter ») ----------
+  // Plusieurs règles peuvent exprimer le même besoin actuel : prendre contact avec le client au sujet d'une opportunité.
+  // Elles sont présentées en une seule ligne, sans être supprimées : chaque recommandation garde son identifiant, sa
+  // source et sa règle de résolution, et se résout seule (réaliser le suivi ne satisfait pas la première réponse).
+  // Regroupées seulement si TOUT concorde :
+  // - même opportunité (jamais deux opportunités d'un même client) ;
+  // - l'objet de la recommandation est l'opportunité elle-même (pas une soumission, un rendez-vous, une transaction…) ;
+  // - le message attendu est une prise de contact générale : première réponse (premiere-reponse, nouveau prospect
+  //   recommandé), suivi planifié par le conseiller (suivi-echeance) ou reprise convenue avec le client (achat-reporte) ;
+  // - la responsabilité est celle du conseiller.
+  // Tout le reste reste une ligne par recommandation (proposition commerciale, rendez-vous, essai, financement et
+  // transaction, véhicule, satisfaction, perte) : dans le doute, on garde les lignes séparées.
+  var CONTACT_GENERAL = ["premiere-reponse", "suivi", "reprise"];
+  // À priorité et échéance égales, la raison principale est la plus concrète : le suivi planifié par le conseiller.
+  var RANG_PRINCIPALE = { suivi: 0, reprise: 1, "premiere-reponse": 2 };
+
+  function rangPrincipale(a) {
+    return a.relance in RANG_PRINCIPALE ? RANG_PRINCIPALE[a.relance] : 9;
+  }
+
+  function cleObligation(a) {
+    var contactGeneral = a.opportuniteId && a.objet && a.objet.type === "opportunite" && CONTACT_GENERAL.indexOf(a.relance) >= 0 && (a.departement || "conseiller") === "conseiller";
+    return contactGeneral ? "contact:" + a.opportuniteId : "action:" + a.id;
+  }
+
+  // Raison principale : la plus prioritaire, puis l'échéance la plus proche, puis la plus concrète, puis l'identifiant.
+  function comparerRaisons(a, b) {
+    var niveau = NIVEAUX.indexOf(b.priorite) - NIVEAUX.indexOf(a.priorite);
+    if (niveau !== 0) return niveau;
+    var ea = a.echeance ? new Date(a.echeance).getTime() : Infinity;
+    var eb = b.echeance ? new Date(b.echeance).getTime() : Infinity;
+    if (ea !== eb) return ea < eb ? -1 : 1;
+    var rang = rangPrincipale(a) - rangPrincipale(b);
+    if (rang !== 0) return rang;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  }
+
+  // actions : recommandations actives déjà triées (ordre décroissant du moteur). Retourne les obligations dans le même
+  // ordre (chacune à la place de sa raison la mieux classée) : { id, raisons, principale, priorite, echeance, regroupee }.
+  // priorite : celle de la raison la plus prioritaire ; echeance : la plus proche de toutes les raisons (jamais masquée).
+  function regrouperObligations(actions) {
+    var obligations = [];
+    var parCle = {};
+    actions.forEach(function (a) {
+      var cle = cleObligation(a);
+      if (!parCle[cle]) {
+        parCle[cle] = { id: cle, raisons: [] };
+        obligations.push(parCle[cle]);
+      }
+      parCle[cle].raisons.push(a);
+    });
+    obligations.forEach(function (o) {
+      o.raisons = o.raisons.slice().sort(comparerRaisons);
+      o.principale = o.raisons[0];
+      o.priorite = o.principale.priorite;
+      o.echeance = null;
+      o.raisons.forEach(function (r) {
+        if (r.echeance && (!o.echeance || new Date(r.echeance) < new Date(o.echeance))) o.echeance = r.echeance;
+      });
+      o.regroupee = o.raisons.length > 1;
+    });
+    return obligations;
+  }
+
   function analyser(ctx) {
     var mo = new Moteur(ctx);
     // Ordre : situations précises d'abord ; les suivis génériques et la surveillance seulement s'il ne reste rien.
@@ -510,7 +576,7 @@
     return { actions: mo.actions, suspendues: mo.suspendues };
   }
 
-  var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, echanges: ECHANGES, relatif: relatif };
+  var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, echanges: ECHANGES, relatif: relatif, regrouperObligations: regrouperObligations };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);
