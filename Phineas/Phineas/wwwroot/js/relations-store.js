@@ -165,6 +165,8 @@
   function refusCloture(oppId) {
     var o = P.opportunite(oppId);
     if (!o) return "Opportunité introuvable.";
+    // Dossier réel : la clôture « Perdu » et son motif ne sont pas encore enregistrables (fonctionnalité 16).
+    if (P.estEnregistree(oppId)) return "Dossier enregistré : la clôture comme perdue, avec son motif, n'est pas encore enregistrable. Elle le sera avec la gestion des ventes perdues.";
     if (!P.estActive(o)) return "Seule une opportunité active peut être clôturée comme perdue.";
     if (T.enCoursPourOpportunite(oppId)) return "Une transaction est en cours : annulez-la d'abord dans le module Transactions (motif conservé).";
     return null;
@@ -242,6 +244,7 @@
   }
   // Réactivation : décision explicite du conseiller, jamais automatique.
   function reactiver(oppId, x) {
+    if (P.estEnregistree(oppId)) return { erreur: "Dossier enregistré : la réactivation n'est pas encore enregistrable." };
     var cl = clotureCourante(oppId);
     var o = P.opportunite(oppId);
     var refus = Regles.refusReactivation(cl, { arret: o ? arret(o.prospectId) : false, evenement: x.evenement });

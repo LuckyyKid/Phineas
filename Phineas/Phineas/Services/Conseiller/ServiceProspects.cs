@@ -259,7 +259,7 @@ public class ServiceProspects : IServiceProspects
                     type = "suivi-remplace";
                     resume = "Suivi remplacé par une nouvelle action, non réalisé : « " + h.Action + " »" + prevu + ".";
                 }
-                liste.Add(new(PrefixeInteraction + "s" + h.Id, contactId, PrefixeOpportunite + o.Id, HeureLocale(h.DateCloture), type, responsable, resume));
+                liste.Add(new(PrefixeInteraction + "s" + h.Id, contactId, PrefixeOpportunite + o.Id, HeureLocale(h.DateCloture), type, responsable, resume, DatePrevue: h.DatePrevue, ActionPrevue: h.Action));
             }
         }
 

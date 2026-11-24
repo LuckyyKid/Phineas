@@ -67,7 +67,8 @@
   // ---------- Clôture rapide d'une opportunité perdue ----------
   var contexte = null;
   function ouvrirCloture(oppId) {
-    var opps = P.toutesOpportunites().filter(function (o) { var c = P.contact(o.prospectId); return P.estActive(o) && c && c.conseillerId === P.moiId; });
+    // Dossiers de démonstration seulement : un dossier enregistré ne se clôture pas encore ici (fonctionnalité 16).
+    var opps = P.toutesOpportunites().filter(function (o) { var c = P.contact(o.prospectId); return P.estActive(o) && c && c.conseillerId === P.moiId && !P.estEnregistree(o.id); });
     var o = oppId ? P.opportunite(oppId) : null;
     if (oppId && RC.refusCloture(oppId)) { P.notifier(RC.refusCloture(oppId)); return; }
     contexte = { type: "cloture", oppId: oppId || null };

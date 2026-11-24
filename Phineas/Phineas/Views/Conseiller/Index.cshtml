@@ -155,7 +155,8 @@
 
 @if (Model.DonneesFictives)
 {
-    <p class="ph-note">Données de démonstration · rien n'est enregistré</p>
+    @* Écran mixte : ce qui est réel et ce qui est une démonstration (MentionsDonnees, fonctionnalité 16). *@
+    <p class="ph-note" data-mention-donnees>@MentionsDonnees.Accueil</p>
 }
 
 @if (Model.Agenda is not null)

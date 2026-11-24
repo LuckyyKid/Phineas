@@ -5,6 +5,8 @@
 @model IntelligencePageViewModel
 @{
     ViewData["Title"] = "Mes suivis";
+    // Cette page affiche le message du serveur (intelligence-composants.js) : _DonneesModules peut le lire.
+    ViewData["AfficheMessagesProspects"] = true;
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
 }
 
@@ -22,8 +24,8 @@
             <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Mes suivis</span>
         </nav>
         @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
-        <div class="iv-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
-            <span class="iv-chip-demo">Démo</span>
+        <div class="iv-puces" role="note" title="@MentionsDonnees.EcranMixte">
+            <span class="iv-chip-demo">@MentionsDonnees.LibelleMixte</span><span class="visually-hidden">@MentionsDonnees.EcranMixte</span>
             <span class="iv-demo-etat" data-etat-demo hidden>Modifiée</span>
             <button type="button" class="iv-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
             <span class="iv-en-ligne"><span class="iv-point-vert" aria-hidden="true"></span>En ligne</span>

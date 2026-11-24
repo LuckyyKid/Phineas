@@ -1,8 +1,16 @@
 @using Phineas.Models.ViewModels.Conseiller
 @model IntelligencePageViewModel
 @* Données de tous les modules locaux : le moteur les lit pour produire ses recommandations. *@
-@* Confirmation ou refus d'une écriture serveur (ex. « Marquer comme réalisé »), affiché par prospects-store.js. *@
-<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true, Confirmation = TempData[Phineas.Controllers.Conseiller.ProspectsController.CleConfirmation] as string, Erreur = TempData[Phineas.Controllers.Conseiller.ProspectsController.CleErreur] as string }" />
+@* Confirmation ou refus d'une écriture serveur (ex. « Marquer comme réalisé »), affiché par prospects-store.js. Lire
+   TempData le consomme (il est effacé à la fin de la requête) : seule une page qui affiche ces messages le demande, avec
+   ViewData["AfficheMessagesProspects"] = true (pages qui chargent intelligence-composants.js ou intelligence-suivis.js).
+   Les autres pages qui incluent ce composant ne les lisent pas (fonctionnalité 16, même règle que RendezVous/_DonneesModules). *@
+@{
+    bool afficheMessages = ViewData["AfficheMessagesProspects"] is true;
+    string? confirmation = afficheMessages ? TempData[Phineas.Controllers.Conseiller.ProspectsController.CleConfirmation] as string : null;
+    string? erreur = afficheMessages ? TempData[Phineas.Controllers.Conseiller.ProspectsController.CleErreur] as string : null;
+}
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true, Confirmation = confirmation, Erreur = erreur }" />
 <partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
 <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Prospects, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = Model.ConseillerNom, Concession = Model.Concession }" />
 <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />

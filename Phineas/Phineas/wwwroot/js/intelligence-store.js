@@ -258,6 +258,8 @@
           historiser(a, "ATraiter", "Situation de nouveau détectée.", { auteur: "Phineas" });
         }
         a.snapshot = { titre: x.regleLibelle, client: x.client, categorie: x.categorie, motif: x.motif, prospectId: x.prospectId, opportuniteId: x.opportuniteId, objet: x.objet, regle: x.regle };
+        // Suivi enregistré : l'action représentée, pour relier une clôture en base au bon suivi (fonctionnalité 16).
+        if (x.regle === "suivi-echeance") a.snapshot.action = x.actionProposee;
       });
       if (!etat.semences) appliquerSemences();
       Object.keys(etat.actions).forEach(function (id) {
@@ -356,7 +358,7 @@
     if (!a) return null;
     var s = a.snapshot || {};
     return { id: id, regle: s.regle, regleLibelle: s.titre, client: s.client, categorie: s.categorie, motif: s.motif, prospectId: s.prospectId, opportuniteId: s.opportuniteId,
-      objet: s.objet, statut: a.statut, historique: a.historique || [], assignation: a.assignation || null, horsFile: true, priorite: "Faible", raisonsPriorite: [], contexte: [] };
+      objet: s.objet, statut: statutHistorique(id), historique: a.historique || [], assignation: a.assignation || null, horsFile: true, priorite: "Faible", raisonsPriorite: [], contexte: [] };
   }
   // Recommandations en veille enregistrée (encore produites par le moteur), du conseiller s'il est précisé. Une veille
   // dont la recommandation n'existe plus (situation résolue) n'est pas listée : elle ne revient jamais artificiellement.
@@ -369,9 +371,20 @@
   // Actions hors de la file active (reportées, terminées, ignorées, obsolètes), y compris celles qui ne sont plus détectées.
   // Un dossier réel n'apparaît jamais comme terminé, ignoré ou reporté par un statut local (fonctionnalité 15) ;
   // « Devenue obsolète » (situation résolue, calculée par le moteur) reste listée.
+  // Fonctionnalité 16 : une recommandation de suivi d'un dossier réel devenue « obsolète » est une réalisation si la
+  // base le prouve (Regles.issueSuiviEnregistree) ; un report, un remplacement ou toute autre disparition reste
+  // « Devenue obsolète ». Le journal local seul ne prouve jamais une réalisation.
+  function statutHistorique(id) {
+    var a = etat.actions[id];
+    if (a.statut !== "Obsolete" || !Regles.estDossierReel(a.snapshot || {})) return a.statut;
+    var preuve = Regles.issueSuiviEnregistree(id, toutesInteractions(), (a.snapshot || {}).action);
+    return preuve && preuve.issue === "realise" ? "Realisee" : "Obsolete";
+  }
   function statutLocalVisible(id, statut) {
     var a = etat.actions[id];
-    if (a.statut !== statut) return false;
+    var affiche = statutHistorique(id);
+    if (statut === "Terminee" && affiche === "Realisee") return true;
+    if (affiche !== statut) return false;
     return statut === "Obsolete" || !Regles.estDossierReel(a.snapshot || {});
   }
   function horsFile(statut) {
@@ -383,6 +396,9 @@
   function parObjet(type, id) {
     return actives().filter(function (a) { return a.objet && a.objet.type === type && a.objet.id === id; });
   }
+  function realisationsEnregistreesDuJour() {
+    return toutesInteractions().filter(function (i) { return i.type === "suivi-realise" && String(i.id).indexOf("ie-s") === 0 && aujourdhui(i.date); }).length;
+  }
   function aujourdhui(d0) {
     return d0 && new Date(d0).toDateString() === new Date().toDateString();
   }
@@ -392,14 +408,23 @@
   // comptent des recommandations traitées localement dans ce navigateur. « En veille » compte les veilles enregistrées :
   // ni à traiter, ni terminées (une veille n'est pas une réalisation).
   function compteurs(conseiller) {
-    var c = Regles.compterObligations(actives({ conseiller: conseiller }), new Date());
+    // « À traiter » : obligations du conseiller qu'il garde (les actions confiées à un collègue, démonstration
+    // seulement, sont dans « Confiées ») ; même ensemble que l'onglet « À traiter », la file « Mes actions » et
+    // l'Accueil (fonctionnalité 16).
+    var siennes = Regles.actionsGardees(actives({ conseiller: conseiller }));
+    var c = Regles.compterObligations(siennes, new Date());
     return {
       aTraiter: c.aTraiter,
       recommandations: c.recommandations,
       prioritaires: c.prioritaires,
       echeance: c.echeance,
       retard: c.retard,
-      terminees: Object.keys(etat.actions).filter(function (id) { return statutLocalVisible(id, "Terminee") && aujourdhui(etat.actions[id].termineeLe); }).length,
+      // Réalisées aujourd'hui : réalisations enregistrées en base (dossiers réels, événements « suivi-realise » du
+      // jour) et réalisations simulées (dossiers de démonstration). Jamais un état local sur un dossier réel.
+      terminees: realisationsEnregistreesDuJour() + Object.keys(etat.actions).filter(function (id) {
+        var a = etat.actions[id];
+        return a.statut === "Terminee" && !Regles.estDossierReel(a.snapshot || {}) && aujourdhui(a.termineeLe);
+      }).length,
       reportees: horsFile("Reportee").length,
       enVeille: enVeille(conseiller).length,
     };
@@ -707,7 +732,8 @@
     return etat.demandes;
   }
   function creerDemande(x) {
-    if (!x.opportuniteId || !P.opportunite(x.opportuniteId)) return null;
+    // Demande de recherche : locale, donc réservée aux dossiers de démonstration (fonctionnalité 16).
+    if (!x.opportuniteId || !P.opportunite(x.opportuniteId) || P.estEnregistree(x.opportuniteId)) return null;
     var dm = { id: "dm-local-" + Date.now().toString(36), opportuniteId: x.opportuniteId, categorie: x.categorie || null, budgetMax: x.budgetMax ? Number(x.budgetMax) : null,
       marques: x.marques || [], caracteristiques: x.caracteristiques || [], places: x.places ? Number(x.places) : null, etat: x.etat || null,
       anneeMin: x.anneeMin ? Number(x.anneeMin) : null, kilometrageMax: x.kilometrageMax ? Number(x.kilometrageMax) : null, indispensables: x.indispensables || [],

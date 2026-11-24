@@ -26,11 +26,8 @@
   // Mes actions actives dans le moteur, sans celles confiées à un collègue.
   function mesActions() {
     if (!I) return [];
-    var resultat = [];
-    var actives = I.actives({ conseiller: P.moiId });
-    for (var i = 0; i < actives.length; i++) {
-      if (!actives[i].assignation) resultat.push(actives[i]);
-    }
+    // Même ensemble que le chiffre « à traiter » du Centre d'actions (Regles.actionsGardees, fonctionnalité 16).
+    var resultat = Regles ? Regles.actionsGardees(I.actives({ conseiller: P.moiId })) : [];
     return resultat;
   }
 
@@ -274,7 +271,8 @@
   }
 
   var priorites = prioritesDuJour(mesActions());
-  nbPriorites = priorites.length;
+  // La phrase compte toutes les priorités du jour (même règle), pas seulement les 3 cartes affichées (fonctionnalité 16).
+  nbPriorites = Regles ? Regles.prioritesAccueil(mesActions(), new Date(), Infinity).length : priorites.length;
   rendrePriorites(priorites);
   rendre();
   // Message du serveur après « Marquer le suivi comme réalisé » (réussite ou refus) : affiché une fois.

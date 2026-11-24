@@ -453,7 +453,9 @@
         (t.statut === "EnAttente" && t.attente ? '<p class="form-text mb-0">En attente depuis le ' + esc(P.dateCourte(t.attente.depuis)) + " : " + esc(ref.motifsAttente[t.attente.motif].toLowerCase()) + ".</p>" : "");
     }
     var o2 = P.opportunite(t.opportuniteId);
-    if (T.peutMarquerGagnee(t)) html += '<div class="tx-gagnee mt-3"><p class="small mb-2">La vente est conclue. Le changement d\'étape de l\'opportunité n\'est jamais automatique.</p>' + bouton("gagnee", "Marquer l'opportunité comme gagnée", "bi-trophy", "btn-success") + "</div>";
+    // Dossier réel : l'étape « Gagné » n'est pas encore enregistrable ; pas de bouton, une explication (fonctionnalité 16).
+    if (T.peutMarquerGagnee(t) && P.estEnregistree(t.opportuniteId)) html += '<p class="small mt-3 mb-0" data-gagne-indisponible><i class="bi bi-info-circle me-1"></i>Dossier enregistré : l\'étape « Gagné » n\'est pas encore enregistrable. Elle le sera avec la gestion des ventes ; en attendant, l\'opportunité reste à « Finalisation » dans la fiche.</p>';
+    else if (T.peutMarquerGagnee(t)) html += '<div class="tx-gagnee mt-3"><p class="small mb-2">La vente est conclue. Le changement d\'étape de l\'opportunité n\'est jamais automatique.</p>' + bouton("gagnee", "Marquer l'opportunité comme gagnée", "bi-trophy", "btn-success") + "</div>";
     else if (o2 && o2.etape === "Gagne") html += '<p class="mt-3 mb-0"><i class="bi bi-trophy me-1"></i>Opportunité marquée « Gagné ».</p>';
     zone("finalisation").innerHTML = html;
   }

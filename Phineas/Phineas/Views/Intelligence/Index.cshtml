@@ -6,6 +6,8 @@
 @model IntelligencePageViewModel
 @{
     ViewData["Title"] = "Centre d'actions";
+    // Cette page affiche le message du serveur (intelligence-composants.js) : _DonneesModules peut le lire.
+    ViewData["AfficheMessagesProspects"] = true;
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
 }
 
@@ -23,8 +25,8 @@
             <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Centre d'actions</span>
         </nav>
         @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
-        <div class="iv-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
-            <span class="iv-chip-demo">Démo</span>
+        <div class="iv-puces" role="note" title="@MentionsDonnees.EcranMixte">
+            <span class="iv-chip-demo">@MentionsDonnees.LibelleMixte</span><span class="visually-hidden">@MentionsDonnees.EcranMixte</span>
             <span class="iv-demo-etat" data-etat-demo hidden>Modifiée</span>
             <button type="button" class="iv-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
             <span class="iv-en-ligne"><span class="iv-point-vert" aria-hidden="true"></span>En ligne</span>
@@ -48,7 +50,8 @@
         <div class="iv-verre iv-chiffre" title="Urgentes ou élevées"><strong data-compteur="prioritaires">0</strong><span>prioritaires</span></div>
         <div class="iv-verre iv-chiffre"><strong data-compteur="echeance">0</strong><span>échéance sous 24 h</span></div>
         <div class="iv-verre iv-chiffre" title="Échéance dépassée"><strong data-compteur="retard">0</strong><span>en retard<span class="iv-point-rouge" aria-hidden="true"></span></span></div>
-        <div class="iv-verre iv-chiffre"><strong data-compteur="terminees">0</strong><span>terminées aujourd'hui</span></div>
+        @* Fonctionnalité 16 : périmètre du compteur, différent de la liste de l'onglet « Traitées et obsolètes ». *@
+        <div class="iv-verre iv-chiffre" title="Réalisations du jour : enregistrées en base pour vos dossiers réels, simulées pour la démonstration. L'onglet « Traitées et obsolètes » ne liste que les actions déjà vues dans cet onglet du navigateur."><strong data-compteur="terminees">0</strong><span>terminées aujourd'hui</span></div>
     </section>
 
     <div class="iv-verre iv-centre" id="centre">

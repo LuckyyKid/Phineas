@@ -30,8 +30,8 @@
             <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Nouvelle transaction</span>
         </nav>
         @* Remplace le bandeau permanent : l'état et la réinitialisation restent accessibles ici (prospects-store.js). *@
-        <div class="ns-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
-            <span class="ns-chip-demo">Démo</span>
+        <div class="ns-puces" role="note" title="@MentionsDonnees.ModuleSimule">
+            <span class="ns-chip-demo">@MentionsDonnees.LibelleSimule</span><span class="visually-hidden">@MentionsDonnees.ModuleSimule</span>
             <span class="ns-demo-etat" data-etat-demo hidden>Modifiée</span>
             <button type="button" class="ns-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise"></i>Réinitialiser</button>
             <span class="ns-en-ligne"><span class="ns-point-vert" aria-hidden="true"></span>En ligne</span>
@@ -192,6 +192,7 @@
     <section class="ns-fin" data-fin hidden aria-labelledby="titre-fin" tabindex="-1">
         <span class="ns-fin-icone" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
         <h2 class="ns-fin-titre" id="titre-fin">Transaction ouverte</h2>
+        <p class="small mb-0" data-mention-donnees>Démonstration : cette transaction reste dans cet onglet, elle n'est pas enregistrée en base.</p>
         <dl class="ns-fin-recap" data-zone="recap-fin"></dl>
         <div class="ns-fin-boutons">
             <a class="ns-btn ns-btn-blanc" asp-action="Index">Retour : Transactions</a>

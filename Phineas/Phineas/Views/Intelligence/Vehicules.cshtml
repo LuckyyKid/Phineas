@@ -2,6 +2,8 @@
 @model IntelligencePageViewModel
 @{
     ViewData["Title"] = "Recommandations véhicules";
+    // Cette page affiche le message du serveur (intelligence-composants.js) : _DonneesModules peut le lire.
+    ViewData["AfficheMessagesProspects"] = true;
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
 }
 
@@ -26,8 +28,8 @@
             <i class="bi bi-chevron-right" aria-hidden="true"></i>
             <span aria-current="page">Recommandations véhicules</span>
         </nav>
-        <div class="iv-puces" role="note" title="Clients, véhicules et montants fictifs. Rien n'est enregistré en base : les ajouts restent dans cet onglet.">
-            <span class="iv-chip-demo">Démo</span>
+        <div class="iv-puces" role="note" title="@MentionsDonnees.ModuleSimule">
+            <span class="iv-chip-demo">@MentionsDonnees.LibelleSimule</span><span class="visually-hidden">@MentionsDonnees.ModuleSimule</span>
             <span class="iv-demo-etat" data-etat-demo hidden>Modifiée</span>
             <button type="button" class="iv-demo-reset" data-reinitialiser hidden><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Réinitialiser</button>
             <span class="iv-en-ligne"><span class="iv-point-vert" aria-hidden="true"></span>En ligne</span>

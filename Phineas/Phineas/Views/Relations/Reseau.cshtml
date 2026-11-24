@@ -6,6 +6,8 @@
 @model RelationsPageViewModel
 @{
     ViewData["Title"] = "Mon réseau et recommandations";
+    // Cette page affiche le message du serveur (intelligence-composants.js) : _DonneesModules peut le lire.
+    ViewData["AfficheMessagesProspects"] = true;
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
 }
 
@@ -24,8 +26,8 @@
         <nav class="rr-ariane" aria-label="Fil d'Ariane">
             <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Réseau et recommandations</span>
         </nav>
-        <div class="rr-puces" title="Clients, ventes et recommandations fictifs. Rien n'est enregistré en base.">
-            <span class="rr-chip-demo">Démo</span>
+        <div class="rr-puces" title="@MentionsDonnees.ModuleSimule">
+            <span class="rr-chip-demo">@MentionsDonnees.LibelleSimule</span><span class="visually-hidden">@MentionsDonnees.ModuleSimule</span>
             <span class="rr-en-ligne"><span class="rr-point-vert" aria-hidden="true"></span>En ligne</span>
         </div>
     </div>

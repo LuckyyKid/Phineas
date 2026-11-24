@@ -167,14 +167,16 @@ async function regles(page, oppId) {
 
     const compteurs = await page.evaluate(function () {
       const moi = window.Prospects.moiId;
-      const recos = window.Intelligence.actives({ conseiller: moi });
+      // Fonctionnalité 16 : « à traiter » compte les obligations que le conseiller garde (sans les actions confiées),
+      // même ensemble que l'onglet « À traiter » et l'Accueil.
+      const recos = window.IntelligenceRegles.actionsGardees(window.Intelligence.actives({ conseiller: moi }));
       return { obligations: window.IntelligenceRegles.regrouperObligations(recos).length, recommandations: recos.length,
         chiffre: Number(document.querySelector('[data-compteur="aTraiter"]').textContent),
         barre: Number((document.querySelector(".ph-nav a .ph-nav-count") || {}).textContent),
         onglet: Number(document.querySelector('[data-champ="nb-file"]').textContent), resultat: document.getElementById("resultat").textContent };
     });
     const cartes = await toutesLesCartes(page);
-    verifier(compteurs.chiffre === compteurs.obligations && compteurs.barre === compteurs.obligations && compteurs.recommandations > compteurs.obligations,
+    verifier(compteurs.chiffre === compteurs.obligations && compteurs.barre === compteurs.obligations && compteurs.onglet === compteurs.obligations && compteurs.recommandations > compteurs.obligations,
       "compteurs « à traiter » (chiffre et barre latérale) = " + compteurs.obligations + " obligations, pour " + compteurs.recommandations + " recommandations");
     verifier(cartes.length === compteurs.onglet && new Set(cartes).size === cartes.length && compteurs.resultat.includes("recommandations"),
       "pagination : " + cartes.length + " cartes, chacune une seule fois ; « " + compteurs.resultat + " »");

@@ -151,9 +151,16 @@
       items += '<li><a class="dropdown-item" href="' + esc(S.urlNouvelle(o.id) + "&vehicule=" + encodeURIComponent(v.id)) + '"><i class="bi bi-file-earmark-text" aria-hidden="true"></i>Créer une soumission</a></li>';
       if (R) items += '<li><a class="dropdown-item" href="' + esc(R.urlNouveau({ opportunite: o.id, type: "EssaiRoutier", vehicule: v.id })) + '"><i class="bi bi-calendar-event" aria-hidden="true"></i>Planifier un essai</a></li>';
     }
-    var libelleEnvisager = dejaEnvisage ? "Déjà envisagé" : "Ajouter aux options envisagées";
-    items += '<li><button type="button" class="dropdown-item" data-envisager="' + esc(v.id) + '"' + (dejaEnvisage ? " disabled" : "") + '><i class="bi bi-bookmark-plus" aria-hidden="true"></i>' + libelleEnvisager + "</button></li>";
-    items += '<li><button type="button" class="dropdown-item" data-noter="' + esc(v.id) + '"><i class="bi bi-journal-text" aria-hidden="true"></i>Enregistrer une note</button></li>';
+    // Dossier réel : la note se saisit dans la fiche (enregistrée en base) ; les options envisagées ne sont pas encore
+    // enregistrables. Démonstration : actions locales, comme avant (fonctionnalité 16).
+    if (P.estEnregistree(o.id)) {
+      items += '<li><a class="dropdown-item" href="' + esc(P.urlFiche(o.prospectId) + "#historique") + '" data-noter-fiche><i class="bi bi-journal-text" aria-hidden="true"></i>Ajouter une note dans la fiche</a></li>';
+      items += '<li><p class="dropdown-item-text small mb-0">Dossier enregistré : les options envisagées ne sont pas encore enregistrables.</p></li>';
+    } else {
+      var libelleEnvisager = dejaEnvisage ? "Déjà envisagé" : "Ajouter aux options envisagées";
+      items += '<li><button type="button" class="dropdown-item" data-envisager="' + esc(v.id) + '"' + (dejaEnvisage ? " disabled" : "") + '><i class="bi bi-bookmark-plus" aria-hidden="true"></i>' + libelleEnvisager + "</button></li>";
+      items += '<li><button type="button" class="dropdown-item" data-noter="' + esc(v.id) + '"><i class="bi bi-journal-text" aria-hidden="true"></i>Enregistrer une note (démonstration)</button></li>';
+    }
     return '<div class="dropdown ivv-proposer"><button type="button" class="iv-btn iv-btn-blanc" data-bs-toggle="dropdown" data-bs-popper-config=\'{"strategy":"fixed"}\' aria-expanded="false">Proposer</button>' +
       '<ul class="dropdown-menu dropdown-menu-end ivv-menu">' + items + "</ul></div>";
   }
@@ -263,7 +270,11 @@
       '<td data-label="Conseiller et suivi">' + esc(P.conseiller(c.conseillerId).nom) + suivi + "</td>" +
       '<td data-label="Actions"><span class="ivv-cellule-actions"><a class="iv-btn iv-btn-blanc iv-btn-petit" href="' + esc(P.urlFiche(c.id)) + '">Consulter</a>' +
       '<button type="button" class="iv-btn iv-btn-blanc iv-btn-petit" data-presenter="' + esc(o.id) + '"' + (r.suspension ? " disabled" : "") + ">Préparer une présentation</button>" +
-      '<button type="button" class="iv-btn iv-btn-discret" data-suivi-opp="' + esc(o.id) + '">Ajouter un suivi</button></span></td></tr>';
+      (P.estEnregistree(o.id)
+        // Dossier réel : le suivi se planifie dans la fiche, où il est enregistré (fonctionnalité 16).
+        ? '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(c.id)) + '" data-suivi-fiche>Planifier le suivi dans la fiche</a>'
+        : '<button type="button" class="iv-btn iv-btn-discret" data-suivi-opp="' + esc(o.id) + '">Ajouter un suivi (démonstration)</button>') +
+      "</span></td></tr>";
   }
   function rendreProspects() {
     var v = S.vehicule(selVeh.value);
@@ -279,7 +290,8 @@
 
   // ---------- Demandes et arrivées ----------
   var selDemOpp = document.getElementById("d-opportunite");
-  selDemOpp.innerHTML = '<option value="">Choisir…</option>' + oppsActives().map(function (o) { return '<option value="' + esc(o.id) + '">' + esc(libelleOpp(o)) + "</option>"; }).join("");
+  // Demandes de recherche : locales, donc réservées aux dossiers de démonstration (fonctionnalité 16).
+  selDemOpp.innerHTML = '<option value="">Choisir…</option>' + oppsActives().filter(function (o) { return !P.estEnregistree(o.id); }).map(function (o) { return '<option value="' + esc(o.id) + '">' + esc(libelleOpp(o)) + "</option>"; }).join("");
   function libelleCritere(cle) {
     var g = GROUPES.filter(function (x) { return x[0] === cle; })[0];
     return g ? g[1] : P.libelle("caracteristiques", cle) || cle;
@@ -399,17 +411,17 @@
       ouvrirFicheVehicule(b.dataset.voir);
     } else if (b.dataset.envisager) {
       var ok = P.ajouterVehiculeEnvisage(o.id, S.nomVehicule(S.vehicule(b.dataset.envisager)));
-      P.notifier(ok ? "Véhicule ajouté aux options envisagées de l'opportunité." : "Déjà envisagé.");
+      P.notifier(ok ? "Véhicule ajouté aux options envisagées (démonstration, dans cet onglet)." : "Déjà envisagé.");
     } else if (b.dataset.noter) {
       var r = I.comparer(o.id, b.dataset.noter);
-      P.ajouterNote(o.prospectId, { type: "note", opportuniteId: o.id, resume: "Véhicule repéré : " + S.nomVehicule(S.vehicule(b.dataset.noter)) + " (" + UI.niveauxCompatibilite[r.niveau].toLowerCase() + (r.score != null ? ", " + r.score + " %" : "") + ", couverture " + r.couverture + " %)." });
-      P.notifier("Note enregistrée dans l'historique du prospect.");
+      var note = P.ajouterNote(o.prospectId, { type: "note", opportuniteId: o.id, resume: "Véhicule repéré : " + S.nomVehicule(S.vehicule(b.dataset.noter)) + " (" + UI.niveauxCompatibilite[r.niveau].toLowerCase() + (r.score != null ? ", " + r.score + " %" : "") + ", couverture " + r.couverture + " %)." });
+      P.notifier(note ? "Note ajoutée à l'historique (démonstration, dans cet onglet)." : "Dossier enregistré : ajoutez la note dans la fiche du prospect.");
     } else if (b.dataset.presenter) {
       ouvrirPresentation(b.dataset.presenter);
     } else if (b.dataset.suiviOpp) {
       var ve2 = S.vehicule(selVeh.value), d1 = new Date(); d1.setDate(d1.getDate() + 1);
-      P.planifierSuivi(b.dataset.suiviOpp, "Présenter le " + S.nomVehicule(ve2), d1);
-      P.notifier("Suivi ajouté à l'opportunité (demain).");
+      var planifie = P.planifierSuivi(b.dataset.suiviOpp, "Présenter le " + S.nomVehicule(ve2), d1);
+      P.notifier(planifie ? "Suivi ajouté à l'opportunité pour demain (démonstration, dans cet onglet)." : "Dossier enregistré : planifiez le suivi dans la fiche du prospect.");
     } else if (b.dataset.arrivee) {
       var nouvelles = I.simulerArrivee(b.dataset.arrivee);
       var texte = nouvelles && nouvelles.length
@@ -429,7 +441,7 @@
     var indisp = Array.prototype.filter.call(f.querySelectorAll('[name="indispensable"]'), function (x) { return x.checked; }).map(function (x) { return x.value; });
     var dm = I.creerDemande({ opportuniteId: f.elements.opportunite.value, categorie: f.elements.categorie.value, budgetMax: f.elements.budget.value, anneeMin: f.elements.annee.value,
       kilometrageMax: f.elements.km.value, indispensables: indisp });
-    P.notifier(dm ? "Demande de recherche enregistrée." : "Création impossible.");
+    P.notifier(dm ? "Demande de recherche ajoutée (démonstration, dans cet onglet)." : "Création impossible.");
     if (dm) f.reset();
   });
 

@@ -628,7 +628,10 @@
       rdv = R.planifier(donnees);
     }
     if (!rdv) {
-      aide.textContent = "Ce rendez-vous ne peut plus être replanifié.";
+      // Motif exact du refus (fonctionnalité 16) : une création n'est jamais une « replanification ».
+      var motif = R.invalide(donnees);
+      if (ancien && !R.peutReplanifier(ancien)) motif = "Ce rendez-vous ne peut plus être replanifié.";
+      aide.textContent = motif || "Rendez-vous non créé : vérifiez les informations.";
       return;
     }
 

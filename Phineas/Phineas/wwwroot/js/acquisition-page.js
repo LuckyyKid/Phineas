@@ -280,7 +280,7 @@
     erreurs(f, r.erreurs);
     if (r.erreurs) return;
     f.reset();
-    P.notifier(r.statut === "cree" ? "Prospect créé avec sa provenance ; prise en charge proposée dans le Centre d'actions." : "Contact déjà connu : demande rattachée, aucun doublon créé.");
+    P.notifier(r.statut === "cree" ? "Prospect ajouté avec sa provenance (démonstration, dans cet onglet, non enregistré en base)." : "Contact déjà connu : demande rattachée dans cet onglet (démonstration), aucun doublon créé.");
   });
   champ("form-prospection").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -310,7 +310,7 @@
       if (r2.erreurs) { f.querySelector("[data-erreur-conv]").textContent = Object.keys(r2.erreurs).map(function (k) { return r2.erreurs[k]; }).join(" "); return; }
       var m = document.getElementById("ia-modale");
       if (m && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).hide();
-      P.notifier(r2.statut === "cree" ? "Opportunité créée (source « Prospection ») ; suivi planifié." : "Contact déjà connu : rattaché, aucun doublon créé.");
+      P.notifier(r2.statut === "cree" ? "Opportunité ajoutée (source « Prospection ») avec un suivi (démonstration, dans cet onglet, non enregistrée en base)." : "Contact déjà connu : rattaché dans cet onglet (démonstration), aucun doublon créé.");
     }
   });
   Pagination.ecouterClics(racine, pages, rendre);

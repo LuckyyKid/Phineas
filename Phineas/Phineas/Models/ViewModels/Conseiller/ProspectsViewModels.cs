@@ -81,7 +81,14 @@ public record InteractionProspect(
     string Type,
     string Auteur,
     string Resume,
-    string? ProchaineAction = null
+    string? ProchaineAction = null,
+    // Événements de suivi enregistrés (réalisé, reporté, remplacé) seulement : jour prévu de la version close, même
+    // convention que DateProchaineAction. Relie l'événement à la recommandation « suivi-echeance » de ce jour
+    // (fonctionnalité 16, IntelligenceRegles.issueSuiviEnregistree).
+    DateTime? DatePrevue = null,
+    // Même événements seulement : l'action enregistrée de la version close (HistoriqueSuiviOpportunite.Action). Avec le
+    // jour prévu, elle distingue deux suivis du même jour sur une opportunité.
+    string? ActionPrevue = null
 );
 
 public record ConseillerResume(string Id, string Nom, bool EstFictif);

@@ -6,6 +6,8 @@
 @model RelationsPageViewModel
 @{
     ViewData["Title"] = "Ventes perdues";
+    // Cette page affiche le message du serveur (intelligence-composants.js) : _DonneesModules peut le lire.
+    ViewData["AfficheMessagesProspects"] = true;
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
 }
 
@@ -23,8 +25,8 @@
         <nav class="rp-ariane" aria-label="Fil d'Ariane">
             <span>Sales OS</span><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page">Ventes perdues</span>
         </nav>
-        <div class="rp-puces" role="note" title="Clients, ventes et recommandations fictifs. Rien n'est enregistré en base.">
-            <span class="rp-chip-demo">Démo</span>
+        <div class="rp-puces" role="note" title="@MentionsDonnees.ModuleSimule">
+            <span class="rp-chip-demo">@MentionsDonnees.LibelleSimule</span><span class="visually-hidden">@MentionsDonnees.ModuleSimule</span>
             <span class="rp-en-ligne"><span class="rp-point-vert" aria-hidden="true"></span>En ligne</span>
         </div>
     </div>

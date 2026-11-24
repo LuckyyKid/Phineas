@@ -627,7 +627,8 @@
   }
   function marquerGagnee(id) {
     var t = transaction(id);
-    if (!peutMarquerGagnee(t)) return null;
+    // Dossier réel : « Gagné » n'est pas encore enregistrable (refusé par le serveur) ; aucune réussite locale.
+    if (!peutMarquerGagnee(t) || P.estEnregistree(t.opportuniteId)) return null;
     var annulerEtape = P.changerEtape(t.opportuniteId, "Gagne");
     if (!annulerEtape) return null;
     historiser(t, { type: "opportunite", description: "Opportunité marquée « Gagné » par le conseiller.", nouveau: "Gagné" });

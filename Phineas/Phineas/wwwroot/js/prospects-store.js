@@ -421,9 +421,15 @@
   }
 
   // Opportunité fictive : changement local à l'onglet. Retourne une fonction d'annulation.
+  // Dossier réel (fonctionnalité 16) : changer l'étape, ajouter une note, planifier un suivi ou un véhicule envisagé
+  // en local n'aurait aucun effet en base et disparaîtrait au rechargement. Ces fonctions locales le refusent ; les
+  // opérations réelles passent par les formulaires de la fiche (envoyerEtape, notes, suivis).
+  function contactEnregistre(contactId) {
+    return String(contactId || "").indexOf("pe-") === 0;
+  }
   function changerEtape(oppId, etape) {
     var o = opportunite(oppId);
-    if (!o || o.etape === etape) return null;
+    if (!o || o.etape === etape || estEnregistree(oppId)) return null;
     var avant = { etape: o.etape, derniereActivite: o.derniereActivite };
     var i = journaliser(o.prospectId, o.id, "etape", "Étape : " + libelleEtape(o.etape) + " → " + libelleEtape(etape) + " (modification locale)", SYSTEME);
     o.etape = etape;
@@ -474,7 +480,7 @@
   // Ajoute un véhicule aux options envisagées d'une opportunité (ex. depuis les recommandations de véhicules).
   function ajouterVehiculeEnvisage(oppId, libelle) {
     var o = opportunite(oppId);
-    if (!o || !libelle || (o.vehiculesEnvisages || []).indexOf(libelle) >= 0) return false;
+    if (!o || estEnregistree(oppId) || !libelle || (o.vehiculesEnvisages || []).indexOf(libelle) >= 0) return false;
     o.vehiculesEnvisages = (o.vehiculesEnvisages || []).concat([libelle]);
     o.derniereActivite = iso(maintenant());
     // Entrée « qualification » : un changement interne, pas un échange avec le client (ne résout pas une première réponse).
@@ -485,14 +491,16 @@
 
   function planifierSuivi(oppId, action, date) {
     var o = opportunite(oppId);
-    if (!o) return;
+    if (!o || estEnregistree(oppId)) return false;
     o.prochaineAction = action;
     o.dateProchaineAction = iso(date);
     journaliser(o.prospectId, o.id, "suivi", "Suivi planifié pour le " + dateCourte(date) + " : " + action);
     changer();
+    return true;
   }
 
   function ajouterNote(contactId, d) {
+    if (contactEnregistre(contactId) || estEnregistree(d.opportuniteId || "")) return null;
     var i = journaliser(contactId, d.opportuniteId, d.type, d.resume, null, d.prochaineAction);
     var o = d.opportuniteId ? opportunite(d.opportuniteId) : null;
     if (o) {

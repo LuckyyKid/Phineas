@@ -185,6 +185,8 @@ public static class ReferentielsIntelligence
         ("Obsolete", "Devenue obsolète"),
         // Fonctionnalité 14 : veille enregistrée en base (dossier réel). Ce n'est pas une réalisation.
         ("EnVeille", "En veille"),
+        // Fonctionnalité 16 : suivi d'un dossier réel dont la réalisation est enregistrée en base (preuve serveur).
+        ("Realisee", "Réalisée, enregistrée"),
     ];
 
     // Règles dont une recommandation d'opportunité enregistrée peut être mise en veille en base (fonctionnalité 14).

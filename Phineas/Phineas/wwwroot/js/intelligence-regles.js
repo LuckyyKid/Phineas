@@ -580,6 +580,27 @@
     return "aucune";
   }
 
+  // Issue enregistrée d'une recommandation « suivi-echeance » d'un dossier réel (fonctionnalité 16) : la dernière
+  // clôture en base (événements « suivi-realise », « suivi-reporte », « suivi-remplace » de HistoriquesSuiviOpportunite)
+  // de la même opportunité et du même jour prévu que la recommandation, et dont l'action enregistrée est celle du suivi
+  // représenté (action). Plusieurs suivis peuvent partager le même jour : sans action connue, ou si la dernière clôture
+  // du jour porte sur une autre action, il n'y a pas de preuve (null). Retour : { issue: "realise" | "reporte" |
+  // "remplace", date } ou null (la disparition d'une recommandation ne prouve pas sa réalisation).
+  var ISSUES_SUIVI = { "suivi-realise": "realise", "suivi-reporte": "reporte", "suivi-remplace": "remplace" };
+  function issueSuiviEnregistree(id, interactions, action) {
+    if (!action) return null;
+    var m = /^suivi-echeance:(oe-\d+):(\d{4}-\d{2}-\d{2})$/.exec(String(id || ""));
+    if (!m) return null;
+    var evenements = (interactions || []).filter(function (i) {
+      return i.opportuniteId === m[1] && ISSUES_SUIVI[i.type] && i.datePrevue && cleJour(i.datePrevue) === m[2];
+    });
+    if (!evenements.length) return null;
+    evenements.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+    var derniere = evenements[0];
+    if (derniere.actionPrevue !== action) return null;
+    return { issue: ISSUES_SUIVI[derniere.type], date: derniere.date };
+  }
+
   // Statut présenté au conseiller pour une recommandation : l'état local applicable (etatLocalApplicable), puis la
   // veille enregistrée (fonctionnalité 14), qui reste la seule mise de côté valable pour un dossier réel.
   // Retour : { statut, reporteJusqua, motif, assignation, veille }. Utilisé par intelligence-store.js (enrichir).
@@ -734,6 +755,13 @@
   // Chiffres « à traiter » d'une liste de recommandations actives (Centre d'actions, barre latérale) : ils comptent des
   // OBLIGATIONS (regrouperObligations) ; une prise de contact regroupée compte une fois, avec sa priorité la plus haute
   // et son échéance la plus proche. « recommandations » garde le nombre de recommandations, pour information.
+  // Actions que le conseiller garde : celles confiées à un collègue (démonstration) sont comptées à part, dans
+  // « Confiées ». Même ensemble pour le chiffre « à traiter », la barre latérale, l'onglet « À traiter » et l'Accueil
+  // (fonctionnalité 16).
+  function actionsGardees(actions) {
+    return actions.filter(function (a) { return !a.assignation; });
+  }
+
   function compterObligations(actions, maintenant) {
     var m = maintenant || new Date();
     var l = regrouperObligations(actions);
@@ -764,7 +792,8 @@
     estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares, commandeRealisation: commandeRealisation, compterObligations: compterObligations,
     commandesObligation: commandesObligation, prioritesAccueil: prioritesAccueil,
     veilleActive: veilleActive, separerVeilles: separerVeilles, commandeMiseDeCote: commandeMiseDeCote,
-    estDossierReel: estDossierReel, etatLocalApplicable: etatLocalApplicable, statutPresente: statutPresente };
+    estDossierReel: estDossierReel, etatLocalApplicable: etatLocalApplicable, statutPresente: statutPresente,
+    issueSuiviEnregistree: issueSuiviEnregistree, actionsGardees: actionsGardees };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);
