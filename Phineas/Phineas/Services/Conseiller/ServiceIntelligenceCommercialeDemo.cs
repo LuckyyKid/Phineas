@@ -14,11 +14,13 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
 
     private readonly IServiceRelationsClients _relations;
     private readonly IServiceOutilsVendeur _outils;
+    private readonly IServiceVeillesRecommandations _veilles;
 
-    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations, IServiceOutilsVendeur outils)
+    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations, IServiceOutilsVendeur outils, IServiceVeillesRecommandations veilles)
     {
         _relations = relations;
         _outils = outils;
+        _veilles = veilles;
     }
 
     public async Task<DonneesIntelligence> ObtenirAsync(UserSummaryViewModel conseiller)
@@ -111,6 +113,9 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
         var relations = await _relations.ObtenirAsync(conseiller);
         // Phase 08 : provenance des prospects et outils du vendeur.
         var outils = await _outils.ObtenirAsync(conseiller);
-        return new DonneesIntelligence(preferences, pauses, demandes, indispensables, etats, simules, blocagesConnus, relations, outils);
+        // Fonctionnalité 14 : seule donnée RÉELLE de ce service, les veilles enregistrées et encore actives du conseiller.
+        var veilles = await _veilles.ActivesAsync(conseiller.Id);
+
+        return new DonneesIntelligence(preferences, pauses, demandes, indispensables, etats, simules, blocagesConnus, relations, outils, veilles);
     }
 }

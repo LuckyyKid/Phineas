@@ -104,9 +104,14 @@
     var surv = I.surveillance().filter(function (a) { return a.conseillerId === P.moiId; });
     liste("surveillance", surv, "Aucune opportunité ne stagne selon les règles actuelles.");
     racine.querySelector('[data-champ="nb-surveillance"]').textContent = String(surv.length);
+    // Veilles enregistrées (fonctionnalité 14) et reports locaux : deux listes distinctes, un compteur d'onglet commun.
+    var veilles = I.enVeille(P.moiId);
+    liste("veilles", veilles, "Aucune recommandation en veille.");
+    racine.querySelector('[data-champ="nb-veilles"]').textContent = String(veilles.length);
     var rep = I.horsFile("Reportee");
     liste("reportees", rep, "Aucune action reportée.");
-    racine.querySelector('[data-champ="nb-reportees"]').textContent = String(rep.length);
+    racine.querySelector('[data-champ="nb-reportees-locales"]').textContent = String(rep.length);
+    racine.querySelector('[data-champ="nb-reportees"]').textContent = String(veilles.length + rep.length);
     var etat = document.getElementById("f-traitees").value;
     var videTraitees = "Aucune action terminée.";
     if (etat === "Ignoree") videTraitees = "Aucune action ignorée.";

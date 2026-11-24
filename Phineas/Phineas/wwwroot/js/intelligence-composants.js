@@ -67,18 +67,38 @@
     return d ? d.libelle : a.departement;
   }
 
-  // Boutons du menu « Plus » (commencer, reporter, ignorer, confier, historique), selon l'état de l'action.
-  function boutonsSecondaires(a) {
+  // Commande « mettre de côté » du menu « Plus » (IntelligenceRegles.commandeMiseDeCote) : veille enregistrée en base
+  // pour une recommandation d'un dossier enregistré, sinon le report habituel (report réel du suivi, ou report local).
+  function boutonMiseDeCote(a) {
+    if (window.IntelligenceRegles.commandeMiseDeCote(a, (ref.veille || {}).regles) === "veille-serveur") {
+      return '<button type="button" class="dropdown-item" data-ia="veille" data-id="' + esc(a.id) + '"><i class="bi bi-moon"></i>Mettre en veille</button>';
+    }
+    return '<button type="button" class="dropdown-item" data-ia="reporter" data-id="' + esc(a.id) + '"><i class="bi bi-clock"></i>Reporter</button>';
+  }
+
+  // Boutons du menu « Plus » (commencer, reporter ou mettre en veille, ignorer, confier, historique), selon l'état.
+  // reactiverVisible : la ligne affiche déjà « Réactiver » en bouton ; le menu ne le répète pas.
+  function boutonsSecondaires(a, reactiverVisible) {
     var actif = estActive(a);
     var secondaires = actif ? [
       a.statut === "ATraiter" ? '<button type="button" class="dropdown-item" data-ia="commencer" data-id="' + esc(a.id) + '"><i class="bi bi-play-circle"></i>Commencer le traitement</button>' : "",
-      '<button type="button" class="dropdown-item" data-ia="reporter" data-id="' + esc(a.id) + '"><i class="bi bi-clock"></i>Reporter</button>',
+      boutonMiseDeCote(a),
       '<button type="button" class="dropdown-item" data-ia="ignorer" data-id="' + esc(a.id) + '"><i class="bi bi-eye-slash"></i>Ignorer</button>',
       a.assignation ? '<button type="button" class="dropdown-item" data-ia="reprendre-charge" data-id="' + esc(a.id) + '"><i class="bi bi-person-check"></i>Reprendre en charge</button>'
         : '<button type="button" class="dropdown-item" data-ia="transferer" data-id="' + esc(a.id) + '"><i class="bi bi-people"></i>Confier à un collègue</button>',
     ].join("") : (a.statut === "Reportee" || a.statut === "Ignoree") && !a.horsFile ? '<button type="button" class="dropdown-item" data-ia="reactiver" data-id="' + esc(a.id) + '"><i class="bi bi-arrow-counterclockwise"></i>Remettre dans la file</button>' : "";
+    if (a.statut === "EnVeille") secondaires = reactiverVisible ? "" : boutonReactiverVeille(a, "dropdown-item");
     secondaires += '<button type="button" class="dropdown-item" data-ia="historique" data-id="' + esc(a.id) + '"><i class="bi bi-clock-history"></i>Historique de l\'action</button>';
     return secondaires;
+  }
+
+  // « Réactiver » une recommandation en veille enregistrée (envoi au serveur, intelligence-store.envoyerReactivation).
+  function boutonReactiverVeille(a, classes) {
+    return '<button type="button" class="' + classes + '" data-ia="reactiver-veille" data-id="' + esc(a.id) + '"><i class="bi bi-arrow-counterclockwise"></i>Réactiver</button>';
+  }
+  // Mention d'une veille enregistrée : jusqu'à quand, et ce qu'elle n'est pas.
+  function texteVeille(a) {
+    return "En veille jusqu'au " + P.dateComplete(a.veille.jusqua) + " (enregistrée dans votre dossier). Ce n'est pas une réalisation : le dossier n'a pas changé.";
   }
 
   // Liste « Pourquoi cette recommandation et cette priorité ? » (règle, raisons, résolution, expiration).
@@ -111,6 +131,7 @@
       (a.avertissement ? '<p class="ia-avertissement"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>' + esc(a.avertissement) + "</p>" : "") +
       (a.assignation ? '<p class="ia-transfert"><i class="bi bi-people me-1" aria-hidden="true"></i>Prise en charge temporaire par <strong>' + esc(a.assignation.collegue) + "</strong> (" + esc((ref.motifsTransfert[a.assignation.motif] || "").toLowerCase()) + ")</p>" : "") +
       (a.statut === "Reportee" && a.reporteJusqua ? '<p class="ia-transfert"><i class="bi bi-clock me-1" aria-hidden="true"></i>Reportée au ' + esc(P.dateCourte(a.reporteJusqua)) + "</p>" : "") +
+      (a.statut === "EnVeille" && a.veille ? '<p class="ia-transfert"><i class="bi bi-moon me-1" aria-hidden="true"></i>' + esc(texteVeille(a)) + "</p>" : "") +
       '<dl class="ia-meta"><div><dt>Action proposée</dt><dd>' + esc(a.actionProposee) + "</dd></div>" +
       '<div><dt>Échéance</dt><dd class="' + (enRetard(a) ? "ia-retard" : "") + '">' + esc(echeanceTexte(a.echeance)) + "</dd></div>" +
       '<div><dt>Responsable</dt><dd>' + esc(a.departement === "conseiller" ? "Vous" : (window.Transactions && window.Transactions.ref.departements[a.departement] || {}).libelle || a.departement) + (a.source ? ' <span class="pr-sous">· ' + esc(a.source) + "</span>" : "") + "</dd></div></dl>" +
@@ -149,7 +170,10 @@
       html += '<p><i class="bi bi-people" aria-hidden="true"></i> Prise en charge temporaire par <strong>' + esc(a.assignation.collegue) + "</strong> (" + esc((ref.motifsTransfert[a.assignation.motif] || "").toLowerCase()) + ")</p>";
     }
     if (a.statut === "Reportee" && a.reporteJusqua) {
-      html += '<p><i class="bi bi-clock" aria-hidden="true"></i> Reportée au ' + esc(P.dateCourte(a.reporteJusqua)) + "</p>";
+      html += '<p><i class="bi bi-clock" aria-hidden="true"></i> Reportée au ' + esc(P.dateCourte(a.reporteJusqua)) + " (dans ce navigateur)</p>";
+    }
+    if (a.statut === "EnVeille" && a.veille) {
+      html += '<p data-veille-texte><i class="bi bi-moon" aria-hidden="true"></i> ' + esc(texteVeille(a)) + "</p>";
     }
 
     var responsable = esc(libelleResponsable(a));
@@ -161,6 +185,7 @@
     html += '<details class="iv-pourquoi"><summary>Pourquoi cette recommandation et cette priorité ?</summary><ul>' + pourquoi(a) + "</ul></details>";
 
     var boutons = "";
+    if (a.statut === "EnVeille") boutons += boutonReactiverVeille(a, "iv-btn iv-btn-sapin iv-btn-petit");
     if (actif && a.relance) {
       boutons += '<button type="button" class="iv-btn iv-btn-sapin iv-btn-petit" data-ia="relance" data-id="' + esc(a.id) + '"><i class="bi bi-pencil-square"></i>Préparer la relance</button>';
     } else if (actif) {
@@ -170,7 +195,7 @@
     if (a.prospectId) boutons += '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(a.prospectId)) + '">Fiche du client</a>';
     boutons += commandeRealiser(a, "iv-btn iv-btn-discret", "bi bi-check2");
     boutons += '<div class="dropdown"><button type="button" class="iv-btn iv-btn-discret dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Autres actions">Plus</button>' +
-      '<div class="dropdown-menu dropdown-menu-end">' + boutonsSecondaires(a) + "</div></div>";
+      '<div class="dropdown-menu dropdown-menu-end">' + boutonsSecondaires(a, true) + "</div></div>";
     html += '<div class="iv-action-boutons">' + boutons + "</div>";
     return html;
   }
@@ -327,6 +352,18 @@
       '<p class="pr-note mt-2 mb-0">L\'action reste à faire, avec la même description : seule son échéance change. Le report est enregistré dans l\'historique du dossier.</p>',
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Reporter</button>');
   }
+  // « Mettre en veille » une recommandation d'un dossier enregistré : UNE raison (son identifiant), une durée proposée.
+  function ouvrirVeille(id) {
+    var a = I.action(id);
+    courant = { type: "veille", id: id };
+    var durees = (ref.veille || {}).dureesJours || [];
+    fenetre("Mettre en veille", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
+      '<label class="form-label" for="ia-duree">Durée <span class="pr-requis">*</span></label><select class="form-select" id="ia-duree">' +
+      durees.map(function (j, i) { return '<option value="' + j + '"' + (i === 0 ? " selected" : "") + ">" + j + (j > 1 ? " jours" : " jour") + "</option>"; }).join("") + "</select>" +
+      '<p class="pr-note mt-2 mb-0">Seule cette recommandation quitte vos priorités, jusqu\'à la fin de la veille ou jusqu\'à ce que vous la réactiviez. Les autres raisons du même dossier restent affichées.</p>' +
+      '<p class="pr-note mt-2 mb-0">Ce n\'est pas une réalisation : le suivi, l\'étape et l\'historique du dossier ne changent pas. La veille est enregistrée dans votre dossier ; vous la retrouvez dans l\'onglet « En veille et reportées » du Centre d\'actions.</p>',
+      '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Mettre en veille</button>');
+  }
   function ouvrirIgnorer(id) {
     var a = I.action(id);
     courant = { type: "ignorer", id: id };
@@ -415,6 +452,9 @@
         if (!jourValide) return;
         b.disabled = true; // contre le double clic
         P.envoyerReport(courant.oppId, champSuivi.value, window.location.pathname + window.location.search);
+      } else if (courant.type === "veille") {
+        b.disabled = true; // contre le double clic
+        I.envoyerVeille(id, modale.querySelector("#ia-duree").value, window.location.pathname + window.location.search);
       } else if (courant.type === "reporter") {
         var champ = modale.querySelector("#ia-date");
         var date = champ.value ? P.depuisChampDate(champ.value) : null;
@@ -464,6 +504,11 @@
     var id = b.dataset.id, quoi = b.dataset.ia;
     if (quoi === "relance") ouvrirRelance(id);
     else if (quoi === "reporter") ouvrirReport(id);
+    else if (quoi === "veille") ouvrirVeille(id);
+    else if (quoi === "reactiver-veille") {
+      b.disabled = true; // contre le double clic
+      I.envoyerReactivation(id, window.location.pathname + window.location.search);
+    }
     else if (quoi === "ignorer") ouvrirIgnorer(id);
     else if (quoi === "transferer") ouvrirTransfert(id);
     else if (quoi === "historique") ouvrirHistorique(id);

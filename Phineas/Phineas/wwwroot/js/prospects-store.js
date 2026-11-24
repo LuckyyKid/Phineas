@@ -589,6 +589,8 @@
     envoyerEtape: envoyerEtape,
     envoyerRealisation: envoyerRealisation,
     envoyerReport: envoyerReport,
+    // Envoi d'un formulaire POST avec le jeton antiforgery (ex. mise en veille, intelligence-store.js).
+    posterFormulaire: posterSuivi,
     afficherMessageServeur: afficherMessageServeur,
     ajouterOpportunite: ajouterOpportunite,
     enregistrerQualification: enregistrerQualification,

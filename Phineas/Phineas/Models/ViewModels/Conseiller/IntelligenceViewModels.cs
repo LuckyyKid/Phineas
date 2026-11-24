@@ -19,6 +19,10 @@ public record PreferencesCommunication(
 // Suivi d'une opportunité mis en pause à la demande du client, jusqu'à une date de reprise souhaitée.
 public record PauseSuivi(string OpportuniteId, DateTime Jusqua, string Motif, DateTime Depuis);
 
+// Veille enregistrée et encore active d'une recommandation (fonctionnalité 14, ServiceVeillesRecommandations.ActivesAsync).
+// Cle : identifiant de la recommandation produit par le moteur ; Depuis et Jusqua en UTC.
+public record VeilleRecommandationVue(string Cle, string OpportuniteId, string Regle, DateTime Depuis, DateTime Jusqua);
+
 // Demande de recherche non satisfaite (le véhicule voulu n'est pas en inventaire).
 // Statut : "Active", "CorrespondanceTrouvee", "AVerifier", "EnPause", "Cloturee".
 public class DemandeRecherche
@@ -69,7 +73,9 @@ public record DonneesIntelligence(
     // titre que les préférences de contact. Sérialisés à part (balise #relations-donnees) avec leurs propres libellés.
     [property: JsonIgnore] DonneesRelationsClients? Relations = null,
     // Phase 08 : annonces, liens de provenance et attributions (provenance des prospects, prise en charge).
-    [property: JsonIgnore] DonneesOutilsVendeur? Outils = null
+    [property: JsonIgnore] DonneesOutilsVendeur? Outils = null,
+    // Fonctionnalité 14 : veilles enregistrées en base et encore actives (dossiers réels seulement).
+    IReadOnlyList<VeilleRecommandationVue>? Veilles = null
 );
 
 public class IntelligencePageViewModel
@@ -177,7 +183,36 @@ public static class ReferentielsIntelligence
         ("Terminee", "Terminée"),
         ("Ignoree", "Ignorée"),
         ("Obsolete", "Devenue obsolète"),
+        // Fonctionnalité 14 : veille enregistrée en base (dossier réel). Ce n'est pas une réalisation.
+        ("EnVeille", "En veille"),
     ];
+
+    // Règles dont une recommandation d'opportunité enregistrée peut être mise en veille en base (fonctionnalité 14).
+    // Pas « suivi-echeance » : un suivi enregistré se reporte en base (ProspectsController.ReporterSuivi), il ne se
+    // met pas en veille. Les autres règles portent sur des modules encore locaux (soumissions, rendez-vous…).
+    public static readonly IReadOnlySet<string> ReglesVeille = new HashSet<string>
+    {
+        "premiere-reponse",
+        "nouveau-prospect-recommande",
+        "qualification-manquante",
+        "opportunite-sans-action",
+        "opportunite-inactive",
+        "qualifiee-sans-vehicule",
+        "horizon-sans-proposition",
+    };
+
+    // Parmi elles, celles dont l'identifiant porte le jour de la situation (« regle:oe-12:2026-11-20 ») :
+    // une nouvelle activité donne un nouvel identifiant, que l'ancienne veille ne masque pas.
+    public static readonly IReadOnlySet<string> ReglesVeilleDatees = new HashSet<string>
+    {
+        "opportunite-sans-action",
+        "opportunite-inactive",
+        "qualifiee-sans-vehicule",
+        "horizon-sans-proposition",
+    };
+
+    // Durées de veille proposées, en jours de 24 h comptés depuis la mise en veille (UTC).
+    public static readonly IReadOnlyList<int> DureesVeilleJours = [1, 3, 7, 14];
 
     public static readonly IReadOnlyList<(string Cle, string Libelle)> Tons =
     [
@@ -237,6 +272,7 @@ public static class ReferentielsIntelligence
             categories = Categories.Select(c => new { cle = c.Cle, libelle = c.Libelle, icone = c.Icone }),
             priorites = Priorites.Select(p => new { cle = p.Cle, libelle = p.Libelle, icone = p.Icone }),
             etatsAction = EtatsAction.ToDictionary(x => x.Cle, x => x.Libelle),
+            veille = new { regles = ReglesVeille.OrderBy(x => x), dureesJours = DureesVeilleJours },
             tons = Tons.Select(x => new { cle = x.Cle, libelle = x.Libelle }),
             motifsIgnorer = MotifsIgnorer.ToDictionary(x => x.Cle, x => x.Libelle),
             motifsTransfert = MotifsTransfert.ToDictionary(x => x.Cle, x => x.Libelle),

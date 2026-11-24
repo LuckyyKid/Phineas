@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HistoriqueEtapeOpportunite> HistoriquesEtapeOpportunite => Set<HistoriqueEtapeOpportunite>();
     public DbSet<NoteProspect> NotesProspect => Set<NoteProspect>();
     public DbSet<HistoriqueSuiviOpportunite> HistoriquesSuiviOpportunite => Set<HistoriqueSuiviOpportunite>();
+    public DbSet<VeilleRecommandation> VeillesRecommandation => Set<VeilleRecommandation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -133,6 +134,31 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne(h => h.Auteur)
                 .WithMany()
                 .HasForeignKey(h => h.AuteurId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<VeilleRecommandation>(e =>
+        {
+            e.Property(v => v.EtapeAuDebut).HasConversion<string>().HasMaxLength(30);
+
+            // Une seule veille ouverte par recommandation et par conseiller, garantie par la base (voir CleActive).
+            e.HasIndex(v => new { v.ConseillerId, v.CleActive }).IsUnique();
+
+            // Les veilles disparaissent avec leur opportunité ; un conseiller ou une concession ne se supprime pas
+            // tant qu'il en a.
+            e.HasOne(v => v.Opportunite)
+                .WithMany()
+                .HasForeignKey(v => v.OpportuniteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(v => v.Conseiller)
+                .WithMany()
+                .HasForeignKey(v => v.ConseillerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(v => v.Dealership)
+                .WithMany()
+                .HasForeignKey(v => v.DealershipId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

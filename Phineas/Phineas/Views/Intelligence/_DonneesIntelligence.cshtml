@@ -16,6 +16,9 @@
         urlActions = Url.Action("Index", "Intelligence"),
         urlSuivis = Url.Action("Suivis", "Intelligence"),
         urlVehicules = Url.Action("Vehicules", "Intelligence"),
+        // Fonctionnalité 14 : mise en veille enregistrée et réactivation (IntelligenceController).
+        urlMettreEnVeille = Url.Action("MettreEnVeille", "Intelligence"),
+        urlReactiverVeille = Url.Action("ReactiverVeille", "Intelligence"),
     };
 }
 <script type="application/json" id="intelligence-donnees">@Html.Raw(JsonSerializer.Serialize(charge, options))</script>

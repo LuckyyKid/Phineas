@@ -56,7 +56,7 @@
             <ul class="nav iv-onglets" role="tablist">
                 <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-file" data-bs-toggle="tab" data-bs-target="#panneau-file" type="button" role="tab" aria-controls="panneau-file" aria-selected="true">À traiter <span class="iv-compte" data-champ="nb-file"></span></button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-surveillance" data-bs-toggle="tab" data-bs-target="#panneau-surveillance" type="button" role="tab" aria-controls="panneau-surveillance" aria-selected="false">Opportunités qui stagnent <span class="iv-compte" data-champ="nb-surveillance"></span></button></li>
-                <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-reportees" data-bs-toggle="tab" data-bs-target="#panneau-reportees" type="button" role="tab" aria-controls="panneau-reportees" aria-selected="false">Reportées <span class="iv-compte" data-champ="nb-reportees"></span></button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-reportees" data-bs-toggle="tab" data-bs-target="#panneau-reportees" type="button" role="tab" aria-controls="panneau-reportees" aria-selected="false">En veille et reportées <span class="iv-compte" data-champ="nb-reportees"></span></button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-traitees" data-bs-toggle="tab" data-bs-target="#panneau-traitees" type="button" role="tab" aria-controls="panneau-traitees" aria-selected="false">Traitées et obsolètes <span class="iv-compte" data-champ="nb-traitees"></span></button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-continuite" data-bs-toggle="tab" data-bs-target="#panneau-continuite" type="button" role="tab" aria-controls="panneau-continuite" aria-selected="false">Continuité <span class="iv-compte" data-champ="nb-continuite"></span></button></li>
             </ul>
@@ -111,6 +111,11 @@
             </div>
 
             <div class="tab-pane fade" id="panneau-reportees" role="tabpanel" aria-labelledby="onglet-reportees" tabindex="0">
+                @* Fonctionnalité 14 : veilles enregistrées en base (dossiers réels) et reports locaux (démonstration), séparés. *@
+                <h2 class="iv-sous-titre">En veille, enregistrées dans vos dossiers · <span data-champ="nb-veilles">0</span></h2>
+                <p class="iv-intro-panneau"><i class="bi bi-info-circle"></i> Une recommandation en veille n'est pas réalisée : elle revient d'elle-même à la fin de la veille si elle s'applique toujours, ou dès que vous la réactivez.</p>
+                <div class="iv-actions" id="veilles"></div>
+                <h2 class="iv-sous-titre">Reportées dans ce navigateur · <span data-champ="nb-reportees-locales">0</span></h2>
                 <div class="iv-actions" id="reportees"></div>
             </div>
 

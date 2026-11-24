@@ -559,6 +559,43 @@
     return "aucune";
   }
 
+  // ---------- Mise en veille enregistrée (fonctionnalité 14) ----------
+  // Une veille est enregistrée en base pour UNE recommandation, par son identifiant exact (ServiceVeillesRecommandations).
+  // veilles : { identifiant: { depuis, jusqua } }, déjà filtrées par le serveur (non réactivées, étape inchangée).
+  // Ce n'est jamais une réalisation : la recommandation n'est que retirée des priorités jusqu'à « jusqua ».
+
+  // Veille encore active pour cette recommandation à l'instant « maintenant », sinon null (fin atteinte : expirée).
+  function veilleActive(veilles, id, maintenant) {
+    var v = (veilles || {})[id];
+    if (!v || new Date(v.jusqua) <= maintenant) return null;
+    return v;
+  }
+
+  // Sépare les recommandations présentées (priorités immédiates) de celles en veille. La comparaison se fait sur
+  // l'identifiant de la recommandation, jamais sur l'opportunité ni sur le prospect : mettre en veille une raison d'une
+  // prise de contact laisse les autres raisons présentées, et l'obligation se recalcule sur elles (regrouperObligations).
+  function separerVeilles(actions, veilles, maintenant) {
+    var presentees = [];
+    var enVeille = [];
+    actions.forEach(function (a) {
+      if (veilleActive(veilles, a.id, maintenant)) enVeille.push(a);
+      else presentees.push(a);
+    });
+    return { presentees: presentees, enVeille: enVeille };
+  }
+
+  // Commande « mettre de côté » d'une recommandation active :
+  // - « veille-serveur » : dossier enregistré et règle de la liste reglesVeille (référentiel C#) : veille en base ;
+  // - « report-suivi » : suivi enregistré (suivi-echeance) : report réel de sa date (fonctionnalité 07), pas une veille ;
+  // - « report-local » : démonstration, ou règle d'un module encore local : statut « Reportée » du navigateur, comme avant.
+  function commandeMiseDeCote(a, reglesVeille) {
+    var enregistre = estEnregistree(a.opportuniteId || "");
+    if (!enregistre) return "report-local";
+    if (a.regle === "suivi-echeance") return "report-suivi";
+    if ((reglesVeille || []).indexOf(a.regle) >= 0) return "veille-serveur";
+    return "report-local";
+  }
+
   // Commandes d'une obligation (carte « Priorité » de l'Accueil vendeur) : la commande de chaque raison
   // (commandeRealisation), principale d'abord, sans doublon. Réaliser le suivi et déclarer le contact restent deux
   // commandes distinctes : l'une ne fait jamais l'autre.
@@ -690,7 +727,8 @@
 
   var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse,
     estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares, commandeRealisation: commandeRealisation, compterObligations: compterObligations,
-    commandesObligation: commandesObligation, prioritesAccueil: prioritesAccueil };
+    commandesObligation: commandesObligation, prioritesAccueil: prioritesAccueil,
+    veilleActive: veilleActive, separerVeilles: separerVeilles, commandeMiseDeCote: commandeMiseDeCote };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);

@@ -679,6 +679,68 @@ namespace Phineas.Data.Migrations
                     b.ToTable("Vehicules");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.VeilleRecommandation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CleActive")
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)");
+
+                    b.Property<string>("CleRecommandation")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)");
+
+                    b.Property<string>("ConseillerId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<int>("DealershipId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DebutUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EtapeAuDebut")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("FinUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ModifieeLeUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("OpportuniteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReactiveeLeUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Regle")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DealershipId");
+
+                    b.HasIndex("OpportuniteId");
+
+                    b.HasIndex("ConseillerId", "CleActive")
+                        .IsUnique();
+
+                    b.ToTable("VeillesRecommandation");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -873,6 +935,33 @@ namespace Phineas.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Dealership");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.VeilleRecommandation", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.ApplicationUser", "Conseiller")
+                        .WithMany()
+                        .HasForeignKey("ConseillerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.Dealership", "Dealership")
+                        .WithMany()
+                        .HasForeignKey("DealershipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
+                        .WithMany()
+                        .HasForeignKey("OpportuniteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conseiller");
+
+                    b.Navigation("Dealership");
+
+                    b.Navigation("Opportunite");
                 });
 
             modelBuilder.Entity("Phineas.Models.Entities.Dealership", b =>

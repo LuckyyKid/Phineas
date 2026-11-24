@@ -1,7 +1,9 @@
 // Phineas Sales Intelligence Engine : état local de démonstration (même principe que les autres stores).
 // Construit un instantané à partir des modules existants, lance le moteur (intelligence-regles.js) et réconcilie
 // les recommandations détectées avec l'état des actions (à traiter, en cours, reportée, terminée, ignorée, obsolète).
-// Aucun appel réseau, aucun envoi : tout reste dans le sessionStorage de l'onglet.
+// Aucun appel réseau : les statuts restent dans le sessionStorage de l'onglet. Seule exception (fonctionnalité 14) :
+// les veilles enregistrées en base (charge.donnees.veilles), lues ici, et posées ou levées par un formulaire envoyé
+// au serveur (envoyerVeille, envoyerReactivation) ; une veille n'est jamais une réalisation.
 (function () {
   "use strict";
 
@@ -26,6 +28,15 @@
   ref.urlActions = charge.urlActions;
   ref.urlSuivis = charge.urlSuivis;
   ref.urlVehicules = charge.urlVehicules;
+  ref.urlMettreEnVeille = charge.urlMettreEnVeille;
+  ref.urlReactiverVeille = charge.urlReactiverVeille;
+
+  // Veilles enregistrées et actives (ServiceVeillesRecommandations.ActivesAsync), par identifiant de recommandation.
+  // Jamais copiées dans le sessionStorage : la base est la seule source.
+  var veilles = {};
+  (d.veilles || []).forEach(function (v) {
+    veilles[v.cle] = { depuis: v.depuis, jusqua: v.jusqua, opportuniteId: v.opportuniteId };
+  });
   ref.libellesPriorite = {};
   ref.priorites.forEach(function (p) { ref.libellesPriorite[p.cle] = p.libelle; });
   ref.caracteristiques = P.ref.caracteristiques || {};
@@ -315,6 +326,14 @@
     var a = etat.actions[x.id] || {};
     var o = cloner(x);
     o.statut = a.statut || "ATraiter";
+    // Veille enregistrée encore active : la recommandation quitte les priorités (statut « En veille »), sans être
+    // terminée. À la fin prévue, elle revient d'elle-même si le moteur la produit toujours.
+    var veille = Regles.veilleActive(veilles, x.id, new Date());
+    o.veille = null;
+    if (veille) {
+      o.statut = "EnVeille";
+      o.veille = { depuis: veille.depuis, jusqua: veille.jusqua };
+    }
     o.reporteJusqua = a.reporteJusqua || null;
     o.motifEtat = a.motif || null;
     o.assignation = a.assignation || null;
@@ -325,9 +344,11 @@
   function toutes() {
     return resultat.actions.map(enrichir);
   }
+  // Recommandations présentées : celles en veille enregistrée sont écartées par Regles.separerVeilles (par identifiant).
   function actives(options) {
     options = options || {};
-    return toutes().filter(function (a) {
+    var presentees = Regles.separerVeilles(resultat.actions, veilles, new Date()).presentees;
+    return presentees.map(enrichir).filter(function (a) {
       return ACTIVES.indexOf(a.statut) >= 0 && (!options.conseiller || a.conseillerId === options.conseiller);
     });
   }
@@ -339,6 +360,14 @@
     var s = a.snapshot || {};
     return { id: id, regle: s.regle, regleLibelle: s.titre, client: s.client, categorie: s.categorie, motif: s.motif, prospectId: s.prospectId, opportuniteId: s.opportuniteId,
       objet: s.objet, statut: a.statut, historique: a.historique || [], assignation: a.assignation || null, horsFile: true, priorite: "Faible", raisonsPriorite: [], contexte: [] };
+  }
+  // Recommandations en veille enregistrée (encore produites par le moteur), du conseiller s'il est précisé. Une veille
+  // dont la recommandation n'existe plus (situation résolue) n'est pas listée : elle ne revient jamais artificiellement.
+  function enVeille(conseiller) {
+    var mises = Regles.separerVeilles(resultat.actions, veilles, new Date()).enVeille;
+    return mises.map(enrichir).filter(function (a) {
+      return !conseiller || a.conseillerId === conseiller;
+    });
   }
   // Actions hors de la file active (reportées, terminées, ignorées, obsolètes), y compris celles qui ne sont plus détectées.
   function horsFile(statut) {
@@ -356,7 +385,8 @@
   // Chiffres du Centre d'actions et compteur de la barre latérale. « À traiter », « prioritaires », « échéance sous
   // 24 h » et « en retard » comptent des OBLIGATIONS (Regles.regrouperObligations : une prise de contact regroupée compte
   // une fois, avec sa priorité la plus haute et son échéance la plus proche). « Terminées aujourd'hui » et « reportées »
-  // comptent des recommandations traitées localement dans ce navigateur.
+  // comptent des recommandations traitées localement dans ce navigateur. « En veille » compte les veilles enregistrées :
+  // ni à traiter, ni terminées (une veille n'est pas une réalisation).
   function compteurs(conseiller) {
     var c = Regles.compterObligations(actives({ conseiller: conseiller }), new Date());
     return {
@@ -367,7 +397,25 @@
       retard: c.retard,
       terminees: Object.keys(etat.actions).filter(function (id) { var a = etat.actions[id]; return a.statut === "Terminee" && aujourdhui(a.termineeLe); }).length,
       reportees: horsFile("Reportee").length,
+      enVeille: enVeille(conseiller).length,
     };
+  }
+
+  // ---------- Veille enregistrée (fonctionnalité 14) ----------
+  // Formulaire envoyé à IntelligenceController.MettreEnVeille : identifiant de la recommandation, durée en jours et
+  // étape affichée de l'opportunité (le serveur refuse si elle a changé). La page revient avec le message du serveur.
+  function envoyerVeille(id, jours, retour) {
+    var x = action(id);
+    var o = x ? P.opportunite(x.opportuniteId) : null;
+    if (!o || !ref.urlMettreEnVeille) return false;
+    P.posterFormulaire(ref.urlMettreEnVeille, { cle: id, jours: String(jours), etape: o.etape, retour: retour });
+    return true;
+  }
+  // Formulaire envoyé à IntelligenceController.ReactiverVeille.
+  function envoyerReactivation(id, retour) {
+    if (!ref.urlReactiverVeille) return false;
+    P.posterFormulaire(ref.urlReactiverVeille, { cle: id, retour: retour });
+    return true;
   }
   function urlObjet(a) {
     var o = a.objet || {};
@@ -689,6 +737,9 @@
     actives: actives,
     action: action,
     horsFile: horsFile,
+    enVeille: enVeille,
+    envoyerVeille: envoyerVeille,
+    envoyerReactivation: envoyerReactivation,
     suspendues: function () { return resultat.suspendues.slice(); },
     surveillance: function () { return actives().filter(function (a) { return a.monitor; }); },
     parProspect: parProspect,
