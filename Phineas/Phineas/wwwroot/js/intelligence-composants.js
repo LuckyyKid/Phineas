@@ -357,7 +357,7 @@
         champ.classList.toggle("is-invalid", !date || date <= new Date());
         if (!date || date <= new Date()) return;
         fermer();
-        notifier(I.reporter(id, date, modale.querySelector("#ia-motif").value.trim()), "Action reportée au " + P.dateCourte(date) + ".");
+        notifier(I.reporter(id, date, modale.querySelector("#ia-motif").value.trim()), P.terminerPhrase("Action reportée au " + P.dateCourte(date)));
       } else if (courant.type === "ignorer") {
         var motif = modale.querySelector("#ia-motif-ignorer").value;
         fermer();

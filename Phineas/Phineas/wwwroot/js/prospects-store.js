@@ -115,6 +115,10 @@
   function argent(n) {
     return n == null || n === "" ? null : fmtArgent.format(n);
   }
+  // Termine une phrase par un point, sans le doubler : une date abrégée finit déjà par un point (« 25 nov. »).
+  function terminerPhrase(texte) {
+    return /[.!?]$/.test(texte) ? texte : texte + ".";
+  }
   function dateCourte(d) {
     var x = new Date(d);
     return x.getFullYear() === maintenant().getFullYear() ? fmtJour.format(x) : fmtJourAnnee.format(x);
@@ -599,6 +603,7 @@
     echeance: echeance,
     ecartJours: ecartJours,
     dateCourte: dateCourte,
+    terminerPhrase: terminerPhrase,
     dateComplete: dateComplete,
     initiales: initiales,
     libelle: libelle,

@@ -537,7 +537,7 @@
     return avecAnnulation(t, function () {
       var avant = t.livraison.datePrevue;
       t.livraison.datePrevue = new Date(date).toISOString();
-      historiser(t, { type: "livraison", description: "Date de livraison envisagée : " + P.dateCourte(date) + ".", ancien: avant ? P.dateCourte(avant) : null, nouveau: P.dateCourte(date) });
+      historiser(t, { type: "livraison", description: P.terminerPhrase("Date de livraison envisagée : " + P.dateCourte(date)), ancien: avant ? P.dateCourte(avant) : null, nouveau: P.dateCourte(date) });
     });
   }
 
@@ -697,7 +697,7 @@
     var vehicule = a.axes.filter(function (x) { return x.cle === "vehicule"; })[0];
     var at = atelier(t.vehiculeId);
     return "Bonjour " + prenom + ",\n\nVoici où en est votre dossier pour le " + nomVehicule(t) + ".\n" +
-      (vehicule.etat === "Terminee" ? "Le véhicule est prêt." : "Le véhicule est en cours de préparation par notre atelier" + (at && at.disponibiliteEstimee ? " ; disponibilité estimée le " + P.dateCourte(at.disponibiliteEstimee) + "." : " ; je vous confirmerai une date dès qu'elle sera connue.")) +
+      (vehicule.etat === "Terminee" ? "Le véhicule est prêt." : "Le véhicule est en cours de préparation par notre atelier" + (at && at.disponibiliteEstimee ? P.terminerPhrase(" ; disponibilité estimée le " + P.dateCourte(at.disponibiliteEstimee)) : " ; je vous confirmerai une date dès qu'elle sera connue.")) +
       "\n\nJe reste disponible pour toute question.\n\n" + auteur();
   }
 

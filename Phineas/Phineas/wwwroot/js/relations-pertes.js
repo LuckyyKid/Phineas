@@ -255,7 +255,7 @@
     var cl = dsr.cloture, c = dsr.contact;
     var motif = String(ref.motifsPerte[cl.motif] || cl.motif).toLowerCase();
     var origine = String((ORIGINES[cl.origine] || ORIGINES.inconnu).libelle).toLowerCase();
-    var phrase = c.prenom + " n'a pas conclu à l'étape « " + P.libelleEtape(cl.etapeAtteinte) + " », le " + P.dateCourte(cl.date) + ".";
+    var phrase = P.terminerPhrase(c.prenom + " n'a pas conclu à l'étape « " + P.libelleEtape(cl.etapeAtteinte) + " », le " + P.dateCourte(cl.date));
     if (cl.motif === "inconnu") phrase += " Le motif n'est pas connu : il ne faut pas le deviner.";
     else phrase += " Motif : " + motif + " (" + origine + ").";
     if (dsr.etat.raison) phrase += " " + dsr.etat.raison;

@@ -53,11 +53,12 @@
 .iv-a-verifier { color: var(--iv-ambre-ink); font-weight: 500; }
 
 /* ---------- Haut de page ---------- */
-.iv-haut { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+/* flex-wrap : sur petit écran, les pastilles passent sous le fil d'Ariane au lieu d'élargir la page. */
+.iv-haut { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
 .iv-ariane { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--iv-muted); }
 .iv-ariane i { font-size: 11px; }
 .iv-ariane [aria-current] { color: var(--iv-ink); font-weight: 500; }
-.iv-puces { display: flex; align-items: center; gap: 8px; }
+.iv-puces { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .iv-chip-demo { padding: 4px 10px; border-radius: 999px; background: #FBF1DE; color: var(--iv-ambre-ink); font-family: var(--iv-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; }
 .iv-demo-etat { font-size: 13px; color: var(--iv-muted); }
 .iv-demo-reset { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 0; border-radius: 999px; background: none; font-size: 13px; color: var(--iv-text); }
@@ -213,7 +214,8 @@
 /* Pagination des listes d'actions (6 par page, intelligence-actions.js) : même rendu que la liste des prospects */
 .iv-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 16px 12px 4px; border-top: 1px solid var(--iv-line-2); }
 .iv-pages-info { font-family: var(--iv-mono); font-size: 11.5px; letter-spacing: .08em; color: var(--iv-muted); }
-.iv-pages { display: flex; align-items: center; gap: 4px; }
+/* flex-wrap : avec beaucoup de pages, les numéros passent à la ligne au lieu d'élargir la page sur mobile. */
+.iv-pages { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .iv-page-btn {
   min-width: 36px;
   height: 36px;
@@ -316,9 +318,10 @@
 .iv-cellule-boutons { display: inline-flex; align-items: center; gap: 4px; }
 
 .iv-suspendues { margin: 0; padding: 0; list-style: none; }
-.iv-suspendues li { display: flex; align-items: center; gap: 16px; padding: 18px 0; border-top: 1px solid var(--iv-line-2); }
+.iv-suspendues li { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 0; border-top: 1px solid var(--iv-line-2); }
 .iv-suspendues li > i { font-size: 20px; color: var(--iv-muted); }
-.iv-suspendues-texte { flex: 1; min-width: 0; }
+/* Base de 180 px : quand la place manque, la date et le bouton passent sous le texte au lieu de l'écraser. */
+.iv-suspendues-texte { flex: 1 1 180px; min-width: 0; }
 .iv-suspendues-texte strong { display: block; font-size: 15.5px; font-weight: 500; color: var(--iv-ink); }
 .iv-suspendues-texte span { display: block; font-size: 14.5px; color: var(--iv-text); }
 .iv-suspendues-date { flex-shrink: 0; font-size: 14.5px; color: var(--iv-muted); }

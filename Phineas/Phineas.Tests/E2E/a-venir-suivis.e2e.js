@@ -190,6 +190,34 @@ async function pageCourante(page, liste) {
     verifier(ligne !== null && !(await ligne.innerText()).includes("En retard"), "… et rejoint « À traiter » (dû aujourd'hui, pas en retard)");
     verifier(sql("SELECT DATE(DateProchaineAction) FROM OpportunitesVente WHERE Id = " + demain.oppId) === jour(1), "la date en base n'a pas changé");
 
+    // ---------- Décalage entre le jour du serveur et celui du conseiller ----------
+    // Le serveur n'envoie que les suivis datés de son jour ou plus tard ; le navigateur classe avec son propre jour.
+    // Conseiller en retard d'un jour sur le serveur (ex. 22 h au Québec quand le serveur en UTC est déjà au lendemain) :
+    // un suivi daté du jour du serveur est « Demain » pour lui et doit être transmis. Conseiller en avance : idem pour J+2.
+    // Jour du serveur : celui de MySQL (même fuseau que le serveur d'application dans cet environnement de test).
+    const jourServeur = sql("SELECT CURDATE()").split("-").map(Number);
+    function heureLocale(decalageJours, heure) { return new Date(jourServeur[0], jourServeur[1] - 1, jourServeur[2] + decalageJours, heure, 0, 0); }
+    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES " +
+      "(" + a.prospectId + ", 'Fuseau J', 'Qualifie', 'Fuseau J " + suffixe + "', TIMESTAMP(CURDATE(), '09:00:00'), NOW(), NOW()), " +
+      "(" + a.prospectId + ", 'Fuseau J+2', 'Qualifie', 'Fuseau J+2 " + suffixe + "', TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 2 DAY), '09:00:00'), NOW(), NOW())");
+    const fuseauJ = sql("SELECT Id FROM OpportunitesVente WHERE ProchaineAction = 'Fuseau J " + suffixe + "'");
+    const fuseauJ2 = sql("SELECT Id FROM OpportunitesVente WHERE ProchaineAction = 'Fuseau J+2 " + suffixe + "'");
+    const enRetardDUnJour = await nouvellePage(navigateur);
+    await enRetardDUnJour.clock.setFixedTime(heureLocale(-1, 22)); // la veille du jour du serveur, 22 h
+    await connecter(enRetardDUnJour, SOPHIE);
+    await ouvrirAVenir(enRetardDUnJour);
+    ligne = await ligneAVenir(enRetardDUnJour, fuseauJ);
+    verifier(ligne !== null && (await ligne.innerText()).includes("Demain"), "conseiller un jour derrière le serveur : le suivi daté du jour du serveur est transmis et « À venir » (« Demain »)");
+    const enAvanceDUnJour = await nouvellePage(navigateur);
+    await enAvanceDUnJour.clock.setFixedTime(heureLocale(1, 1)); // le lendemain du jour du serveur, 1 h
+    await connecter(enAvanceDUnJour, SOPHIE);
+    await ouvrirAVenir(enAvanceDUnJour);
+    ligne = await ligneAVenir(enAvanceDUnJour, fuseauJ2);
+    verifier(ligne !== null && (await ligne.innerText()).includes("Demain") && (await ligneAVenir(enAvanceDUnJour, fuseauJ)) === null, "conseiller un jour devant le serveur : J+2 est « Demain », J n'est plus à venir");
+    await enAvanceDUnJour.click("#onglet-a-traiter");
+    ligne = await ligneATraiter(enAvanceDUnJour, fuseauJ);
+    verifier(ligne !== null && (await ligne.innerText()).includes("En retard"), "… et J est « En retard » dans « À traiter »");
+
     // ---------- Reporter depuis « À venir » (fenêtre existante) ----------
     await ouvrirAVenir(page);
     await (await ligneAVenir(page, a.oppId)).locator("[data-reporter-suivi]").click();
@@ -285,12 +313,9 @@ async function pageCourante(page, liste) {
       return { largeur: largeur, tete: droite("#suivis .iv-carte-tete-onglets"), onglets: droite("#onglet-a-venir"), panneau: droite("#panneau-a-venir"), defile: droite('[data-zone="tableau-a-venir"]'), puces: droite(".iv-puces") };
     });
     verifier(mesures.tete <= mesures.largeur && mesures.onglets <= mesures.largeur && mesures.panneau <= mesures.largeur && mesures.defile <= mesures.largeur, "390 px : onglets, panneau et tableau « À venir » restent dans l'écran (le tableau défile dans son cadre) " + JSON.stringify(mesures));
-    // Toute la page : le seul débordement admis est celui, antérieur, des pastilles de l'en-tête (iv-puces) ; une fois
-    // neutralisé par le correctif proposé (retour à la ligne de .iv-haut et .iv-puces), la vue « À venir » n'en ajoute aucun.
-    await mobile.addStyleTag({ content: ".iv-haut, .iv-puces { flex-wrap: wrap; }" });
-    await mobile.waitForTimeout(200);
+    // Toute la page, sans aucune aide : ni la vue « À venir », ni l'en-tête, ni la pagination ne débordent.
     const debordement = await mobile.evaluate(function () { return document.documentElement.scrollWidth - document.documentElement.clientWidth; });
-    verifier(debordement === 0, "390 px : la vue « À venir » n'ajoute aucun défilement horizontal à la page (" + debordement + " px)");
+    verifier(debordement === 0, "390 px : aucun défilement horizontal de la page (" + debordement + " px)");
     await mobile.screenshot({ path: "a-venir-390-sombre.png", fullPage: false });
     await (await ligneAVenir(page, a.oppId)).screenshot({ path: "a-venir-ligne-clair.png" });
 

@@ -540,7 +540,7 @@
     var pref = etat.preferences[prospectId];
     if (pref && (pref.nePlusContacter || pref.consentement === "retire") && nature !== "dossier") return "Le client a demandé à ne plus être sollicité.";
     var p = etat.pauses[opportuniteId];
-    if (p && new Date(p.jusqua) > new Date() && nature !== "dossier") return "Suivi en pause jusqu'au " + P.dateCourte(p.jusqua) + ".";
+    if (p && new Date(p.jusqua) > new Date() && nature !== "dossier") return P.terminerPhrase("Suivi en pause jusqu'au " + P.dateCourte(p.jusqua));
     var o = P.opportunite(opportuniteId);
     if (o && ["Gagne", "Perdu"].indexOf(o.etape) >= 0 && !horsPipeline) return "L'opportunité est clôturée.";
     return null;
