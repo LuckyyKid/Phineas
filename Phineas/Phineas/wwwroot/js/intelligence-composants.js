@@ -244,7 +244,7 @@
   function ouvrirReport(id) {
     var a = I.action(id);
     if (a && a.regle === "suivi-echeance" && P.estEnregistree(a.opportuniteId)) {
-      ouvrirReportSuivi(a);
+      ouvrirReportSuivi(a.opportuniteId, a.regleLibelle, a.client);
       return;
     }
     courant = { type: "reporter", id: id };
@@ -257,11 +257,13 @@
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Reporter</button>');
   }
   // Suivi planifié et enregistré en base : on change sa date en base (même action), ce n'est pas une mise en veille locale.
-  function ouvrirReportSuivi(a) {
-    var o = P.opportunite(a.opportuniteId);
+  // Ouvert depuis une recommandation « suivi-echeance » (« À traiter », cartes) ou depuis la vue « À venir ».
+  // titre : libellé en gras en tête de la fenêtre (règle ou opportunité) ; client : nom affiché à côté.
+  function ouvrirReportSuivi(oppId, titre, client) {
+    var o = P.opportunite(oppId);
     var demain = new Date(); demain.setDate(demain.getDate() + 1);
-    courant = { type: "reporter-suivi", id: a.id, oppId: a.opportuniteId };
-    fenetre("Reporter le suivi", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
+    courant = { type: "reporter-suivi", id: oppId, oppId: oppId };
+    fenetre("Reporter le suivi", "<p><strong>" + esc(titre) + "</strong> : " + esc(client) + "</p>" +
       "<p>Action : « " + esc(o.prochaineAction) + " »<br />Échéance actuelle : " + esc(P.dateCourte(o.dateProchaineAction)) + "</p>" +
       '<label class="form-label" for="ia-date">Nouvelle échéance <span class="pr-requis">*</span></label><input type="date" class="form-control" id="ia-date" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" />' +
       '<div class="invalid-feedback">Choisissez aujourd\'hui ou une date à venir, différente de l\'échéance actuelle.</div>' +
@@ -503,6 +505,7 @@
     echeanceTexte: echeanceTexte,
     fenetre: fenetre,
     ouvrirRelance: ouvrirRelance,
+    reporterSuivi: ouvrirReportSuivi,
     categories: CAT,
   };
 })();

@@ -1,5 +1,6 @@
-// « Mes suivis » (Views/Intelligence/Suivis.cshtml, maquette 06) : relances recommandées avec leur contexte,
-// relances suspendues et préférences de contact déclarées par le conseiller. Les recommandations viennent du store.
+// « Mes suivis » (Views/Intelligence/Suivis.cshtml, maquette 06) : vue « À traiter » (relances recommandées avec leur
+// contexte), vue « À venir » (suivis enregistrés planifiés après aujourd'hui), relances suspendues et préférences de
+// contact déclarées par le conseiller. Les recommandations viennent du store ; les suivis à venir, du serveur.
 (function () {
   "use strict";
 
@@ -22,6 +23,57 @@
       elements: elements.slice(debut, debut + LIGNES_PAR_PAGE),
       pagination: UI.htmlPagination(idListe, elements.length, page, LIGNES_PAR_PAGE),
     };
+  }
+
+  // ---------- Vue « À venir » ----------
+  // Données : <script id="suivis-planifies"> (IntelligenceController.Suivis → ServiceProspects.SuivisPlanifiesAsync),
+  // déjà triées par date prévue puis par opportunité. Classement avec le jour civil du navigateur, la même convention
+  // que la règle « suivi-echeance » de « À traiter » : aujourd'hui ou avant = « À traiter », après aujourd'hui = « À venir ».
+  var suivisPlanifies = lireSuivisPlanifies();
+
+  function lireSuivisPlanifies() {
+    var element = document.getElementById("suivis-planifies");
+    if (!element) return [];
+    try {
+      return JSON.parse(element.textContent) || [];
+    } catch (erreur) {
+      return [];
+    }
+  }
+
+  function suivisAVenir() {
+    return suivisPlanifies.filter(function (s) { return P.ecartJours(s.datePrevue) > 0; });
+  }
+
+  var fmtJourLong = new Intl.DateTimeFormat("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  // « Demain », « Dans 4 jours ».
+  function dansCombien(d) {
+    var jours = P.ecartJours(d);
+    return jours === 1 ? "Demain" : "Dans " + jours + " jours";
+  }
+
+  // Une ligne par opportunité : client (lien vers la fiche), opportunité, action, date prévue, actions existantes.
+  function ligneAVenir(s) {
+    return '<tr data-suivi="' + esc(s.opportuniteId) + '">' +
+      '<td><a class="iv-nom" href="' + esc(P.urlFiche(s.prospectId)) + '">' + esc(s.client) + "</a></td>" +
+      "<td>" + esc(s.opportunite) + "</td>" +
+      "<td>" + esc(s.action) + "</td>" +
+      "<td>" + esc(fmtJourLong.format(new Date(s.datePrevue))) + '<span class="iv-sous">' + esc(dansCombien(s.datePrevue)) + "</span></td>" +
+      '<td><span class="iv-cellule-boutons">' +
+      '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(s.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>' +
+      '<button type="button" class="iv-btn iv-btn-discret" data-reporter-suivi="' + esc(s.opportuniteId) + '"><i class="bi bi-clock" aria-hidden="true"></i>Reporter</button>' +
+      "</span></td></tr>";
+  }
+
+  function rendreAVenir() {
+    var liste = suivisAVenir();
+    var page = paginer("a-venir", liste);
+    document.getElementById("a-venir").innerHTML = page.elements.map(ligneAVenir).join("");
+    racine.querySelector('[data-zone="pagination-a-venir"]').innerHTML = page.pagination;
+    racine.querySelector('[data-zone="tableau-a-venir"]').hidden = liste.length === 0;
+    document.getElementById("a-venir-vide").hidden = liste.length > 0;
+    racine.querySelector('[data-champ="nb-a-venir"]').textContent = String(liste.length);
   }
 
   // Icône du canal préféré (clés de ReferentielsProspects.MoyensContact).
@@ -98,6 +150,8 @@
       : '<li><span class="iv-gris">Aucune relance suspendue.</span></li>';
     racine.querySelector('[data-zone="pagination-suspendues"]').innerHTML = pageSuspendues.pagination;
     racine.querySelector('[data-champ="nb-suspendues"]').textContent = String(suspendues.length);
+
+    rendreAVenir();
   }
 
   // Préférences de contact : déclarées par le conseiller (ce que le client a demandé), jamais déduites.
@@ -121,13 +175,37 @@
       '<p class="pr-note mt-3 mb-0">Ces préférences sont locales à la démonstration et devront être validées juridiquement avant tout usage réel.</p>',
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button><button type="button" class="btn btn-primary" data-pref="enregistrer">Enregistrer</button>');
   }
-  // « Marquer comme réalisé » : le serveur archive le suivi, puis cette page se recharge avec un message.
+  // « Marquer comme réalisé » : le serveur archive le suivi, puis cette page se recharge avec un message,
+  // dans la même vue (l'adresse garde ?vue=a-venir).
   racine.addEventListener("click", function (e) {
     var bouton = e.target.closest("[data-realiser-suivi]");
     if (!bouton || bouton.disabled) return;
     bouton.disabled = true; // contre le double clic
-    P.envoyerRealisation(bouton.dataset.realiserSuivi, window.location.pathname);
+    P.envoyerRealisation(bouton.dataset.realiserSuivi, window.location.pathname + window.location.search);
   });
+
+  // « Reporter » d'un suivi à venir : même fenêtre et même envoi que dans « À traiter » (intelligence-composants.js).
+  racine.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-reporter-suivi]");
+    if (!bouton) return;
+    var suivi = suivisPlanifies.find(function (s) { return s.opportuniteId === bouton.dataset.reporterSuivi; });
+    if (suivi) UI.reporterSuivi(suivi.opportuniteId, suivi.opportunite, suivi.client);
+  });
+
+  // Vue affichée : gardée dans l'adresse pour revenir au même endroit après une action ou une actualisation.
+  // La pastille « Délais : règles de démonstration » ne concerne que « À traiter ».
+  var ongletAVenir = document.getElementById("onglet-a-venir");
+  var pastilleATraiter = racine.querySelector("[data-pastille-a-traiter]");
+  racine.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (onglet) {
+    onglet.addEventListener("shown.bs.tab", function () {
+      var aVenir = onglet === ongletAVenir;
+      pastilleATraiter.hidden = aVenir;
+      history.replaceState(null, "", window.location.pathname + (aVenir ? "?vue=a-venir" : ""));
+    });
+  });
+  if (new URLSearchParams(window.location.search).get("vue") === "a-venir" && window.bootstrap) {
+    bootstrap.Tab.getOrCreateInstance(ongletAVenir).show();
+  }
 
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-preferences]");

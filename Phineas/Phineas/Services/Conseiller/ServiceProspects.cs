@@ -43,6 +43,8 @@ public interface IServiceProspects
     // Planifie la prochaine action d'une opportunité enregistrée (elle remplace l'action courante, archivée « Remplacé »).
     // Valeur du résultat : true si le suivi a changé, false s'il était déjà planifié à l'identique (double envoi).
     Task<ResultatService<bool>> PlanifierSuiviAsync(string utilisateurId, SuiviSaisie saisie);
+    // Prochaines actions enregistrées des dossiers du conseiller, datées d'aujourd'hui (jour du serveur) ou plus tard.
+    Task<IReadOnlyList<SuiviPlanifie>> SuivisPlanifiesAsync(string utilisateurId);
     // Nouvelle échéance pour la même action ; Valeur = false si ce report était déjà enregistré (double envoi).
     Task<ResultatService<bool>> ReporterSuiviAsync(string utilisateurId, string? opportuniteId, string? versionSuivi, DateTime? date);
 
@@ -129,6 +131,37 @@ public class ServiceProspects : IServiceProspects
         }
 
         return new DonneesProspects(demo.ConseillerConnecteId, demo.Conseillers, contacts, opportunites, interactions);
+    }
+
+    // ---------- Suivis à venir ----------
+
+    // Prochaine action courante de chaque opportunité active des dossiers du conseiller, dans sa concession actuelle,
+    // triée par date prévue puis par opportunité (ordre stable). Lue dans OpportuniteVente seulement : les actions
+    // archivées (réalisées, remplacées, reportées) ne sont jamais des suivis actifs.
+    // Le classement « À traiter » ou « À venir » se fait dans le navigateur, avec le jour civil de l'utilisateur, comme la
+    // règle « suivi-echeance » de « À traiter » (une seule convention ; le serveur ne connaît pas le fuseau de l'utilisateur).
+    // Le serveur n'envoie que les suivis datés d'aujourd'hui (son jour) ou plus tard : un suivi antérieur ne peut pas être
+    // après le jour de l'utilisateur tant que l'écart entre les deux fuseaux reste inférieur à un jour.
+    public async Task<IReadOnlyList<SuiviPlanifie>> SuivisPlanifiesAsync(string utilisateurId)
+    {
+        DateTime premierJour = DateTime.Today;
+        var lignes = await _db.OpportunitesVente.AsNoTracking()
+            .Where(o => o.Prospect!.ConseillerId == utilisateurId && o.Prospect.DealershipId == o.Prospect.Conseiller!.DealershipId)
+            .Where(o => o.Etape != EtapeVente.Gagne && o.Etape != EtapeVente.Perdu)
+            .Where(o => o.ProchaineAction != null && o.DateProchaineAction != null && o.DateProchaineAction >= premierJour)
+            .OrderBy(o => o.DateProchaineAction)
+            .ThenBy(o => o.Id)
+            .Select(o => new { o.Id, o.ProspectId, o.Prospect!.Prenom, o.Prospect.Nom, o.Titre, o.ProchaineAction, o.DateProchaineAction })
+            .ToListAsync();
+
+        var suivis = new List<SuiviPlanifie>();
+        foreach (var l in lignes)
+        {
+            string client = (l.Prenom + " " + l.Nom).Trim();
+            string version = EmpreinteSuivi(l.ProchaineAction, l.DateProchaineAction)!;
+            suivis.Add(new SuiviPlanifie(PrefixeOpportunite + l.Id, PrefixeProspect + l.ProspectId, client, l.Titre, l.ProchaineAction!, l.DateProchaineAction!.Value, version));
+        }
+        return suivis;
     }
 
     private static ContactProspect VersContact(Prospect p) =>

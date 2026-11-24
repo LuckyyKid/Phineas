@@ -60,6 +60,19 @@ public record Opportunite(
     string? VersionSuivi = null
 );
 
+// Prochaine action enregistrée d'une opportunité active, pour la vue « À venir » de « Mes suivis »
+// (voir ServiceProspects.SuivisPlanifiesAsync). Une ligne par opportunité : jamais une action archivée.
+public record SuiviPlanifie(
+    string OpportuniteId,
+    string ProspectId,
+    string Client,
+    string Opportunite,
+    string Action,
+    DateTime DatePrevue,
+    // Empreinte de l'action (ServiceProspects.EmpreinteSuivi), renvoyée par « Reporter » et « Marquer comme réalisé ».
+    string VersionSuivi
+);
+
 public record InteractionProspect(
     string Id,
     string ProspectId,

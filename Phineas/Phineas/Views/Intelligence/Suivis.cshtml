@@ -1,4 +1,4 @@
-@* Mes suivis (maquette 06-mes-suivis) : clients à relancer (tableau) et relances suspendues.
+@* Mes suivis (maquette 06-mes-suivis) : vues « À traiter » et « À venir » (tableaux) et relances suspendues.
    Données : IntelligenceController.Suivis. Interactions : wwwroot/js/intelligence-suivis.js ;
    fenêtre « Préparer la relance » : intelligence-composants.js. Styles : intelligence-verre.css. *@
 @using Phineas.Models.ViewModels.Conseiller
@@ -34,31 +34,65 @@
     <h1 class="iv-titre">Mes suivis</h1>
     <p class="iv-intro">Qui relancer, pourquoi, et comment le client préfère être contacté. Vous gardez la main sur chaque message.</p>
 
-    <section class="iv-verre iv-carte mt-4" aria-labelledby="titre-a-relancer">
-        <div class="iv-carte-tete">
-            <h2 class="iv-label" id="titre-a-relancer">À relancer · <span data-champ="nb-relances">0</span></h2>
-            <span class="iv-pastille-grise">Délais : règles de démonstration</span>
+    @* Deux vues : « À traiter » (recommandations dues, dont les suivis du jour et en retard) et « À venir »
+       (suivis enregistrés planifiés après aujourd'hui). La vue choisie est gardée dans l'adresse (?vue=a-venir). *@
+    <section class="iv-verre iv-carte mt-4" aria-labelledby="titre-mes-suivis">
+        <h2 class="visually-hidden" id="titre-mes-suivis">Suivis</h2>
+        <div class="iv-carte-tete iv-carte-tete-onglets">
+            <ul class="nav iv-onglets" role="tablist" aria-label="Vue des suivis">
+                <li class="nav-item" role="presentation"><button class="nav-link active" id="onglet-a-traiter" data-bs-toggle="tab" data-bs-target="#panneau-a-traiter" type="button" role="tab" aria-controls="panneau-a-traiter" aria-selected="true">À traiter <span class="iv-compte" data-champ="nb-relances">0</span></button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="onglet-a-venir" data-bs-toggle="tab" data-bs-target="#panneau-a-venir" type="button" role="tab" aria-controls="panneau-a-venir" aria-selected="false">À venir <span class="iv-compte" data-champ="nb-a-venir">0</span></button></li>
+            </ul>
+            <span class="iv-pastille-grise" data-pastille-a-traiter>Délais : règles de démonstration</span>
         </div>
-        <div class="iv-defile" data-zone="tableau-relances">
-            <table class="iv-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Client</th>
-                        <th scope="col">Pourquoi</th>
-                        <th scope="col">Dernier contact</th>
-                        <th scope="col">Canal préféré</th>
-                        <th scope="col">Prochaine action</th>
-                    </tr>
-                </thead>
-                <tbody id="relances"></tbody>
-            </table>
-        </div>
-        <div data-zone="pagination-relances"></div>
-        @* Affiché à la place du tableau quand il n'y a rien : jamais un tableau avec seulement ses en-têtes. *@
-        <div class="iv-vide" id="relances-vide" hidden>
-            <i class="bi bi-check2-circle"></i>
-            <strong>Aucune relance à faire</strong>
-            <span>Les relances apparaîtront lorsqu'une situation le justifiera.</span>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="panneau-a-traiter" role="tabpanel" aria-labelledby="onglet-a-traiter" tabindex="0">
+                <div class="iv-defile" data-zone="tableau-relances">
+                    <table class="iv-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Client</th>
+                                <th scope="col">Pourquoi</th>
+                                <th scope="col">Dernier contact</th>
+                                <th scope="col">Canal préféré</th>
+                                <th scope="col">Prochaine action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relances"></tbody>
+                    </table>
+                </div>
+                <div data-zone="pagination-relances"></div>
+                @* Affiché à la place du tableau quand il n'y a rien : jamais un tableau avec seulement ses en-têtes. *@
+                <div class="iv-vide" id="relances-vide" hidden>
+                    <i class="bi bi-check2-circle"></i>
+                    <strong>Aucune relance à faire</strong>
+                    <span>Les relances apparaîtront lorsqu'une situation le justifiera.</span>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="panneau-a-venir" role="tabpanel" aria-labelledby="onglet-a-venir" tabindex="0">
+                <p class="iv-note mb-3">Prochaines actions planifiées après aujourd'hui dans vos dossiers enregistrés, de la plus proche à la plus lointaine. Le jour venu, elles passent dans « À traiter ». Les dossiers de démonstration n'y figurent pas.</p>
+                <div class="iv-defile" data-zone="tableau-a-venir">
+                    <table class="iv-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Client</th>
+                                <th scope="col">Opportunité</th>
+                                <th scope="col">Prochaine action</th>
+                                <th scope="col">Prévu le</th>
+                                @* position-relative : le libellé masqué (position absolue) reste dans le cadre qui défile, sinon il élargit la page sur mobile. *@
+                                <th scope="col" class="position-relative"><span class="visually-hidden">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="a-venir"></tbody>
+                    </table>
+                </div>
+                <div data-zone="pagination-a-venir"></div>
+                <div class="iv-vide" id="a-venir-vide" hidden>
+                    <i class="bi bi-calendar-check"></i>
+                    <strong>Aucun suivi à venir</strong>
+                    <span>Les suivis planifiés après aujourd'hui apparaîtront ici.</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -71,6 +105,8 @@
 </div>
 
 <partial name="_DonneesModules" model="Model" />
+@* Suivis enregistrés pour la vue « À venir » (ServiceProspects.SuivisPlanifiesAsync) : seulement les dossiers du conseiller. *@
+<script type="application/json" id="suivis-planifies">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SuivisPlanifies, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)))</script>
 
 @section Scripts {
     <script src="~/js/prospects-store.js" asp-append-version="true"></script>

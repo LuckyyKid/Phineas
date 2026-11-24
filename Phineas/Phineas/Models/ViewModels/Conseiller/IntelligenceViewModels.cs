@@ -85,6 +85,8 @@ public class IntelligencePageViewModel
     public string ConseillerCourriel { get; init; } = "";
     public string? OpportuniteId { get; init; }
     public string? VehiculeId { get; init; }
+    // « Mes suivis » seulement : suivis enregistrés qui peuvent être « à venir » (voir ServiceProspects.SuivisPlanifiesAsync).
+    public IReadOnlyList<SuiviPlanifie> SuivisPlanifies { get; init; } = [];
 }
 
 public record ChargeIntelligence(DonneesIntelligence Donnees, string ConseillerNom, string? Concession = null);

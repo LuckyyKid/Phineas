@@ -282,6 +282,8 @@
    Mes suivis (maquette 06)
    ========================================================= */
 .iv-carte-tete { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+/* En-tête avec onglets (« Mes suivis ») : passe à la ligne sur petit écran au lieu de déborder. */
+.iv-carte-tete-onglets { flex-wrap: wrap; }
 .iv-pastille-grise { padding: 6px 14px; border-radius: 999px; background: rgba(11, 13, 13, .05); font-size: 13.5px; color: var(--iv-text); }
 
 /* Sur petit écran, le tableau défile au lieu de se déformer */

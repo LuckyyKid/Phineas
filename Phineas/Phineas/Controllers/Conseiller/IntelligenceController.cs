@@ -42,9 +42,10 @@ public class IntelligenceController : Controller
         return modele is null ? Challenge() : View(modele);
     }
 
+    // « Mes suivis » : vues « À traiter » (recommandations) et « À venir » (suivis enregistrés, SuivisPlanifies).
     public async Task<IActionResult> Suivis()
     {
-        var modele = await ConstruireAsync();
+        var modele = await ConstruireAsync(avecSuivisPlanifies: true);
         return modele is null ? Challenge() : View(modele);
     }
 
@@ -54,7 +55,7 @@ public class IntelligenceController : Controller
         return modele is null ? Challenge() : View(modele);
     }
 
-    private async Task<IntelligencePageViewModel?> ConstruireAsync(string? opportuniteId = null, string? vehiculeId = null)
+    private async Task<IntelligencePageViewModel?> ConstruireAsync(string? opportuniteId = null, string? vehiculeId = null, bool avecSuivisPlanifies = false)
     {
         var me = await _account.GetSummaryAsync(User);
         if (me is null)
@@ -73,6 +74,7 @@ public class IntelligenceController : Controller
             ConseillerCourriel = me.Email,
             OpportuniteId = opportuniteId,
             VehiculeId = vehiculeId,
+            SuivisPlanifies = avecSuivisPlanifies ? await _prospects.SuivisPlanifiesAsync(me.Id) : [],
         };
     }
 }
