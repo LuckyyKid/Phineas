@@ -273,6 +273,8 @@
 .iv-pourquoi summary { color: var(--iv-sapin-texte); font-weight: 500; cursor: pointer; }
 .iv-pourquoi ul { margin: 8px 0 0; padding-left: 18px; }
 .iv-action-boutons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* Sur un écran étroit, un libellé long (ex. « Déclarer le contact dans la fiche ») passe à la ligne au lieu de déborder. */
+.iv-action-boutons .iv-btn { max-width: 100%; white-space: normal; }
 .iv-action-boutons .dropdown-menu { border-radius: 16px; border: 1px solid var(--iv-line-2); box-shadow: 0 16px 40px -12px rgba(11, 13, 13, .2); }
 .iv-action-boutons .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 14.5px; }
 
@@ -342,6 +344,8 @@
   .iv-carte { padding: 22px 18px; }
   .iv-centre-tete, .iv-centre .tab-pane { padding-inline: 14px; }
   .iv-action-ligne { flex-wrap: wrap; }
+  /* Le texte de la carte prend toute la ligne : l'échéance et la flèche passent dessous (sinon il est écrasé). */
+  .iv-action-ouvrir { flex: 1 1 100%; }
   .iv-action-echeance { margin-left: 26px; text-align: left; }
   .iv-action-detail { padding-left: 14px; }
 }

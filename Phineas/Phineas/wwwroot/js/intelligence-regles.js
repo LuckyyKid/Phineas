@@ -542,6 +542,23 @@
     var x = new Date(d); x.setHours(23, 59, 0, 0); return x.toISOString();
   }
 
+  // ---------- Commande de fin d'une recommandation (fonctionnalité 12) ----------
+  // Ce que « Marquer comme réalisée » peut honnêtement faire pour cette recommandation :
+  // - « realiser-local » : dossier de démonstration, réalisation locale (statut du navigateur), comme avant ;
+  // - « realiser-serveur » : dossier enregistré, suivi planifié (suivi-echeance) : réalisation réelle en base ;
+  // - « declarer-contact » : dossier enregistré, première réponse : rien n'est réalisé sans contact déclaré, le
+  //   conseiller le déclare dans la fiche (note « Appel effectué », « Courriel (résumé) » ou « Visite en concession ») ;
+  // - « aucune » : dossier enregistré, autre recommandation : pas de clôture simulée ; elle disparaît quand le dossier
+  //   change en base.
+  // Un dossier est enregistré si son opportunité (« oe-… ») ou son prospect (« pe-… ») l'est.
+  function commandeRealisation(a) {
+    var enregistre = estEnregistree(a.opportuniteId || "") || String(a.prospectId || "").indexOf("pe-") === 0;
+    if (!enregistre) return "realiser-local";
+    if (a.regle === "suivi-echeance") return "realiser-serveur";
+    if (a.regle === "premiere-reponse" || a.regle === "nouveau-prospect-recommande") return "declarer-contact";
+    return "aucune";
+  }
+
   // ---------- Regroupement des obligations (« Mes suivis », vue « À traiter ») ----------
   // Plusieurs règles peuvent exprimer le même besoin actuel : prendre contact avec le client au sujet d'une opportunité.
   // Elles sont présentées en une seule ligne, sans être supprimées : chaque recommandation garde son identifiant, sa
@@ -606,6 +623,21 @@
     return obligations;
   }
 
+  // Chiffres « à traiter » d'une liste de recommandations actives (Centre d'actions, barre latérale) : ils comptent des
+  // OBLIGATIONS (regrouperObligations) ; une prise de contact regroupée compte une fois, avec sa priorité la plus haute
+  // et son échéance la plus proche. « recommandations » garde le nombre de recommandations, pour information.
+  function compterObligations(actions, maintenant) {
+    var m = maintenant || new Date();
+    var l = regrouperObligations(actions);
+    return {
+      aTraiter: l.length,
+      recommandations: actions.length,
+      prioritaires: l.filter(function (g) { return g.priorite === "Urgent" || g.priorite === "Eleve"; }).length,
+      echeance: l.filter(function (g) { return g.echeance && new Date(g.echeance) >= m && new Date(g.echeance) - m <= JOUR; }).length,
+      retard: l.filter(function (g) { return g.echeance && new Date(g.echeance) < m; }).length,
+    };
+  }
+
   function analyser(ctx) {
     var mo = new Moteur(ctx);
     // Ordre : situations précises d'abord ; les suivis génériques et la surveillance seulement s'il ne reste rien.
@@ -621,7 +653,7 @@
   }
 
   var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse,
-    estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares };
+    estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares, commandeRealisation: commandeRealisation, compterObligations: compterObligations };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);

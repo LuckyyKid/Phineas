@@ -353,14 +353,18 @@
   function aujourdhui(d0) {
     return d0 && new Date(d0).toDateString() === new Date().toDateString();
   }
+  // Chiffres du Centre d'actions et compteur de la barre latérale. « À traiter », « prioritaires », « échéance sous
+  // 24 h » et « en retard » comptent des OBLIGATIONS (Regles.regrouperObligations : une prise de contact regroupée compte
+  // une fois, avec sa priorité la plus haute et son échéance la plus proche). « Terminées aujourd'hui » et « reportées »
+  // comptent des recommandations traitées localement dans ce navigateur.
   function compteurs(conseiller) {
-    var l = actives({ conseiller: conseiller });
-    var m = new Date();
+    var c = Regles.compterObligations(actives({ conseiller: conseiller }), new Date());
     return {
-      aTraiter: l.length,
-      prioritaires: l.filter(function (a) { return a.priorite === "Urgent" || a.priorite === "Eleve"; }).length,
-      echeance: l.filter(function (a) { return a.echeance && new Date(a.echeance) >= m && new Date(a.echeance) - m <= JOUR; }).length,
-      retard: l.filter(function (a) { return a.echeance && new Date(a.echeance) < m; }).length,
+      aTraiter: c.aTraiter,
+      recommandations: c.recommandations,
+      prioritaires: c.prioritaires,
+      echeance: c.echeance,
+      retard: c.retard,
       terminees: Object.keys(etat.actions).filter(function (id) { var a = etat.actions[id]; return a.statut === "Terminee" && aujourdhui(a.termineeLe); }).length,
       reportees: horsFile("Reportee").length,
     };

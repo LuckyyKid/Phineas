@@ -1,13 +1,14 @@
 // Centre d'actions (Views/Intelligence/Index.cshtml, maquette 01) : file de travail, surveillance des opportunités,
-// actions reportées, historique des actions traitées et continuité commerciale. Chaque action est une ligne
-// (UI.ligne, intelligence-composants.js). Aucune recommandation n'est recalculée ici : tout vient du store
-// (window.Intelligence).
+// actions reportées, historique des actions traitées et continuité commerciale. File « À traiter » : une ligne par
+// obligation (IntelligenceRegles.regrouperObligations, la même règle que « Mes suivis » ; UI.ligneObligation) ; les
+// autres listes : une ligne par recommandation (UI.ligne). Aucune recommandation n'est recalculée ici : tout vient du
+// store (window.Intelligence).
 (function () {
   "use strict";
 
-  var I = window.Intelligence, P = window.Prospects, UI = window.IntelligenceUI;
+  var I = window.Intelligence, P = window.Prospects, UI = window.IntelligenceUI, Regles = window.IntelligenceRegles;
   var racine = document.getElementById("centre");
-  if (!I || !P || !UI || !racine) return;
+  if (!I || !P || !UI || !Regles || !racine) return;
   var esc = P.esc;
   var f = {
     recherche: document.getElementById("f-recherche"),
@@ -27,14 +28,20 @@
   function filtresActifs() {
     return !!(f.recherche.value.trim() || f.categorie.value || f.priorite.value || f.responsable.value !== "moi" || f.retard.checked);
   }
-  function correspond(a) {
+  // Filtres appliqués à une obligation : le conseiller de la raison principale ; la priorité la plus haute et
+  // l'échéance la plus proche de l'obligation ; la catégorie et la recherche sur n'importe laquelle de ses raisons.
+  function correspondObligation(g) {
+    var a = g.principale;
     if (f.responsable.value === "moi" && (a.conseillerId !== P.moiId || a.assignation)) return false;
     if (f.responsable.value === "confiees" && !a.assignation) return false;
-    if (f.categorie.value && a.categorie !== f.categorie.value) return false;
-    if (f.priorite.value && a.priorite !== f.priorite.value) return false;
-    if (f.retard.checked && !(a.echeance && new Date(a.echeance) < new Date())) return false;
-    var q = normaliser(f.recherche.value.trim());
-    return !q || normaliser([a.client, a.vehicule, a.regleLibelle, a.motif, a.declencheur].join(" ")).indexOf(q) >= 0;
+    if (f.priorite.value && g.priorite !== f.priorite.value) return false;
+    if (f.retard.checked && !(g.echeance && new Date(g.echeance) < new Date())) return false;
+    var raisons = g.raisons.filter(function (r) {
+      if (f.categorie.value && r.categorie !== f.categorie.value) return false;
+      var q = normaliser(f.recherche.value.trim());
+      return !q || normaliser([r.client, r.vehicule, r.regleLibelle, r.motif, r.declencheur].join(" ")).indexOf(q) >= 0;
+    });
+    return raisons.length > 0;
   }
   function lignes(actions) {
     return actions.map(function (a) { return UI.ligne(a); }).join("");
@@ -47,13 +54,15 @@
   var pages = {};
 
   // Lignes de la page courante de la liste, suivies de la pagination si la liste dépasse une page.
-  function lignesPaginees(idListe, actions) {
+  // rendreLigne : UI.ligne (une recommandation) par défaut, UI.ligneObligation pour la file « À traiter ».
+  function lignesPaginees(idListe, actions, rendreLigne) {
     // La liste a pu raccourcir (action traitée, filtre) : on reste sur une page qui existe.
     var page = UI.pageValide(pages[idListe], actions.length, ACTIONS_PAR_PAGE);
     pages[idListe] = page;
     var debut = (page - 1) * ACTIONS_PAR_PAGE;
     var actionsDeLaPage = actions.slice(debut, debut + ACTIONS_PAR_PAGE);
-    return lignes(actionsDeLaPage) + UI.htmlPagination(idListe, actions.length, page, ACTIONS_PAR_PAGE);
+    var html = rendreLigne ? actionsDeLaPage.map(rendreLigne).join("") : lignes(actionsDeLaPage);
+    return html + UI.htmlPagination(idListe, actions.length, page, ACTIONS_PAR_PAGE);
   }
 
   function liste(el, actions, vide) {
@@ -67,10 +76,13 @@
       if (el) el.textContent = String(c[k]);
     });
 
-    // File active, dans l'ordre du store ; la catégorie est rappelée sur chaque ligne.
+    // File active : une ligne par obligation, dans l'ordre du store (chaque obligation à la place de sa raison la
+    // mieux classée) ; la catégorie est rappelée sur chaque ligne.
     var actives = I.actives();
-    var visibles = actives.filter(correspond);
-    document.getElementById("file").innerHTML = lignesPaginees("file", visibles);
+    var obligations = Regles.regrouperObligations(actives);
+    var visibles = obligations.filter(correspondObligation);
+    var nbRecommandations = visibles.reduce(function (n, g) { return n + g.raisons.length; }, 0);
+    document.getElementById("file").innerHTML = lignesPaginees("file", visibles, UI.ligneObligation);
     var vide = !visibles.length;
     document.getElementById("file-vide").hidden = !vide;
     var toutEstTraite = I.actives({ conseiller: P.moiId }).length === 0;
@@ -83,9 +95,11 @@
     }
     document.querySelector("[data-vide-titre]").textContent = titreVide;
     document.querySelector("[data-vide-texte]").textContent = texteVide;
-    document.getElementById("resultat").textContent = visibles.length + " action" + (visibles.length > 1 ? "s" : "") + " à traiter";
+    // Obligations à traiter, et nombre de recommandations qu'elles regroupent quand il diffère.
+    document.getElementById("resultat").textContent = visibles.length + " action" + (visibles.length > 1 ? "s" : "") + " à traiter" +
+      (nbRecommandations !== visibles.length ? " (" + nbRecommandations + " recommandations)" : "");
     racine.querySelector("[data-effacer-filtres]").hidden = !filtresActifs();
-    racine.querySelector('[data-champ="nb-file"]').textContent = String(actives.filter(function (a) { return a.conseillerId === P.moiId && !a.assignation; }).length);
+    racine.querySelector('[data-champ="nb-file"]').textContent = String(obligations.filter(function (g) { return g.principale.conseillerId === P.moiId && !g.principale.assignation; }).length);
 
     var surv = I.surveillance().filter(function (a) { return a.conseillerId === P.moiId; });
     liste("surveillance", surv, "Aucune opportunité ne stagne selon les règles actuelles.");

@@ -35,6 +35,31 @@
   function estActive(a) {
     return a.statut === "ATraiter" || a.statut === "EnCours";
   }
+  // Dossier enregistré en base (opportunité « oe-… » ou prospect « pe-… ») : ses statuts locaux ne sont jamais une écriture.
+  function estDossierEnregistre(a) {
+    return P.estEnregistree(a.opportuniteId || "") || String(a.prospectId || "").indexOf("pe-") === 0;
+  }
+
+  // Commande « terminer » d'une recommandation, selon ce qu'elle permet vraiment (IntelligenceRegles.commandeRealisation) :
+  // réalisation locale (démonstration) ou en base (suivi enregistré, terminerAction), « Déclarer le contact dans la
+  // fiche » (première réponse d'un dossier enregistré), ou rien (autre recommandation d'un dossier enregistré).
+  function commandeRealiser(a, classes, classeIcone) {
+    if (!estActive(a)) return "";
+    var commande = window.IntelligenceRegles.commandeRealisation(a);
+    if (commande === "realiser-local" || commande === "realiser-serveur") {
+      return '<button type="button" class="' + classes + '" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="' + classeIcone + '"></i>Marquer comme réalisée</button>';
+    }
+    if (commande === "declarer-contact") {
+      return '<a class="' + classes + '" href="' + esc(P.urlFiche(a.prospectId)) + '" data-declarer-contact="' + esc(a.id) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique.">' +
+        '<i class="bi bi-journal-plus' + (classeIcone.indexOf("me-1") >= 0 ? " me-1" : "") + '"></i>Déclarer le contact dans la fiche</a>';
+    }
+    return "";
+  }
+  // Mention ajoutée aux fenêtres de mise en veille d'un dossier enregistré : rien n'est écrit en base.
+  function noteLocale(a) {
+    return estDossierEnregistre(a) ? '<p class="pr-note mt-2 mb-0">Dossier enregistré : ce choix reste propre à ce navigateur, rien n\'est enregistré dans le dossier.</p>' : "";
+  }
+
   function libelleResponsable(a) {
     if (a.departement === "conseiller") return "Vous";
     var departements = window.Transactions ? window.Transactions.ref.departements : {};
@@ -92,7 +117,7 @@
       (options.compacte ? "" : '<details class="ia-pourquoi"><summary>Pourquoi cette recommandation et cette priorité ?</summary><ul>' + pourquoi(a) + "</ul></details>") +
       '<footer class="ia-carte-actions">' + principale +
       '<a class="btn btn-sm btn-outline-primary" href="' + esc(lien) + '">Consulter le dossier</a>' +
-      (actif ? '<button type="button" class="btn btn-sm btn-ghost" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="bi bi-check2 me-1"></i>Marquer comme réalisée</button>' : "") +
+      commandeRealiser(a, "btn btn-sm btn-ghost", "bi bi-check2 me-1") +
       '<div class="dropdown"><button type="button" class="btn btn-sm btn-ghost dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Autres actions">Plus</button><div class="dropdown-menu dropdown-menu-end sv-menu">' + secondaires + "</div></div>" +
       "</footer></article>";
   }
@@ -143,7 +168,7 @@
     }
     boutons += '<a class="iv-btn iv-btn-blanc iv-btn-petit" href="' + esc(lien) + '">Consulter le dossier</a>';
     if (a.prospectId) boutons += '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(a.prospectId)) + '">Fiche du client</a>';
-    if (actif) boutons += '<button type="button" class="iv-btn iv-btn-discret" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="bi bi-check2"></i>Marquer comme réalisée</button>';
+    boutons += commandeRealiser(a, "iv-btn iv-btn-discret", "bi bi-check2");
     boutons += '<div class="dropdown"><button type="button" class="iv-btn iv-btn-discret dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Autres actions">Plus</button>' +
       '<div class="dropdown-menu dropdown-menu-end">' + boutonsSecondaires(a) + "</div></div>";
     html += '<div class="iv-action-boutons">' + boutons + "</div>";
@@ -172,6 +197,38 @@
       '<a class="iv-btn-rond" href="' + esc(lienDossier) + '" aria-label="Ouvrir le dossier : ' + esc(a.client) + '"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>' +
       "</div>" +
       '<div class="iv-action-detail" id="' + esc(idDetail) + '"' + (ouverte ? "" : " hidden") + ">" + detailLigne(a) + "</div>" +
+      "</article>";
+  }
+
+  // Ligne d'une obligation (IntelligenceRegles.regrouperObligations) du Centre d'actions. Une seule raison : la ligne
+  // habituelle. Plusieurs raisons (même prise de contact) : une ligne, priorité de la raison la plus prioritaire,
+  // échéance la plus proche ; le détail montre chaque raison avec SES commandes (réaliser le suivi ne satisfait pas la
+  // première réponse, déclarer un contact ne réalise pas le suivi).
+  function ligneObligation(g) {
+    if (!g.regroupee) return ligne(g.principale);
+    var a = g.principale;
+    var prio = PRIO[g.priorite] || { libelle: g.priorite };
+    var ouverte = !!lignesOuvertes[g.id];
+    var idDetail = "iv-d-" + cleId(g.id);
+    var vue = { echeance: g.echeance };
+    var libelles = g.raisons.map(function (r) { return r.regleLibelle; }).join(" · ");
+    var detail = g.raisons.map(function (r) {
+      return '<section class="mt-3" data-raison="' + esc(r.regle) + '"><p class="iv-label mb-2">' + esc(r.regleLibelle) + "</p>" + detailLigne(r) + "</section>";
+    }).join("");
+
+    return '<article class="iv-action' + (ouverte ? " is-ouverte" : "") + '" data-action-id="' + esc(a.id) + '" data-obligation="' + esc(g.id) + '" data-nb-raisons="' + g.raisons.length + '">' +
+      '<div class="iv-action-ligne">' +
+      '<button type="button" class="iv-action-ouvrir" data-iv-ouvrir="' + esc(g.id) + '" aria-expanded="' + ouverte + '" aria-controls="' + esc(idDetail) + '">' +
+      '<span class="iv-prio iv-prio-' + esc(g.priorite) + '" title="Priorité : ' + esc(prio.libelle) + '"><span class="visually-hidden">Priorité ' + esc(prio.libelle) + "</span></span>" +
+      '<span class="iv-action-texte"><span class="iv-action-nom">' + esc(a.client) + "</span>" +
+      '<span class="iv-action-type">Prise de contact · ' + g.raisons.length + " raisons</span>" +
+      (a.vehicule ? '<span class="iv-action-type">' + esc(a.vehicule) + "</span>" : "") +
+      '<span class="iv-action-raison">' + esc(libelles) + "</span></span></button>" +
+      '<span class="iv-action-echeance' + (enRetard(vue) ? " is-retard" : "") + '">' + esc(echeanceCourte(vue)) + "</span>" +
+      '<a class="iv-btn-rond" href="' + esc(I.urlObjet(a)) + '" aria-label="Ouvrir le dossier : ' + esc(a.client) + '"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>' +
+      "</div>" +
+      '<div class="iv-action-detail" id="' + esc(idDetail) + '"' + (ouverte ? "" : " hidden") + ">" +
+      '<p class="iv-sous">Une seule prise de contact, ' + g.raisons.length + " raisons. Chaque raison garde sa source et se résout seule.</p>" + detail + "</div>" +
       "</article>";
   }
 
@@ -253,7 +310,7 @@
       '<label class="form-label" for="ia-date">Revenir dans la file le <span class="pr-requis">*</span></label><input type="date" class="form-control" id="ia-date" min="' + esc(P.versChampDate(demain)) + '" value="' + esc(P.versChampDate(demain)) + '" />' +
       '<div class="invalid-feedback">Choisissez une date à venir.</div>' +
       '<label class="form-label mt-3" for="ia-motif">Motif <span class="text-muted">(facultatif)</span></label><input class="form-control" id="ia-motif" maxlength="200" />' +
-      '<p class="pr-note mt-2 mb-0">L\'action ne réapparaîtra pas avant cette date, sauf si vous la remettez dans la file.</p>',
+      '<p class="pr-note mt-2 mb-0">L\'action ne réapparaîtra pas avant cette date, sauf si vous la remettez dans la file.</p>' + noteLocale(a),
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Reporter</button>');
   }
   // Suivi planifié et enregistré en base : on change sa date en base (même action), ce n'est pas une mise en veille locale.
@@ -276,7 +333,7 @@
     fenetre("Ignorer l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
       '<label class="form-label" for="ia-motif-ignorer">Motif <span class="text-muted">(facultatif)</span></label><select class="form-select" id="ia-motif-ignorer"><option value="">Sans motif</option>' +
       Object.keys(ref.motifsIgnorer).map(function (k) { return '<option value="' + esc(k) + '">' + esc(ref.motifsIgnorer[k]) + "</option>"; }).join("") + "</select>" +
-      '<p class="pr-note mt-2 mb-0">Une action ignorée ne réapparaît que si un nouvel événement crée une nouvelle situation.</p>',
+      '<p class="pr-note mt-2 mb-0">Une action ignorée ne réapparaît que si un nouvel événement crée une nouvelle situation.</p>' + noteLocale(a),
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Ignorer</button>');
   }
   function ouvrirTransfert(id) {
@@ -322,13 +379,17 @@
       '<div class="col-sm-6"><span class="form-label d-block">Canal envisagé</span><span class="ia-canal"><i class="bi bi-chat-left-text me-1"></i>' + esc(ctx.canal) + (ctx.coordonnee ? " · " + esc(ctx.coordonnee) : "") + "</span></div></div>" +
       '<label class="form-label mt-2" for="ia-texte">Brouillon (modifiable)</label><textarea class="form-control" id="ia-texte" rows="9">' + esc(I.brouillon(id, "professionnel")) + "</textarea>" +
       '<p class="pr-note mt-1 mb-0"><i class="bi bi-info-circle me-1"></i>Phineas n\'envoie rien. Copier le message ne l\'envoie pas ; vous le transmettez vous-même, puis vous pouvez déclarer le contact.</p></section>' +
-      '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi (local)</h3><div class="row g-2"><div class="col-sm-5"><input type="date" class="form-control form-control-sm" id="ia-suivi-date" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" aria-label="Date du suivi" /></div>' +
+      (estDossierEnregistre(a)
+        // Dossier enregistré : le suivi se planifie dans la fiche (enregistré en base), jamais en local ici.
+        ? '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi</h3><p class="pr-note mb-2">Dossier enregistré : planifiez le suivi dans la fiche, il y sera enregistré.</p><a class="btn btn-sm btn-outline-primary" href="' + esc(P.urlFiche(a.prospectId)) + '"><i class="bi bi-alarm me-1"></i>Planifier le suivi dans la fiche</a></section>'
+        : '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi (local)</h3><div class="row g-2"><div class="col-sm-5"><input type="date" class="form-control form-control-sm" id="ia-suivi-date" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" aria-label="Date du suivi" /></div>' +
       '<div class="col-sm-7"><input class="form-control form-control-sm" id="ia-suivi-texte" maxlength="120" value="' + esc(a.actionProposee) + '" aria-label="Action de suivi" /></div></div>' +
-      '<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-ia-relance="suivi"><i class="bi bi-alarm me-1"></i>Programmer le suivi</button></section>' +
+      '<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-ia-relance="suivi"><i class="bi bi-alarm me-1"></i>Programmer le suivi</button></section>') +
       "</div>",
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>' +
       '<button type="button" class="btn btn-outline-primary" data-ia-relance="copier"><i class="bi bi-clipboard me-1"></i>Copier le message</button>' +
-      '<button type="button" class="btn btn-outline-primary" data-ia-relance="brouillon"><i class="bi bi-journal-text me-1"></i>Enregistrer dans l\'historique</button>' +
+      // Brouillon dans l'historique : local ; absent pour un dossier enregistré (il n'y serait pas enregistré).
+      (estDossierEnregistre(a) ? "" : '<button type="button" class="btn btn-outline-primary" data-ia-relance="brouillon"><i class="bi bi-journal-text me-1"></i>Enregistrer dans l\'historique</button>') +
       (P.estEnregistree(a.opportuniteId || "")
         // Dossier enregistré : le contact se déclare par une note de la fiche, enregistrée en base (jamais en local ici).
         ? '<a class="btn btn-primary" href="' + esc(P.urlFiche(a.prospectId)) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique."><i class="bi bi-journal-plus me-1"></i>Déclarer le contact dans la fiche</a>'
@@ -489,6 +550,11 @@
       P.envoyerRealisation(x.opportuniteId, window.location.pathname + window.location.search);
       return;
     }
+    // Dossier enregistré, autre recommandation : aucune clôture locale qui simulerait une écriture (commande non proposée).
+    if (x && window.IntelligenceRegles.commandeRealisation(x) !== "realiser-local") {
+      P.notifier("Rien n'a été marqué comme réalisé : cette recommandation disparaîtra quand le dossier aura changé.");
+      return;
+    }
     notifier(I.terminer(id), "Action marquée comme réalisée.");
   }
 
@@ -500,6 +566,7 @@
     htmlPagination: htmlPagination,
     carte: carte,
     ligne: ligne,
+    ligneObligation: ligneObligation,
     pastillePriorite: pastillePriorite,
     pastilleEtat: pastilleEtat,
     pastilleCompatibilite: pastilleCompatibilite,
