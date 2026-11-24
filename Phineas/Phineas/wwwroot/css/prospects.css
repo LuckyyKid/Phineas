@@ -758,6 +758,7 @@
 .pr-tl-suivi .pr-tl-icone,
 .pr-tl-suivi-realise .pr-tl-icone,
 .pr-tl-suivi-remplace .pr-tl-icone,
+.pr-tl-suivi-reporte .pr-tl-icone,
 .pr-tl-qualification .pr-tl-icone {
   background: var(--ph-primary-50);
   color: var(--ph-primary-600);

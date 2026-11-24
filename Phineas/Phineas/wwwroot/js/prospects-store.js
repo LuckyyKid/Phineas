@@ -368,15 +368,32 @@
   function envoyerRealisation(oppId, retour) {
     var o = opportunite(oppId);
     if (!o || !charge.urlRealiserSuivi) return;
-    var form = document.createElement("form");
-    form.method = "post";
-    form.action = charge.urlRealiserSuivi;
-    var champs = {
+    posterSuivi(charge.urlRealiserSuivi, {
       opportuniteId: o.id,
       versionSuivi: o.versionSuivi || "",
       retour: retour,
-      __RequestVerificationToken: charge.jeton,
-    };
+    });
+  }
+
+  // « Reporter » du suivi d'une opportunité enregistrée : envoi à ProspectsController.ReporterSuivi avec la nouvelle
+  // date (AAAA-MM-JJ, champ <input type="date">). Même action, nouvelle échéance ; retour à la page d'origine.
+  function envoyerReport(oppId, jour, retour) {
+    var o = opportunite(oppId);
+    if (!o || !charge.urlReporterSuivi) return;
+    posterSuivi(charge.urlReporterSuivi, {
+      opportuniteId: o.id,
+      versionSuivi: o.versionSuivi || "",
+      date: jour,
+      retour: retour,
+    });
+  }
+
+  // Formulaire caché envoyé au serveur (réalisation ou report d'un suivi), avec le jeton antiforgery de la page.
+  function posterSuivi(url, champs) {
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = url;
+    champs.__RequestVerificationToken = charge.jeton;
     Object.keys(champs).forEach(function (nom) {
       var input = document.createElement("input");
       input.type = "hidden";
@@ -567,6 +584,7 @@
     estEnregistree: estEnregistree,
     envoyerEtape: envoyerEtape,
     envoyerRealisation: envoyerRealisation,
+    envoyerReport: envoyerReport,
     afficherMessageServeur: afficherMessageServeur,
     ajouterOpportunite: ajouterOpportunite,
     enregistrerQualification: enregistrerQualification,

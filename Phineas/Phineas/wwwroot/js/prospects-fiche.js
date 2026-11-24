@@ -22,6 +22,7 @@
     suivi: { libelle: "Suivi planifié", icone: "bi-alarm" },
     "suivi-realise": { libelle: "Suivi réalisé", icone: "bi-check2-circle" },
     "suivi-remplace": { libelle: "Suivi remplacé", icone: "bi-arrow-repeat" },
+    "suivi-reporte": { libelle: "Suivi reporté", icone: "bi-clock" },
     qualification: { libelle: "Qualification", icone: "bi-clipboard-check" },
     opportunite: { libelle: "Nouvelle opportunité", icone: "bi-briefcase" },
     soumission: { libelle: "Soumission", icone: "bi-file-earmark-text" },

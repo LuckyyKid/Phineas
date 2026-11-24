@@ -243,6 +243,10 @@
 
   function ouvrirReport(id) {
     var a = I.action(id);
+    if (a && a.regle === "suivi-echeance" && P.estEnregistree(a.opportuniteId)) {
+      ouvrirReportSuivi(a);
+      return;
+    }
     courant = { type: "reporter", id: id };
     var demain = new Date(); demain.setDate(demain.getDate() + 1);
     fenetre("Reporter l'action", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
@@ -250,6 +254,18 @@
       '<div class="invalid-feedback">Choisissez une date à venir.</div>' +
       '<label class="form-label mt-3" for="ia-motif">Motif <span class="text-muted">(facultatif)</span></label><input class="form-control" id="ia-motif" maxlength="200" />' +
       '<p class="pr-note mt-2 mb-0">L\'action ne réapparaîtra pas avant cette date, sauf si vous la remettez dans la file.</p>',
+      '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Reporter</button>');
+  }
+  // Suivi planifié et enregistré en base : on change sa date en base (même action), ce n'est pas une mise en veille locale.
+  function ouvrirReportSuivi(a) {
+    var o = P.opportunite(a.opportuniteId);
+    var demain = new Date(); demain.setDate(demain.getDate() + 1);
+    courant = { type: "reporter-suivi", id: a.id, oppId: a.opportuniteId };
+    fenetre("Reporter le suivi", "<p><strong>" + esc(a.regleLibelle) + "</strong> : " + esc(a.client) + "</p>" +
+      "<p>Action : « " + esc(o.prochaineAction) + " »<br />Échéance actuelle : " + esc(P.dateCourte(o.dateProchaineAction)) + "</p>" +
+      '<label class="form-label" for="ia-date">Nouvelle échéance <span class="pr-requis">*</span></label><input type="date" class="form-control" id="ia-date" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" />' +
+      '<div class="invalid-feedback">Choisissez aujourd\'hui ou une date à venir, différente de l\'échéance actuelle.</div>' +
+      '<p class="pr-note mt-2 mb-0">L\'action reste à faire, avec la même description : seule son échéance change. Le report est enregistré dans l\'historique du dossier.</p>',
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button type="button" class="btn btn-primary" data-ia-valider>Reporter</button>');
   }
   function ouvrirIgnorer(id) {
@@ -324,7 +340,16 @@
     if (!b || !courant) return;
     var id = courant.id;
     if (b.hasAttribute("data-ia-valider")) {
-      if (courant.type === "reporter") {
+      if (courant.type === "reporter-suivi") {
+        var champSuivi = modale.querySelector("#ia-date");
+        var actuelle = P.versChampDate(P.opportunite(courant.oppId).dateProchaineAction);
+        // Comparaison des jours au format AAAA-MM-JJ : aujourd'hui ou plus tard, et différent de l'échéance actuelle.
+        var jourValide = champSuivi.value !== "" && champSuivi.value >= P.aujourdhuiChamp() && champSuivi.value !== actuelle;
+        champSuivi.classList.toggle("is-invalid", !jourValide);
+        if (!jourValide) return;
+        b.disabled = true; // contre le double clic
+        P.envoyerReport(courant.oppId, champSuivi.value, window.location.pathname + window.location.search);
+      } else if (courant.type === "reporter") {
         var champ = modale.querySelector("#ia-date");
         var date = champ.value ? P.depuisChampDate(champ.value) : null;
         champ.classList.toggle("is-invalid", !date || date <= new Date());

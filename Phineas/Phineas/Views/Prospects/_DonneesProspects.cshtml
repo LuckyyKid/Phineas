@@ -20,6 +20,7 @@
         urlChangerEtape = Url.Action("ChangerEtape", "Prospects"),
         // « Marquer comme réalisé » d'un suivi enregistré (prospects-store.js, envoyerRealisation).
         urlRealiserSuivi = Url.Action("RealiserSuivi", "Prospects"),
+        urlReporterSuivi = Url.Action("ReporterSuivi", "Prospects"),
         jeton = Antiforgery.GetAndStoreTokens(Context).RequestToken,
         // Résultat de ProspectsController.Creer ou Modifier, lu par prospects-tiroir.js (message ou tiroir rouvert avec les erreurs).
         // prospectId rempli : la saisie refusée vient du mode « Modifier » de ce prospect.

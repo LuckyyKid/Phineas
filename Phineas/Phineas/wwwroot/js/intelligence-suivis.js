@@ -48,10 +48,12 @@
 
     var prevu = a.actionProposee + " · " + UI.echeanceTexte(a.echeance);
     if (o && o.prochaineAction) prevu += " · prévu : " + o.prochaineAction;
-    // Suivi planifié et enregistré en base : il peut être marqué comme réalisé (écriture serveur réelle).
+    // Suivi planifié et enregistré en base : il peut être marqué comme réalisé ou reporté (écritures serveur réelles).
+    // « Reporter » ouvre la fenêtre de intelligence-composants.js (ouvrirReport), qui change la date en base.
     var suiviEnregistre = a.regle === "suivi-echeance" && P.estEnregistree(a.opportuniteId);
     var realiser = suiviEnregistre
-      ? '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(a.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>'
+      ? '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(a.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>' +
+        '<button type="button" class="iv-btn iv-btn-discret" data-ia="reporter" data-id="' + esc(a.id) + '"><i class="bi bi-clock" aria-hidden="true"></i>Reporter</button>'
       : "";
     var prochaine = '<span class="iv-cellule-boutons">' + realiser +
       '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button>' +

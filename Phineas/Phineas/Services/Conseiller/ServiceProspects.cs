@@ -43,6 +43,8 @@ public interface IServiceProspects
     // Planifie la prochaine action d'une opportunité enregistrée (elle remplace l'action courante, archivée « Remplacé »).
     // Valeur du résultat : true si le suivi a changé, false s'il était déjà planifié à l'identique (double envoi).
     Task<ResultatService<bool>> PlanifierSuiviAsync(string utilisateurId, SuiviSaisie saisie);
+    // Nouvelle échéance pour la même action ; Valeur = false si ce report était déjà enregistré (double envoi).
+    Task<ResultatService<bool>> ReporterSuiviAsync(string utilisateurId, string? opportuniteId, string? versionSuivi, DateTime? date);
 
     // Marque comme réalisée la prochaine action d'une opportunité enregistrée (id « oe-34 ») : elle est archivée
     // « Réalisé » et retirée des suivis actifs. versionSuivi : empreinte de l'action affichée (EmpreinteSuivi).
@@ -199,18 +201,31 @@ public class ServiceProspects : IServiceProspects
             liste.Add(new(PrefixeInteraction + "n" + n.Id, contactId, opportuniteDeLaNote, HeureLocale(n.DateCreation), n.Type, redacteur, n.Contenu));
         }
 
-        // Suivis réalisés ou remplacés (HistoriqueSuiviOpportunite) : deux types distincts, jamais confondus.
+        // Suivis réalisés, remplacés ou reportés (HistoriqueSuiviOpportunite) : trois types distincts, jamais confondus.
         foreach (var o in p.Opportunites)
         {
             foreach (var h in o.HistoriqueSuivis)
             {
                 string responsable = h.Auteur is null ? auteur : h.Auteur.FullName;
-                string prevu = h.DatePrevue is null ? "" : " (prévu le " + h.DatePrevue.Value.ToString("d MMMM yyyy", CultureFrancaise) + ")";
-                bool realise = h.Cloture == ClotureSuivi.Realise;
-                string type = realise ? "suivi-realise" : "suivi-remplace";
-                string resume = realise
-                    ? "Suivi réalisé, déclaré par le conseiller : « " + h.Action + " »" + prevu + "."
-                    : "Suivi remplacé par une nouvelle action, non réalisé : « " + h.Action + " »" + prevu + ".";
+                string prevu = h.DatePrevue is null ? "" : " (prévu le " + JourLisible(h.DatePrevue) + ")";
+                string type;
+                string resume;
+                if (h.Cloture == ClotureSuivi.Realise)
+                {
+                    type = "suivi-realise";
+                    resume = "Suivi réalisé, déclaré par le conseiller : « " + h.Action + " »" + prevu + ".";
+                }
+                else if (h.Cloture == ClotureSuivi.Reporte)
+                {
+                    type = "suivi-reporte";
+                    resume = "Suivi reporté, l'action reste à faire : « " + h.Action + " » (nouvelle échéance : "
+                        + JourLisible(h.NouvelleDatePrevue) + ", auparavant : " + JourLisible(h.DatePrevue) + ").";
+                }
+                else
+                {
+                    type = "suivi-remplace";
+                    resume = "Suivi remplacé par une nouvelle action, non réalisé : « " + h.Action + " »" + prevu + ".";
+                }
                 liste.Add(new(PrefixeInteraction + "s" + h.Id, contactId, PrefixeOpportunite + o.Id, HeureLocale(h.DateCloture), type, responsable, resume));
             }
         }
@@ -731,16 +746,21 @@ public class ServiceProspects : IServiceProspects
         jour is null ? null : jour.Value.Date.AddHours(HeureDuSuivi);
 
     // Remplace la prochaine action courante de l'opportunité (une seule action courante par opportunité).
-    // L'action remplacée, si elle existe et diffère, est archivée « Remplacé » dans le même SaveChanges :
-    // elle n'est jamais comptée comme réalisée.
+    // L'ancienne version est archivée dans le même SaveChanges, jamais comptée comme réalisée :
+    // « Reporté » si seule la date change (même description), « Remplacé » si la description change.
     private static void AppliquerSuivi(OpportuniteVente opportunite, string action, DateTime? jour, string utilisateurId)
     {
         var maintenant = DateTime.UtcNow;
         DateTime? nouvelleDate = DateDuSuivi(jour);
-        bool remplaceUneAutreAction = opportunite.ProchaineAction is not null
-            && (opportunite.ProchaineAction != action || opportunite.DateProchaineAction != nouvelleDate);
-        if (remplaceUneAutreAction)
-            opportunite.HistoriqueSuivis.Add(Archive(opportunite, ClotureSuivi.Remplace, utilisateurId, maintenant));
+        if (opportunite.ProchaineAction is not null)
+        {
+            bool memeAction = opportunite.ProchaineAction == action;
+            bool memeDate = opportunite.DateProchaineAction == nouvelleDate;
+            if (!memeAction)
+                opportunite.HistoriqueSuivis.Add(Archive(opportunite, ClotureSuivi.Remplace, utilisateurId, maintenant));
+            else if (!memeDate)
+                opportunite.HistoriqueSuivis.Add(Archive(opportunite, ClotureSuivi.Reporte, utilisateurId, maintenant, nouvelleDate));
+        }
 
         opportunite.ProchaineAction = action;
         opportunite.DateProchaineAction = nouvelleDate;
@@ -748,16 +768,22 @@ public class ServiceProspects : IServiceProspects
     }
 
     // Copie de l'action courante de l'opportunité, avec sa clôture, pour l'historique des suivis.
-    private static HistoriqueSuiviOpportunite Archive(OpportuniteVente opportunite, ClotureSuivi cloture, string utilisateurId, DateTime maintenant) =>
+    // nouvelleDate : seulement pour un report (nouvelle échéance de la même action).
+    private static HistoriqueSuiviOpportunite Archive(OpportuniteVente opportunite, ClotureSuivi cloture, string utilisateurId, DateTime maintenant, DateTime? nouvelleDate = null) =>
         new()
         {
             OpportuniteId = opportunite.Id,
             Action = opportunite.ProchaineAction!,
             DatePrevue = opportunite.DateProchaineAction,
+            NouvelleDatePrevue = nouvelleDate,
             Cloture = cloture,
             DateCloture = maintenant,
             AuteurId = utilisateurId,
         };
+
+    // « 30 novembre 2026 », ou « aucune date ».
+    private static string JourLisible(DateTime? jour) =>
+        jour is null ? "aucune date" : jour.Value.ToString("d MMMM yyyy", CultureFrancaise);
 
     // ---------- Réalisation d'un suivi ----------
 
@@ -820,6 +846,97 @@ public class ServiceProspects : IServiceProspects
         {
             _db.ChangeTracker.Clear();
             return ResultatService<bool>.Echec("L'enregistrement a échoué : le suivi n'a pas été marqué comme réalisé. Réessayez dans un instant.");
+        }
+        return ResultatService<bool>.Ok(true);
+    }
+
+    // ---------- Report d'un suivi ----------
+
+    // Erreurs de la nouvelle date d'un report, sans lire la base : même règle de jour que la planification.
+    public static List<ErreurChamp> ErreursDeReport(DateTime? date)
+    {
+        var erreurs = new List<ErreurChamp>();
+        if (date is null)
+            erreurs.Add(new ErreurChamp("date", "Choisissez la nouvelle date du suivi."));
+        else if (!EstJourAccepte(date.Value, DateTime.Today))
+            erreurs.Add(new ErreurChamp("date", "Choisissez aujourd'hui ou une date à venir."));
+        return erreurs;
+    }
+
+    // Donne une nouvelle échéance à l'action courante, sans changer sa description : elle reste à faire.
+    // L'ancienne version est archivée « Reporté » (ancienne et nouvelle dates) dans le même SaveChanges.
+    // versionSuivi : empreinte de l'action affichée ; refus si elle a été réalisée, remplacée ou reportée entre-temps.
+    public async Task<ResultatService<bool>> ReporterSuiviAsync(string utilisateurId, string? opportuniteId, string? versionSuivi, DateTime? date)
+    {
+        int? id = LireId(opportuniteId, PrefixeOpportunite);
+        if (id is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<bool>.Echec(MessageCompteInutilisable);
+
+        // Même transaction et même verrou (ligne du prospect parent) que les autres écritures du dossier.
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        int? prospectId = await _db.OpportunitesVente.Where(o => o.Id == id.Value).Select(o => (int?)o.ProspectId).FirstOrDefaultAsync();
+        if (prospectId is null)
+            return ResultatService<bool>.NonTrouve();
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, prospectId.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == id.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var resultat = new ResultatService<bool>();
+        resultat.Erreurs.AddRange(ErreursDeReport(date));
+        if (!EstActive(opportunite))
+            resultat.Erreurs.Add(new ErreurChamp("opportuniteId", MessageOpportuniteCloturee));
+        if (!resultat.Succes)
+            return resultat;
+        DateTime nouvelleDate = DateDuSuivi(date)!.Value;
+
+        // L'action affichée doit être l'action courante. Sinon : soit ce même report vient d'être enregistré
+        // (double clic), soit l'action a été réalisée, remplacée ou reportée ailleurs, et rien n'est fait.
+        string? versionActuelle = EmpreinteSuivi(opportunite.ProchaineAction, opportunite.DateProchaineAction);
+        if (versionActuelle is null || versionSuivi != versionActuelle)
+        {
+            var derniere = await _db.HistoriquesSuiviOpportunite.AsNoTracking()
+                .Where(h => h.OpportuniteId == opportunite.Id)
+                .OrderByDescending(h => h.Id)
+                .FirstOrDefaultAsync();
+            bool dejaReporte = derniere is not null
+                && derniere.Cloture == ClotureSuivi.Reporte
+                && EmpreinteSuivi(derniere.Action, derniere.DatePrevue) == versionSuivi
+                && derniere.NouvelleDatePrevue == nouvelleDate
+                // Empreinte calculée sur la date relue en base (le format de l'empreinte tient compte du type de date).
+                && versionActuelle == EmpreinteSuivi(derniere.Action, derniere.NouvelleDatePrevue);
+            if (dejaReporte)
+                return ResultatService<bool>.Ok(false);
+            if (versionActuelle is null && string.IsNullOrEmpty(versionSuivi))
+                return ResultatService<bool>.Echec("Cette opportunité n'a aucun suivi actif à reporter.");
+            return ResultatService<bool>.Echec(MessageSuiviChange);
+        }
+
+        // Même jour qu'avant : ce n'est pas un report, aucun événement n'est créé.
+        if (opportunite.DateProchaineAction == nouvelleDate)
+        {
+            resultat.Erreurs.Add(new ErreurChamp("date", "La nouvelle date est celle de l'échéance actuelle : rien n'a été modifié."));
+            return resultat;
+        }
+
+        var maintenant = DateTime.UtcNow;
+        opportunite.HistoriqueSuivis.Add(Archive(opportunite, ClotureSuivi.Reporte, utilisateurId, maintenant, nouvelleDate));
+        opportunite.DateProchaineAction = nouvelleDate;
+        opportunite.DerniereActivite = maintenant;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<bool>.Echec("L'enregistrement a échoué : le suivi n'a pas été reporté. Réessayez dans un instant.");
         }
         return ResultatService<bool>.Ok(true);
     }

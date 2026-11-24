@@ -407,6 +407,9 @@ namespace Phineas.Data.Migrations
                     b.Property<DateTime?>("DatePrevue")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("NouvelleDatePrevue")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("OpportuniteId")
                         .HasColumnType("int");
 

@@ -231,7 +231,7 @@ public class ProspectsController : Controller
             if (resultat.Succes)
             {
                 TempData[CleConfirmation] = resultat.Valeur
-                    ? "Suivi planifié : il remplace la prochaine action de l'opportunité. Aucun rappel automatique n'est envoyé."
+                    ? "Suivi planifié : il devient la prochaine action de l'opportunité (l'action précédente est conservée dans l'historique). Aucun rappel automatique n'est envoyé."
                     : "Ce suivi était déjà planifié : rien n'a changé.";
                 return RedirectToAction(nameof(Fiche), new { id = saisie.ProspectId });
             }
@@ -263,6 +263,40 @@ public class ProspectsController : Controller
             TempData[CleConfirmation] = "Suivi marqué comme réalisé et ajouté à l'historique du dossier.";
         else
             TempData[CleConfirmation] = "Ce suivi était déjà marqué comme réalisé : rien n'a changé.";
+
+        if (!string.IsNullOrEmpty(retour) && Url.IsLocalUrl(retour))
+            return LocalRedirect(retour);
+        return RedirectToAction("Suivis", "Intelligence");
+    }
+
+    // « Reporter » d'un suivi enregistré (« Mes suivis », Centre d'actions, fiche) : nouvelle échéance pour la même
+    // action, archivée « Reporté », puis retour à la page d'origine avec un message. L'action reste à faire.
+    // retour : adresse locale de la page d'origine (jamais une adresse externe) ; sinon « Mes suivis ».
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReporterSuivi(string? opportuniteId, string? versionSuivi, DateTime? date, string? retour)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        // Une date illisible est refusée avant tout enregistrement.
+        List<ErreurChamp> erreurs = ErreursDeLecture();
+        if (erreurs.Count == 0)
+        {
+            var resultat = await _prospects.ReporterSuiviAsync(me.Id, opportuniteId, versionSuivi, date);
+            if (resultat.Introuvable)
+                return NotFound();
+            if (resultat.Succes && resultat.Valeur)
+                TempData[CleConfirmation] = "Suivi reporté au " + date!.Value.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("fr-CA"))
+                    + " : l'action reste à faire, le report est ajouté à l'historique du dossier.";
+            else if (resultat.Succes)
+                TempData[CleConfirmation] = "Ce suivi était déjà reporté à cette date : rien n'a changé.";
+            else
+                erreurs = resultat.Erreurs;
+        }
+        if (erreurs.Count > 0)
+            TempData[CleErreur] = "Suivi non reporté. " + erreurs[0].Message;
 
         if (!string.IsNullOrEmpty(retour) && Url.IsLocalUrl(retour))
             return LocalRedirect(retour);
