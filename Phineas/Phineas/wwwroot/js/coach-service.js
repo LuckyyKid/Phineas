@@ -42,8 +42,14 @@
   }
   function notes(x) {
     if (!x.contact) return [];
-    return P.interactionsDe(x.contact.id).filter(function (i) { return (!x.opp || !i.opportuniteId || i.opportuniteId === x.opp.id) && OV.echanges.indexOf(i.type) >= 0; }).slice(0, 3)
-      .map(function (i) { return { date: P.dateCourte(i.date), texte: i.resume }; });
+    // Contacts déclarés et notes internes du dossier, étiquetés : une note interne n'est jamais présentée comme un échange.
+    var types = P.typesContact();
+    var Regles = window.IntelligenceRegles;
+    return P.interactionsDe(x.contact.id).filter(function (i) {
+      var contact = Regles.estContactDeclare(i, types);
+      return (!x.opp || !i.opportuniteId || i.opportuniteId === x.opp.id) && (contact || i.type === "note");
+    }).slice(0, 3)
+      .map(function (i) { return { date: P.dateCourte(i.date), texte: i.resume, nature: Regles.estContactDeclare(i, types) ? "contact" : "note" }; });
   }
   function contexteTransmis(x) {
     var q = (x.opp && x.opp.qualification) || {};

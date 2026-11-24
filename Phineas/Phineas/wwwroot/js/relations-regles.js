@@ -80,8 +80,8 @@
     if (d.soumissions.length) faits.push(d.soumissions.length + " soumission(s) : " + d.soumissions.map(function (s) { return s.reference + " v" + s.numero + " (" + s.statutLibelle.toLowerCase() + ")"; }).join(", ") + ".");
     else inconnus.push("Aucune soumission n'a été préparée : le client n'a pas reçu de proposition chiffrée.");
     if (d.rendezVous.length) faits.push(d.rendezVous.length + " rendez-vous : " + d.rendezVous.map(function (r) { return r.typeLibelle.toLowerCase() + " (" + r.statutLibelle.toLowerCase() + ")"; }).join(", ") + ".");
-    var echanges = d.interactions.filter(function (i) { return d.echanges.indexOf(i.type) >= 0; });
-    if (echanges.length) faits.push(echanges.length + " échange(s) enregistré(s), le dernier " + dateTexte(echanges[0].date) + ".");
+    var contacts = d.contacts || [];
+    if (contacts.length) faits.push(contacts.length + " contact(s) déclaré(s) avec le client, le dernier " + dateTexte(contacts[0].date) + ".");
     if (estConfirme(cl)) faits.push("Motif : " + ref.motifsPerte[cl.motif].toLowerCase() + " — " + ref.originesMotif[cl.origine].toLowerCase() + ".");
     else if (cl.origine === "hypothese") interpretations.push("Hypothèse du conseiller : " + ref.motifsPerte[cl.motif].toLowerCase() + ". Elle n'est pas confirmée par le client.");
     if (cl.motif === "inconnu") inconnus.push("La raison pour laquelle le client n'a pas poursuivi.");

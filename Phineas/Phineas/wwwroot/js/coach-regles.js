@@ -61,7 +61,7 @@
     else verifier.push("Véhicule : aucun véhicule associé au rendez-vous.");
     if (d.vehicule && !d.vehicule.pret) verifier.push("État de préparation du véhicule : " + d.vehicule.disponibilite.toLowerCase());
     if (d.soumission) savons.push("Soumission associée : " + d.soumission.reference + " (" + d.soumission.statutLibelle.toLowerCase() + ")" + (d.soumission.montant ? ", total estimé " + d.soumission.montant : "") + ".");
-    (d.interactions || []).forEach(function (i) { savons.push("Dernier échange (" + i.date + ") : " + i.texte); });
+    (d.interactions || []).forEach(function (i) { savons.push((i.nature === "contact" ? "Contact déclaré" : "Note interne") + " (" + i.date + ") : " + i.texte); });
     (d.objections || []).forEach(function (o) { savons.push("Objection enregistrée : « " + o + " »"); });
     if (!(d.objections || []).length) verifier.push("Objections : aucune n'est enregistrée (ne pas en supposer).");
     (d.completude && d.completude.manquants || []).forEach(function (m) { verifier.push("Qualification : " + m.toLowerCase() + " non renseigné(e)."); });

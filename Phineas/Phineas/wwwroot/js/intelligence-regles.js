@@ -11,8 +11,9 @@
   var NIVEAUX = ["Faible", "Normal", "Eleve", "Urgent"];
   // Seules ces règles peuvent atteindre « Urgent » : la priorité n'est jamais gonflée arbitrairement.
   var URGENCE_POSSIBLE = ["premiere-reponse", "nouveau-prospect-recommande", "rdv-vehicule-indisponible", "rdv-a-confirmer", "soumission-expire"];
-  // Interactions qui comptent comme un échange avec le client (un brouillon n'en est pas un).
-  var ECHANGES = ["appel", "courriel", "visite", "texto", "relance", "note"];
+  // Contact déclaré propre aux données de démonstration (aucun type de note réel ne lui correspond) : message texte
+  // déclaré dans la démonstration. Ne compte jamais pour un prospect enregistré.
+  var CONTACTS_DEMONSTRATION = ["texto"];
   var HEURE = 3600000, JOUR = 86400000;
   var DATE_LISIBLE = { day: "numeric", month: "long" };
 
@@ -54,24 +55,44 @@
   Moteur.prototype.interactions = function (prospectId, oppId) {
     return this.ctx.interactions.filter(function (i) { return i.prospectId === prospectId && (!oppId || !i.opportuniteId || i.opportuniteId === oppId); });
   };
-  Moteur.prototype.dernierEchange = function (prospectId, oppId, apres) {
-    var l = this.interactions(prospectId, oppId).filter(function (i) { return ECHANGES.indexOf(i.type) >= 0 && (!apres || new Date(i.date) > new Date(apres)); });
-    l.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+  // Dernier contact déclaré avec le client pour une opportunité (contacts liés à elle ou généraux), après « apres ».
+  // Une note ordinaire, une tâche ou un changement d'étape n'en sont pas (estContactDeclare).
+  Moteur.prototype.dernierContact = function (prospectId, oppId, apres) {
+    var types = this.ctx.typesContact || [];
+    var l = contactsDeclares(this.interactions(prospectId, oppId), types, null).filter(function (i) { return !apres || new Date(i.date) > new Date(apres); });
     return l[0] || null;
   };
-  // ---------- Premier contact déclaré ----------
-  // Seule règle qui décide si une interaction satisfait la « première réponse » d'une opportunité. Toutes requises :
-  // - un type de contact déclaré (typesContact = ReferentielsVente.TypesContactDeclare : appel, courriel, visite) ;
-  //   une « Note » simple, un suivi réalisé, reporté ou remplacé, un changement d'étape ne le sont pas, et le texte
-  //   libre n'est jamais interprété ;
-  // - rattachée à CETTE opportunité : une note générale ou d'une autre opportunité ne compte pas ;
-  // - datée du moment de la demande ou après (création de l'opportunité, horodatage du serveur) ;
-  // - opportunité enregistrée (« oe-… ») : note enregistrée en base (« ie-n… »), jamais une saisie locale du navigateur.
+  // ---------- Activité du dossier et contact déclaré ----------
+  // Toute interaction est une ACTIVITÉ du dossier (note, suivi planifié, réalisé, reporté ou remplacé, étape…).
+  // Seule règle qui décide si elle est aussi un CONTACT DÉCLARÉ avec le client (déclaratif, jamais vérifié) :
+  // - type de contact déclaré : typesContact (ReferentielsVente.TypesContactDeclare : appel, courriel, visite), ou
+  //   « texto » pour les données de démonstration ; une « Note » simple, une tâche réalisée, un report, un remplacement,
+  //   un changement d'étape ne le sont pas, et le texte libre n'est jamais interprété ;
+  // - prospect enregistré (« pe-… ») : note enregistrée en base (« ie-n… »), jamais une saisie locale du navigateur.
+  function estContactDeclare(i, typesContact) {
+    if (String(i.prospectId).indexOf("pe-") === 0) {
+      return typesContact.indexOf(i.type) >= 0 && String(i.id).indexOf("ie-n") === 0;
+    }
+    return typesContact.indexOf(i.type) >= 0 || CONTACTS_DEMONSTRATION.indexOf(i.type) >= 0;
+  }
+
+  // Contacts déclarés d'une liste d'interactions, du plus récent au plus ancien. Portée :
+  // - oppId absent : vue globale du prospect (contacts généraux et de toutes ses opportunités) ;
+  // - oppId donné : une opportunité (contacts liés à elle ou généraux, jamais ceux d'une autre opportunité).
+  // La première réponse est plus stricte (estPremiereReponse : contact lié à l'opportunité, après la demande).
+  function contactsDeclares(interactions, typesContact, oppId) {
+    return interactions.filter(function (i) {
+      return estContactDeclare(i, typesContact) && (!oppId || !i.opportuniteId || i.opportuniteId === oppId);
+    }).sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+  }
+
+  // Première réponse d'une opportunité : un contact déclaré (estContactDeclare) rattaché à CETTE opportunité (une note
+  // générale ou d'une autre opportunité ne compte pas), daté du moment de la demande ou après (création de
+  // l'opportunité, horodatage du serveur).
   function estPremiereReponse(i, o, typesContact) {
-    if (typesContact.indexOf(i.type) < 0) return false;
+    if (!estContactDeclare(i, typesContact)) return false;
     if (i.opportuniteId !== o.id) return false;
     if (new Date(i.date) < new Date(o.dateCreation)) return false;
-    if (estEnregistree(o.id) && String(i.id).indexOf("ie-n") !== 0) return false;
     return true;
   }
   function estEnregistree(id) {
@@ -221,21 +242,21 @@
       }
       if (v.statut === "Envoyee" || v.statut === "EnAttente") {
         var jours = ecartJours(v.dateValidite, mo.m);
-        var echange = mo.dernierEchange(s.prospectId, s.opportuniteId, v.date);
+        var echange = mo.dernierContact(s.prospectId, s.opportuniteId, v.date);
         var depuis = echange ? echange.date : v.date;
         if (jours >= 0 && jours <= cfg.expirationProcheJours) {
           ajout({ id: "soumission-expire:" + s.id + ":v" + v.numero, regle: "soumission-expire",
             declencheur: s.reference + " v" + v.numero + " expire " + (jours === 0 ? "aujourd'hui" : jours === 1 ? "demain" : "dans " + jours + " jours") + ".", detecteLe: v.date, echeance: finJour(v.dateValidite),
-            motif: "Proposition envoyée " + relatif(v.date, mo.m) + (echange ? ", dernier échange " + relatif(echange.date, mo.m) : ", aucun échange depuis") + " ; validité bientôt atteinte.",
+            motif: "Proposition envoyée " + relatif(v.date, mo.m) + (echange ? ", dernier contact déclaré " + relatif(echange.date, mo.m) : ", aucun contact déclaré depuis") + " ; validité bientôt atteinte.",
             actionProposee: "Faire le point avec le client sur la proposition", contexte: [s.reference + " · " + v.vehiculeNom],
             dernierContact: echange, resolution: "Réponse du client (acceptation, refus) ou nouvelle version.", expiration: "La validité est dépassée.", relance: "soumission" });
         } else if (jours > cfg.expirationProcheJours && joursDepuis(depuis, mo.m) >= cfg.delaiRelanceSoumissionJours) {
           ajout({ id: "soumission-sans-reponse:" + s.id + ":v" + v.numero + ":" + cleJour(depuis), regle: "soumission-sans-reponse",
             declencheur: s.reference + " v" + v.numero + " envoyée " + relatif(v.date, mo.m) + ".", detecteLe: depuis,
             echeance: new Date(new Date(depuis).getTime() + cfg.delaiRelanceSoumissionJours * JOUR).toISOString(),
-            motif: "Aucune réponse ni relance enregistrée depuis " + joursDepuis(depuis, mo.m) + " jours (règle de démonstration : " + cfg.delaiRelanceSoumissionJours + " jours).",
+            motif: "Aucun contact déclaré avec le client depuis " + joursDepuis(depuis, mo.m) + " jours (règle de démonstration : " + cfg.delaiRelanceSoumissionJours + " jours).",
             actionProposee: "Préparer un suivi personnalisé sur la proposition", contexte: [s.reference + " · " + v.vehiculeNom + (v.montant ? " · " + v.montant : "")],
-            dernierContact: echange, resolution: "Un échange avec le client est enregistré ou la soumission change de statut.", expiration: "La soumission est acceptée, refusée, expirée ou l'opportunité close.", relance: "soumission" });
+            dernierContact: echange, resolution: "Un contact avec le client est déclaré ou la soumission change de statut.", expiration: "La soumission est acceptée, refusée, expirée ou l'opportunité close.", relance: "soumission" });
         }
       }
       if (s.acceptee && !s.transaction) {
@@ -287,14 +308,14 @@
       }
       // Après un essai : le résultat demande une suite et rien n'a été fait depuis.
       if (r.type === "EssaiRoutier" && r.statut === "Termine" && r.resultat && r.resultat.prochaineAction && r.resultat.prochaineAction !== "aucune" && r.resultat.resultat !== "abandon") {
-        var apres = mo.dernierEchange(r.prospectId, r.opportuniteId, r.resultat.date);
+        var apres = mo.dernierContact(r.prospectId, r.opportuniteId, r.resultat.date);
         if (!apres && !r.rdvSuivant) {
           var ech = r.resultat.dateSuivi || new Date(new Date(r.resultat.date).getTime() + JOUR).toISOString();
           ajout({ id: "essai-sans-suite:" + r.id, regle: "essai-sans-suite", declencheur: "Essai routier terminé " + relatif(r.fin, m) + ".", detecteLe: r.resultat.date, echeance: finJour(ech),
-            motif: "Résultat « " + r.resultat.resultatLibelle + " » ; prochaine action prévue : " + r.resultat.actionLibelle.toLowerCase() + ". Aucun échange depuis.",
+            motif: "Résultat « " + r.resultat.resultatLibelle + " » ; prochaine action prévue : " + r.resultat.actionLibelle.toLowerCase() + ". Aucun contact déclaré depuis.",
             actionProposee: "Reprendre les points exprimés pendant l'essai",
             contexte: [r.resultat.observations ? "Observations : " + r.resultat.observations : null, r.resultat.objections ? "Objections : " + r.resultat.objections : null, r.resultat.vehiculeAlternatif ? "Véhicule alternatif envisagé : " + r.resultat.vehiculeAlternatif : null].filter(Boolean),
-            resolution: "Un échange est enregistré ou un nouveau rendez-vous est planifié.", expiration: "L'opportunité est clôturée.", relance: "essai" });
+            resolution: "Un contact avec le client est déclaré ou un nouveau rendez-vous est planifié.", expiration: "L'opportunité est clôturée.", relance: "essai" });
         }
       }
     });
@@ -434,11 +455,11 @@
       }
       if (["a-verifier", "attente-evenement", "suivi-planifie"].indexOf(c.etat) < 0) return;
       // Achat reporté : la date de reprise souhaitée par le client est atteinte.
-      if (c.etat === "suivi-planifie" && c.dateReprise && new Date(c.dateReprise) <= m && joursDepuis(c.dateReprise, m) <= cfg.fenetreRepriseJours && !mo.dernierEchange(c.prospectId, c.opportuniteId, c.dateReprise)) {
+      if (c.etat === "suivi-planifie" && c.dateReprise && new Date(c.dateReprise) <= m && joursDepuis(c.dateReprise, m) <= cfg.fenetreRepriseJours && !mo.dernierContact(c.prospectId, c.opportuniteId, c.dateReprise)) {
         base({ id: "perte-achat-reporte:" + c.opportuniteId + ":" + cleJour(c.dateReprise), regle: "perte-achat-reporte", declencheur: "Date de reprise souhaitée : " + new Date(c.dateReprise).toLocaleDateString("fr-CA", DATE_LISIBLE) + ".",
           detecteLe: c.dateReprise, echeance: finJour(new Date(new Date(c.dateReprise).getTime() + 2 * JOUR)), motif: "Le client avait reporté son achat" + (c.commentaire ? " (« " + c.commentaire + " »)" : "") + " ; la date convenue est atteinte.",
           actionProposee: "Reprendre contact comme convenu et mettre à jour les besoins", contexte: ["Projet initial : " + c.titre, "Une réactivation reste une décision du conseiller."],
-          resolution: "Un échange est enregistré ou l'opportunité est réactivée.", expiration: cfg.fenetreRepriseJours + " jours après la date de reprise.", relance: "perte-reprise" }, b);
+          resolution: "Un contact avec le client est déclaré ou l'opportunité est réactivée.", expiration: cfg.fenetreRepriseJours + " jours après la date de reprise.", relance: "perte-reprise" }, b);
       }
       // Véhicule correspondant à une ancienne demande (Vehicle Matching Engine).
       if ((c.correspondances || []).length) {
@@ -599,7 +620,8 @@
     return { actions: mo.actions, suspendues: mo.suspendues };
   }
 
-  var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, echanges: ECHANGES, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse };
+  var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse,
+    estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);

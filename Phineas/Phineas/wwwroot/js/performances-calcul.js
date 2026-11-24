@@ -9,9 +9,12 @@
   "use strict";
 
   var JOUR = 86400000, HEURE = 3600000;
+  // Règle de la première réponse (contact déclaré lié à l'opportunité, après la demande) : intelligence-regles.js.
+  function regles() {
+    return typeof module !== "undefined" && module.exports ? require("./intelligence-regles.js") : racine.IntelligenceRegles;
+  }
   var ACTIVES = ["Nouveau", "AQualifier", "Qualifie", "Soumission", "EssaiRoutier", "Negociation", "Finalisation"];
   var QUALIFIEES = ["Qualifie", "Soumission", "EssaiRoutier", "Negociation", "Finalisation", "Gagne"];
-  var ECHANGES = ["appel", "courriel", "visite", "texto", "relance", "note"];
   var ENVOYEES = ["Envoyee", "EnAttente", "Acceptee", "Refusee", "Expiree"];
 
   // ---------- Valeurs qualifiées ----------
@@ -86,11 +89,13 @@
     var recos = uniques(p.recommandations.filter(function (r) { return !r.doublon && ids.indexOf(r.prospectId) >= 0; }), "prospectId");
     var annonces = uniques(p.attributions.filter(function (a) { return ids.indexOf(a.prospectId) >= 0 && (a.annonceId || a.lienId); }), "prospectId");
     var oppsCreees = p.opps.filter(function (o) { return dansPeriode(o.dateCreation, p.periode, p.m); });
-    // Délai de première réponse : premier échange après la création ; une opportunité sans échange n'est pas un zéro.
+    // Délai de première réponse : premier contact déclaré pour l'opportunité après la demande (même règle que la
+    // recommandation « Première réponse ») ; une note interne n'en est pas un ; une opportunité sans contact n'est pas un zéro.
     var delais = [], sansReponse = 0;
+    var estPremiereReponse = regles().estPremiereReponse;
     oppsCreees.forEach(function (o) {
       var e = p.interactions.filter(function (i) {
-        return i.prospectId === o.prospectId && (!i.opportuniteId || i.opportuniteId === o.id) && ECHANGES.indexOf(i.type) >= 0 && new Date(i.date) >= new Date(o.dateCreation);
+        return i.prospectId === o.prospectId && estPremiereReponse(i, o, s.typesContact || []);
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); })[0];
       if (e) delais.push((new Date(e.date) - new Date(o.dateCreation)) / HEURE); else sansReponse++;
     });
@@ -236,7 +241,7 @@
     var acq = acquisition(s);
     var lents = acq.delais.filter(function (h) { return h > (x.cibleHeures || 1); }).length;
     if (lents) c.push({ cle: "delai", n: lents, texte: lents + " première(s) réponse(s) au-delà de " + (x.cibleHeures || 1) + " h (cible de démonstration).", lien: "prospects" });
-    if (acq.sansReponse) c.push({ cle: "sans-reponse", n: acq.sansReponse, texte: acq.sansReponse + " opportunité(s) récente(s) sans premier échange enregistré.", lien: "actions" });
+    if (acq.sansReponse) c.push({ cle: "sans-reponse", n: acq.sansReponse, texte: acq.sansReponse + " opportunité(s) récente(s) sans premier contact déclaré.", lien: "actions" });
     return c;
   }
 

@@ -211,7 +211,7 @@ test("régression : un suivi réalisé sans contact client (« Préparer le doss
   realise.resume = "Suivi réalisé, déclaré par le conseiller : « Préparer le dossier de financement » (prévu le 24 novembre 2026).";
   const r = obligations(contexte([o], [realise]));
   assert.ok(r.actions.some((a) => a.id === "premiere-reponse:oe-1"), "la première réponse doit rester");
-  assert.ok(!Regles.echanges.includes("suivi-realise"), "un suivi réalisé n'est pas un échange");
+  assert.ok(!Regles.estContactDeclare(realise, typesContact), "un suivi réalisé n'est pas un contact déclaré");
 });
 
 // Scénario B : le signal structuré existant (note de la fonctionnalité 04 de type « Appel effectué », « Courriel »

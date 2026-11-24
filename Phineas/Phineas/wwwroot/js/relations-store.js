@@ -18,7 +18,6 @@
   var CLE_BOITE = "phineas.salesos.relations.v1:demandes-recues";
   var CLE_PROFIL_PUBLIC = "phineas.salesos.relations.v1:profil-public";
   var JOUR = 86400000;
-  var ECHANGES = ["appel", "courriel", "visite", "texto", "relance", "note"];
 
   ref.conseillerNom = charge.conseillerNom;
   ref.concession = charge.concession;
@@ -296,7 +295,9 @@
     var inters = P.interactionsDe(o.prospectId).filter(function (i) { return !i.opportuniteId || i.opportuniteId === oppId; });
     var trs = T.parOpportunite(oppId);
     var x = { cloture: cl, opportunite: o, contact: P.contact(o.prospectId), soumissions: soums, rendezVous: rdvs, interactions: inters, retour: retourDe(oppId),
-      completude: P.completude(o.qualification), etapeLibelle: P.libelleEtape(cl.etapeAtteinte), echanges: ECHANGES, transactions: trs, historique: cloturesDe(oppId) };
+      completude: P.completude(o.qualification), etapeLibelle: P.libelleEtape(cl.etapeAtteinte), transactions: trs, historique: cloturesDe(oppId),
+      // Contacts déclarés avec le client pour cette opportunité (intelligence-regles.js) ; les notes internes n'en sont pas.
+      contacts: window.IntelligenceRegles ? window.IntelligenceRegles.contactsDeclares(inters, P.typesContact(), oppId) : [] };
     x.analyse = Regles.analyse(x, ref);
     x.etat = etatDe(cl);
     x.blocages = trs.map(function (t) {

@@ -101,7 +101,8 @@
     }).join("");
     if (g.regroupee) raison += '<span class="iv-sous mt-2">Même prise de contact : ' + g.raisons.length + " raisons, une seule action.</span>";
 
-    var contact = '<span class="iv-gris">Aucun échange enregistré</span>';
+    // Dernier contact déclaré avec le client (intelligence-store.js, contexteRelance) : jamais une note interne.
+    var contact = '<span class="iv-gris">Aucun contact déclaré</span>';
     if (derniere) contact = '<span class="iv-gris">' + esc(P.relatif(derniere.date)) + '</span><span class="iv-sous">' + esc(derniere.resume) + "</span>";
 
     var canal = '<span class="iv-canal"><i class="bi ' + icone + '" aria-hidden="true"></i>' + esc(ctx.canal) + "</span>";

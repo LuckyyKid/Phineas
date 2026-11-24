@@ -13,7 +13,6 @@
   var d = charge.donnees;
   var ref = charge.referentiels;
   var CLE = "phineas.salesos.outils.v1:" + charge.conseillerNom;
-  var ECHANGES = ["appel", "courriel", "visite", "texto", "relance", "note"];
 
   ref.conseillerNom = charge.conseillerNom;
   ref.concession = charge.concession;
@@ -331,6 +330,7 @@
       contacts: P.contacts(),
       opportunites: P.toutesOpportunites().map(function (o) { var x = cloner(o); x.dateFermeture = fermetures[o.id] || null; return x; }),
       interactions: interactions,
+      typesContact: P.typesContact(),
       soumissions: S.liste().map(function (s) { return { id: s.id, opportuniteId: s.opportuniteId, conseillerId: s.conseillerId, dateCreation: s.dateCreation, versions: s.versions.map(function (v) { return { numero: v.numero, statut: v.statut, date: v.date, dateModification: v.dateModification }; }) }; }),
       rendezVous: R ? R.liste().map(function (r) { return { id: r.id, prospectId: r.prospectId, opportuniteId: r.opportuniteId, conseillerId: r.conseillerId, type: r.type, statut: r.statut, debut: r.debut, resultat: r.resultat }; }) : [],
       transactions: T ? T.liste().map(function (t) {
@@ -369,7 +369,6 @@
     consultations: consultations, enregistrerConsultation: enregistrerConsultation,
     // statistiques
     instantanePerformances: instantanePerformances,
-    echanges: ECHANGES,
   };
 
   P.enregistrerModule({ estModifie: function () { return modifie; }, reinitialiser: reinitialiser });

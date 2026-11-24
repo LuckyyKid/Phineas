@@ -131,7 +131,12 @@
     if (c.telephone) coord.push('<span class="pr-coord-ligne"><a href="tel:' + esc(c.telephone.replace(/[^\d+]/g, "")) + '">' + esc(c.telephone) + "</a></span>" + (pref !== "courriel" ? '<span class="pr-prefere">' + esc(P.libelle("moyensContact", pref)) + " préféré</span>" : ""));
     if (c.courriel) coord.push('<span class="pr-coord-ligne" title="' + esc(c.courriel) + '"><a href="mailto:' + esc(c.courriel) + '">' + esc(c.courriel) + "</a></span>" + (pref === "courriel" ? '<span class="pr-prefere">Courriel préféré</span>' : ""));
     remplir("coordonnees", coord.join("") || '<span class="text-muted">Aucune</span>');
-    remplir("derniere", derniere ? esc(P.relatif(derniere.date)) + '<span class="pr-sous d-block pr-tronque">' + esc(derniere.resume) + "</span>" : "—");
+    // Dernière activité : interaction la plus récente disponible pour le prospect (notes, suivis, étapes, création,
+    // entrées locales) ; pas un journal exhaustif de tous les événements métier.
+    remplir("derniere", derniere ? esc(P.relatif(derniere.date)) + '<span class="pr-sous d-block pr-tronque">' + esc(derniere.resume) + "</span>" : "Aucune");
+    // Dernier contact déclaré (appel, courriel, visite ; vue globale du prospect) : une note interne ne le remplace pas.
+    var contactDeclare = window.IntelligenceRegles ? window.IntelligenceRegles.contactsDeclares(P.interactionsDe(c.id), P.typesContact())[0] : null;
+    remplir("dernier-contact", contactDeclare ? esc(P.relatif(contactDeclare.date)) + '<span class="pr-sous d-block pr-tronque">' + esc(contactDeclare.resume) + "</span>" : "Aucun contact déclaré");
     remplir("prochaine", prochaine ? prochaineHtml(prochaine) + '<span class="pr-sous d-block">' + esc(prochaine.titre) + "</span>" : '<span class="text-muted">Aucune action planifiée</span>');
 
     remplir("nb-interactions", String(P.interactionsDe(c.id).length));

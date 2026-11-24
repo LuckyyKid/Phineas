@@ -326,7 +326,7 @@
     var graphique = htmlGraphiques([htmlCarteGraphique("Répartition des sources", "Nouveaux prospects de la période selon la source déclarée.",
       htmlRepartition(sources), "Une source déclarée n'est pas une attribution vérifiée.")]);
     var autres = [
-      { libelle: "Sans premier échange", precision: "Exclues du délai, ce n'est pas un zéro", o: PC.obs(a.sansReponse) },
+      { libelle: "Sans premier contact déclaré", precision: "Exclues du délai, ce n'est pas un zéro", o: PC.obs(a.sansReponse) },
       { libelle: "Issus des recommandations", precision: "Recommandations attribuées, sans doublon", o: a.recommandations },
       { libelle: "Issus des annonces", precision: "Provenance établie par un lien ou un formulaire", o: a.annonces },
       { libelle: "Sources inconnues", precision: "Jamais devinées", o: a.sourcesInconnues },

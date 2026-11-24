@@ -451,7 +451,8 @@
     var s = x.objet && x.objet.type === "soumission" ? S.soumission(x.objet.id) : soums[soums.length - 1] || null;
     var rdvs = R && o ? R.parOpportunite(o.id) : [];
     var rdv = x.objet && x.objet.type === "rendezvous" && R ? R.rdv(x.objet.id) : rdvs[rdvs.length - 1] || null;
-    var derniere = c ? P.interactionsDe(c.id).filter(function (i) { return Regles.echanges.indexOf(i.type) >= 0; })[0] : null;
+    // Dernier contact déclaré avec le client (vue globale du prospect) ; une note interne ne l'est pas.
+    var derniere = c ? Regles.contactsDeclares(P.interactionsDe(c.id), P.typesContact())[0] || null : null;
     var pref = etat.preferences[x.prospectId];
     var canal = c ? (P.libelle("moyensContact", c.contactPrefere) || "Non précisé") : "Non précisé";
     var coord = c ? (c.contactPrefere === "courriel" ? c.courriel : c.telephone) || c.telephone || c.courriel : null;
@@ -460,14 +461,14 @@
     if (!coord) aVerifier.push("Coordonnée pour le moyen préféré");
     if (!vehicule) aVerifier.push("Véhicule concerné");
     if (!q.modeAchat) aVerifier.push("Mode d'achat envisagé");
-    if (!derniere) aVerifier.push("Aucun échange antérieur enregistré");
+    if (!derniere) aVerifier.push("Aucun contact déclaré avec le client");
     var utilisees = [
       { libelle: "Prénom du client", valeur: c ? c.prenom : null },
       { libelle: "Véhicule", valeur: vehicule },
       { libelle: "Soumission", valeur: s ? s.reference + " v" + S.versionCourante(s).numero + " (" + S.libelleStatut(S.statut(s)).toLowerCase() + ")" : null },
       { libelle: "Dernier rendez-vous", valeur: rdv ? R.type(rdv.type).libelle + " · " + R.creneauTexte(rdv).toLowerCase() + " (" + R.statut(rdv.statut).libelle.toLowerCase() + ")" : null },
       { libelle: "Préférences exprimées", valeur: (q.elementsDecision || []).map(function (k) { return P.libelle("elementsDecision", k); }).filter(Boolean).join(", ") || null },
-      { libelle: "Dernière interaction", valeur: derniere ? P.relatif(derniere.date) + " — " + derniere.resume : null },
+      { libelle: "Dernier contact déclaré", valeur: derniere ? P.relatif(derniere.date) + " : " + derniere.resume : null },
       { libelle: "Prochaine action", valeur: o && o.prochaineAction ? o.prochaineAction : null },
       { libelle: "Moyen préféré", valeur: canal + (coord ? " · " + coord : "") },
     ];
