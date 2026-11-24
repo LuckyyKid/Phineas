@@ -7,6 +7,9 @@
 @{
     ViewData["Title"] = "Accueil";
     Layout = "_LayoutConseiller";
+    // L'Accueil affiche le message du serveur après « Marquer le suivi comme réalisé » (accueil-moteur.js) :
+    // _DonneesModules peut donc le lire (et le consommer).
+    ViewData["AfficheMessagesProspects"] = true;
     var maintenant = Model.Maintenant;
 
     // À partir de cette heure, les rendez-vous restants sont annoncés « ce soir ».

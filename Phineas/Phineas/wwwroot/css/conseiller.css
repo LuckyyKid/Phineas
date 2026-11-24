@@ -275,6 +275,8 @@ html[data-accueil-chiffres="masques"] .ph-stats { display: none; }
   border: 1px solid transparent;
   font-size: 16px;
   font-weight: 500;
+  /* Même apparence pour un lien (ex. « Déclarer le contact dans la fiche ») que pour un bouton. */
+  text-decoration: none;
   transition: background-color .15s ease, transform .15s ease, box-shadow .2s ease;
 }
 .ph-btn:active { transform: translateY(1px); }

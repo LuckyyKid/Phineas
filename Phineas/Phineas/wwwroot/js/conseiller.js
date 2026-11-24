@@ -92,7 +92,8 @@
 
     if (focusDedans) {
       if (resteAFaire) {
-        courante.querySelector("[data-valider]").focus();
+        // Première commande de la carte (bouton ou lien, selon l'action réelle).
+        courante.querySelector(".ph-focus-actions a, .ph-focus-actions button").focus();
       } else {
         fin.setAttribute("tabindex", "-1");
         fin.focus();
@@ -105,17 +106,32 @@
     if (!p) return;
     var nom = p.querySelector(".ph-focus-nom").textContent;
 
-    if (e.target.closest("[data-valider]")) {
-      // Priorité venue du moteur : on la marque comme réalisée dans le Centre d'actions aussi.
+    var realiser = e.target.closest("[data-realiser-suivi]");
+    if (realiser) {
+      // Suivi enregistré : réalisation réelle par la route existante (ProspectsController.RealiserSuivi, avec la version
+      // affichée et le jeton antiforgery) ; la page revient ici avec la confirmation ou le refus du serveur.
+      if (realiser.disabled) return;
+      realiser.disabled = true; // contre le double clic
+      window.Prospects.envoyerRealisation(realiser.getAttribute("data-realiser-suivi"), window.location.pathname + window.location.search);
+      return;
+    }
+
+    var valider = e.target.closest("[data-valider]");
+    if (valider) {
+      // Carte de démonstration seulement (commandeRealisation = realiser-local) : réalisation locale, rien n'est
+      // enregistré. Un dossier enregistré n'est jamais « terminé » localement.
       var annulerMoteur = null;
-      var actionId = p.getAttribute("data-action-id");
-      if (actionId && window.Intelligence) {
-        annulerMoteur = window.Intelligence.terminer(actionId);
+      var actionId = valider.getAttribute("data-raison") || p.getAttribute("data-action-id");
+      var action = actionId && window.Intelligence ? window.Intelligence.action(actionId) : null;
+      if (!action || !window.IntelligenceRegles || window.IntelligenceRegles.commandeRealisation(action) !== "realiser-local") {
+        notifier("Rien n'a été marqué comme réalisé : ouvrez le dossier pour agir.");
+        return;
       }
+      annulerMoteur = window.Intelligence.terminer(actionId);
       file.shift();
       faites++;
       afficher();
-      notifier(nom + " : action marquée comme réalisée.", function () {
+      notifier(nom + " : action marquée comme réalisée (démonstration, rien n'est enregistré).", function () {
         if (annulerMoteur) annulerMoteur();
         file.unshift(p);
         faites--;

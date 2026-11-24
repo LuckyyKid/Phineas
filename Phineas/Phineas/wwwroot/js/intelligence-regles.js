@@ -559,6 +559,42 @@
     return "aucune";
   }
 
+  // Commandes d'une obligation (carte « Priorité » de l'Accueil vendeur) : la commande de chaque raison
+  // (commandeRealisation), principale d'abord, sans doublon. Réaliser le suivi et déclarer le contact restent deux
+  // commandes distinctes : l'une ne fait jamais l'autre.
+  function commandesObligation(g) {
+    var vues = {};
+    var liste = [];
+    g.raisons.forEach(function (r) {
+      var commande = commandeRealisation(r);
+      var cle = commande + ":" + (commande === "realiser-serveur" ? r.opportuniteId : commande === "declarer-contact" ? r.prospectId : r.id);
+      if (vues[cle]) return;
+      vues[cle] = true;
+      liste.push({ commande: commande, raison: r });
+    });
+    return liste;
+  }
+
+  // Priorités du jour de l'Accueil vendeur : obligations (regrouperObligations) de priorité Urgent ou Élevé dont
+  // l'échéance est aujourd'hui ou dépassée, les plus fortes d'abord, puis les échéances les plus anciennes ; au plus
+  // « max ». Même sélection qu'avant la fonctionnalité 13, appliquée aux obligations au lieu des recommandations : une
+  // prise de contact regroupée n'occupe qu'une carte.
+  var RANG_ACCUEIL = { Urgent: 0, Eleve: 1, Normal: 2, Faible: 3 };
+  function prioritesAccueil(actions, maintenant, max) {
+    var finDuJour = new Date(maintenant);
+    finDuJour.setHours(23, 59, 59, 999);
+    var choisies = regrouperObligations(actions).filter(function (g) {
+      var forte = g.priorite === "Urgent" || g.priorite === "Eleve";
+      return forte && !!g.echeance && new Date(g.echeance) <= finDuJour;
+    });
+    choisies.sort(function (x, y) {
+      var ecartRang = RANG_ACCUEIL[x.priorite] - RANG_ACCUEIL[y.priorite];
+      if (ecartRang !== 0) return ecartRang;
+      return new Date(x.echeance) - new Date(y.echeance);
+    });
+    return choisies.slice(0, max);
+  }
+
   // ---------- Regroupement des obligations (« Mes suivis », vue « À traiter ») ----------
   // Plusieurs règles peuvent exprimer le même besoin actuel : prendre contact avec le client au sujet d'une opportunité.
   // Elles sont présentées en une seule ligne, sans être supprimées : chaque recommandation garde son identifiant, sa
@@ -653,7 +689,8 @@
   }
 
   var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse,
-    estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares, commandeRealisation: commandeRealisation, compterObligations: compterObligations };
+    estContactDeclare: estContactDeclare, contactsDeclares: contactsDeclares, commandeRealisation: commandeRealisation, compterObligations: compterObligations,
+    commandesObligation: commandesObligation, prioritesAccueil: prioritesAccueil };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);

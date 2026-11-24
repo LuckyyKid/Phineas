@@ -1,7 +1,15 @@
 @using Phineas.Models.ViewModels.Conseiller
 @model RendezVousPageViewModel
 @* Données des trois modules locaux (prospects, inventaire et soumissions, rendez-vous) pour les pages de l'agenda. *@
-<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+@* Confirmation ou refus d'une écriture serveur (ex. « Marquer le suivi comme réalisé » depuis l'Accueil), affiché par
+   prospects-store.js. Lire TempData le consomme (il est effacé à la fin de la requête) : seule une page qui affiche ces
+   messages le demande, avec ViewData["AfficheMessagesProspects"] = true (l'Accueil). Les pages Rendez-vous ne les lisent pas. *@
+@{
+    bool afficheMessages = ViewData["AfficheMessagesProspects"] is true;
+    string? confirmation = afficheMessages ? TempData[Phineas.Controllers.Conseiller.ProspectsController.CleConfirmation] as string : null;
+    string? erreur = afficheMessages ? TempData[Phineas.Controllers.Conseiller.ProspectsController.CleErreur] as string : null;
+}
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true, Confirmation = confirmation, Erreur = erreur }" />
 <partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
 <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="Model" />
 @if (Model.Transactions is not null)

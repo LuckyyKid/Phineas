@@ -8,6 +8,7 @@
 
   var I = window.Intelligence;
   var P = window.Prospects;
+  var Regles = window.IntelligenceRegles;
   var R = window.RendezVous;
   var T = window.Transactions;
   var focus = document.getElementById("ph-focus");
@@ -17,8 +18,6 @@
   var NB_PRIORITES_MAX = 3;
   // À partir de cette heure, les rendez-vous restants sont annoncés « ce soir ». Même valeur dans Index.cshtml.
   var HEURE_DU_SOIR = 17;
-  // Niveaux de priorité du moteur, du plus fort au plus faible (voir intelligence-regles.js).
-  var RANG_PRIORITE = { Urgent: 0, Eleve: 1, Normal: 2, Faible: 3 };
 
   var esc = P.esc;
 
@@ -35,33 +34,15 @@
     return resultat;
   }
 
-  function estAujourdhuiOuEnRetard(dateTexte) {
-    if (!dateTexte) return false;
-    var date = new Date(dateTexte);
-    var finDuJour = new Date();
-    finDuJour.setHours(23, 59, 59, 999);
-    return date <= finDuJour;
-  }
-
   function estEnRetard(dateTexte) {
     return !!dateTexte && new Date(dateTexte) < new Date();
   }
 
-  // Priorités du jour : actions urgentes ou élevées dont l'échéance est aujourd'hui ou dépassée,
-  // les plus fortes d'abord, puis les plus anciennes échéances.
+  // Priorités du jour : obligations urgentes ou élevées dont l'échéance est aujourd'hui ou dépassée
+  // (IntelligenceRegles.prioritesAccueil, même règle de regroupement que le Centre d'actions et « Mes suivis »).
   function prioritesDuJour(actions) {
-    var choisies = [];
-    for (var i = 0; i < actions.length; i++) {
-      var a = actions[i];
-      var forte = a.priorite === "Urgent" || a.priorite === "Eleve";
-      if (forte && estAujourdhuiOuEnRetard(a.echeance)) choisies.push(a);
-    }
-    choisies.sort(function (x, y) {
-      var ecartRang = RANG_PRIORITE[x.priorite] - RANG_PRIORITE[y.priorite];
-      if (ecartRang !== 0) return ecartRang;
-      return new Date(x.echeance) - new Date(y.echeance);
-    });
-    return choisies.slice(0, NB_PRIORITES_MAX);
+    if (!Regles) return [];
+    return Regles.prioritesAccueil(actions, new Date(), NB_PRIORITES_MAX);
   }
 
   // Mes rendez-vous actifs pas encore terminés, du plus tôt au plus tard (même règle que l'agenda).
@@ -115,19 +96,48 @@
     return "Échéance à " + heureCourte(a.echeance);
   }
 
-  function htmlPriorite(a, index) {
+  // Bouton (ou lien) d'une commande (IntelligenceRegles.commandesObligation). La première commande de la carte est
+  // le bouton principal (blanc), les suivantes sont secondaires (verre).
+  // - realiser-serveur : suivi enregistré, réalisé en base par la route existante (conseiller.js, data-realiser-suivi) ;
+  // - declarer-contact : première réponse d'un dossier enregistré, à déclarer dans la fiche ;
+  // - realiser-local : démonstration, réalisation locale (conseiller.js, data-valider) ;
+  // - aucune : dossier enregistré sans opération persistante : on ouvre le dossier, sans clôture fictive.
+  function htmlCommande(c, principale) {
+    var classe = principale ? "ph-btn ph-btn-blanc" : "ph-btn ph-btn-verre";
+    var r = c.raison;
+    var fleche = '<i class="bi bi-arrow-right"></i>';
+    if (c.commande === "realiser-serveur") {
+      return '<button type="button" class="' + classe + '" data-realiser-suivi="' + esc(r.opportuniteId) + '" data-raison="' + esc(r.id) + '">Marquer le suivi comme réalisé' + fleche + "</button>";
+    }
+    if (c.commande === "declarer-contact") {
+      return '<a class="' + classe + '" href="' + esc(P.urlFiche(r.prospectId)) + '" data-declarer-contact="' + esc(r.id) + '">Déclarer le contact dans la fiche' + fleche + "</a>";
+    }
+    if (c.commande === "realiser-local") {
+      return '<button type="button" class="' + classe + '" data-valider data-raison="' + esc(r.id) + '">' + esc(r.actionProposee) + fleche + "</button>";
+    }
+    return '<a class="' + classe + '" href="' + esc(I.urlObjet(r)) + '" data-ouvrir-dossier="' + esc(r.id) + '">' + esc(r.actionProposee) + fleche + "</a>";
+  }
+
+  // Carte d'une obligation : une raison (comme avant) ou plusieurs (même prise de contact), avec une commande par raison.
+  function htmlPriorite(g, index) {
+    var a = g.principale;
     var nom = esc(a.client);
     if (a.prospectId) nom = '<a class="sv-lien-fiche" href="' + esc(P.urlFiche(a.prospectId)) + '">' + nom + "</a>";
-    var retard = estEnRetard(a.echeance) ? ' <span class="ph-tag-retard">En retard</span>' : "";
+    var retard = estEnRetard(g.echeance) ? ' <span class="ph-tag-retard">En retard</span>' : "";
     var vehicule = a.vehicule ? "<span>" + esc(a.vehicule) + "</span>" : "";
-    return '<article class="ph-focus-item" data-priorite data-action-id="' + esc(a.id) + '"' + (index > 0 ? " hidden" : "") + ">" +
-      '<p class="ph-focus-type">' + esc(a.regleLibelle) + retard + "</p>" +
+    var commandes = Regles.commandesObligation(g);
+    // Carte de démonstration : toutes ses commandes sont locales ; on le dit, sans couleur nouvelle.
+    var demonstration = commandes.every(function (c) { return c.commande === "realiser-local"; });
+    var type = g.regroupee ? "Prise de contact · " + g.raisons.length + " raisons" : a.regleLibelle;
+    var texte = g.regroupee ? g.raisons.map(function (r) { return r.regleLibelle; }).join(" · ") : a.motif;
+    return '<article class="ph-focus-item" data-priorite data-action-id="' + esc(a.id) + '" data-obligation="' + esc(g.id) + '"' + (index > 0 ? " hidden" : "") + ">" +
+      '<p class="ph-focus-type">' + esc(type) + (demonstration ? " · Démonstration" : "") + retard + "</p>" +
       '<h3 class="ph-focus-nom">' + nom + "</h3>" +
-      '<p class="ph-focus-texte">' + esc(a.motif) + "</p>" +
-      '<p class="ph-focus-dossier" data-dossier hidden>' + vehicule + "<span>" + esc(texteEcheance(a)) + "</span>" +
+      '<p class="ph-focus-texte">' + esc(texte) + "</p>" +
+      '<p class="ph-focus-dossier" data-dossier hidden>' + vehicule + "<span>" + esc(texteEcheance(g)) + "</span>" +
       '<a class="sv-lien-fiche" href="' + esc(I.urlObjet(a)) + '">Consulter le dossier</a></p>' +
       '<div class="ph-focus-actions">' +
-      '<button type="button" class="ph-btn ph-btn-blanc" data-valider>' + esc(a.actionProposee) + '<i class="bi bi-arrow-right"></i></button>' +
+      commandes.map(function (c, i) { return htmlCommande(c, i === 0); }).join("") +
       '<button type="button" class="ph-btn ph-btn-verre" data-voir-dossier aria-expanded="false">Voir le dossier</button>' +
       '<button type="button" class="ph-btn-discret" data-plus-tard>Plus tard</button>' +
       "</div></article>";
@@ -257,7 +267,8 @@
     var duJour = R ? rendezVousDuJour(aVenir) : [];
     var moment = momentDuJour(duJour);
     rendreChiffres(actions, aVenir);
-    rendreCompteurMenu(actions.length);
+    // Même compteur que sur les pages du Centre d'actions : obligations à traiter (fonctionnalité 12).
+    rendreCompteurMenu(I ? I.compteurs(P.moiId).aTraiter : 0);
     rendreRendezVous(duJour, moment);
     if (R) rendreResume(nbPriorites, duJour.length, moment);
   }
@@ -266,6 +277,8 @@
   nbPriorites = priorites.length;
   rendrePriorites(priorites);
   rendre();
+  // Message du serveur après « Marquer le suivi comme réalisé » (réussite ou refus) : affiché une fois.
+  P.afficherMessageServeur();
 
   if (I) I.abonner(rendre);
   if (R) R.abonner(rendre);
