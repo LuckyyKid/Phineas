@@ -343,11 +343,15 @@
           contexte: [o.titre], resolution: "Un échange est enregistré ou une nouvelle date est convenue.", expiration: "L'opportunité est clôturée.", relance: "reprise" });
       }
     });
-    // Suivi à date : seulement si aucune autre recommandation de contact ne couvre déjà l'opportunité.
+    // Suivi à date (aujourd'hui ou en retard ; un suivi futur n'apparaît pas encore).
+    // Opportunité enregistrée (« oe-… ») : le suivi a été planifié par le conseiller et enregistré en base, il apparaît
+    // toujours, même si une autre recommandation couvre l'opportunité. Données de démonstration : règle d'origine,
+    // seulement si aucune autre recommandation ne couvre déjà l'opportunité.
     c.opportunites.forEach(function (o) {
       if (!mo.oppActive(o.id) || !o.dateProchaineAction || !o.prochaineAction) return;
       if (ecartJours(o.dateProchaineAction, m) > 0) return;
-      if ((mo.parOpp[o.id] || []).length) return;
+      var enregistree = String(o.id).indexOf("oe-") === 0;
+      if (!enregistree && (mo.parOpp[o.id] || []).length) return;
       if (mo.suspendues.some(function (a) { return a.opportuniteId === o.id && ["prospects", "soumissions", "rendezvous"].indexOf(a.categorie) >= 0; })) return;
       mo.ajouter({ id: "suivi-echeance:" + o.id + ":" + cleJour(o.dateProchaineAction), regle: "suivi-echeance", prospectId: o.prospectId, opportuniteId: o.id, objet: { type: "opportunite", id: o.id },
         declencheur: "Suivi prévu " + (ecartJours(o.dateProchaineAction, m) === 0 ? "aujourd'hui" : "le " + new Date(o.dateProchaineAction).toLocaleDateString("fr-CA", DATE_LISIBLE)) + ".",

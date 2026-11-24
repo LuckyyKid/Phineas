@@ -362,6 +362,43 @@
     form.submit();
   }
 
+  // « Marquer comme réalisé » du suivi d'une opportunité enregistrée : envoi à ProspectsController.RealiserSuivi,
+  // qui archive l'action et revient à la page d'origine (retour : chemin local, ex. /Intelligence/Suivis) avec un message.
+  // versionSuivi : empreinte de l'action affichée ; le serveur refuse si l'action a changé entre-temps.
+  function envoyerRealisation(oppId, retour) {
+    var o = opportunite(oppId);
+    if (!o || !charge.urlRealiserSuivi) return;
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = charge.urlRealiserSuivi;
+    var champs = {
+      opportuniteId: o.id,
+      versionSuivi: o.versionSuivi || "",
+      retour: retour,
+      __RequestVerificationToken: charge.jeton,
+    };
+    Object.keys(champs).forEach(function (nom) {
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = nom;
+      input.value = champs[nom];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  // Message du serveur après un Post/Redirect/Get (confirmation ou refus), affiché une seule fois par page,
+  // quel que soit le script qui l'appelle (tiroir, fiche, Centre d'actions, « Mes suivis »).
+  var messageServeurAffiche = false;
+  function afficherMessageServeur() {
+    if (messageServeurAffiche) return;
+    messageServeurAffiche = true;
+    var retour = charge.enregistrement || {};
+    if (retour.confirmation) notifier(retour.confirmation);
+    if (retour.erreur) notifier(retour.erreur);
+  }
+
   // Opportunité fictive : changement local à l'onglet. Retourne une fonction d'annulation.
   function changerEtape(oppId, etape) {
     var o = opportunite(oppId);
@@ -529,6 +566,8 @@
     changerEtape: changerEtape,
     estEnregistree: estEnregistree,
     envoyerEtape: envoyerEtape,
+    envoyerRealisation: envoyerRealisation,
+    afficherMessageServeur: afficherMessageServeur,
     ajouterOpportunite: ajouterOpportunite,
     enregistrerQualification: enregistrerQualification,
     planifierSuivi: planifierSuivi,

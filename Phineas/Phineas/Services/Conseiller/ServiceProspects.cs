@@ -40,9 +40,14 @@ public interface IServiceProspects
     // Valeur du résultat : true si la note a été créée, false si ce même formulaire avait déjà été enregistré (aucun doublon).
     Task<ResultatService<bool>> AjouterNoteAsync(string utilisateurId, NoteSaisie saisie);
 
-    // Planifie la prochaine action d'une opportunité enregistrée (elle remplace l'action courante).
+    // Planifie la prochaine action d'une opportunité enregistrée (elle remplace l'action courante, archivée « Remplacé »).
     // Valeur du résultat : true si le suivi a changé, false s'il était déjà planifié à l'identique (double envoi).
     Task<ResultatService<bool>> PlanifierSuiviAsync(string utilisateurId, SuiviSaisie saisie);
+
+    // Marque comme réalisée la prochaine action d'une opportunité enregistrée (id « oe-34 ») : elle est archivée
+    // « Réalisé » et retirée des suivis actifs. versionSuivi : empreinte de l'action affichée (EmpreinteSuivi).
+    // Valeur du résultat : true si l'action a été réalisée, false si cette même action l'était déjà (double envoi).
+    Task<ResultatService<bool>> RealiserSuiviAsync(string utilisateurId, string? opportuniteId, string? versionSuivi);
 }
 
 // Prospects réels du conseiller (table Prospects et OpportunitesVente), ajoutés aux données fictives.
@@ -101,6 +106,9 @@ public class ServiceProspects : IServiceProspects
             .ThenInclude(h => h.Utilisateur)
             .Include(p => p.Notes)
             .ThenInclude(n => n.Auteur)
+            .Include(p => p.Opportunites)
+            .ThenInclude(o => o.HistoriqueSuivis)
+            .ThenInclude(h => h.Auteur)
             .AsSplitQuery()
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
@@ -158,7 +166,8 @@ public class ServiceProspects : IServiceProspects
             o.ProchaineAction,
             o.DateProchaineAction,
             [],
-            qualification
+            qualification,
+            VersionSuivi: EmpreinteSuivi(o.ProchaineAction, o.DateProchaineAction)
         );
     }
 
@@ -188,6 +197,22 @@ public class ServiceProspects : IServiceProspects
             string redacteur = n.Auteur is null ? auteur : n.Auteur.FullName;
             string? opportuniteDeLaNote = n.OpportuniteId is null ? null : PrefixeOpportunite + n.OpportuniteId;
             liste.Add(new(PrefixeInteraction + "n" + n.Id, contactId, opportuniteDeLaNote, HeureLocale(n.DateCreation), n.Type, redacteur, n.Contenu));
+        }
+
+        // Suivis réalisés ou remplacés (HistoriqueSuiviOpportunite) : deux types distincts, jamais confondus.
+        foreach (var o in p.Opportunites)
+        {
+            foreach (var h in o.HistoriqueSuivis)
+            {
+                string responsable = h.Auteur is null ? auteur : h.Auteur.FullName;
+                string prevu = h.DatePrevue is null ? "" : " (prévu le " + h.DatePrevue.Value.ToString("d MMMM yyyy", CultureFrancaise) + ")";
+                bool realise = h.Cloture == ClotureSuivi.Realise;
+                string type = realise ? "suivi-realise" : "suivi-remplace";
+                string resume = realise
+                    ? "Suivi réalisé, déclaré par le conseiller : « " + h.Action + " »" + prevu + "."
+                    : "Suivi remplacé par une nouvelle action, non réalisé : « " + h.Action + " »" + prevu + ".";
+                liste.Add(new(PrefixeInteraction + "s" + h.Id, contactId, PrefixeOpportunite + o.Id, HeureLocale(h.DateCloture), type, responsable, resume));
+            }
         }
 
         // Changements d'étape enregistrés (HistoriqueEtapeOpportunite), même type « etape » que les changements locaux.
@@ -247,6 +272,8 @@ public class ServiceProspects : IServiceProspects
 
         return ResultatService<int>.Ok(prospect.Id);
     }
+
+    private static readonly CultureInfo CultureFrancaise = CultureInfo.GetCultureInfo("fr-CA");
 
     private const string MessageCompteInutilisable =
         "Votre compte n'est rattaché à aucune concession active : le prospect ne peut pas être enregistré.";
@@ -535,7 +562,7 @@ public class ServiceProspects : IServiceProspects
             opportunite.DerniereActivite = maintenant;
         // Même SaveChanges que la note : la note et le suivi sont enregistrés ensemble, ou pas du tout.
         if (avecSuivi)
-            AppliquerSuivi(opportunite!, saisie.ProchaineAction!.Trim(), saisie.Date);
+            AppliquerSuivi(opportunite!, saisie.ProchaineAction!.Trim(), saisie.Date, utilisateurId);
 
         try
         {
@@ -651,7 +678,7 @@ public class ServiceProspects : IServiceProspects
         if (saisie.Version != Empreinte(prospect))
             return ResultatService<bool>.Echec(MessageConflitSuivi);
 
-        AppliquerSuivi(opportunite, action, saisie.Date);
+        AppliquerSuivi(opportunite, action, saisie.Date, utilisateurId);
         try
         {
             await _db.SaveChangesAsync();
@@ -704,11 +731,107 @@ public class ServiceProspects : IServiceProspects
         jour is null ? null : jour.Value.Date.AddHours(HeureDuSuivi);
 
     // Remplace la prochaine action courante de l'opportunité (une seule action courante par opportunité).
-    private static void AppliquerSuivi(OpportuniteVente opportunite, string action, DateTime? jour)
+    // L'action remplacée, si elle existe et diffère, est archivée « Remplacé » dans le même SaveChanges :
+    // elle n'est jamais comptée comme réalisée.
+    private static void AppliquerSuivi(OpportuniteVente opportunite, string action, DateTime? jour, string utilisateurId)
     {
+        var maintenant = DateTime.UtcNow;
+        DateTime? nouvelleDate = DateDuSuivi(jour);
+        bool remplaceUneAutreAction = opportunite.ProchaineAction is not null
+            && (opportunite.ProchaineAction != action || opportunite.DateProchaineAction != nouvelleDate);
+        if (remplaceUneAutreAction)
+            opportunite.HistoriqueSuivis.Add(Archive(opportunite, ClotureSuivi.Remplace, utilisateurId, maintenant));
+
         opportunite.ProchaineAction = action;
-        opportunite.DateProchaineAction = DateDuSuivi(jour);
-        opportunite.DerniereActivite = DateTime.UtcNow;
+        opportunite.DateProchaineAction = nouvelleDate;
+        opportunite.DerniereActivite = maintenant;
+    }
+
+    // Copie de l'action courante de l'opportunité, avec sa clôture, pour l'historique des suivis.
+    private static HistoriqueSuiviOpportunite Archive(OpportuniteVente opportunite, ClotureSuivi cloture, string utilisateurId, DateTime maintenant) =>
+        new()
+        {
+            OpportuniteId = opportunite.Id,
+            Action = opportunite.ProchaineAction!,
+            DatePrevue = opportunite.DateProchaineAction,
+            Cloture = cloture,
+            DateCloture = maintenant,
+            AuteurId = utilisateurId,
+        };
+
+    // ---------- Réalisation d'un suivi ----------
+
+    private const string MessageSuiviChange =
+        "Ce suivi a changé entre-temps (réalisé, remplacé ou modifié) : rien n'a été enregistré. Actualisez la page pour voir le suivi actuel.";
+
+    public async Task<ResultatService<bool>> RealiserSuiviAsync(string utilisateurId, string? opportuniteId, string? versionSuivi)
+    {
+        int? id = LireId(opportuniteId, PrefixeOpportunite);
+        if (id is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<bool>.Echec(MessageCompteInutilisable);
+
+        // Même transaction et même verrou (ligne du prospect parent) que les autres écritures du dossier.
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        int? prospectId = await _db.OpportunitesVente.Where(o => o.Id == id.Value).Select(o => (int?)o.ProspectId).FirstOrDefaultAsync();
+        if (prospectId is null)
+            return ResultatService<bool>.NonTrouve();
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, prospectId.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == id.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<bool>.NonTrouve();
+
+        // L'action affichée doit être l'action courante. Sinon : soit elle vient d'être réalisée par ce même envoi
+        // (double clic), soit elle a été réalisée, remplacée ou modifiée ailleurs, et rien n'est fait.
+        string? versionActuelle = EmpreinteSuivi(opportunite.ProchaineAction, opportunite.DateProchaineAction);
+        if (versionActuelle is null || versionSuivi != versionActuelle)
+        {
+            var derniere = await _db.HistoriquesSuiviOpportunite.AsNoTracking()
+                .Where(h => h.OpportuniteId == opportunite.Id)
+                .OrderByDescending(h => h.Id)
+                .FirstOrDefaultAsync();
+            bool dejaRealisee = derniere is not null
+                && derniere.Cloture == ClotureSuivi.Realise
+                && EmpreinteSuivi(derniere.Action, derniere.DatePrevue) == versionSuivi;
+            if (dejaRealisee)
+                return ResultatService<bool>.Ok(false);
+            if (versionActuelle is null && string.IsNullOrEmpty(versionSuivi))
+                return ResultatService<bool>.Echec("Cette opportunité n'a aucun suivi actif à marquer comme réalisé.");
+            return ResultatService<bool>.Echec(MessageSuiviChange);
+        }
+
+        // Archivage « Réalisé » et retrait de l'action courante, dans le même SaveChanges (tout ou rien).
+        // Un suivi en retard peut être réalisé : sa date prévue est seulement conservée dans l'historique.
+        var maintenant = DateTime.UtcNow;
+        opportunite.HistoriqueSuivis.Add(Archive(opportunite, ClotureSuivi.Realise, utilisateurId, maintenant));
+        opportunite.ProchaineAction = null;
+        opportunite.DateProchaineAction = null;
+        opportunite.DerniereActivite = maintenant;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<bool>.Echec("L'enregistrement a échoué : le suivi n'a pas été marqué comme réalisé. Réessayez dans un instant.");
+        }
+        return ResultatService<bool>.Ok(true);
+    }
+
+    // Empreinte courte d'une prochaine action (texte et date prévue) ; null s'il n'y a aucune action.
+    public static string? EmpreinteSuivi(string? action, DateTime? datePrevue)
+    {
+        if (action is null)
+            return null;
+        string texte = action + "|" + datePrevue?.ToString("O", CultureInfo.InvariantCulture);
+        byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte));
+        return Convert.ToHexString(hachage, 0, 8);
     }
 
     // Même règle que prospects-store.js (estActive) : une opportunité gagnée ou perdue est clôturée.

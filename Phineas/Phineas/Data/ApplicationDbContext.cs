@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<OpportuniteVente> OpportunitesVente => Set<OpportuniteVente>();
     public DbSet<HistoriqueEtapeOpportunite> HistoriquesEtapeOpportunite => Set<HistoriqueEtapeOpportunite>();
     public DbSet<NoteProspect> NotesProspect => Set<NoteProspect>();
+    public DbSet<HistoriqueSuiviOpportunite> HistoriquesSuiviOpportunite => Set<HistoriqueSuiviOpportunite>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -116,6 +117,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne(h => h.Utilisateur)
                 .WithMany()
                 .HasForeignKey(h => h.UtilisateurId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<HistoriqueSuiviOpportunite>(e =>
+        {
+            e.Property(h => h.Cloture).HasConversion<string>().HasMaxLength(20);
+
+            // L'historique d'un suivi disparaît avec son opportunité (comme l'historique des étapes).
+            e.HasOne(h => h.Opportunite)
+                .WithMany(o => o.HistoriqueSuivis)
+                .HasForeignKey(h => h.OpportuniteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(h => h.Auteur)
+                .WithMany()
+                .HasForeignKey(h => h.AuteurId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

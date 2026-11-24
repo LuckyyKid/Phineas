@@ -40,4 +40,7 @@ public class OpportuniteVente
 
     // Changements d'étape effectifs, du plus ancien au plus récent (voir HistoriqueEtapeOpportunite).
     public ICollection<HistoriqueEtapeOpportunite> HistoriqueEtapes { get; set; } = new List<HistoriqueEtapeOpportunite>();
+
+    // Prochaines actions réalisées ou remplacées (voir HistoriqueSuiviOpportunite).
+    public ICollection<HistoriqueSuiviOpportunite> HistoriqueSuivis { get; set; } = new List<HistoriqueSuiviOpportunite>();
 }

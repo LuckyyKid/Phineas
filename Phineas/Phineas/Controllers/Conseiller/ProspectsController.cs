@@ -12,9 +12,9 @@ namespace Phineas.Controllers.Conseiller;
 // Les pages reçoivent les prospects en JSON : données de démonstration + prospects enregistrés du conseiller.
 // La création (POST Creer), la modification d'un prospect enregistré (POST Modifier), le changement d'étape
 // d'une opportunité enregistrée (POST ChangerEtape), l'ajout d'une note (POST AjouterNote) et la planification
-// du prochain suivi (POST PlanifierSuivi, ou avec une note) sont réels, enregistrés en base par IServiceProspects ;
-// les autres actions (qualification complète, clôture comme perdue, actions de « Mes suivis ») et toute
-// modification d'un prospect fictif restent locales au navigateur pour l'instant.
+// du prochain suivi (POST PlanifierSuivi, ou avec une note) et sa réalisation (POST RealiserSuivi) sont réels,
+// enregistrés en base par IServiceProspects ; les autres actions (qualification complète, clôture comme perdue,
+// autres actions de « Mes suivis ») et toute modification d'un prospect fictif restent locales pour l'instant.
 [Authorize(Roles = AppRoles.Conseiller)]
 public class ProspectsController : Controller
 {
@@ -242,6 +242,33 @@ public class ProspectsController : Controller
         return modele is null ? Challenge() : View(nameof(Fiche), modele);
     }
 
+    // « Marquer comme réalisé » d'un suivi enregistré (« Mes suivis », Centre d'actions, fiche) : réalisation réelle et
+    // archivée, puis retour à la page d'origine avec un message de réussite ou de refus.
+    // retour : adresse locale de la page d'origine (jamais une adresse externe) ; sinon « Mes suivis ».
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RealiserSuivi(string? opportuniteId, string? versionSuivi, string? retour)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.RealiserSuiviAsync(me.Id, opportuniteId, versionSuivi);
+        if (resultat.Introuvable)
+            return NotFound();
+
+        if (!resultat.Succes)
+            TempData[CleErreur] = "Suivi non marqué comme réalisé. " + resultat.PremierMessage;
+        else if (resultat.Valeur)
+            TempData[CleConfirmation] = "Suivi marqué comme réalisé et ajouté à l'historique du dossier.";
+        else
+            TempData[CleConfirmation] = "Ce suivi était déjà marqué comme réalisé : rien n'a changé.";
+
+        if (!string.IsNullOrEmpty(retour) && Url.IsLocalUrl(retour))
+            return LocalRedirect(retour);
+        return RedirectToAction("Suivis", "Intelligence");
+    }
+
     private static string LibelleEtape(string? etape) =>
         Enum.TryParse<EtapeVente>(etape, out var valeur) ? FormatVente.Libelle(valeur) : etape ?? "";
 
@@ -276,8 +303,9 @@ public class ProspectsController : Controller
         return erreurs;
     }
 
-    private const string CleConfirmation = "ConfirmationProspect";
-    private const string CleErreur = "ErreurProspect";
+    // Clés TempData des messages affichés après un Post/Redirect/Get (lues aussi par les pages Intelligence).
+    public const string CleConfirmation = "ConfirmationProspect";
+    public const string CleErreur = "ErreurProspect";
 
     private async Task<ProspectsPageViewModel?> ConstruireAsync(
         string? prospectId,

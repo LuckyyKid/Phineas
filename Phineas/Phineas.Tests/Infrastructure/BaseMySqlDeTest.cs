@@ -11,6 +11,10 @@ namespace Phineas.Tests.Infrastructure;
 public sealed class BaseMySqlDeTest : IAsyncLifetime
 {
     private const string ServeurParDefaut = "Server=localhost;Port=3307;User=phineas;Password=phineas_dev_password;";
+
+    // Plusieurs classes de tests (et leurs bases) tournent en parallèle sur le même serveur MySQL :
+    // délai de connexion plus long et pool limité pour ne pas le saturer.
+    private const string ReglagesConnexion = "Connection Timeout=60;Maximum Pool Size=20;";
     public static readonly MySqlServerVersion VersionMySql = new(new Version(8, 4, 0));
 
     public string NomBase { get; } = "phineas_test_" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -20,7 +24,7 @@ public sealed class BaseMySqlDeTest : IAsyncLifetime
         get
         {
             string serveur = Environment.GetEnvironmentVariable("PHINEAS_TEST_MYSQL") ?? ServeurParDefaut;
-            return serveur + "Database=" + NomBase + ";";
+            return serveur + ReglagesConnexion + "Database=" + NomBase + ";";
         }
     }
 

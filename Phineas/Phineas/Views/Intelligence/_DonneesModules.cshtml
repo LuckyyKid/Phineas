@@ -1,7 +1,8 @@
 @using Phineas.Models.ViewModels.Conseiller
 @model IntelligencePageViewModel
 @* Données de tous les modules locaux : le moteur les lit pour produire ses recommandations. *@
-<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true }" />
+@* Confirmation ou refus d'une écriture serveur (ex. « Marquer comme réalisé »), affiché par prospects-store.js. *@
+<partial name="~/Views/Prospects/_DonneesProspects.cshtml" model="new ProspectsPageViewModel { Donnees = Model.Prospects, DonneesFictives = true, Confirmation = TempData[Phineas.Controllers.Conseiller.ProspectsController.CleConfirmation] as string, Erreur = TempData[Phineas.Controllers.Conseiller.ProspectsController.CleErreur] as string }" />
 <partial name="~/Views/Soumissions/_DonneesSoumissions.cshtml" model="new ChargeSoumissions(Model.Soumissions, Model.ConseillerNom, Model.ConseillerCourriel, Model.Concession)" />
 <partial name="~/Views/RendezVous/_DonneesRendezVous.cshtml" model="new RendezVousPageViewModel { Prospects = Model.Prospects, Soumissions = Model.Soumissions, RendezVous = Model.RendezVous, ConseillerNom = Model.ConseillerNom, Concession = Model.Concession }" />
 <partial name="~/Views/Transactions/_DonneesTransactions.cshtml" model="new ChargeTransactions(Model.Transactions, Model.ConseillerNom)" />

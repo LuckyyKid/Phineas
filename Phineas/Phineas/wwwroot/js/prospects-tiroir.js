@@ -235,9 +235,8 @@
   if (retour.saisie && retour.erreurs && retour.erreurs.length) {
     afficherRefusServeur(retour.saisie, retour.erreurs, retour.prospectId, retour.opportuniteId, retour.version);
   }
-  if (retour.confirmation) P.notifier(retour.confirmation);
-  // Refus sans formulaire à rouvrir (ex. changement d'étape) : le message dit ce qui n'a pas été enregistré.
-  if (retour.erreur) P.notifier(retour.erreur);
+  // Confirmation ou refus sans formulaire à rouvrir (ex. changement d'étape) : affiché une seule fois par page.
+  P.afficherMessageServeur();
 
   // Correction en direct : le message disparaît dès que le champ est modifié.
   form.addEventListener("input", function (e) {

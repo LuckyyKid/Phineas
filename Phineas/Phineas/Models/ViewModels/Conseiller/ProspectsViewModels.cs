@@ -54,7 +54,10 @@ public record Opportunite(
     string? ProchaineAction,
     DateTime? DateProchaineAction,
     IReadOnlyList<string> VehiculesEnvisages,
-    QualificationOpportunite Qualification
+    QualificationOpportunite Qualification,
+    // Opportunité enregistrée : empreinte de la prochaine action affichée (voir ServiceProspects.EmpreinteSuivi),
+    // renvoyée par « Marquer comme réalisé » pour ne jamais réaliser une action qui a changé entre-temps.
+    string? VersionSuivi = null
 );
 
 public record InteractionProspect(

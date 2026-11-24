@@ -377,7 +377,7 @@
     else if (quoi === "transferer") ouvrirTransfert(id);
     else if (quoi === "historique") ouvrirHistorique(id);
     else if (quoi === "commencer") notifier(I.commencer(id), "Traitement commencé.");
-    else if (quoi === "terminer") notifier(I.terminer(id), "Action marquée comme réalisée.");
+    else if (quoi === "terminer") terminerAction(id, b);
     else if (quoi === "reactiver") notifier(I.reactiver(id), "Action remise dans la file.");
     else if (quoi === "reprendre-charge") notifier(I.reprendreEnCharge(id), "Vous reprenez l'action en charge.");
   });
@@ -449,6 +449,21 @@
       "</div></nav>";
     return html;
   }
+
+  // Suivi planifié et enregistré en base (règle « suivi-echeance », opportunité « oe-… ») : réalisation réelle
+  // côté serveur, puis retour à cette page. Toute autre action reste une réalisation locale de démonstration.
+  function terminerAction(id, bouton) {
+    var x = I.action(id);
+    if (x && x.regle === "suivi-echeance" && P.estEnregistree(x.opportuniteId)) {
+      bouton.disabled = true; // contre le double clic
+      P.envoyerRealisation(x.opportuniteId, window.location.pathname + window.location.search);
+      return;
+    }
+    notifier(I.terminer(id), "Action marquée comme réalisée.");
+  }
+
+  // Message du serveur après une réalisation (ou toute autre écriture) : affiché une seule fois par page.
+  P.afficherMessageServeur();
 
   window.IntelligenceUI = {
     pageValide: pageValide,

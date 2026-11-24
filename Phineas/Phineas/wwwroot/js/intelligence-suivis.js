@@ -48,7 +48,12 @@
 
     var prevu = a.actionProposee + " · " + UI.echeanceTexte(a.echeance);
     if (o && o.prochaineAction) prevu += " · prévu : " + o.prochaineAction;
-    var prochaine = '<span class="iv-cellule-boutons">' +
+    // Suivi planifié et enregistré en base : il peut être marqué comme réalisé (écriture serveur réelle).
+    var suiviEnregistre = a.regle === "suivi-echeance" && P.estEnregistree(a.opportuniteId);
+    var realiser = suiviEnregistre
+      ? '<button type="button" class="iv-btn iv-btn-discret" data-realiser-suivi="' + esc(a.opportuniteId) + '"><i class="bi bi-check2" aria-hidden="true"></i>Marquer comme réalisé</button>'
+      : "";
+    var prochaine = '<span class="iv-cellule-boutons">' + realiser +
       '<button type="button" class="iv-btn iv-btn-discret" data-preferences="' + esc(a.prospectId) + '" data-opp="' + esc(a.opportuniteId) + '">Préférences</button>' +
       '<button type="button" class="iv-btn iv-btn-sapin iv-btn-petit" data-ia="relance" data-id="' + esc(a.id) + '">Préparer le message</button></span>' +
       '<span class="iv-sous">' + esc(prevu) + "</span>";
@@ -114,6 +119,14 @@
       '<p class="pr-note mt-3 mb-0">Ces préférences sont locales à la démonstration et devront être validées juridiquement avant tout usage réel.</p>',
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button><button type="button" class="btn btn-primary" data-pref="enregistrer">Enregistrer</button>');
   }
+  // « Marquer comme réalisé » : le serveur archive le suivi, puis cette page se recharge avec un message.
+  racine.addEventListener("click", function (e) {
+    var bouton = e.target.closest("[data-realiser-suivi]");
+    if (!bouton || bouton.disabled) return;
+    bouton.disabled = true; // contre le double clic
+    P.envoyerRealisation(bouton.dataset.realiserSuivi, window.location.pathname);
+  });
+
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-preferences]");
     if (b) { ouvrirPreferences(b.dataset.preferences, b.dataset.opp || null); return; }
@@ -149,4 +162,5 @@
 
   I.abonner(rendre);
   rendre();
+  P.afficherMessageServeur();
 })();

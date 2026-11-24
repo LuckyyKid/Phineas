@@ -378,6 +378,47 @@ namespace Phineas.Data.Migrations
                     b.ToTable("HistoriquesStatut");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.HistoriqueSuiviOpportunite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("AuteurId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<string>("Cloture")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("DateCloture")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DatePrevue")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("OpportuniteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuteurId");
+
+                    b.HasIndex("OpportuniteId");
+
+                    b.ToTable("HistoriquesSuiviOpportunite");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.NoteProspect", b =>
                 {
                     b.Property<int>("Id")
@@ -745,6 +786,25 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Vehicule");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.HistoriqueSuiviOpportunite", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.ApplicationUser", "Auteur")
+                        .WithMany()
+                        .HasForeignKey("AuteurId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
+                        .WithMany("HistoriqueSuivis")
+                        .HasForeignKey("OpportuniteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Auteur");
+
+                    b.Navigation("Opportunite");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.NoteProspect", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.ApplicationUser", "Auteur")
@@ -820,6 +880,8 @@ namespace Phineas.Data.Migrations
             modelBuilder.Entity("Phineas.Models.Entities.OpportuniteVente", b =>
                 {
                     b.Navigation("HistoriqueEtapes");
+
+                    b.Navigation("HistoriqueSuivis");
                 });
 
             modelBuilder.Entity("Phineas.Models.Entities.Prospect", b =>
