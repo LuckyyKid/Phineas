@@ -20,6 +20,9 @@ for (const m of source.matchAll(/\("([a-z-]+)", "([^"]+)", "([a-z]+)", "(Faible|
 const config = {};
 for (const m of source.matchAll(/public const int (\w+) = (\d+);/g)) config[m[1].charAt(0).toLowerCase() + m[1].slice(1)] = Number(m[2]);
 const libellesPriorite = { Faible: "Faible", Normal: "Normal", Eleve: "Élevé", Urgent: "Urgent" };
+// Types de contact déclaré (ReferentielsVente.TypesContactDeclare, ProspectsViewModels.cs).
+const sourceVente = fs.readFileSync(path.join(racine, "Models", "ViewModels", "Conseiller", "ProspectsViewModels.cs"), "utf8");
+const typesContact = JSON.parse(sourceVente.match(/TypesContactDeclare = (\[[^\]]*\]);/)[1]);
 
 const HEURE = 3600000, JOUR = 86400000;
 const MAINTENANT = new Date(2026, 10, 24, 14, 0, 0); // mardi 24 novembre 2026, 14 h (heure locale)
@@ -41,7 +44,7 @@ function contexte(opportunites, interactions, extra) {
   const pids = [...new Set(opportunites.map((o) => o.prospectId))];
   return Object.assign({
     maintenant: MAINTENANT, ref: { config: config, regles: regles, libellesPriorite: libellesPriorite },
-    contacts: pids.map(contact), opportunites: opportunites, interactions: interactions || [],
+    contacts: pids.map(contact), opportunites: opportunites, interactions: interactions || [], typesContact: typesContact,
     soumissions: [], rendezVous: [], transactions: [], relations: null, preferences: {}, pauses: {}, correspondances: [],
   }, extra || {});
 }
@@ -50,8 +53,12 @@ function obligations(ctx) {
   const actions = Regles.analyser(ctx).actions.filter((a) => a.relance);
   return { actions: actions, obligations: Regles.regrouperObligations(actions) };
 }
+// Interaction enregistrée en base (identifiant serveur « ie-n… » d'une note, « ie-s… » d'un événement de suivi).
+let numero = 0;
 function interaction(type, prospectId, oppId, date) {
-  return { id: "i-" + type + "-" + oppId, prospectId: prospectId, opportuniteId: oppId, date: date, type: type, auteur: "Moi", resume: type };
+  numero += 1;
+  const prefixe = type.indexOf("suivi-") === 0 ? "ie-s" : "ie-n";
+  return { id: prefixe + numero, prospectId: prospectId, opportuniteId: oppId, date: date, type: type, auteur: "Moi", resume: type };
 }
 
 // Action synthétique déjà priorisée (pour les cas que le moteur ne produit pas avec des données minimales).

@@ -332,6 +332,8 @@
                                 <div class="col-sm-6 col-lg-12 col-xl-6">
                                     <label class="form-label" for="n-opp">Concerne</label>
                                     <select class="form-select" id="n-opp" name="opportuniteId"></select>
+                                    @* Affiché par prospects-fiche.js pour un type de contact sans opportunité choisie. *@
+                                    <div class="form-text" id="n-aide-contact" hidden>Pour compter comme première réponse, un contact doit concerner une opportunité : choisissez-la. Une note générale reste dans l'historique.</div>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label" for="n-resume">Résumé <span class="pr-requis">*</span></label>

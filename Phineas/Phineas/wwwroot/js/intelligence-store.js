@@ -170,7 +170,7 @@
       };
     }) : [];
     return {
-      maintenant: m, ref: ref, moiId: P.moiId, contacts: P.contacts(), opportunites: opps, interactions: toutesInteractions(),
+      maintenant: m, ref: ref, moiId: P.moiId, contacts: P.contacts(), opportunites: opps, interactions: toutesInteractions(), typesContact: P.typesContact(),
       soumissions: soumissions, rendezVous: rendezVous, transactions: transactions,
       preferences: etat.preferences, pauses: etat.pauses, correspondances: correspondances(), relations: rel,
     };
@@ -554,8 +554,10 @@
     return function () { while (P.interactionsDe(x.prospectId).length > nb) P.retirerDerniereInteraction(x.prospectId); };
   }
   // Contact déclaré explicitement par le conseiller (fait hors Phineas) : compte comme un échange et termine l'action.
+  // Dossier enregistré : refusé, le contact se déclare par une note de la fiche (enregistrée en base), jamais ici en local.
   function declarerContact(id, canal, resume) {
     var x = action(id);
+    if (x && P.estEnregistree(x.opportuniteId || "")) return null;
     var raison = x && suspensionContact(x.prospectId, x.opportuniteId, x.nature, x.categorie === "relations");
     if (!x || raison) return null;
     var nb = P.interactionsDe(x.prospectId).length;

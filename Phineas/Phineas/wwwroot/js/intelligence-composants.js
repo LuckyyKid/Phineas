@@ -329,7 +329,10 @@
       '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>' +
       '<button type="button" class="btn btn-outline-primary" data-ia-relance="copier"><i class="bi bi-clipboard me-1"></i>Copier le message</button>' +
       '<button type="button" class="btn btn-outline-primary" data-ia-relance="brouillon"><i class="bi bi-journal-text me-1"></i>Enregistrer dans l\'historique</button>' +
-      '<button type="button" class="btn btn-primary" data-ia-relance="contact"' + (suspension ? " disabled" : "") + '><i class="bi bi-check2 me-1"></i>J\'ai contacté le client</button>');
+      (P.estEnregistree(a.opportuniteId || "")
+        // Dossier enregistré : le contact se déclare par une note de la fiche, enregistrée en base (jamais en local ici).
+        ? '<a class="btn btn-primary" href="' + esc(P.urlFiche(a.prospectId)) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique."><i class="bi bi-journal-plus me-1"></i>Déclarer le contact dans la fiche</a>'
+        : '<button type="button" class="btn btn-primary" data-ia-relance="contact"' + (suspension ? " disabled" : "") + '><i class="bi bi-check2 me-1"></i>J\'ai contacté le client</button>'));
   }
 
   function surChangeModale(e) {

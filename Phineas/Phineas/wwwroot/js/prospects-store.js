@@ -604,6 +604,8 @@
     ecartJours: ecartJours,
     dateCourte: dateCourte,
     terminerPhrase: terminerPhrase,
+    // Types de note qui déclarent un contact (ReferentielsVente.TypesContactDeclare).
+    typesContact: function () { return (ref.typesContact || []).slice(); },
     dateComplete: dateComplete,
     initiales: initiales,
     libelle: libelle,

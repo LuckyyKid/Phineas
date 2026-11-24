@@ -345,6 +345,15 @@
   });
 
   var formNote = document.getElementById("form-note");
+  // Aide sous « Concerne » : un contact déclaré (appel, courriel, visite) sans opportunité ne satisfait aucune première
+  // réponse (règle estPremiereReponse de intelligence-regles.js). La note générale reste permise.
+  var aideContact = document.getElementById("n-aide-contact");
+  function afficherAideContact() {
+    var contact = P.typesContact().indexOf(formNote.elements.type.value) >= 0;
+    aideContact.hidden = !(contact && !formNote.elements.opportuniteId.value);
+  }
+  formNote.elements.type.addEventListener("change", afficherAideContact);
+  formNote.elements.opportuniteId.addEventListener("change", afficherAideContact);
   function rendreFormNote(opps) {
     var sel = formNote.elements.opportuniteId;
     var actuel = sel.value;
@@ -357,6 +366,7 @@
     // Prospect enregistré : empreinte lue par la page, vérifiée par le serveur si un suivi est planifié avec la note.
     var c = P.contact(contactId);
     formNote.elements.version.value = c && c.enregistre ? c.version || "" : "";
+    afficherAideContact();
   }
   formNote.addEventListener("submit", function (e) {
     e.preventDefault();

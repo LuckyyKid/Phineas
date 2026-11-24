@@ -59,6 +59,28 @@
     l.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
     return l[0] || null;
   };
+  // ---------- Premier contact déclaré ----------
+  // Seule règle qui décide si une interaction satisfait la « première réponse » d'une opportunité. Toutes requises :
+  // - un type de contact déclaré (typesContact = ReferentielsVente.TypesContactDeclare : appel, courriel, visite) ;
+  //   une « Note » simple, un suivi réalisé, reporté ou remplacé, un changement d'étape ne le sont pas, et le texte
+  //   libre n'est jamais interprété ;
+  // - rattachée à CETTE opportunité : une note générale ou d'une autre opportunité ne compte pas ;
+  // - datée du moment de la demande ou après (création de l'opportunité, horodatage du serveur) ;
+  // - opportunité enregistrée (« oe-… ») : note enregistrée en base (« ie-n… »), jamais une saisie locale du navigateur.
+  function estPremiereReponse(i, o, typesContact) {
+    if (typesContact.indexOf(i.type) < 0) return false;
+    if (i.opportuniteId !== o.id) return false;
+    if (new Date(i.date) < new Date(o.dateCreation)) return false;
+    if (estEnregistree(o.id) && String(i.id).indexOf("ie-n") !== 0) return false;
+    return true;
+  }
+  function estEnregistree(id) {
+    return String(id).indexOf("oe-") === 0;
+  }
+  Moteur.prototype.premiereReponse = function (o) {
+    var types = this.ctx.typesContact || [];
+    return this.interactions(o.prospectId, o.id).filter(function (i) { return estPremiereReponse(i, o, types); })[0] || null;
+  };
   Moteur.prototype.nomClient = function (pid) {
     var c = this.contacts[pid];
     return c ? c.prenom + " " + c.nom : "Prospect inconnu";
@@ -131,11 +153,12 @@
     var c = mo.ctx, cfg = mo.cfg;
     c.opportunites.forEach(function (o) {
       if (!mo.oppActive(o.id)) return;
-      // Seul un échange déclaré (ECHANGES, ex. note « Appel effectué ») satisfait la première réponse. Un suivi réalisé,
-      // remplacé ou reporté n'est pas une prise de contact : une tâche accomplie n'est pas forcément un contact client.
-      var echange = mo.dernierEchange(o.prospectId, null, o.dateCreation);
-      // Un rendez-vous déjà confirmé, tenu ou annulé par le client prouve un premier contact.
-      if (o.etape === "Nouveau" && !echange && !o.rdvContact) {
+      // Première réponse : seulement un contact déclaré pour cette opportunité (estPremiereReponse).
+      var contact = mo.premiereReponse(o);
+      // Un rendez-vous déjà confirmé, tenu ou annulé par le client prouve un premier contact. Les rendez-vous ne sont
+      // pas encore enregistrés en base (module local) : ce signal ne vaut que pour les dossiers de démonstration.
+      var rdvPreuve = o.rdvContact && !estEnregistree(o.id);
+      if (o.etape === "Nouveau" && !contact && !rdvPreuve) {
         // Prospect recommandé : même délai de première réponse, avec l'attribution de la recommandation (une seule action).
         if (o.recommandation) {
           mo.ajouter({
@@ -576,7 +599,7 @@
     return { actions: mo.actions, suspendues: mo.suspendues };
   }
 
-  var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, echanges: ECHANGES, relatif: relatif, regrouperObligations: regrouperObligations };
+  var api = { analyser: analyser, niveaux: NIVEAUX, cleJour: cleJour, echanges: ECHANGES, relatif: relatif, regrouperObligations: regrouperObligations, estPremiereReponse: estPremiereReponse };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.IntelligenceRegles = api;
 })(this);

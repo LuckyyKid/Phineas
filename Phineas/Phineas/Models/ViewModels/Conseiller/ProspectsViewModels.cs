@@ -320,6 +320,11 @@ public static class ReferentielsVente
         ("visite", "Visite en concession"),
     ];
 
+    // Types de note qui déclarent une prise de contact avec le client (sous-ensemble de TypesNote). Une « Note » simple
+    // n'en est pas une. Seule source de cette liste : envoyée au navigateur (typesContact), où intelligence-regles.js
+    // (estPremiereReponse) décide si une note satisfait la première réponse d'une opportunité.
+    public static readonly IReadOnlyList<string> TypesContactDeclare = ["appel", "courriel", "visite"];
+
     public static readonly IReadOnlyList<EtapeVente> Etapes = Enum.GetValues<EtapeVente>();
 
     public static object PourClient() =>
@@ -337,6 +342,7 @@ public static class ReferentielsVente
             horizons = EnDictionnaire(Horizons),
             elementsDecision = EnDictionnaire(ElementsDecision),
             typesNote = EnDictionnaire(TypesNote),
+            typesContact = TypesContactDeclare,
             etapes = Etapes.Select(e => new { cle = e.ToString(), libelle = FormatVente.Libelle(e) }),
         };
 
