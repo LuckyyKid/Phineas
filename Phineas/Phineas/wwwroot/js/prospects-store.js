@@ -328,7 +328,41 @@
     changer();
   }
 
-  // Retourne une fonction d'annulation.
+  // Opportunité enregistrée en base (id « oe-… ») : son étape se change sur le serveur, pas dans cet onglet.
+  function estEnregistree(oppId) {
+    return String(oppId).indexOf("oe-") === 0;
+  }
+
+  // Envoie le changement d'étape d'une opportunité enregistrée à ProspectsController.ChangerEtape, qui l'enregistre
+  // avec son historique puis recharge la page d'origine (retour : "fiche" ou "liste") avec un message.
+  // La version (empreinte du prospect) fait refuser le changement si le dossier a été modifié entre-temps.
+  function envoyerEtape(oppId, etape, retour) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !charge.urlChangerEtape) return;
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = charge.urlChangerEtape;
+    var champs = {
+      opportuniteId: o.id,
+      prospectId: c.id,
+      etape: etape,
+      version: c.version || "",
+      retour: retour,
+      __RequestVerificationToken: charge.jeton,
+    };
+    Object.keys(champs).forEach(function (nom) {
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = nom;
+      input.value = champs[nom];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  // Opportunité fictive : changement local à l'onglet. Retourne une fonction d'annulation.
   function changerEtape(oppId, etape) {
     var o = opportunite(oppId);
     if (!o || o.etape === etape) return null;
@@ -493,6 +527,8 @@
     ajouterProspect: ajouterProspect,
     modifierContact: modifierContact,
     changerEtape: changerEtape,
+    estEnregistree: estEnregistree,
+    envoyerEtape: envoyerEtape,
     ajouterOpportunite: ajouterOpportunite,
     enregistrerQualification: enregistrerQualification,
     planifierSuivi: planifierSuivi,

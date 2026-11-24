@@ -29,6 +29,11 @@ public interface IServiceProspects
 
     // Modifie le contact d'un prospect enregistré et, si OpportuniteId est fourni, le premier intérêt de cette opportunité.
     Task<ResultatService> ModifierAsync(string utilisateurId, ModificationProspectSaisie saisie);
+
+    // Change l'étape d'une opportunité enregistrée (id « oe-34 ») et trace le changement dans l'historique.
+    // version : empreinte du prospect lue par la page (voir Empreinte). Valeur du résultat : true si l'étape a changé,
+    // false si l'opportunité était déjà à cette étape (rien n'est écrit, aucun historique).
+    Task<ResultatService<bool>> ChangerEtapeAsync(string utilisateurId, string? opportuniteId, string? etape, string? version);
 }
 
 // Prospects réels du conseiller (table Prospects et OpportunitesVente), ajoutés aux données fictives.
@@ -83,6 +88,8 @@ public class ServiceProspects : IServiceProspects
         var enregistres = await _db
             .Prospects.AsNoTracking()
             .Include(p => p.Opportunites)
+            .ThenInclude(o => o.HistoriqueEtapes)
+            .ThenInclude(h => h.Utilisateur)
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
             .ToListAsync();
@@ -162,6 +169,17 @@ public class ServiceProspects : IServiceProspects
         };
         if (p.CommentaireInitial is not null)
             liste.Add(new(PrefixeInteraction + p.Id + "-note", contactId, opportuniteId, date, "note", auteur, p.CommentaireInitial));
+
+        // Changements d'étape enregistrés (HistoriqueEtapeOpportunite), même type « etape » que les changements locaux.
+        foreach (var o in p.Opportunites)
+        {
+            foreach (var h in o.HistoriqueEtapes)
+            {
+                string responsable = h.Utilisateur is null ? auteur : h.Utilisateur.FullName;
+                string resume = "Étape : " + FormatVente.Libelle(h.AncienneEtape) + " → " + FormatVente.Libelle(h.NouvelleEtape) + ".";
+                liste.Add(new(PrefixeInteraction + "e" + h.Id, contactId, PrefixeOpportunite + o.Id, HeureLocale(h.DateHeure), "etape", responsable, resume));
+            }
+        }
         return liste;
     }
 
@@ -259,9 +277,7 @@ public class ServiceProspects : IServiceProspects
         // empreinte ne correspond plus : il est refusé. Sans ce verrou, les deux pourraient passer la vérification.
         // Si la méthode se termine sans CommitAsync, la transaction est annulée (rien n'est écrit).
         await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Prospects WHERE Id = {id.Value} FOR UPDATE");
-
-        var prospect = await TrouverDansSonDossierAsync(utilisateurId, id.Value, suivre: true);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, id.Value);
         if (prospect is null)
             return ResultatService.NonTrouve();
 
@@ -339,6 +355,110 @@ public class ServiceProspects : IServiceProspects
     // Même règle que prospects-store.js (ajouterProspect).
     public static string TitreAutomatique(string? modele, string? categorie) =>
         modele ?? Libelle(ReferentielsVente.Categories, categorie) ?? "Premier intérêt";
+
+    // ---------- Changement d'étape ----------
+
+    public async Task<ResultatService<bool>> ChangerEtapeAsync(string utilisateurId, string? opportuniteId, string? etape, string? version)
+    {
+        // 1. L'étape demandée doit être une des étapes du module (EtapeVente).
+        EtapeVente? nouvelleEtape = LireEtapeConnue(etape);
+        if (nouvelleEtape is null)
+            return ResultatService<bool>.Echec("Étape inconnue.", "etape");
+
+        int? id = LireId(opportuniteId, PrefixeOpportunite);
+        if (id is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<bool>.Echec(MessageCompteInutilisable);
+
+        // 2. Même transaction et même verrou que ModifierAsync, sur la ligne du prospect parent : un changement
+        // d'étape et une modification du même dossier passent l'un après l'autre, toujours dans le même ordre.
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        int? prospectId = await _db.OpportunitesVente.Where(o => o.Id == id.Value).Select(o => (int?)o.ProspectId).FirstOrDefaultAsync();
+        if (prospectId is null)
+            return ResultatService<bool>.NonTrouve();
+
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, prospectId.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == id.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<bool>.NonTrouve();
+
+        // 3. La page doit montrer l'état actuel du dossier, sinon le changement est refusé (comme pour ModifierAsync).
+        if (version != Empreinte(prospect))
+            return ResultatService<bool>.Echec(MessageConflitEtape);
+
+        // 4. Déjà à cette étape : rien à écrire, et aucun historique trompeur.
+        if (opportunite.Etape == nouvelleEtape.Value)
+            return ResultatService<bool>.Ok(false);
+
+        // 5. Règle existante : une perte passe par la clôture avec motif (module Relations), qui n'est pas encore en base.
+        if (nouvelleEtape.Value == EtapeVente.Perdu)
+            return ResultatService<bool>.Echec(
+                "La clôture comme perdue demande un motif, qui n'est pas encore enregistré en base : "
+                    + "cette étape n'est pas encore disponible pour un prospect enregistré.",
+                "etape"
+            );
+
+        // Décision de l'architecte fonctionnel : une vente ne compte comme gagnée qu'une fois confirmée par une
+        // transaction. Tant que ce lien n'existe pas, « Gagné » est refusé (« Finalisation » reste disponible).
+        // Quitter « Gagné » reste permis (retour en arrière). À lever quand les transactions seront intégrées.
+        if (nouvelleEtape.Value == EtapeVente.Gagne)
+            return ResultatService<bool>.Echec(
+                "Une vente est comptée comme gagnée seulement après la confirmation de sa transaction, qui n'est pas encore "
+                    + "reliée aux opportunités enregistrées : utilisez « Finalisation » en attendant.",
+                "etape"
+            );
+
+        // 6. Nouvelle étape et historique dans le même SaveChanges, dans la transaction : tout ou rien.
+        // Le titre, le premier intérêt, le suivi et le contact ne changent pas.
+        var maintenant = DateTime.UtcNow;
+        opportunite.HistoriqueEtapes.Add(new HistoriqueEtapeOpportunite
+        {
+            AncienneEtape = opportunite.Etape,
+            NouvelleEtape = nouvelleEtape.Value,
+            DateHeure = maintenant,
+            UtilisateurId = utilisateurId,
+        });
+        opportunite.Etape = nouvelleEtape.Value;
+        opportunite.DerniereActivite = maintenant;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<bool>.Echec("L'enregistrement a échoué : l'étape n'a pas été changée. Réessayez dans un instant.");
+        }
+        return ResultatService<bool>.Ok(true);
+    }
+
+    private const string MessageConflitEtape =
+        "Ce prospect a été modifié entre-temps : l'étape n'a pas été changée. La page affiche maintenant ses valeurs actuelles ; refaites votre choix si besoin.";
+
+    // « Negociation » donne EtapeVente.Negociation ; un nombre ou un texte inconnu donne null.
+    private static EtapeVente? LireEtapeConnue(string? valeur)
+    {
+        foreach (var etape in Enum.GetValues<EtapeVente>())
+        {
+            if (etape.ToString() == valeur)
+                return etape;
+        }
+        return null;
+    }
+
+    // Verrouille la ligne du prospect (SELECT … FOR UPDATE, à appeler dans une transaction) puis le charge
+    // s'il est dans le dossier du conseiller. Toute écriture sur un prospect ou ses opportunités passe par ici :
+    // un seul verrou, toujours le même, donc pas d'interblocage entre les opérations.
+    private async Task<Prospect?> VerrouillerDansSonDossierAsync(string utilisateurId, int prospectId)
+    {
+        await _db.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Prospects WHERE Id = {prospectId} FOR UPDATE");
+        return await TrouverDansSonDossierAsync(utilisateurId, prospectId, suivre: true);
+    }
 
     // Même règle que la liste (ObtenirAsync) : prospect du conseiller, dans sa concession actuelle.
     private async Task<Prospect?> TrouverDansSonDossierAsync(string utilisateurId, int id, bool suivre)

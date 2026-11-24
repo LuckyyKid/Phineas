@@ -10,9 +10,10 @@ using Phineas.Services.Conseiller;
 namespace Phineas.Controllers.Conseiller;
 
 // Les pages reçoivent les prospects en JSON : données de démonstration + prospects enregistrés du conseiller.
-// La création (POST Creer) et la modification d'un prospect enregistré (POST Modifier) sont réelles,
-// enregistrées en base par IServiceProspects ; les autres actions (étape, notes, qualification complète)
-// et toute modification d'un prospect fictif restent locales au navigateur pour l'instant.
+// La création (POST Creer), la modification d'un prospect enregistré (POST Modifier) et le changement d'étape
+// d'une opportunité enregistrée (POST ChangerEtape) sont réels, enregistrés en base par IServiceProspects ;
+// les autres actions (notes, suivis, qualification complète, clôture comme perdue) et toute modification
+// d'un prospect fictif restent locales au navigateur pour l'instant.
 [Authorize(Roles = AppRoles.Conseiller)]
 public class ProspectsController : Controller
 {
@@ -132,6 +133,37 @@ public class ProspectsController : Controller
         return modele is null ? Challenge() : View(nameof(Fiche), modele);
     }
 
+    // Menu « Étape » d'une opportunité enregistrée (fiche ou pipeline de la liste) : changement réel et tracé,
+    // puis Post/Redirect/Get vers la page d'origine avec un message de réussite ou de refus.
+    // prospectId et retour ne servent qu'à revenir à la bonne page : l'accès est vérifié par le service.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangerEtape(string? opportuniteId, string? etape, string? version, string? prospectId, string? retour)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.ChangerEtapeAsync(me.Id, opportuniteId, etape, version);
+        if (resultat.Introuvable)
+            return NotFound();
+
+        if (!resultat.Succes)
+            TempData[CleErreur] = "Étape non modifiée. " + resultat.PremierMessage;
+        else if (resultat.Valeur)
+            TempData[CleConfirmation] = "Étape enregistrée : « " + LibelleEtape(etape) + " ».";
+        else
+            TempData[CleConfirmation] = "L'opportunité est déjà à l'étape « " + LibelleEtape(etape) + " » : rien n'a changé.";
+
+        bool versLaFiche = retour == "fiche" && prospectId is not null && prospectId.StartsWith(ServiceProspects.PrefixeProspect, StringComparison.Ordinal);
+        if (versLaFiche)
+            return RedirectToAction(nameof(Fiche), new { id = prospectId });
+        return RedirectToAction(nameof(Index));
+    }
+
+    private static string LibelleEtape(string? etape) =>
+        Enum.TryParse<EtapeVente>(etape, out var valeur) ? FormatVente.Libelle(valeur) : etape ?? "";
+
     // Même page « Prospect introuvable » qu'un id inconnu, avec le code 404 : rien n'est révélé
     // sur un prospect d'une autre concession ou d'un autre conseiller.
     private async Task<IActionResult> FicheIntrouvableAsync(string id)
@@ -161,6 +193,7 @@ public class ProspectsController : Controller
     }
 
     private const string CleConfirmation = "ConfirmationProspect";
+    private const string CleErreur = "ErreurProspect";
 
     private async Task<ProspectsPageViewModel?> ConstruireAsync(
         string? prospectId,
@@ -186,6 +219,7 @@ public class ProspectsController : Controller
             Transactions = avecModules ? await _transactions.ObtenirAsync(me) : null,
             Intelligence = avecModules ? await _intelligence.ObtenirAsync(me) : null,
             Confirmation = TempData[CleConfirmation] as string,
+            Erreur = TempData[CleErreur] as string,
             SaisieRefusee = saisieRefusee,
             ErreursCreation = erreurs ?? [],
             // Une saisie refusée sur la fiche vient du tiroir en mode « Modifier ».

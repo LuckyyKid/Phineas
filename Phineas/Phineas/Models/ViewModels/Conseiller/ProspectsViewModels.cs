@@ -100,6 +100,9 @@ public class ProspectsPageViewModel
     // Message affiché après une création réussie (Post/Redirect/Get, via TempData).
     public string? Confirmation { get; init; }
 
+    // Message affiché après un refus sans formulaire à rouvrir (ex. changement d'étape refusé), via TempData.
+    public string? Erreur { get; init; }
+
     // Création refusée par le serveur : le tiroir se rouvre avec la saisie et les erreurs.
     public NouveauProspectSaisie? SaisieRefusee { get; init; }
     // Champ = attribut name du champ du formulaire ("" = erreur générale).

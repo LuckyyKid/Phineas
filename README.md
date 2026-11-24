@@ -26,10 +26,14 @@ Trajet d'une création : clic sur « Créer le prospect » → `prospects-tiroir
 
 Trajet d'une modification (prospect enregistré seulement) : bouton « Modifier » de la fiche → `prospects-tiroir.js` (tiroir prérempli, opportunité visée et empreinte dans des champs cachés) → `POST /Prospects/Modifier` (`ProspectsController.Modifier`) → `ServiceProspects.ModifierAsync` → base MySQL → retour à la fiche avec un message. La modification d'un prospect fictif reste locale à l'onglet. La fiche d'un prospect enregistré est vérifiée par `ServiceProspects.ConsulterAsync` (404 s'il n'est pas dans le dossier du conseiller).
 
+Trajet d'un changement d'étape (opportunité enregistrée seulement) : menu « Étape » de l'onglet Opportunités ou menu du pipeline → `prospects-store.js` (`envoyerEtape`) → `POST /Prospects/ChangerEtape` → `ServiceProspects.ChangerEtapeAsync` (verrou du prospect, nouvelle étape et ligne de `HistoriquesEtapeOpportunite` enregistrées ensemble) → retour à la fiche ou à la liste avec un message. `Models/Entities/HistoriqueEtapeOpportunite.cs` : historique des étapes (migration `AjoutHistoriqueEtapes`), affiché dans l'onglet Historique. Pour une opportunité enregistrée, « Perdu » (motif de perte pas encore en base) et « Gagné » (confirmation par une transaction pas encore reliée) sont refusés par le serveur ; les autres étapes, et le retour en arrière, sont permis.
+
+Migrations : `DbSeeder` applique automatiquement les migrations en attente au démarrage de l'application, sur la base de la chaîne de connexion. Démarrer l'application sur une base réelle depuis une branche qui contient une nouvelle migration l'applique donc à cette base.
+
 ## Tests
 
 - `Phineas/Phineas.Tests/` : tests xUnit du service et de la chaîne MVC complète, sur une base MySQL jetable (`phineas_test_xxxxxxxx`, supprimée à la fin). Serveur : variable `PHINEAS_TEST_MYSQL`, sinon le conteneur MySQL local (port 3307).
-- `Phineas/Phineas.Tests/E2E/creation-prospect.e2e.js`, `modification-prospect.e2e.js` et `conflit-prospect.e2e.js` : parcours Playwright dans un vrai navigateur (application lancée sur une base de test, voir l'en-tête de chaque fichier).
+- `Phineas/Phineas.Tests/E2E/creation-prospect.e2e.js`, `modification-prospect.e2e.js`, `conflit-prospect.e2e.js` et `etapes-prospect.e2e.js` : parcours Playwright dans un vrai navigateur (application lancée sur une base de test, voir l'en-tête de chaque fichier).
 - Sur un poste où le Contrôle intelligent des applications de Windows bloque les DLL compilées, lancer les tests dans le conteneur `mcr.microsoft.com/dotnet/sdk:10.0` au lieu de désactiver la protection.
 
 ## Où trouver quoi : coque commune des espaces

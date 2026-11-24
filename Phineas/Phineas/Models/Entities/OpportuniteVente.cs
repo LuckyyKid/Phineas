@@ -37,4 +37,7 @@ public class OpportuniteVente
 
     public DateTime DateCreation { get; set; } = DateTime.UtcNow;
     public DateTime DerniereActivite { get; set; } = DateTime.UtcNow;
+
+    // Changements d'étape effectifs, du plus ancien au plus récent (voir HistoriqueEtapeOpportunite).
+    public ICollection<HistoriqueEtapeOpportunite> HistoriqueEtapes { get; set; } = new List<HistoriqueEtapeOpportunite>();
 }

@@ -15,6 +15,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HistoriqueStatut> HistoriquesStatut => Set<HistoriqueStatut>();
     public DbSet<Prospect> Prospects => Set<Prospect>();
     public DbSet<OpportuniteVente> OpportunitesVente => Set<OpportuniteVente>();
+    public DbSet<HistoriqueEtapeOpportunite> HistoriquesEtapeOpportunite => Set<HistoriqueEtapeOpportunite>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -99,6 +100,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(p => p.Opportunites)
                 .HasForeignKey(o => o.ProspectId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<HistoriqueEtapeOpportunite>(e =>
+        {
+            e.Property(h => h.AncienneEtape).HasConversion<string>().HasMaxLength(30);
+            e.Property(h => h.NouvelleEtape).HasConversion<string>().HasMaxLength(30);
+
+            e.HasOne(h => h.Opportunite)
+                .WithMany(o => o.HistoriqueEtapes)
+                .HasForeignKey(h => h.OpportuniteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(h => h.Utilisateur)
+                .WithMany()
+                .HasForeignKey(h => h.UtilisateurId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

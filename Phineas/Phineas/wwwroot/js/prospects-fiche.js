@@ -595,6 +595,12 @@
   racine.addEventListener("change", function (e) {
     var sel = e.target.closest("[data-etape-opp]");
     if (!sel) return;
+    // Opportunité enregistrée : le serveur valide, enregistre et trace le changement, puis recharge la fiche.
+    if (P.estEnregistree(sel.dataset.etapeOpp)) {
+      sel.disabled = true;
+      P.envoyerEtape(sel.dataset.etapeOpp, sel.value, "fiche");
+      return;
+    }
     // Phase 07 : une opportunité perdue passe par le parcours de clôture (motif et origine du motif).
     if (sel.value === "Perdu" && window.RelationsUI) {
       sel.value = P.opportunite(sel.dataset.etapeOpp).etape;
