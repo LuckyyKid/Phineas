@@ -37,6 +37,12 @@ public interface IServiceProspects
     // Fonctionnalité 20 : qualification commerciale d'une opportunité enregistrée du conseiller (seulement elle).
     Task<ResultatService> QualifierAsync(string utilisateurId, QualificationSaisie saisie);
 
+    // Véhicules envisagés d'une opportunité enregistrée du conseiller (fonctionnalité 21) : ajout (identifiant du
+    // véhicule créé), modification des champs envoyés, retrait. Simple description : ni inventaire, ni réservation.
+    Task<ResultatService<int>> AjouterVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
+    Task<ResultatService> ModifierVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
+    Task<ResultatService> RetirerVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
+
     // Change l'étape d'une opportunité enregistrée (id « oe-34 ») et trace le changement dans l'historique.
     // version : empreinte du prospect lue par la page (voir Empreinte). Valeur du résultat : true si l'étape a changé,
     // false si l'opportunité était déjà à cette étape (rien n'est écrit, aucun historique).
@@ -120,6 +126,8 @@ public class ServiceProspects : IServiceProspects
             .Include(p => p.Opportunites)
             .ThenInclude(o => o.HistoriqueSuivis)
             .ThenInclude(h => h.Auteur)
+            .Include(p => p.Opportunites)
+            .ThenInclude(o => o.VehiculesEnvisages)
             .AsSplitQuery()
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
@@ -211,6 +219,11 @@ public class ServiceProspects : IServiceProspects
             Objections = o.Objections,
         };
 
+        // Véhicules envisagés (fonctionnalité 21), dans l'ordre où ils ont été ajoutés.
+        var vehicules = new List<VehiculeEnvisageVue>();
+        foreach (var v in o.VehiculesEnvisages.OrderBy(v => v.Id))
+            vehicules.Add(new VehiculeEnvisageVue(PrefixeVehicule + v.Id, v.Marque, v.Modele, v.Annee, v.Finition, LibelleVehicule(v)));
+
         return new Opportunite(
             PrefixeOpportunite + o.Id,
             PrefixeProspect + o.ProspectId,
@@ -220,9 +233,10 @@ public class ServiceProspects : IServiceProspects
             HeureLocale(o.DerniereActivite),
             o.ProchaineAction,
             o.DateProchaineAction,
-            [],
+            vehicules.Select(v => v.Libelle).ToList(),
             qualification,
-            VersionSuivi: EmpreinteSuivi(o.ProchaineAction, o.DateProchaineAction)
+            VersionSuivi: EmpreinteSuivi(o.ProchaineAction, o.DateProchaineAction),
+            VehiculesDetail: vehicules
         );
     }
 
@@ -566,6 +580,232 @@ public class ServiceProspects : IServiceProspects
             return ResultatService<int>.Echec("L'enregistrement a échoué : l'opportunité n'a pas été créée. Réessayez dans un instant.");
         }
         return ResultatService<int>.Ok(opportunite.Id);
+    }
+
+    // ---------- Véhicules envisagés d'une opportunité enregistrée (fonctionnalité 21) ----------
+
+    public const string PrefixeVehicule = "ve-";
+    private const int LongueurMarqueVehicule = 40;
+    private const int LongueurModeleVehicule = 60;
+    private const int LongueurFinition = 60;
+    private const int AnneeMinimum = 1980;
+
+    // Noms des champs du formulaire « Véhicule envisagé » (attribut name).
+    private static readonly string[] ChampsVehicule = ["marque", "modele", "annee", "finition"];
+
+    // « 2024 Kia Sportage EX », comme le catalogue (soumissions-store.js, nomVehicule) ; sans année : « Kia Sportage ».
+    public static string LibelleVehicule(VehiculeEnvisage v)
+    {
+        var morceaux = new List<string>();
+        if (v.Annee is not null)
+            morceaux.Add(v.Annee.Value.ToString(CultureInfo.InvariantCulture));
+        morceaux.Add(v.Marque);
+        morceaux.Add(v.Modele);
+        if (v.Finition is not null)
+            morceaux.Add(v.Finition);
+        return string.Join(" ", morceaux);
+    }
+
+    private static string MessageConflitVehicule(string action) =>
+        $"Ce dossier a été modifié entre-temps : le véhicule envisagé n'a pas été {action}. La page affiche maintenant "
+        + "les valeurs actuelles ; refaites votre changement si besoin.";
+
+    // Ajoute un véhicule envisagé à UNE opportunité du conseiller (son prospect, sa concession, l'opportunité de ce
+    // prospect, contrôlés côté serveur). Marque et modèle obligatoires ; année et version facultatives.
+    // Double envoi : comme pour une nouvelle opportunité (F18), la page envoie l'empreinte du prospect qu'elle affiche ;
+    // sous le verrou, un deuxième envoi de la même page trouve une empreinte déjà changée par le premier et il est
+    // refusé. Deux ajouts voulus restent possibles : la page rechargée après le premier porte la nouvelle empreinte.
+    // Ni contact déclaré, ni étape, ni suivi, ni date d'activité, ni qualification.
+    public async Task<ResultatService<int>> AjouterVehiculeAsync(string utilisateurId, VehiculeSaisie saisie)
+    {
+        int? idProspect = LireId(saisie.ProspectId, PrefixeProspect);
+        int? idOpportunite = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        if (idProspect is null || idOpportunite is null)
+            return ResultatService<int>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+
+        var resultat = new ResultatService<int>();
+        var valeurs = LireVehicule(saisie, ChampsVehicule.ToHashSet(), resultat.Erreurs);
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, idProspect.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == idOpportunite.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<int>.NonTrouve();
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService<int>.Echec(MessageConflitVehicule("ajouté"));
+
+        var vehicule = new VehiculeEnvisage
+        {
+            OpportuniteId = opportunite.Id,
+            Marque = valeurs.Marque!,
+            Modele = valeurs.Modele!,
+            Annee = valeurs.Annee,
+            Finition = valeurs.Finition,
+        };
+        _db.VehiculesEnvisages.Add(vehicule);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<int>.Echec("L'enregistrement a échoué : le véhicule envisagé n'a pas été ajouté. Réessayez dans un instant.");
+        }
+        return ResultatService<int>.Ok(vehicule.Id);
+    }
+
+    // Modifie UN véhicule envisagé : il doit appartenir à l'opportunité envoyée, elle-même au prospect du conseiller.
+    // Seuls les champs nommés dans saisie.Champs changent ; année ou version envoyée vide est effacée ; marque et
+    // modèle ne peuvent pas être vidés. Une page périmée (empreinte changée) ne peut rien écraser.
+    public async Task<ResultatService> ModifierVehiculeAsync(string utilisateurId, VehiculeSaisie saisie)
+    {
+        int? idProspect = LireId(saisie.ProspectId, PrefixeProspect);
+        int? idOpportunite = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        int? idVehicule = LireId(saisie.VehiculeId, PrefixeVehicule);
+        if (idProspect is null || idOpportunite is null || idVehicule is null)
+            return ResultatService.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService.Echec(MessageCompteInutilisable);
+
+        var champs = (saisie.Champs ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Where(c => ChampsVehicule.Contains(c)).ToHashSet();
+        var resultat = new ResultatService();
+        var valeurs = LireVehicule(saisie, champs, resultat.Erreurs);
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var trouve = await VehiculeDansSonDossierAsync(utilisateurId, idProspect.Value, idOpportunite.Value, idVehicule.Value);
+        if (trouve.Prospect is null || trouve.Opportunite is null)
+            return ResultatService.NonTrouve();
+        // Page périmée (dossier changé, véhicule peut-être déjà retiré) : refus, rien n'est recréé ni modifié.
+        if (saisie.Version != Empreinte(trouve.Prospect))
+            return ResultatService.Echec(MessageConflitVehicule("modifié"));
+        if (trouve.Vehicule is null)
+            return ResultatService.NonTrouve();
+
+        var vehicule = trouve.Vehicule;
+        if (champs.Contains("marque"))
+            vehicule.Marque = valeurs.Marque!;
+        if (champs.Contains("modele"))
+            vehicule.Modele = valeurs.Modele!;
+        if (champs.Contains("annee"))
+            vehicule.Annee = valeurs.Annee;
+        if (champs.Contains("finition"))
+            vehicule.Finition = valeurs.Finition;
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService.Echec("L'enregistrement a échoué : le véhicule envisagé n'a pas été modifié. Réessayez dans un instant.");
+        }
+        return ResultatService.Ok();
+    }
+
+    // Retire UN véhicule envisagé de son opportunité (suppression de la ligne) : il n'est plus considéré pour ce projet.
+    // Rien d'autre ne change : ni inventaire, ni opportunité, ni qualification, ni suivi. Même contrôle d'appartenance
+    // et d'empreinte que la modification.
+    public async Task<ResultatService> RetirerVehiculeAsync(string utilisateurId, VehiculeSaisie saisie)
+    {
+        int? idProspect = LireId(saisie.ProspectId, PrefixeProspect);
+        int? idOpportunite = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        int? idVehicule = LireId(saisie.VehiculeId, PrefixeVehicule);
+        if (idProspect is null || idOpportunite is null || idVehicule is null)
+            return ResultatService.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService.Echec(MessageCompteInutilisable);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var trouve = await VehiculeDansSonDossierAsync(utilisateurId, idProspect.Value, idOpportunite.Value, idVehicule.Value);
+        if (trouve.Prospect is null || trouve.Opportunite is null)
+            return ResultatService.NonTrouve();
+        if (saisie.Version != Empreinte(trouve.Prospect))
+            return ResultatService.Echec(MessageConflitVehicule("retiré"));
+        if (trouve.Vehicule is null)
+            return ResultatService.NonTrouve();
+
+        _db.VehiculesEnvisages.Remove(trouve.Vehicule);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService.Echec("L'enregistrement a échoué : le véhicule envisagé n'a pas été retiré. Réessayez dans un instant.");
+        }
+        return ResultatService.Ok();
+    }
+
+    // Verrouille le prospect du conseiller, puis cherche l'opportunité DE CE prospect et le véhicule DE CETTE
+    // opportunité. Chaque élément vaut null s'il n'est pas trouvé à sa place (jamais de repli sur un autre élément).
+    private async Task<(Prospect? Prospect, OpportuniteVente? Opportunite, VehiculeEnvisage? Vehicule)> VehiculeDansSonDossierAsync(
+        string utilisateurId, int idProspect, int idOpportunite, int idVehicule)
+    {
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, idProspect);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == idOpportunite);
+        var vehicule = opportunite?.VehiculesEnvisages.FirstOrDefault(v => v.Id == idVehicule);
+        return (prospect, opportunite, vehicule);
+    }
+
+    private sealed record ValeursVehicule(string? Marque, string? Modele, int? Annee, string? Finition);
+
+    // Lit et valide les champs envoyés (seulement ceux de la liste) ; les erreurs sont ajoutées à la liste donnée.
+    private static ValeursVehicule LireVehicule(VehiculeSaisie s, HashSet<string> champs, List<ErreurChamp> erreurs)
+    {
+        string? marque = null;
+        if (champs.Contains("marque"))
+        {
+            marque = Texte(s.Marque);
+            if (marque is null)
+                erreurs.Add(new ErreurChamp("marque", "Indiquez la marque."));
+            else if (marque.Length > LongueurMarqueVehicule)
+                erreurs.Add(new ErreurChamp("marque", $"Marque : {LongueurMarqueVehicule} caractères au plus."));
+        }
+
+        string? modele = null;
+        if (champs.Contains("modele"))
+        {
+            modele = Texte(s.Modele);
+            if (modele is null)
+                erreurs.Add(new ErreurChamp("modele", "Indiquez le modèle."));
+            else if (modele.Length > LongueurModeleVehicule)
+                erreurs.Add(new ErreurChamp("modele", $"Modèle : {LongueurModeleVehicule} caractères au plus."));
+        }
+
+        string? finition = champs.Contains("finition") ? Texte(s.Finition) : null;
+        if (finition is not null && finition.Length > LongueurFinition)
+            erreurs.Add(new ErreurChamp("finition", $"Version : {LongueurFinition} caractères au plus."));
+
+        int? annee = null;
+        string? texteAnnee = champs.Contains("annee") ? Texte(s.Annee) : null;
+        if (texteAnnee is not null)
+        {
+            int anneeMaximum = DateTime.UtcNow.Year + 2;
+            bool lisible = int.TryParse(texteAnnee, NumberStyles.None, CultureInfo.InvariantCulture, out int nombre);
+            if (!lisible || nombre < AnneeMinimum || nombre > anneeMaximum)
+                erreurs.Add(new ErreurChamp("annee", $"Année : entre {AnneeMinimum} et {anneeMaximum}."));
+            else
+                annee = nombre;
+        }
+        return new ValeursVehicule(marque, modele, annee, finition);
     }
 
     // ---------- Qualification d'une opportunité enregistrée (fonctionnalité 20) ----------
@@ -1341,7 +1581,7 @@ public class ServiceProspects : IServiceProspects
     // Même règle que la liste (ObtenirAsync) : prospect du conseiller, dans sa concession actuelle.
     private async Task<Prospect?> TrouverDansSonDossierAsync(string utilisateurId, int id, bool suivre)
     {
-        var requete = _db.Prospects.Include(p => p.Opportunites).Where(p =>
+        var requete = _db.Prospects.Include(p => p.Opportunites).ThenInclude(o => o.VehiculesEnvisages).Where(p =>
             p.Id == id && p.ConseillerId == utilisateurId && p.DealershipId == p.Conseiller!.DealershipId);
         if (!suivre)
             requete = requete.AsNoTracking();
@@ -1375,6 +1615,13 @@ public class ServiceProspects : IServiceProspects
             texte.AppendJoin('|', o.EtatVehicule, o.Marques, o.Places, o.Caracteristiques, o.Utilisation,
                 o.BudgetMensuel?.ToString(CultureInfo.InvariantCulture), o.ModeAchat, o.MiseDeFonds?.ToString(CultureInfo.InvariantCulture),
                 o.Reprise, o.RepriseDetail, o.DateCible?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), o.ElementsDecision, o.Objections);
+            // Véhicules envisagés (fonctionnalité 21). Rien n'est ajouté quand il n'y en a pas : l'empreinte d'un
+            // dossier sans véhicule reste celle d'avant.
+            foreach (var v in o.VehiculesEnvisages.OrderBy(v => v.Id))
+            {
+                texte.Append('~');
+                texte.AppendJoin('|', v.Id, v.Marque, v.Modele, v.Annee, v.Finition);
+            }
         }
         byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte.ToString()));
         return Convert.ToHexString(hachage, 0, 8);

@@ -194,6 +194,60 @@ public class ProspectsController : Controller
         return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "qualification");
     }
 
+    // Véhicules envisagés d'une opportunité enregistrée (fonctionnalité 21) : ajout, modification, retrait, puis
+    // Post/Redirect/Get vers les opportunités de la fiche, cette opportunité sélectionnée. Refus : message, rien d'écrit.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AjouterVehicule(VehiculeSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.AjouterVehiculeAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        return RetourVehicule(saisie, resultat.Succes, "Véhicule envisagé ajouté.", "Véhicule envisagé non ajouté. ", resultat.Erreurs);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ModifierVehicule(VehiculeSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.ModifierVehiculeAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        return RetourVehicule(saisie, resultat.Succes, "Véhicule envisagé modifié.", "Véhicule envisagé non modifié. ", resultat.Erreurs);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RetirerVehicule(VehiculeSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.RetirerVehiculeAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        return RetourVehicule(saisie, resultat.Succes, "Véhicule envisagé retiré.", "Véhicule envisagé non retiré. ", resultat.Erreurs);
+    }
+
+    // Message (confirmation ou refus avec ses motifs), puis retour aux opportunités de la fiche, celle-ci sélectionnée.
+    private RedirectToActionResult RetourVehicule(VehiculeSaisie saisie, bool succes, string confirmation, string refus, List<ErreurChamp> erreurs)
+    {
+        if (succes)
+            TempData[CleConfirmation] = confirmation;
+        else
+            TempData[CleErreur] = refus + string.Join(" ", erreurs.Select(e => e.Message).Distinct());
+        return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "opportunites");
+    }
+
     // Fenêtre « Nouvelle opportunité » de la fiche d'un prospect enregistré (fonctionnalité 18) : enregistrement réel,
     // puis Post/Redirect/Get vers la fiche, la nouvelle opportunité sélectionnée. Refus : message, rien d'écrit.
     [HttpPost]

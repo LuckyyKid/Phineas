@@ -499,6 +499,23 @@
   }
 
   // ---------- Opportunités ----------
+
+  // Véhicules envisagés enregistrés d'une opportunité réelle (fonctionnalité 21) : seulement ceux de CETTE
+  // opportunité, chacun avec « Modifier » et « Retirer » (en rouge, à l'écart), puis « Ajouter un véhicule ».
+  function vehiculesEnregistresHtml(o) {
+    var vehicules = P.vehiculesDe(o.id);
+    var liste = vehicules.length
+      ? '<ul class="pr-vehicules pr-vehicules-reels" data-vehicules="' + esc(o.id) + '">' + vehicules.map(function (v) {
+        return '<li data-vehicule-id="' + esc(v.id) + '"><span class="pr-vehicule-nom">' + esc(v.libelle) + "</span>" +
+          '<span class="pr-vehicule-actions">' +
+          '<button type="button" class="btn btn-sm btn-link p-0" data-vehicule-action="modifier" data-opp="' + esc(o.id) + '" data-vehicule="' + esc(v.id) + '" aria-label="Modifier « ' + esc(v.libelle) + ' »">Modifier</button>' +
+          '<button type="button" class="btn btn-sm btn-link text-danger p-0" data-vehicule-action="retirer" data-opp="' + esc(o.id) + '" data-vehicule="' + esc(v.id) + '" aria-label="Retirer « ' + esc(v.libelle) + ' »">Retirer</button>' +
+          "</span></li>";
+      }).join("") + "</ul>"
+      : '<span class="text-muted" data-vehicules-vide>Aucun véhicule envisagé pour ce projet.</span>';
+    return liste + '<button type="button" class="btn btn-sm btn-outline-primary pr-vehicule-ajouter" data-vehicule-action="ajouter" data-opp="' + esc(o.id) + '"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Ajouter un véhicule</button>';
+  }
+
   function rendreOpportunites(opps) {
     zone("opportunites").innerHTML = opps.length ? opps.map(function (o) {
       var q = o.qualification || {};
@@ -517,9 +534,10 @@
         '<div class="card-header sv-card-header"><span class="pr-opp-titre">' + esc(o.titre) + "</span>" + pastilleEtape(o.etape) + "</div>" +
         '<div class="card-body">' +
         '<dl class="pr-liste-def pr-opp-grille">' +
-        "<div><dt>Véhicules envisagés</dt><dd>" + (o.vehiculesEnvisages && o.vehiculesEnvisages.length
-          ? '<ul class="pr-vehicules">' + o.vehiculesEnvisages.map(function (v) { return "<li>" + esc(v) + "</li>"; }).join("") + "</ul>"
-          : aPreciser()) + "</dd></div>" +
+        "<div><dt>Véhicules envisagés</dt><dd>" + (P.estEnregistree(o.id) ? vehiculesEnregistresHtml(o)
+          : o.vehiculesEnvisages && o.vehiculesEnvisages.length
+            ? '<ul class="pr-vehicules">' + o.vehiculesEnvisages.map(function (v) { return "<li>" + esc(v) + "</li>"; }).join("") + "</ul>"
+            : aPreciser()) + "</dd></div>" +
         "<div><dt>Critères</dt><dd>" + (criteres.length ? esc(criteres.join(" · ")) : aPreciser()) +
         '<span class="pr-sous d-block">Complétude : ' + comp.remplis + " / " + comp.total + "</span></dd></div>" +
         "<div><dt>Prochaine action</dt><dd>" + (P.estActive(o) ? prochaineHtml(o) + badgeSuivi(o) : '<span class="text-muted">Opportunité clôturée</span>') + "</dd></div>" +
@@ -756,7 +774,7 @@
         formOpp.reset();
         formOpp.elements.titre.classList.remove("is-invalid");
         formOpp.querySelector('button[type="submit"]').disabled = false;
-        // Dossier enregistré : opportunité enregistrée en base ; pas de véhicules envisagés (non enregistrés, lot E4).
+        // Dossier enregistré : opportunité enregistrée en base ; les véhicules envisagés s'ajoutent ensuite depuis sa carte (F21).
         var enregistre = !!(P.contact(contactId) && P.contact(contactId).enregistre);
         formOpp.querySelector("[data-vehicules-locaux]").hidden = enregistre;
         formOpp.querySelector("[data-opp-mention]").textContent = enregistre
@@ -802,6 +820,77 @@
   });
   window.addEventListener("beforeunload", function (e) {
     if (qualifModifiee) { e.preventDefault(); e.returnValue = ""; }
+  });
+
+  // ---------- Véhicules envisagés d'une opportunité enregistrée (fonctionnalité 21) ----------
+  // Ajout et modification : fenêtre envoyée au serveur ; retrait : confirmation, puis envoi. Le serveur vérifie tout
+  // (prospect, opportunité, véhicule, empreinte) et la fiche se recharge avec son message : rien n'est annoncé avant.
+  var modalVehicule = bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-vehicule"));
+  var formVehicule = document.getElementById("form-vehicule");
+  var vehiculeOpp = null;
+  var vehiculeId = null;
+
+  function ouvrirVehicule(oppId, idVehicule) {
+    var o = P.opportunite(oppId);
+    if (!o) return;
+    var v = P.vehiculesDe(oppId).filter(function (x) { return x.id === idVehicule; })[0] || null;
+    if (idVehicule && !v) return;
+    vehiculeOpp = oppId;
+    vehiculeId = v ? v.id : null;
+    formVehicule.reset();
+    formVehicule.querySelectorAll(".is-invalid").forEach(function (x) { x.classList.remove("is-invalid"); });
+    var el = formVehicule.elements;
+    el.marque.value = v ? v.marque : "";
+    el.modele.value = v ? v.modele : "";
+    el.annee.value = v && v.annee ? v.annee : "";
+    el.finition.value = v && v.finition ? v.finition : "";
+    document.getElementById("modal-vehicule-titre").textContent = v ? "Modifier le véhicule envisagé" : "Ajouter un véhicule envisagé";
+    formVehicule.querySelector("[data-vehicule-envoyer]").textContent = v ? "Enregistrer les changements" : "Ajouter le véhicule";
+    formVehicule.querySelector("[data-vehicule-mention]").textContent = "Projet « " + o.titre + " ». Un véhicule que le client considère : "
+      + "ce n'est ni une réservation, ni une soumission, et sa disponibilité en inventaire n'est pas vérifiée.";
+    formVehicule.querySelector("[data-vehicule-envoyer]").disabled = false;
+    modalVehicule.show();
+  }
+
+  formVehicule.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var el = formVehicule.elements;
+    var invalides = [];
+    [el.marque, el.modele, el.annee].forEach(function (x) { x.classList.remove("is-invalid"); });
+    if (!el.marque.value.trim()) invalides.push(el.marque);
+    if (!el.modele.value.trim()) invalides.push(el.modele);
+    if (el.annee.value && !el.annee.checkValidity()) invalides.push(el.annee);
+    if (invalides.length) {
+      invalides.forEach(function (x) { x.classList.add("is-invalid"); });
+      invalides[0].focus();
+      return;
+    }
+    if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return;
+    formVehicule.querySelector("[data-vehicule-envoyer]").disabled = true; // contre le double clic
+    definirModifiee(false);
+    if (!P.envoyerVehicule(vehiculeOpp, vehiculeId, formVehicule)) {
+      formVehicule.querySelector("[data-vehicule-envoyer]").disabled = false;
+      P.notifier("Ce véhicule n'est plus dans la fiche : actualisez la page.");
+    }
+  });
+
+  racine.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-vehicule-action]");
+    if (!b) return;
+    var action = b.dataset.vehiculeAction;
+    if (action === "ajouter") return ouvrirVehicule(b.dataset.opp, null);
+    if (action === "modifier") return ouvrirVehicule(b.dataset.opp, b.dataset.vehicule);
+    if (action === "retirer") {
+      var v = P.vehiculesDe(b.dataset.opp).filter(function (x) { return x.id === b.dataset.vehicule; })[0];
+      if (!v) return;
+      var question = "Retirer « " + v.libelle + " » des véhicules envisagés de ce projet ? Il ne sera plus considéré pour ce projet "
+        + "(l'inventaire n'est pas touché).";
+      if (!window.confirm(question)) return;
+      if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return;
+      b.disabled = true; // contre le double clic
+      definirModifiee(false);
+      P.envoyerRetraitVehicule(b.dataset.opp, v.id);
+    }
   });
 
   P.abonner(rendre);

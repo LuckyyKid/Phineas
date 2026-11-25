@@ -57,7 +57,10 @@ public record Opportunite(
     QualificationOpportunite Qualification,
     // Opportunité enregistrée : empreinte de la prochaine action affichée (voir ServiceProspects.EmpreinteSuivi),
     // renvoyée par « Marquer comme réalisé » pour ne jamais réaliser une action qui a changé entre-temps.
-    string? VersionSuivi = null
+    string? VersionSuivi = null,
+    // Opportunité enregistrée : ses véhicules envisagés avec leur identifiant (fonctionnalité 21). VehiculesEnvisages
+    // garde leurs libellés, lus par les autres modules (Centre d'actions, liste, relations).
+    IReadOnlyList<VehiculeEnvisageVue>? VehiculesDetail = null
 );
 
 // Prochaine action enregistrée d'une opportunité active, pour la vue « À venir » de « Mes suivis »
@@ -197,6 +200,25 @@ public class QualificationSaisie
     public string? DateCible { get; set; }
     public List<string> ElementsDecision { get; set; } = [];
     public string? Objections { get; set; }
+}
+
+// Véhicule envisagé d'une opportunité enregistrée, tel que la fiche l'affiche (fonctionnalité 21). Id : « ve-12 ».
+public record VehiculeEnvisageVue(string Id, string Marque, string Modele, int? Annee, string? Finition, string Libelle);
+
+// Champs postés par la fenêtre « Véhicule envisagé » de la fiche (ajout, modification) et par « Retirer »
+// (fonctionnalité 21). Textes bruts : la validation se fait dans ServiceProspects. VehiculeId : vide pour un ajout.
+// Champs (modification seulement) : noms des champs envoyés ; un champ absent de la liste garde sa valeur.
+public class VehiculeSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? VehiculeId { get; set; }
+    public string? Version { get; set; }
+    public string? Champs { get; set; }
+    public string? Marque { get; set; }
+    public string? Modele { get; set; }
+    public string? Annee { get; set; }
+    public string? Finition { get; set; }
 }
 
 // Champs postés par la fenêtre « Nouvelle opportunité » de la fiche d'un prospect enregistré (fonctionnalité 18).

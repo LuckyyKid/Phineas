@@ -701,6 +701,31 @@
   margin: 0;
   padding-left: 1rem;
 }
+/* Véhicules envisagés enregistrés (fonctionnalité 21) : nom, puis « Modifier » et « Retirer » bien séparés ;
+   sur mobile, les actions passent sous le nom. Mise en page seulement : aucune couleur, rien à redéfinir en sombre. */
+.pr-vehicules-reels {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0.5rem;
+}
+.pr-vehicules-reels li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  padding: 0.2rem 0;
+}
+.pr-vehicule-nom {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pr-vehicule-actions {
+  display: inline-flex;
+  gap: 1.25rem;
+}
+.pr-vehicule-ajouter {
+  margin-top: 0.35rem;
+}
 .pr-opp-pied {
   display: flex;
   flex-wrap: wrap;

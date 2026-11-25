@@ -426,6 +426,54 @@
     </div>
 </div>
 
+@* ---------- Véhicule envisagé d'une opportunité enregistrée (fonctionnalité 21) ----------
+   Envoyé tel quel au serveur (AjouterVehicule ou ModifierVehicule) ; prospects-fiche.js choisit l'action et remplit
+   les champs cachés. Simple description : aucun lien avec l'inventaire, aucun prix. *@
+<div class="modal fade" id="modal-vehicule" tabindex="-1" aria-labelledby="modal-vehicule-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-vehicule" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="prospectId" value="@Model.ProspectId" />
+            <input type="hidden" name="opportuniteId" />
+            <input type="hidden" name="vehiculeId" />
+            <input type="hidden" name="version" />
+            <input type="hidden" name="champs" value="marque,modele,annee,finition" />
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-vehicule-titre">Ajouter un véhicule envisagé</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted" data-vehicule-mention></p>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="v-marque">Marque <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="v-marque" name="marque" required maxlength="40" autocomplete="off" />
+                        <div class="invalid-feedback">Indiquez la marque.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="v-modele">Modèle <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="v-modele" name="modele" required maxlength="60" autocomplete="off" />
+                        <div class="invalid-feedback">Indiquez le modèle.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="v-annee">Année <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <input class="form-control" id="v-annee" name="annee" type="number" inputmode="numeric" min="1980" max="@(DateTime.Today.Year + 2)" step="1" />
+                        <div class="invalid-feedback">Une année entre 1980 et @(DateTime.Today.Year + 2).</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="v-finition">Version <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <input class="form-control" id="v-finition" name="finition" maxlength="60" placeholder="Ex. : EX, Sport" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary" data-vehicule-envoyer>Ajouter le véhicule</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @* ---------- Nouvelle opportunité ---------- *@
 <div class="modal fade" id="modal-opportunite" tabindex="-1" aria-labelledby="modal-opp-titre" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -459,7 +507,7 @@
                             <option value="@EtapeVente.AQualifier" selected>@FormatVente.Libelle(EtapeVente.AQualifier)</option>
                         </select>
                     </div>
-                    @* Véhicules envisagés : démonstration seulement (non enregistrés pour un dossier réel, lot E4). *@
+                    @* Véhicules envisagés : démonstration seulement ; pour un dossier réel, ils s'ajoutent depuis la carte de l'opportunité (F21). *@
                     <div class="col-12" data-vehicules-locaux>
                         <label class="form-label" for="o-vehicules">Véhicules envisagés <span class="text-muted fw-normal">(facultatif)</span></label>
                         <input class="form-control" id="o-vehicules" name="vehicules" maxlength="200" placeholder="Séparés par des virgules" />

@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HistoriqueEtapeOpportunite> HistoriquesEtapeOpportunite => Set<HistoriqueEtapeOpportunite>();
     public DbSet<NoteProspect> NotesProspect => Set<NoteProspect>();
     public DbSet<HistoriqueSuiviOpportunite> HistoriquesSuiviOpportunite => Set<HistoriqueSuiviOpportunite>();
+    public DbSet<VehiculeEnvisage> VehiculesEnvisages => Set<VehiculeEnvisage>();
     public DbSet<VeilleRecommandation> VeillesRecommandation => Set<VeilleRecommandation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -126,6 +127,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(h => h.UtilisateurId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Véhicules envisagés (fonctionnalité 21) : ils disparaissent avec leur opportunité. Aucun lien vers l'inventaire.
+        builder.Entity<VehiculeEnvisage>(e =>
+        {
+            e.HasOne(v => v.Opportunite)
+                .WithMany(o => o.VehiculesEnvisages)
+                .HasForeignKey(v => v.OpportuniteId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<HistoriqueSuiviOpportunite>(e =>

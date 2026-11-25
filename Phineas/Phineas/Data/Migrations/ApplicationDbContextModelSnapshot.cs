@@ -731,6 +731,41 @@ namespace Phineas.Data.Migrations
                     b.ToTable("Vehicules");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.VehiculeEnvisage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Annee")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Finition")
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<string>("Marque")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Modele")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<int>("OpportuniteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportuniteId");
+
+                    b.ToTable("VehiculesEnvisages");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.VeilleRecommandation", b =>
                 {
                     b.Property<int>("Id")
@@ -989,6 +1024,17 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Dealership");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.VehiculeEnvisage", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
+                        .WithMany("VehiculesEnvisages")
+                        .HasForeignKey("OpportuniteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opportunite");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.VeilleRecommandation", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.ApplicationUser", "Conseiller")
@@ -1026,6 +1072,8 @@ namespace Phineas.Data.Migrations
                     b.Navigation("HistoriqueEtapes");
 
                     b.Navigation("HistoriqueSuivis");
+
+                    b.Navigation("VehiculesEnvisages");
                 });
 
             modelBuilder.Entity("Phineas.Models.Entities.Prospect", b =>

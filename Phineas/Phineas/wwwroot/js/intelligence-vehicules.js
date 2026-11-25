@@ -151,11 +151,12 @@
       items += '<li><a class="dropdown-item" href="' + esc(S.urlNouvelle(o.id) + "&vehicule=" + encodeURIComponent(v.id)) + '"><i class="bi bi-file-earmark-text" aria-hidden="true"></i>Créer une soumission</a></li>';
       if (R) items += '<li><a class="dropdown-item" href="' + esc(R.urlNouveau({ opportunite: o.id, type: "EssaiRoutier", vehicule: v.id })) + '"><i class="bi bi-calendar-event" aria-hidden="true"></i>Planifier un essai</a></li>';
     }
-    // Dossier réel : la note se saisit dans la fiche (enregistrée en base) ; les options envisagées ne sont pas encore
-    // enregistrables. Démonstration : actions locales, comme avant (fonctionnalité 16).
+    // Dossier réel : la note et les véhicules envisagés (fonctionnalité 21) se saisissent dans la fiche, où ils sont
+    // enregistrés en base ; ce catalogue de démonstration n'y est jamais recopié. Démonstration : actions locales,
+    // comme avant (fonctionnalité 16).
     if (P.estEnregistree(o.id)) {
       items += '<li><a class="dropdown-item" href="' + esc(P.urlFiche(o.prospectId, o.id) + "#historique") + '" data-noter-fiche><i class="bi bi-journal-text" aria-hidden="true"></i>Ajouter une note dans la fiche</a></li>';
-      items += '<li><p class="dropdown-item-text small mb-0">Dossier enregistré : les options envisagées ne sont pas encore enregistrables.</p></li>';
+      items += '<li><a class="dropdown-item" href="' + esc(P.urlFiche(o.prospectId, o.id) + "#opportunites") + '" data-envisager-fiche><i class="bi bi-bookmark-plus" aria-hidden="true"></i>Ajouter un véhicule envisagé dans la fiche</a></li>';
     } else {
       var libelleEnvisager = dejaEnvisage ? "Déjà envisagé" : "Ajouter aux options envisagées";
       items += '<li><button type="button" class="dropdown-item" data-envisager="' + esc(v.id) + '"' + (dejaEnvisage ? " disabled" : "") + '><i class="bi bi-bookmark-plus" aria-hidden="true"></i>' + libelleEnvisager + "</button></li>";

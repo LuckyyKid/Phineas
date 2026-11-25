@@ -423,6 +423,43 @@
     return true;
   }
 
+  // Véhicules envisagés enregistrés d'UNE opportunité (fonctionnalité 21), tels que le serveur les a envoyés :
+  // { id: "ve-…", marque, modele, annee, finition, libelle }. Une opportunité de démonstration n'en a aucun.
+  function vehiculesDe(oppId) {
+    var o = opportunite(oppId);
+    return o && estEnregistree(oppId) ? o.vehiculesDetail || [] : [];
+  }
+
+  // Ajout ou modification d'un véhicule envisagé (fonctionnalité 21) : le formulaire de la fiche est envoyé tel quel
+  // à ProspectsController.AjouterVehicule (vehiculeId vide) ou ModifierVehicule, avec l'opportunité et l'empreinte du
+  // prospect affichée. Rien n'est écrit dans l'onglet : la fiche se recharge avec le message du serveur.
+  function envoyerVehicule(oppId, vehiculeId, formulaire) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !estEnregistree(oppId)) return false;
+    var modification = !!vehiculeId;
+    if (modification && !vehiculesDe(oppId).some(function (v) { return v.id === vehiculeId; })) return false;
+    var url = modification ? charge.urlModifierVehicule : charge.urlAjouterVehicule;
+    if (!url) return false;
+    formulaire.elements.opportuniteId.value = o.id;
+    formulaire.elements.vehiculeId.value = vehiculeId || "";
+    formulaire.elements.version.value = c.version || "";
+    formulaire.action = url;
+    formulaire.submit();
+    return true;
+  }
+
+  // Retrait d'un véhicule envisagé (fonctionnalité 21) : envoi à ProspectsController.RetirerVehicule avec
+  // l'identifiant exact du véhicule et l'empreinte affichée ; la fiche se recharge avec le message du serveur.
+  function envoyerRetraitVehicule(oppId, vehiculeId) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !charge.urlRetirerVehicule) return false;
+    if (!vehiculesDe(oppId).some(function (v) { return v.id === vehiculeId; })) return false;
+    posterSuivi(charge.urlRetirerVehicule, { prospectId: c.id, opportuniteId: o.id, vehiculeId: vehiculeId, version: c.version || "" });
+    return true;
+  }
+
   // « Marquer comme réalisé » du suivi d'une opportunité enregistrée : envoi à ProspectsController.RealiserSuivi,
   // qui archive l'action et revient à la page d'origine (retour : chemin local, ex. /Intelligence/Suivis) avec un message.
   // versionSuivi : empreinte de l'action affichée ; le serveur refuse si l'action a changé entre-temps.
@@ -628,6 +665,9 @@
     },
     envoyerOpportunite: envoyerOpportunite,
     envoyerQualification: envoyerQualification,
+    vehiculesDe: vehiculesDe,
+    envoyerVehicule: envoyerVehicule,
+    envoyerRetraitVehicule: envoyerRetraitVehicule,
     projet: projet,
     urlListe: charge.urlListe,
     // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).

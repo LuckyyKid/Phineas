@@ -82,4 +82,7 @@ public class OpportuniteVente
 
     // Prochaines actions réalisées ou remplacées (voir HistoriqueSuiviOpportunite).
     public ICollection<HistoriqueSuiviOpportunite> HistoriqueSuivis { get; set; } = new List<HistoriqueSuiviOpportunite>();
+
+    // Véhicules que le client considère pour ce projet (fonctionnalité 21, voir VehiculeEnvisage).
+    public ICollection<VehiculeEnvisage> VehiculesEnvisages { get; set; } = new List<VehiculeEnvisage>();
 }
