@@ -584,19 +584,64 @@
         : '<p class="pr-sous mb-0">Aucune soumission pour cette opportunité.</p>') + "</div>";
   }
 
-  // Rendez-vous enregistrés d'une opportunité réelle (fonctionnalité 22) : seulement ceux de CETTE opportunité, du plus
-  // tôt au plus tard, affichés dans leur fuseau commercial. Tous sont « Planifié » : ni confirmation du client, ni
-  // invitation, ni réservation. Aucune commande de modification ou d'annulation (F23).
+  // Icône de chaque statut d'un rendez-vous enregistré (le libellé vient du serveur : le statut ne se lit jamais
+  // à la seule couleur).
+  var ICONES_STATUT_RENDEZVOUS = { Planifie: "bi-calendar-event", Annule: "bi-x-circle", Termine: "bi-check2-all", ClientAbsent: "bi-person-x" };
+
+  // Boutons du cycle de vie (fonctionnalité 23) : seulement ceux que le serveur accepterait maintenant
+  // (P.actionsRendezVous). Le serveur revérifie tout ; un statut définitif n'a plus aucun bouton.
+  function actionsRendezVousHtml(o, r) {
+    var actions = P.actionsRendezVous(r, new Date());
+    if (!actions.length) return "";
+    var nom = r.typeLibelle;
+    function bouton(action, libelle, danger) {
+      return '<button type="button" class="btn btn-sm btn-link p-0' + (danger ? " text-danger" : "") + '" data-rendezvous-action="' + action + '" data-opp="' + esc(o.id) +
+        '" data-rendezvous="' + esc(r.id) + '" aria-label="' + esc(libelle + " : " + nom) + '">' + esc(libelle) + "</button>";
+    }
+    var boutons = [];
+    if (actions.indexOf("modifier") >= 0) boutons.push(bouton("modifier", "Modifier"));
+    if (actions.indexOf("replanifier") >= 0) boutons.push(bouton("replanifier", "Replanifier"));
+    if (actions.indexOf("annuler") >= 0) boutons.push(bouton("annuler", "Annuler le rendez-vous", true));
+    if (actions.indexOf("realiser") >= 0) boutons.push(bouton("realiser", "Déclarer réalisé"));
+    if (actions.indexOf("absent") >= 0) boutons.push(bouton("absent", "Déclarer une absence"));
+    var rappel = actions.indexOf("realiser") >= 0
+      ? '<span class="pr-sous d-block w-100" data-rendezvous-a-declarer>L\'heure prévue est atteinte : indiquez si la rencontre a eu lieu.</span>'
+      : "";
+    return rappel + '<span class="d-flex flex-wrap gap-3 w-100 mt-1" data-rendezvous-actions>' + boutons.join("") + "</span>";
+  }
+
+  // Historique d'un rendez-vous enregistré : création, puis chaque changement (date de l'opération, auteur, ancien
+  // horaire d'une replanification), affiché dans le fuseau du rendez-vous.
+  function historiqueRendezVousHtml(r) {
+    var evenements = r.historique || [];
+    if (!evenements.length) return "";
+    var formatDate = new Intl.DateTimeFormat("fr-CA", { timeZone: r.fuseau, day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+    var lignes = evenements.map(function (e) {
+      var texte = e.texte;
+      if (e.ancienDebutUtc) {
+        var ancien = P.formaterRendezVous({ debutUtc: e.ancienDebutUtc, dureeMinutes: e.ancienneDureeMinutes, fuseau: r.fuseau });
+        texte += " Ancien horaire : " + ancien.jour + ", de " + ancien.debut + " à " + ancien.fin + ".";
+      }
+      return '<li data-rendezvous-evenement="' + esc(e.type) + '">' + esc(formatDate.format(new Date(e.date))) + (e.auteur ? " · " + esc(e.auteur) : "") + " : " + esc(texte) + "</li>";
+    }).join("");
+    return '<details class="pr-sous w-100 mt-1" data-rendezvous-historique><summary>Historique (' + evenements.length + ")</summary><ul>" + lignes + "</ul></details>";
+  }
+
+  // Rendez-vous enregistrés d'une opportunité réelle (fonctionnalités 22 et 23) : seulement ceux de CETTE opportunité,
+  // du plus tôt au plus tard, affichés dans leur fuseau commercial, avec leur statut, les actions permises et
+  // l'historique. Ni confirmation du client, ni invitation, ni réservation.
   function rendezVousEnregistresHtml(o) {
     var liste = P.rendezVousDe(o.id);
     var lignes = liste.map(function (r) {
       var f = P.formaterRendezVous(r);
       var details = [r.modeLibelle, r.lieu].filter(Boolean).join(", ");
-      return '<li data-rendezvous-id="' + esc(r.id) + '"><strong>' + esc(r.typeLibelle) + "</strong>" +
-        '<span class="rv-statut rv-st-Planifie"><i class="bi bi-calendar-event" aria-hidden="true"></i>Planifié</span>' +
+      var icone = ICONES_STATUT_RENDEZVOUS[r.statut] || "bi-circle";
+      return '<li data-rendezvous-id="' + esc(r.id) + '" data-rendezvous-statut="' + esc(r.statut) + '"><strong>' + esc(r.typeLibelle) + "</strong>" +
+        '<span class="rv-statut rv-st-' + esc(r.statut) + '"><i class="bi ' + icone + '" aria-hidden="true"></i>' + esc(r.statutLibelle) + "</span>" +
         '<span class="pr-sous d-block w-100" data-rendezvous-horaire>' + esc(f.jour + ", de " + f.debut + " à " + f.fin) + "</span>" +
         '<span class="pr-sous d-block w-100">' + esc(details) + (r.objectif ? " · " + esc(r.objectif) : "") + "</span>" +
         (r.commentaire ? '<span class="pr-sous d-block w-100">' + esc(r.commentaire) + "</span>" : "") +
+        actionsRendezVousHtml(o, r) + historiqueRendezVousHtml(r) +
         "</li>";
     }).join("");
     var fuseau = liste.length ? liste[0].fuseau : "";
@@ -918,21 +963,71 @@
     }
   });
 
-  // ---------- Rendez-vous d'une opportunité enregistrée (fonctionnalité 22) ----------
-  // Fenêtre envoyée au serveur, qui interprète la date et l'heure dans le fuseau commercial, refuse un moment passé ou
-  // un changement d'heure, puis recharge la fiche avec son message : rien n'est annoncé avant sa réponse.
+  // ---------- Rendez-vous d'une opportunité enregistrée (fonctionnalités 22 et 23) ----------
+  // Une seule fenêtre pour trois opérations envoyées au serveur :
+  //   planifier : tous les champs ;
+  //   modifier : type, modalité, lieu, objectif, commentaire (l'horaire ne bouge pas) ;
+  //   replanifier : date, heure, durée du MÊME rendez-vous.
+  // Les champs qui ne servent pas sont masqués et désactivés (donc pas envoyés). Le serveur interprète l'heure dans
+  // le fuseau commercial, refuse ce qui n'est pas permis, puis recharge la fiche avec son message.
   var modalRendezVous = bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-rendezvous"));
   var formRendezVous = document.getElementById("form-rendezvous");
   var rendezVousOpp = null;
+  var rendezVousCible = null;
+  var rendezVousOperation = "planifier";
 
-  function ouvrirRendezVous(oppId) {
+  var TEXTES_FENETRE_RENDEZVOUS = {
+    planifier: { titre: "Planifier un rendez-vous", bouton: "Enregistrer le rendez-vous" },
+    modifier: { titre: "Modifier le rendez-vous", bouton: "Enregistrer les modifications" },
+    replanifier: { titre: "Replanifier le rendez-vous", bouton: "Replanifier" },
+  };
+
+  // Montre les blocs utiles à l'opération (« details », « horaire ») ; les autres sont masqués et désactivés.
+  function afficherBlocsRendezVous(blocs) {
+    formRendezVous.querySelectorAll("[data-rendezvous-bloc]").forEach(function (zone) {
+      var visible = blocs.indexOf(zone.dataset.rendezvousBloc) >= 0;
+      zone.hidden = !visible;
+      zone.querySelectorAll("input, select, textarea").forEach(function (champ) { champ.disabled = !visible; });
+    });
+  }
+
+  function ouvrirRendezVous(oppId, rendezVousId, operation) {
     var o = P.opportunite(oppId);
-    if (!o || !P.estEnregistree(oppId) || !P.estActive(o)) return;
+    if (!o || !P.estEnregistree(oppId)) return;
+    var r = rendezVousId ? P.rendezVousEnregistre(oppId, rendezVousId) : null;
+    if (operation === "planifier" && !P.estActive(o)) return;
+    if (operation !== "planifier" && P.actionsRendezVous(r, new Date()).indexOf(operation) < 0) return;
     rendezVousOpp = oppId;
+    rendezVousCible = r ? r.id : null;
+    rendezVousOperation = operation;
     formRendezVous.reset();
     formRendezVous.querySelectorAll(".is-invalid").forEach(function (x) { x.classList.remove("is-invalid"); });
-    formRendezVous.querySelector("[data-rendezvous-mention]").textContent = "Projet « " + o.titre + " ». Le rendez-vous est enregistré dans le dossier ; "
+    var el = formRendezVous.elements;
+    var mention = "Projet « " + o.titre + " ». Le rendez-vous est enregistré dans le dossier ; "
       + "aucune invitation n'est envoyée au client, et aucun créneau, aucune salle ni aucun véhicule n'est réservé.";
+    if (operation === "planifier") afficherBlocsRendezVous(["details", "horaire"]);
+    if (operation === "modifier") {
+      afficherBlocsRendezVous(["details"]);
+      el.type.value = r.type;
+      el.mode.value = r.mode;
+      el.lieu.value = r.lieu || "";
+      el.objectif.value = r.objectif || "";
+      el.commentaire.value = r.commentaire || "";
+      mention = "Projet « " + o.titre + " ». L'horaire ne change pas : pour le déplacer, utilisez « Replanifier ». Aucun message n'est envoyé au client.";
+    }
+    if (operation === "replanifier") {
+      afficherBlocsRendezVous(["horaire"]);
+      var actuel = P.champsHoraire(r);
+      var f = P.formaterRendezVous(r);
+      el.date.value = actuel.date;
+      el.heure.value = actuel.heure;
+      el.dureeMinutes.value = String(r.dureeMinutes);
+      mention = "Projet « " + o.titre + " ». Horaire actuel : " + f.jour + ", de " + f.debut + " à " + f.fin
+        + ". Le même rendez-vous est déplacé ; l'ancien horaire reste dans son historique. Aucune invitation n'est envoyée au client.";
+    }
+    document.getElementById("modal-rendezvous-titre").textContent = TEXTES_FENETRE_RENDEZVOUS[operation].titre;
+    formRendezVous.querySelector("[data-rendezvous-envoyer]").textContent = TEXTES_FENETRE_RENDEZVOUS[operation].bouton;
+    formRendezVous.querySelector("[data-rendezvous-mention]").textContent = mention;
     formRendezVous.querySelector("[data-rendezvous-envoyer]").disabled = false;
     modalRendezVous.show();
   }
@@ -940,8 +1035,11 @@
   formRendezVous.addEventListener("submit", function (e) {
     e.preventDefault();
     var el = formRendezVous.elements;
+    var aVerifier = [el.type, el.date, el.heure];
+    if (rendezVousOperation === "modifier") aVerifier = [el.type];
+    if (rendezVousOperation === "replanifier") aVerifier = [el.date, el.heure];
     var invalides = [];
-    [el.type, el.date, el.heure].forEach(function (x) {
+    aVerifier.forEach(function (x) {
       x.classList.remove("is-invalid");
       if (!x.value || !x.checkValidity()) invalides.push(x);
     });
@@ -953,15 +1051,42 @@
     if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return;
     formRendezVous.querySelector("[data-rendezvous-envoyer]").disabled = true; // contre le double clic
     definirModifiee(false);
-    if (!P.envoyerRendezVous(rendezVousOpp, formRendezVous)) {
+    var envoye;
+    if (rendezVousOperation === "planifier") envoye = P.envoyerRendezVous(rendezVousOpp, formRendezVous);
+    else envoye = P.envoyerCycleRendezVous(rendezVousOpp, rendezVousCible, formRendezVous, rendezVousOperation);
+    if (!envoye) {
       formRendezVous.querySelector("[data-rendezvous-envoyer]").disabled = false;
-      P.notifier("Cette opportunité ne peut plus recevoir de rendez-vous : actualisez la page.");
+      P.notifier("Ce rendez-vous ne peut plus être enregistré depuis cette page : actualisez la page.");
     }
   });
 
+  // Confirmation demandée avant un changement de statut définitif (la vraie vérification reste celle du serveur).
+  var CHANGEMENTS_STATUT_RENDEZVOUS = {
+    annuler: { statut: "Annule", question: "Annuler le rendez-vous « {nom} » du {horaire} ? Il reste dans le dossier avec son historique, mais ne compte plus comme rendez-vous à venir. Aucun message n'est envoyé au client. Ce changement est définitif." },
+    realiser: { statut: "Termine", question: "Déclarer que la rencontre « {nom} » du {horaire} a eu lieu ? C'est votre déclaration : aucun contact ni suivi n'est enregistré automatiquement. Ce changement est définitif." },
+    absent: { statut: "ClientAbsent", question: "Déclarer que le client était absent au rendez-vous « {nom} » du {horaire} ? Aucun contact ni suivi n'est enregistré automatiquement. Ce changement est définitif." },
+  };
+
+  function changerStatutRendezVous(oppId, rendezVousId, action) {
+    var r = P.rendezVousEnregistre(oppId, rendezVousId);
+    var changement = CHANGEMENTS_STATUT_RENDEZVOUS[action];
+    if (!r || !changement) return false;
+    var f = P.formaterRendezVous(r);
+    var question = changement.question.replace("{nom}", r.typeLibelle).replace("{horaire}", f.jour + ", de " + f.debut + " à " + f.fin);
+    if (!window.confirm(question)) return false;
+    if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return false;
+    definirModifiee(false);
+    return P.envoyerStatutRendezVous(oppId, rendezVousId, changement.statut);
+  }
+
   racine.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-rendezvous-planifier]");
-    if (b) ouvrirRendezVous(b.dataset.rendezvousPlanifier);
+    var planifier = e.target.closest("[data-rendezvous-planifier]");
+    if (planifier) return ouvrirRendezVous(planifier.dataset.rendezvousPlanifier, null, "planifier");
+    var b = e.target.closest("[data-rendezvous-action]");
+    if (!b) return;
+    var action = b.dataset.rendezvousAction;
+    if (action === "modifier" || action === "replanifier") return ouvrirRendezVous(b.dataset.opp, b.dataset.rendezvous, action);
+    if (changerStatutRendezVous(b.dataset.opp, b.dataset.rendezvous, action)) b.disabled = true; // contre le double clic
   });
 
   P.abonner(rendre);

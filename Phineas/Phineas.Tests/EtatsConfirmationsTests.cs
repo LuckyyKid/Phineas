@@ -259,6 +259,36 @@ public class EtatsConfirmationsTests : IClassFixture<ApplicationDeTest>
         Assert.Contains(MentionsDonnees.BandeauTexte, fiche);
     }
 
+    // Bandeau corrigé avec F23 : affiché tel quel sur la fiche d'un dossier enregistré et sur celle d'un dossier fictif,
+    // il annonce enregistrés la qualification, les véhicules envisagés et les rendez-vous des dossiers enregistrés, et
+    // seulement les dossiers fictifs, soumissions, transactions et rendez-vous de démonstration comme locaux.
+    [Fact]
+    public async Task Le_bandeau_des_fiches_reelles_et_fictives_annonce_exactement_ce_qui_est_enregistre()
+    {
+        var client = await _app.ConnecterAsync(Sophie);
+        var o = await CreerAsync(client, "Bandeau" + Unique());
+
+        string reelle = WebUtility.HtmlDecode(await client.GetStringAsync("/Prospects/Fiche/pe-" + o.ProspectId));
+        string fictive = WebUtility.HtmlDecode(await client.GetStringAsync("/Prospects/Fiche/chloe-bouchard"));
+        string[] phrases = MentionsDonnees.BandeauTexte.Split("sont enregistrés en base de données.");
+
+        Assert.Contains(MentionsDonnees.BandeauTexte, reelle);
+        Assert.Contains(MentionsDonnees.BandeauTexte, fictive);
+        Assert.Equal(2, phrases.Length);
+        foreach (var persiste in new[] { "dossiers enregistrés", "qualifications", "véhicules envisagés", "rendez-vous commerciaux" })
+            Assert.Contains(persiste, phrases[0]);
+        Assert.DoesNotContain("soumission", phrases[0]);
+        Assert.DoesNotContain("transaction", phrases[0]);
+        Assert.Contains("dossiers fictifs", phrases[1]);
+        Assert.Contains("les soumissions et les transactions, restent locaux à cet onglet et ne sont pas enregistrés en base", phrases[1]);
+        Assert.Contains("rendez-vous de démonstration restent également fictifs", phrases[1]);
+        foreach (var page in new[] { reelle, fictive })
+        {
+            Assert.DoesNotContain("disparaît à sa fermeture", page);
+            Assert.DoesNotContain("qualification détaillée, véhicules envisagés, rendez-vous", page);
+        }
+    }
+
     // ---------- Messages du serveur (TempData) ----------
 
     [Theory]

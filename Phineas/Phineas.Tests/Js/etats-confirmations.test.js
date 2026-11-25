@@ -77,6 +77,19 @@ test("G1 : plus aucune vue vendeur n'affiche l'ancienne mention générale « Ri
   assert.ok(constante("BandeauTexte").includes("notes, étapes intermédiaires et suivis"));
 });
 
+// Bandeau des fiches (réelles et fictives), corrigé avec F23 : ce que F20 à F23 enregistrent est annoncé enregistré ;
+// seuls les dossiers fictifs et les modules de démonstration restent dans l'onglet.
+test("G1 : le bandeau distingue ce qui est enregistré (qualification, véhicules, rendez-vous) de la démonstration", () => {
+  const texte = constante("BandeauTexte");
+  const [enregistre, demonstration] = texte.split("sont enregistrés en base de données.");
+  assert.ok(demonstration !== undefined, "une phrase annonce ce qui est enregistré en base");
+  ["dossiers enregistrés", "qualifications", "véhicules envisagés", "rendez-vous commerciaux"].forEach((x) => assert.ok(enregistre.includes(x), x));
+  assert.ok(demonstration.includes("dossiers fictifs") && demonstration.includes("soumissions et les transactions") && demonstration.includes("ne sont pas enregistrés en base"));
+  assert.ok(demonstration.includes("rendez-vous de démonstration restent également fictifs"));
+  assert.ok(!/soumission[^.]*sont enregistrés|transaction[^.]*sont enregistrés/.test(enregistre), "aucune soumission ni transaction annoncée enregistrée");
+  assert.ok(!/disparaît|fermeture|invitation|réserv/i.test(texte), "ni perte à la fermeture, ni invitation, ni réservation");
+});
+
 // ---------- G2 : prospects-store.js dans un faux DOM ----------
 function chargerProspects() {
   const code = fs.readFileSync(path.join(racine, "wwwroot", "js", "prospects-store.js"), "utf8");

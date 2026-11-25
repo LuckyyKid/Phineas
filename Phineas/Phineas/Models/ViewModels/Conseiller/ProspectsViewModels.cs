@@ -206,17 +206,32 @@ public class QualificationSaisie
 
 // Rendez-vous commercial enregistré, tel que la fiche l'affiche (fonctionnalité 22). Id : « rv-12 ». DebutUtc est un
 // instant UTC (sérialisé avec « Z ») ; la fiche l'affiche dans le fuseau Fuseau, jamais dans celui du navigateur.
+// Statut (fonctionnalité 23) : « Planifie », « Annule », « Termine » ou « ClientAbsent » ; Historique : création puis
+// changements enregistrés, du plus ancien au plus récent.
 public record RendezVousEnregistreVue(string Id, string Type, string TypeLibelle, DateTime DebutUtc, string Fuseau, int DureeMinutes,
-    string Mode, string ModeLibelle, string? Lieu, string? Objectif, string? Commentaire);
+    string Mode, string ModeLibelle, string? Lieu, string? Objectif, string? Commentaire,
+    string Statut = "Planifie", string StatutLibelle = "Planifié", IReadOnlyList<EvenementRendezVousVue>? Historique = null);
+
+// Une ligne de l'historique d'un rendez-vous enregistré. Date : instant UTC de l'opération (pas l'heure du rendez-vous).
+// AncienDebutUtc et AncienneDureeMinutes : horaire remplacé, pour une replanification seulement.
+public record EvenementRendezVousVue(string Type, DateTime Date, string Auteur, string Texte,
+    DateTime? AncienDebutUtc = null, int? AncienneDureeMinutes = null);
 
 // Champs postés par la fenêtre « Planifier un rendez-vous » de la fiche (fonctionnalité 22). Textes bruts : toute la
 // validation se fait dans ServiceProspects.PlanifierRendezVousAsync. Date (« 2027-01-15 ») et Heure (« 14:00 ») sont
 // l'heure commerciale, comprise dans le fuseau commercial de l'application (FuseauCommercial), jamais celui du poste.
+//
+// Même classe pour le cycle de vie (fonctionnalité 23) ; chaque opération ne lit que ses champs :
+// modifier : RendezVousId, Type, Mode, Lieu, Objectif, Commentaire (l'horaire n'est jamais lu) ;
+// replanifier : RendezVousId, Date, Heure, DureeMinutes ;
+// changer le statut : RendezVousId, Statut (« Annule », « Termine » ou « ClientAbsent »).
 public class RendezVousSaisie
 {
     public string? ProspectId { get; set; }
     public string? OpportuniteId { get; set; }
+    public string? RendezVousId { get; set; }
     public string? Version { get; set; }
+    public string? Statut { get; set; }
     public string? Type { get; set; }
     public string? Date { get; set; }
     public string? Heure { get; set; }

@@ -92,9 +92,13 @@
     P.contacts().forEach(function (c) { l = l.concat(P.interactionsDe(c.id)); });
     return l;
   }
+  // Rendez-vous à venir d'une opportunité (rdvFutur). Dossier réel (« oe-… », fonctionnalité 23) : seulement ses
+  // rendez-vous enregistrés, planifiés et pas encore commencés ; un rendez-vous fictif n'en est jamais la preuve.
+  // Démonstration : rendez-vous locaux actifs, comme avant.
   function rdvFuturs(oppId) {
-    if (!R) return [];
     var m = new Date();
+    if (P.estEnregistree(oppId)) return P.rendezVousFuturs(oppId, m);
+    if (!R) return [];
     return R.parOpportunite(oppId).filter(function (r) { return R.estActif(r) && R.fin(r) >= m; });
   }
   function nomVehiculeInv(v) {

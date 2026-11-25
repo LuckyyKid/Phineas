@@ -258,6 +258,64 @@ public class ProspectsController : Controller
         return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "opportunites");
     }
 
+    // Cycle de vie d'un rendez-vous enregistré (fonctionnalité 23) : modifier ses informations, le replanifier, l'annuler,
+    // déclarer la rencontre réalisée ou l'absence du client. Toujours POST avec jeton antiforgery ; le service vérifie
+    // conseiller, concession, prospect, opportunité, rendez-vous, statut, heure et empreinte. Retour à la fiche avec un message.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ModifierRendezVous(RendezVousSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.ModifierRendezVousAsync(me.Id, saisie);
+        return RetourRendezVous(saisie, resultat, "Rendez-vous modifié dans le dossier (aucun message n'a été envoyé au client).", "Rendez-vous non modifié. ");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReplanifierRendezVous(RendezVousSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.ReplanifierRendezVousAsync(me.Id, saisie);
+        return RetourRendezVous(saisie, resultat, "Rendez-vous replanifié dans le dossier (aucune invitation n'a été envoyée au client).", "Rendez-vous non replanifié. ");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangerStatutRendezVous(RendezVousSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.ChangerStatutRendezVousAsync(me.Id, saisie);
+        string confirmation = "Statut du rendez-vous enregistré dans le dossier.";
+        if (saisie.Statut == nameof(StatutRendezVous.Annule))
+            confirmation = "Rendez-vous annulé dans le dossier (aucun message n'a été envoyé au client).";
+        else if (saisie.Statut == nameof(StatutRendezVous.Termine))
+            confirmation = "Rencontre déclarée réalisée dans le dossier.";
+        else if (saisie.Statut == nameof(StatutRendezVous.ClientAbsent))
+            confirmation = "Absence du client déclarée dans le dossier.";
+        return RetourRendezVous(saisie, resultat, confirmation, "Statut du rendez-vous inchangé. ");
+    }
+
+    // Message (confirmation ou refus avec ses motifs), puis retour aux opportunités de la fiche, celle-ci sélectionnée.
+    private IActionResult RetourRendezVous(RendezVousSaisie saisie, ResultatService<int> resultat, string confirmation, string refus)
+    {
+        if (resultat.Introuvable)
+            return NotFound();
+        if (resultat.Succes)
+            TempData[CleConfirmation] = confirmation;
+        else
+            TempData[CleErreur] = refus + string.Join(" ", resultat.Erreurs.Select(e => e.Message).Distinct());
+        return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "opportunites");
+    }
+
     // Message (confirmation ou refus avec ses motifs), puis retour aux opportunités de la fiche, celle-ci sélectionnée.
     private RedirectToActionResult RetourVehicule(VehiculeSaisie saisie, bool succes, string confirmation, string refus, List<ErreurChamp> erreurs)
     {

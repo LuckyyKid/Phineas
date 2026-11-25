@@ -116,11 +116,13 @@ test("F22 : un ancien état de l'onglet ne remplace jamais les rendez-vous du se
   assert.deepEqual(ids(P.rendezVousDe("oe-1")), ["rv-1", "rv-2"]);
 });
 
-test("F22 : la fiche n'annonce ni invitation envoyée, ni confirmation du client, ni réservation, ni commande F23", () => {
+// Depuis F23, le libellé du statut vient du serveur (statutLibelle) et les commandes du cycle de vie existent : elles
+// sont vérifiées par cycle-vie-rendezvous.test.js. Ce test garde ce que F22 interdisait toujours d'annoncer.
+test("F22 : la fiche n'annonce ni invitation envoyée, ni confirmation du client, ni réservation", () => {
   const fiche = fs.readFileSync(path.join(racine, "wwwroot", "js", "prospects-fiche.js"), "utf8");
   const debut = fiche.indexOf("function rendezVousEnregistresHtml");
   const bloc = fiche.slice(debut, fiche.indexOf("\n  }\n", debut));
-  assert.ok(bloc.includes("Planifié") && bloc.includes("aucune invitation envoyée") && bloc.includes("formaterRendezVous"));
-  assert.ok(!/Confirmé|Invitation envoyée|Réservé|Annuler|Replanifier|Modifier|Réalisé/.test(bloc));
+  assert.ok(bloc.includes("r.statutLibelle") && bloc.includes("aucune invitation envoyée") && bloc.includes("formaterRendezVous"));
+  assert.ok(!/Confirmé|Invitation envoyée|Réservé/.test(bloc));
   assert.ok(!/Rendez-vous enregistré dans le dossier/.test(fiche), "la confirmation vient du serveur seulement");
 });

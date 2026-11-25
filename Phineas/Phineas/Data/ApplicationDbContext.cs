@@ -20,6 +20,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HistoriqueSuiviOpportunite> HistoriquesSuiviOpportunite => Set<HistoriqueSuiviOpportunite>();
     public DbSet<VehiculeEnvisage> VehiculesEnvisages => Set<VehiculeEnvisage>();
     public DbSet<RendezVousCommercial> RendezVousCommerciaux => Set<RendezVousCommercial>();
+    public DbSet<EvenementRendezVousCommercial> EvenementsRendezVous => Set<EvenementRendezVousCommercial>();
     public DbSet<VeilleRecommandation> VeillesRecommandation => Set<VeilleRecommandation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -150,6 +151,28 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(o => o.RendezVous)
                 .HasForeignKey(r => r.OpportuniteId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Statut (fonctionnalité 23), gardé par son nom. Les rendez-vous déjà enregistrés reçoivent « Planifie »
+            // par la migration AjoutCycleVieRendezVous (valeur par défaut de la colonne).
+            e.Property(r => r.Statut).HasConversion<string>().HasMaxLength(20);
+        });
+
+        // Historique des rendez-vous (fonctionnalité 23) : il disparaît avec son rendez-vous, donc avec l'opportunité ;
+        // un utilisateur qui a écrit dans l'historique ne peut pas être supprimé (comme l'historique des suivis).
+        builder.Entity<EvenementRendezVousCommercial>(e =>
+        {
+            e.ToTable("EvenementsRendezVousCommerciaux");
+            e.Property(h => h.Type).HasConversion<string>().HasMaxLength(20);
+
+            e.HasOne(h => h.RendezVous)
+                .WithMany(r => r.Evenements)
+                .HasForeignKey(h => h.RendezVousId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(h => h.Auteur)
+                .WithMany()
+                .HasForeignKey(h => h.AuteurId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<HistoriqueSuiviOpportunite>(e =>

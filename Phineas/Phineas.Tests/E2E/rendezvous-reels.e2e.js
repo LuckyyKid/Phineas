@@ -184,7 +184,10 @@ async function creerOpportunite(page, prospectId, titre) {
     }
     const total = nombre();
     const hier = maintenantCommercial(-24 * 60);
+    // Arrondie aux 5 minutes inférieures : le champ heure a un pas de 5 minutes (step="300") et le navigateur refuse
+    // d'envoyer « 11:43 » ; sans arrondi, ce cas dépendait de la minute réelle d'exécution. Elle reste passée.
     const ilYaUneHeure = maintenantCommercial(-60);
+    ilYaUneHeure.heure = ilYaUneHeure.heure.slice(0, 3) + String(Math.floor(Number(ilYaUneHeure.heure.slice(3)) / 5) * 5).padStart(2, "0");
     const refus = [];
     for (const [r, attendu] of [
       [{ date: "2027-03-14", heure: "02:30" }, "n'existe pas"],
@@ -283,9 +286,14 @@ async function creerOpportunite(page, prospectId, titre) {
     verifier((await page.locator("[data-rendezvous-reels], [data-rendezvous-planifier]").count()) === 0, "fiche de démonstration : aucun bloc ni bouton de rendez-vous enregistré");
     await ouvrirOpportunites(page, p, a);
     const carte = await page.locator('[data-rendezvous-reels="oe-' + a + '"]').textContent();
-    verifier(carte.includes("Planifié") && carte.includes("aucune invitation envoyée") && !/Confirmé|Invitation envoyée|Réservé|Annuler|Replanifier|Réalisé/.test(carte) &&
-      (await page.locator('[data-rendezvous-reels="oe-' + a + '"] a, [data-rendezvous-reels="oe-' + a + '"] [data-rendezvous-id] button').count()) === 0,
-      "carte réelle : « Planifié » seulement, ni confirmation, ni invitation, ni réservation, ni commande F23");
+    // Depuis F23, un rendez-vous planifié à venir a ses commandes de cycle de vie (vérifiées par rendezvous-cycle-vie.e2e.js) :
+    // ce sont les seuls boutons de la carte, et rien n'y annonce une confirmation, une invitation ou une réservation.
+    const commandes = await page.locator('[data-rendezvous-reels="oe-' + a + '"] [data-rendezvous-id] button').evaluateAll(function (l) {
+      return l.every(function (x) { return ["modifier", "replanifier", "annuler"].indexOf(x.dataset.rendezvousAction) >= 0; });
+    });
+    verifier(carte.includes("Planifié") && carte.includes("aucune invitation envoyée") && !/Confirmé|Invitation envoyée|Réservé/.test(carte) && commandes &&
+      (await page.locator('[data-rendezvous-reels="oe-' + a + '"] a').count()) === 0,
+      "carte réelle : « Planifié », ni confirmation, ni invitation, ni réservation ; seulement les commandes du cycle de vie");
 
     // ---------- Parcours H : ce que planifier ne change pas ----------
     verifier(sql("SELECT CONCAT_WS('|', Etape, IFNULL(ProchaineAction,'-'), DerniereActivite, IFNULL(Categorie,'-'), IFNULL(Modele,'-')) FROM OpportunitesVente WHERE Id = " + a) === avantA &&

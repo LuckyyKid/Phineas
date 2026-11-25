@@ -475,8 +475,76 @@
     var c = o ? contact(o.prospectId) : null;
     if (!o || !c || !c.enregistre || !estEnregistree(oppId) || !estActive(o)) return false;
     formulaire.elements.opportuniteId.value = o.id;
+    // La même fenêtre sert aussi à modifier et replanifier (F23) : une création n'envoie aucun rendez-vous ciblé.
+    if (formulaire.elements.rendezVousId) formulaire.elements.rendezVousId.value = "";
     formulaire.elements.version.value = c.version || "";
+    if (charge.urlPlanifierRendezVous) formulaire.action = charge.urlPlanifierRendezVous;
     formulaire.submit();
+    return true;
+  }
+
+  // ---------- Cycle de vie des rendez-vous enregistrés (fonctionnalité 23) ----------
+
+  // Date (« 2027-01-15 ») et heure (« 14:00 ») du début dans le fuseau du rendez-vous, au format des champs
+  // <input type="date"> et <input type="time"> : la replanification part de l'horaire actuel, jamais de l'heure du poste.
+  function champsHoraire(r) {
+    var debut = new Date(r.debutUtc);
+    var morceaux = {};
+    new Intl.DateTimeFormat("en-CA", { timeZone: r.fuseau, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(debut)
+      .forEach(function (m) { morceaux[m.type] = m.value; });
+    return { date: morceaux.year + "-" + morceaux.month + "-" + morceaux.day, heure: morceaux.hour + ":" + morceaux.minute };
+  }
+
+  // Un rendez-vous enregistré de CETTE opportunité, ou null.
+  function rendezVousEnregistre(oppId, rendezVousId) {
+    return rendezVousDe(oppId).filter(function (r) { return r.id === rendezVousId; })[0] || null;
+  }
+
+  // Ce que le conseiller peut faire sur ce rendez-vous à cet instant ; même règle que le serveur
+  // (ServiceProspects.RefusCycleRendezVous), qui reste seul juge :
+  // planifié et pas encore commencé : modifier, replanifier, annuler ;
+  // planifié et commencé (heure atteinte ou passée) : déclarer réalisé, déclarer l'absence ;
+  // annulé, réalisé ou absent : rien (états définitifs).
+  function actionsRendezVous(r, maintenant) {
+    if (!r || r.statut !== "Planifie") return [];
+    if (new Date(r.debutUtc) > maintenant) return ["modifier", "replanifier", "annuler"];
+    return ["realiser", "absent"];
+  }
+
+  // Rendez-vous enregistrés de CETTE opportunité qui comptent comme « rendez-vous à venir » (rdvFutur du moteur) :
+  // planifiés et dont le début est encore à venir. Annulés, réalisés, absents ou déjà commencés : exclus.
+  // Une opportunité de démonstration n'en a jamais (ses rendez-vous fictifs restent dans le module Rendez-vous).
+  function rendezVousFuturs(oppId, maintenant) {
+    return rendezVousDe(oppId).filter(function (r) {
+      return r.statut === "Planifie" && new Date(r.debutUtc) > maintenant;
+    });
+  }
+
+  // Modification ou replanification : le formulaire « Rendez-vous » de la fiche est envoyé à l'adresse de l'opération,
+  // avec l'opportunité, le rendez-vous et l'empreinte affichée. Faux si le rendez-vous n'est plus dans cette opportunité.
+  function envoyerCycleRendezVous(oppId, rendezVousId, formulaire, operation) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !rendezVousEnregistre(oppId, rendezVousId)) return false;
+    var url = operation === "replanifier" ? charge.urlReplanifierRendezVous : charge.urlModifierRendezVous;
+    if (!url) return false;
+    formulaire.elements.opportuniteId.value = o.id;
+    formulaire.elements.rendezVousId.value = rendezVousId;
+    formulaire.elements.version.value = c.version || "";
+    formulaire.action = url;
+    formulaire.submit();
+    return true;
+  }
+
+  // Annuler (« Annule »), déclarer réalisé (« Termine ») ou déclarer l'absence (« ClientAbsent ») : envoi à
+  // ProspectsController.ChangerStatutRendezVous ; la fiche se recharge avec le message du serveur.
+  function envoyerStatutRendezVous(oppId, rendezVousId, statut) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !charge.urlChangerStatutRendezVous) return false;
+    if (!rendezVousEnregistre(oppId, rendezVousId)) return false;
+    posterSuivi(charge.urlChangerStatutRendezVous, { prospectId: c.id, opportuniteId: o.id, rendezVousId: rendezVousId, statut: statut, version: c.version || "" });
     return true;
   }
 
@@ -702,6 +770,12 @@
     rendezVousDe: rendezVousDe,
     formaterRendezVous: formaterRendezVous,
     envoyerRendezVous: envoyerRendezVous,
+    rendezVousEnregistre: rendezVousEnregistre,
+    champsHoraire: champsHoraire,
+    actionsRendezVous: actionsRendezVous,
+    rendezVousFuturs: rendezVousFuturs,
+    envoyerCycleRendezVous: envoyerCycleRendezVous,
+    envoyerStatutRendezVous: envoyerStatutRendezVous,
     projet: projet,
     urlListe: charge.urlListe,
     // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).

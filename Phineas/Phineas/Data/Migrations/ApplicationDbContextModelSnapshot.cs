@@ -300,6 +300,55 @@ namespace Phineas.Data.Migrations
                     b.ToTable("Dealerships");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.EvenementRendezVousCommercial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AncienDebutUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("AncienneDureeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AuteurId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
+                    b.Property<string>("Champs")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("NouveauDebutUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("NouvelleDureeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RendezVousId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuteurId");
+
+                    b.HasIndex("RendezVousId");
+
+                    b.ToTable("EvenementsRendezVousCommerciaux", (string)null);
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.HistoriqueEtapeOpportunite", b =>
                 {
                     b.Property<int>("Id")
@@ -667,6 +716,9 @@ namespace Phineas.Data.Migrations
                     b.Property<DateTime>("DateCreation")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("DateModification")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("DebutUtc")
                         .HasColumnType("datetime(6)");
 
@@ -693,6 +745,11 @@ namespace Phineas.Data.Migrations
 
                     b.Property<int>("OpportuniteId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Statut")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -954,6 +1011,25 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Vehicule");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.EvenementRendezVousCommercial", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.ApplicationUser", "Auteur")
+                        .WithMany()
+                        .HasForeignKey("AuteurId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.RendezVousCommercial", "RendezVous")
+                        .WithMany("Evenements")
+                        .HasForeignKey("RendezVousId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Auteur");
+
+                    b.Navigation("RendezVous");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.HistoriqueEtapeOpportunite", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
@@ -1148,6 +1224,11 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Notes");
 
                     b.Navigation("Opportunites");
+                });
+
+            modelBuilder.Entity("Phineas.Models.Entities.RendezVousCommercial", b =>
+                {
+                    b.Navigation("Evenements");
                 });
 
             modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>

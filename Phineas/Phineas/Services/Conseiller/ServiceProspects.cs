@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Phineas.Data;
 using Phineas.Models.Entities;
 using Phineas.Models.ViewModels.Account;
@@ -45,6 +46,11 @@ public interface IServiceProspects
     // Rendez-vous commercial planifié pour une opportunité enregistrée du conseiller (fonctionnalité 22) : création
     // seulement ; identifiant du rendez-vous créé. Ni invitation, ni réservation, ni contact déclaré.
     Task<ResultatService<int>> PlanifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
+
+    // Cycle de vie d'un rendez-vous enregistré (fonctionnalité 23), seulement tant qu'il est « Planifié ».
+    Task<ResultatService<int>> ModifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
+    Task<ResultatService<int>> ReplanifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
+    Task<ResultatService<int>> ChangerStatutRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
     Task<ResultatService> ModifierVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
     Task<ResultatService> RetirerVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
 
@@ -141,6 +147,8 @@ public class ServiceProspects : IServiceProspects
             .ThenInclude(o => o.VehiculesEnvisages)
             .Include(p => p.Opportunites)
             .ThenInclude(o => o.RendezVous)
+            .ThenInclude(r => r.Evenements)
+            .ThenInclude(h => h.Auteur)
             .AsSplitQuery()
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
@@ -615,7 +623,26 @@ public class ServiceProspects : IServiceProspects
         TypeRendezVous.Autre,
     ];
 
-    // Rendez-vous d'une opportunité pour la fiche, du plus tôt au plus tard (à début égal, dans l'ordre de création).
+    // Statuts qu'un rendez-vous enregistré peut avoir (fonctionnalité 23) : Planifie, puis un des trois autres, définitif.
+    // Codes repris du module Rendez-vous ; Termine veut dire « réalisé, déclaré par le conseiller ».
+    public static readonly IReadOnlyList<StatutRendezVous> StatutsRendezVousPersistants =
+    [
+        StatutRendezVous.Planifie,
+        StatutRendezVous.Annule,
+        StatutRendezVous.Termine,
+        StatutRendezVous.ClientAbsent,
+    ];
+
+    // Libellé d'un statut de rendez-vous enregistré, tel que la fiche l'affiche.
+    public static string LibelleStatutRendezVous(StatutRendezVous statut)
+    {
+        if (statut == StatutRendezVous.Termine)
+            return "Réalisé";
+        return ReferentielsRendezVous.Libelle(statut);
+    }
+
+    // Rendez-vous d'une opportunité pour la fiche, du plus tôt au plus tard (à début égal, dans l'ordre de création),
+    // chacun avec son statut et son historique.
     private static List<RendezVousEnregistreVue> RendezVousDe(OpportuniteVente o)
     {
         var liste = new List<RendezVousEnregistreVue>();
@@ -625,17 +652,54 @@ public class ServiceProspects : IServiceProspects
                 PrefixeRendezVous + r.Id,
                 r.Type.ToString(),
                 ReferentielsRendezVous.Libelle(r.Type),
-                DateTime.SpecifyKind(r.DebutUtc, DateTimeKind.Utc),
+                Utc(r.DebutUtc),
                 r.Fuseau,
                 r.DureeMinutes,
                 r.Mode,
                 LibelleDansListe(ReferentielsRendezVous.Modes, r.Mode),
                 r.Lieu,
                 r.Objectif,
-                r.Commentaire));
+                r.Commentaire,
+                r.Statut.ToString(),
+                LibelleStatutRendezVous(r.Statut),
+                HistoriqueDe(r)));
         }
         return liste;
     }
+
+    // Historique d'un rendez-vous : sa création (F22 ne gardait pas l'auteur), puis ses changements dans l'ordre où ils
+    // ont été faits.
+    private static List<EvenementRendezVousVue> HistoriqueDe(RendezVousCommercial r)
+    {
+        var liste = new List<EvenementRendezVousVue>();
+        liste.Add(new EvenementRendezVousVue("Creation", Utc(r.DateCreation), "", "Rendez-vous planifié."));
+        foreach (var h in r.Evenements.OrderBy(h => h.Date).ThenBy(h => h.Id))
+        {
+            string auteur = h.Auteur is null ? "" : h.Auteur.FullName;
+            DateTime? ancienDebut = null;
+            if (h.AncienDebutUtc is not null)
+                ancienDebut = Utc(h.AncienDebutUtc.Value);
+            liste.Add(new EvenementRendezVousVue(h.Type.ToString(), Utc(h.Date), auteur, TexteEvenement(h), ancienDebut, h.AncienneDureeMinutes));
+        }
+        return liste;
+    }
+
+    // Phrase de l'historique. L'ancien horaire d'une replanification est ajouté par la fiche, dans le fuseau du rendez-vous.
+    private static string TexteEvenement(EvenementRendezVousCommercial h)
+    {
+        if (h.Type == TypeEvenementRendezVous.Modification)
+            return "Informations modifiées : " + h.Champs + ".";
+        if (h.Type == TypeEvenementRendezVous.Replanification)
+            return "Rendez-vous replanifié.";
+        if (h.Type == TypeEvenementRendezVous.Annulation)
+            return "Rendez-vous annulé.";
+        if (h.Type == TypeEvenementRendezVous.Realisation)
+            return "Rencontre déclarée réalisée par le conseiller.";
+        return "Absence du client déclarée par le conseiller.";
+    }
+
+    // Les dates lues par EF n'ont pas de genre : on précise qu'elles sont en UTC (sérialisées avec « Z »).
+    private static DateTime Utc(DateTime valeur) => DateTime.SpecifyKind(valeur, DateTimeKind.Utc);
 
     private static string LibelleDansListe(IReadOnlyList<(string Cle, string Libelle)> liste, string cle)
     {
@@ -719,6 +783,17 @@ public class ServiceProspects : IServiceProspects
     // Lit et valide la saisie ; les erreurs sont ajoutées à la liste donnée. maintenantUtc : horloge du serveur.
     private static ValeursRendezVous LireRendezVous(RendezVousSaisie s, FuseauCommercial fuseau, DateTime maintenantUtc, List<ErreurChamp> erreurs)
     {
+        var details = LireDetailsRendezVous(s, erreurs);
+        var horaire = LireHoraireRendezVous(s, fuseau, maintenantUtc, erreurs);
+        return new ValeursRendezVous(details.Type, horaire.DebutUtc, horaire.DureeMinutes, details.Mode, details.Lieu, details.Objectif, details.Commentaire);
+    }
+
+    private sealed record DetailsRendezVous(TypeRendezVous Type, string Mode, string? Lieu, string? Objectif, string? Commentaire);
+    private sealed record HoraireRendezVous(DateTime DebutUtc, int DureeMinutes);
+
+    // Type, modalité, lieu, objectif et commentaire (création et modification).
+    private static DetailsRendezVous LireDetailsRendezVous(RendezVousSaisie s, List<ErreurChamp> erreurs)
+    {
         void Erreur(string champ, string message) => erreurs.Add(new ErreurChamp(champ, message));
 
         // Type : un nom existant (jamais un nombre) ET permis par F22.
@@ -736,11 +811,6 @@ public class ServiceProspects : IServiceProspects
         if (!typeConnu)
             Erreur("type", "Choisissez un type de rendez-vous proposé.");
 
-        int duree = 0;
-        bool dureeLisible = int.TryParse(Texte(s.DureeMinutes), NumberStyles.None, CultureInfo.InvariantCulture, out duree);
-        if (!dureeLisible || !ReferentielsRendezVous.Durees.Contains(duree))
-            Erreur("dureeMinutes", "Choisissez une durée proposée.");
-
         string mode = Texte(s.Mode) ?? "";
         if (!EstDansListe(ReferentielsRendezVous.Modes, mode))
             Erreur("mode", "Choisissez la modalité du rendez-vous.");
@@ -754,6 +824,20 @@ public class ServiceProspects : IServiceProspects
         string? commentaire = Texte(s.Commentaire);
         if (commentaire is not null && commentaire.Length > LongueurCommentaireRendezVous)
             Erreur("commentaire", $"Commentaire : {LongueurCommentaireRendezVous} caractères au plus.");
+
+        return new DetailsRendezVous(type, mode, lieu, objectif, commentaire);
+    }
+
+    // Date, heure et durée (création et replanification). L'heure saisie est comprise dans le fuseau commercial.
+    // Refus : heure inexistante ou en double (changement d'heure), moment passé, rendez-vous qui traverse un changement d'heure.
+    private static HoraireRendezVous LireHoraireRendezVous(RendezVousSaisie s, FuseauCommercial fuseau, DateTime maintenantUtc, List<ErreurChamp> erreurs)
+    {
+        void Erreur(string champ, string message) => erreurs.Add(new ErreurChamp(champ, message));
+
+        int duree = 0;
+        bool dureeLisible = int.TryParse(Texte(s.DureeMinutes), NumberStyles.None, CultureInfo.InvariantCulture, out duree);
+        if (!dureeLisible || !ReferentielsRendezVous.Durees.Contains(duree))
+            Erreur("dureeMinutes", "Choisissez une durée proposée.");
 
         // Date et heure commerciales, au format des champs du navigateur (« 2027-01-15 » et « 14:00 »).
         bool dateLisible = DateTime.TryParseExact(Texte(s.Date), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime jour);
@@ -780,7 +864,256 @@ public class ServiceProspects : IServiceProspects
                     Erreur("dureeMinutes", "Ce rendez-vous traverserait un changement d'heure : choisissez un autre horaire.");
             }
         }
-        return new ValeursRendezVous(type, debutUtc, duree, mode, lieu, objectif, commentaire);
+        return new HoraireRendezVous(debutUtc, duree);
+    }
+
+    // ---------- Cycle de vie d'un rendez-vous enregistré (fonctionnalité 23) ----------
+    // Une seule frontière de temps, l'heure de début (horloge du serveur) :
+    //   avant le début : modifier, replanifier, annuler ;
+    //   à partir du début : déclarer la rencontre réalisée ou déclarer l'absence du client.
+    // Rien ne change tout seul : un rendez-vous passé reste « Planifié » tant que le conseiller n'a rien déclaré.
+    // Annulé, réalisé et absent sont définitifs (aucune réouverture). Chaque changement ajoute une ligne d'historique,
+    // jamais un contact, une première réponse, un suivi, une étape ou une date d'activité.
+
+    private const string MessageConflitCycleRendezVous =
+        "Ce dossier a été modifié entre-temps : rien n'a été enregistré. La page affiche maintenant les valeurs actuelles ; "
+        + "vérifiez le rendez-vous avant de recommencer.";
+
+    // Les trois identifiants envoyés par la fiche : prospect « pe- », opportunité « oe- », rendez-vous « rv- ».
+    private sealed record IdsRendezVous(int Prospect, int Opportunite, int RendezVous);
+
+    private static IdsRendezVous? LireIdsRendezVous(RendezVousSaisie s)
+    {
+        int? prospect = LireId(s.ProspectId, PrefixeProspect);
+        int? opportunite = LireId(s.OpportuniteId, PrefixeOpportunite);
+        int? rendezVous = LireId(s.RendezVousId, PrefixeRendezVous);
+        if (prospect is null || opportunite is null || rendezVous is null)
+            return null;
+        return new IdsRendezVous(prospect.Value, opportunite.Value, rendezVous.Value);
+    }
+
+    private sealed record CibleRendezVous(Prospect Prospect, OpportuniteVente Opportunite, RendezVousCommercial RendezVous);
+
+    // Verrouille le prospect (à appeler dans une transaction) et retrouve le rendez-vous demandé. Null si le prospect
+    // n'est pas dans le dossier du conseiller, si l'opportunité n'est pas à ce prospect ou si le rendez-vous n'est pas
+    // à cette opportunité : un rendez-vous n'est jamais cherché ailleurs que dans SON opportunité.
+    private async Task<CibleRendezVous?> VerrouillerRendezVousAsync(string utilisateurId, IdsRendezVous ids)
+    {
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, ids.Prospect);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == ids.Opportunite);
+        var rendezVous = opportunite?.RendezVous.FirstOrDefault(r => r.Id == ids.RendezVous);
+        if (prospect is null || opportunite is null || rendezVous is null)
+            return null;
+        return new CibleRendezVous(prospect, opportunite, rendezVous);
+    }
+
+    // Pourquoi cette opération est impossible maintenant sur ce rendez-vous ; null si elle est permise.
+    private static string? RefusCycleRendezVous(CibleRendezVous cible, TypeEvenementRendezVous operation, DateTime maintenantUtc)
+    {
+        var r = cible.RendezVous;
+        if (r.Statut != StatutRendezVous.Planifie)
+            return "Ce rendez-vous est déjà « " + LibelleStatutRendezVous(r.Statut) + " » : il ne peut plus être modifié ni changer de statut.";
+
+        bool commence = maintenantUtc >= r.DebutUtc;
+        bool changeDetailsOuHoraire = operation == TypeEvenementRendezVous.Modification || operation == TypeEvenementRendezVous.Replanification;
+        bool declaration = operation == TypeEvenementRendezVous.Realisation || operation == TypeEvenementRendezVous.Absence;
+        if (changeDetailsOuHoraire && !EstActive(cible.Opportunite))
+            return "Cette opportunité est clôturée : son rendez-vous ne peut plus être modifié ni replanifié.";
+        if (changeDetailsOuHoraire && commence)
+            return "L'heure de ce rendez-vous est atteinte : il ne peut plus être modifié ni replanifié. Déclarez la rencontre "
+                + "réalisée ou l'absence du client, puis planifiez au besoin un nouveau rendez-vous.";
+        if (operation == TypeEvenementRendezVous.Annulation && commence)
+            return "L'heure de ce rendez-vous est atteinte : il ne peut plus être annulé. Déclarez la rencontre réalisée ou l'absence du client.";
+        if (declaration && !commence)
+            return "Ce rendez-vous n'a pas encore commencé : la rencontre ou l'absence se déclare à partir de l'heure prévue.";
+        return null;
+    }
+
+    // Enregistre le changement et sa ligne d'historique dans la transaction ouverte, puis la valide.
+    private async Task<ResultatService<int>> EnregistrerCycleRendezVousAsync(IDbContextTransaction transaction, RendezVousCommercial rendezVous,
+        EvenementRendezVousCommercial evenement)
+    {
+        rendezVous.DateModification = evenement.Date;
+        _db.EvenementsRendezVous.Add(evenement);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<int>.Echec("L'enregistrement a échoué : rien n'a été enregistré. Réessayez dans un instant.");
+        }
+        return ResultatService<int>.Ok(rendezVous.Id);
+    }
+
+    // Modifie le type, la modalité, le lieu, l'objectif ou le commentaire d'un rendez-vous planifié qui n'a pas commencé.
+    // L'horaire n'est jamais lu ici (il passe par une replanification). Rien de changé : refus, aucun historique.
+    public async Task<ResultatService<int>> ModifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie)
+    {
+        var ids = LireIdsRendezVous(saisie);
+        if (ids is null)
+            return ResultatService<int>.NonTrouve();
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+
+        var resultat = new ResultatService<int>();
+        var details = LireDetailsRendezVous(saisie, resultat.Erreurs);
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var cible = await VerrouillerRendezVousAsync(utilisateurId, ids);
+        if (cible is null)
+            return ResultatService<int>.NonTrouve();
+        if (saisie.Version != Empreinte(cible.Prospect))
+            return ResultatService<int>.Echec(MessageConflitCycleRendezVous);
+        DateTime maintenant = _temps.GetUtcNow().UtcDateTime;
+        string? refus = RefusCycleRendezVous(cible, TypeEvenementRendezVous.Modification, maintenant);
+        if (refus is not null)
+            return ResultatService<int>.Echec(refus);
+
+        var r = cible.RendezVous;
+        var changes = new List<string>();
+        if (r.Type != details.Type)
+            changes.Add("Type");
+        if (r.Mode != details.Mode)
+            changes.Add("Modalité");
+        if (r.Lieu != details.Lieu)
+            changes.Add("Lieu");
+        if (r.Objectif != details.Objectif)
+            changes.Add("Objectif");
+        if (r.Commentaire != details.Commentaire)
+            changes.Add("Commentaire");
+        if (changes.Count == 0)
+            return ResultatService<int>.Echec("Aucune information n'a changé : rien n'a été enregistré.");
+
+        r.Type = details.Type;
+        r.Mode = details.Mode;
+        r.Lieu = details.Lieu;
+        r.Objectif = details.Objectif;
+        r.Commentaire = details.Commentaire;
+        var evenement = new EvenementRendezVousCommercial
+        {
+            RendezVousId = r.Id,
+            Type = TypeEvenementRendezVous.Modification,
+            Date = maintenant,
+            AuteurId = utilisateurId,
+            Champs = string.Join(", ", changes),
+        };
+        return await EnregistrerCycleRendezVousAsync(transaction, r, evenement);
+    }
+
+    // Donne un nouvel horaire (date, heure, durée) au MÊME rendez-vous, planifié et pas encore commencé. Mêmes règles
+    // que la création (fuseau commercial, moment futur, changements d'heure). L'ancien horaire reste dans l'historique.
+    public async Task<ResultatService<int>> ReplanifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie)
+    {
+        var ids = LireIdsRendezVous(saisie);
+        if (ids is null)
+            return ResultatService<int>.NonTrouve();
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+        if (_fuseau is null)
+            return ResultatService<int>.Echec("Le fuseau commercial n'est pas configuré : le rendez-vous n'a pas été replanifié.");
+
+        DateTime maintenant = _temps.GetUtcNow().UtcDateTime;
+        var resultat = new ResultatService<int>();
+        var horaire = LireHoraireRendezVous(saisie, _fuseau, maintenant, resultat.Erreurs);
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var cible = await VerrouillerRendezVousAsync(utilisateurId, ids);
+        if (cible is null)
+            return ResultatService<int>.NonTrouve();
+        if (saisie.Version != Empreinte(cible.Prospect))
+            return ResultatService<int>.Echec(MessageConflitCycleRendezVous);
+        string? refus = RefusCycleRendezVous(cible, TypeEvenementRendezVous.Replanification, maintenant);
+        if (refus is not null)
+            return ResultatService<int>.Echec(refus);
+
+        var r = cible.RendezVous;
+        if (r.DebutUtc == horaire.DebutUtc && r.DureeMinutes == horaire.DureeMinutes)
+            return ResultatService<int>.Echec("Le nouvel horaire est identique à l'actuel : rien n'a été enregistré.");
+
+        var evenement = new EvenementRendezVousCommercial
+        {
+            RendezVousId = r.Id,
+            Type = TypeEvenementRendezVous.Replanification,
+            Date = maintenant,
+            AuteurId = utilisateurId,
+            AncienDebutUtc = r.DebutUtc,
+            AncienneDureeMinutes = r.DureeMinutes,
+            NouveauDebutUtc = horaire.DebutUtc,
+            NouvelleDureeMinutes = horaire.DureeMinutes,
+        };
+        r.DebutUtc = horaire.DebutUtc;
+        r.DureeMinutes = horaire.DureeMinutes;
+        r.Fuseau = _fuseau.Id;
+        return await EnregistrerCycleRendezVousAsync(transaction, r, evenement);
+    }
+
+    // Passe un rendez-vous planifié à « Annule » (avant son début), « Termine » ou « ClientAbsent » (à partir de son début).
+    // Déclarations du conseiller : ni contact, ni première réponse, ni suivi réalisé n'en sont déduits.
+    public async Task<ResultatService<int>> ChangerStatutRendezVousAsync(string utilisateurId, RendezVousSaisie saisie)
+    {
+        var ids = LireIdsRendezVous(saisie);
+        if (ids is null)
+            return ResultatService<int>.NonTrouve();
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+
+        // Seules trois cibles existent ; tout autre texte (dont « Planifie » ou un nombre) est refusé.
+        string? texteStatut = Texte(saisie.Statut);
+        StatutRendezVous nouveauStatut;
+        TypeEvenementRendezVous operation;
+        if (texteStatut == nameof(StatutRendezVous.Annule))
+        {
+            nouveauStatut = StatutRendezVous.Annule;
+            operation = TypeEvenementRendezVous.Annulation;
+        }
+        else if (texteStatut == nameof(StatutRendezVous.Termine))
+        {
+            nouveauStatut = StatutRendezVous.Termine;
+            operation = TypeEvenementRendezVous.Realisation;
+        }
+        else if (texteStatut == nameof(StatutRendezVous.ClientAbsent))
+        {
+            nouveauStatut = StatutRendezVous.ClientAbsent;
+            operation = TypeEvenementRendezVous.Absence;
+        }
+        else
+        {
+            var refusStatut = new ResultatService<int>();
+            refusStatut.Erreurs.Add(new ErreurChamp("statut", "Choisissez un changement de statut proposé."));
+            return refusStatut;
+        }
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var cible = await VerrouillerRendezVousAsync(utilisateurId, ids);
+        if (cible is null)
+            return ResultatService<int>.NonTrouve();
+        if (saisie.Version != Empreinte(cible.Prospect))
+            return ResultatService<int>.Echec(MessageConflitCycleRendezVous);
+        DateTime maintenant = _temps.GetUtcNow().UtcDateTime;
+        string? refus = RefusCycleRendezVous(cible, operation, maintenant);
+        if (refus is not null)
+            return ResultatService<int>.Echec(refus);
+
+        var r = cible.RendezVous;
+        r.Statut = nouveauStatut;
+        var evenement = new EvenementRendezVousCommercial
+        {
+            RendezVousId = r.Id,
+            Type = operation,
+            Date = maintenant,
+            AuteurId = utilisateurId,
+        };
+        return await EnregistrerCycleRendezVousAsync(transaction, r, evenement);
     }
 
     // ---------- Véhicules envisagés d'une opportunité enregistrée (fonctionnalité 21) ----------
@@ -1826,11 +2159,14 @@ public class ServiceProspects : IServiceProspects
                 texte.Append('~');
                 texte.AppendJoin('|', v.Id, v.Marque, v.Modele, v.Annee, v.Finition);
             }
-            // Rendez-vous (fonctionnalité 22), même principe : rien d'ajouté pour une opportunité sans rendez-vous.
+            // Rendez-vous (fonctionnalités 22 et 23), même principe : rien d'ajouté pour une opportunité sans rendez-vous.
+            // Statut, lieu, objectif et commentaire en font partie : une page qui n'affiche pas le rendez-vous à jour ne
+            // peut ni le modifier, ni le replanifier, ni changer son statut.
             foreach (var r in o.RendezVous.OrderBy(r => r.Id))
             {
                 texte.Append('@');
-                texte.AppendJoin('|', r.Id, r.Type, r.DebutUtc.ToString("O", CultureInfo.InvariantCulture), r.Fuseau, r.DureeMinutes, r.Mode);
+                texte.AppendJoin('|', r.Id, r.Type, r.DebutUtc.ToString("O", CultureInfo.InvariantCulture), r.Fuseau, r.DureeMinutes, r.Mode,
+                    r.Statut, r.Lieu, r.Objectif, r.Commentaire);
             }
         }
         byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte.ToString()));

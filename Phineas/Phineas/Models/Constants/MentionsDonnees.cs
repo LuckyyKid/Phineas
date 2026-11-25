@@ -31,9 +31,11 @@ public static class MentionsDonnees
     // Bandeau des fiches (prospect, rendez-vous, soumission, transaction).
     public const string BandeauTitre = "Données réelles et de démonstration.";
 
+    // Affiché sur les fiches réelles et fictives : exact dans les deux cas (qualification F20, véhicules F21, rendez-vous F22 et F23).
     public const string BandeauTexte =
-        "Les prospects créés avec « Nouveau prospect » sont enregistrés, ainsi que leurs modifications, notes, étapes "
-        + "intermédiaires et suivis, et les opportunités ajoutées à leur fiche. Le reste (prospects fictifs, qualification détaillée, "
-        + "véhicules envisagés, rendez-vous, soumissions, transactions) reste dans cet onglet du navigateur : ce n'est pas enregistré "
-        + "en base et disparaît à sa fermeture.";
+        "Dans les dossiers enregistrés (prospects créés avec « Nouveau prospect »), les informations du prospect, ses modifications, "
+        + "notes, étapes intermédiaires et suivis, et les opportunités ajoutées à leur fiche, avec leurs qualifications, leurs véhicules "
+        + "envisagés et leurs rendez-vous commerciaux, sont enregistrés en base de données. Les dossiers fictifs et les modules de "
+        + "démonstration, notamment les soumissions et les transactions, restent locaux à cet onglet et ne sont pas enregistrés en base. "
+        + "Les rendez-vous de démonstration restent également fictifs.";
 }

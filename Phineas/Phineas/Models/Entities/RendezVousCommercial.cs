@@ -5,8 +5,11 @@ namespace Phineas.Models.Entities;
 
 // Rendez-vous commercial planifié pour UN projet d'achat (fonctionnalité 22). C'est une intention enregistrée dans
 // Phineas : aucun calendrier externe, aucune invitation envoyée, aucun créneau ni véhicule réservé, aucune présence
-// confirmée. Pas de statut : tout rendez-vous de F22 est planifié (le cycle de vie viendra avec F23).
-// Écrit par ServiceProspects.PlanifierRendezVousAsync, sous le verrou du prospect.
+// confirmée. Cycle de vie (fonctionnalité 23) : Planifie, puis Annule, Termine (réalisé, déclaré par le conseiller) ou
+// ClientAbsent (absence déclarée), trois états définitifs. Aucun changement automatique : un rendez-vous dont l'heure
+// est passée reste « Planifié » tant que le conseiller n'a rien déclaré.
+// Écrit par ServiceProspects (PlanifierRendezVousAsync, ModifierRendezVousAsync, ReplanifierRendezVousAsync,
+// ChangerStatutRendezVousAsync), toujours sous le verrou du prospect. Chaque changement est noté dans Evenements.
 public class RendezVousCommercial
 {
     public int Id { get; set; }
@@ -42,4 +45,14 @@ public class RendezVousCommercial
     public string? Commentaire { get; set; }
 
     public DateTime DateCreation { get; set; } = DateTime.UtcNow;
+
+    // Un des statuts permis par F23 (ServiceProspects.StatutsRendezVousPersistants). Les rendez-vous créés avant F23
+    // reçoivent « Planifie » par la migration AjoutCycleVieRendezVous.
+    public StatutRendezVous Statut { get; set; } = StatutRendezVous.Planifie;
+
+    // Dernier changement (modification, replanification ou statut), en UTC ; null tant qu'il n'y en a pas eu.
+    public DateTime? DateModification { get; set; }
+
+    // Changements enregistrés, du plus ancien au plus récent (jamais effacés, même après annulation).
+    public ICollection<EvenementRendezVousCommercial> Evenements { get; set; } = new List<EvenementRendezVousCommercial>();
 }
