@@ -78,9 +78,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<Prospect>(e =>
         {
-            // Index pour la recherche de doublons dans une concession.
-            e.HasIndex(p => new { p.DealershipId, p.Courriel });
-            e.HasIndex(p => new { p.DealershipId, p.TelephoneChiffres });
+            // Doublon = même courriel ou même téléphone dans une concession (ServiceProspects.ChercherDoublonAsync).
+            // Index uniques (fonctionnalité 17) : la base garantit cette règle même si deux créations ou modifications
+            // arrivent au même instant, sur une ou plusieurs instances. Un courriel ou un téléphone absent (null) reste
+            // permis plusieurs fois ; deux concessions différentes ne se gênent jamais.
+            e.HasIndex(p => new { p.DealershipId, p.Courriel }).IsUnique();
+            e.HasIndex(p => new { p.DealershipId, p.TelephoneChiffres }).IsUnique();
             e.HasIndex(p => new { p.DealershipId, p.ConseillerId });
 
             e.HasOne(p => p.Dealership)

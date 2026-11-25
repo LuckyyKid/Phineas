@@ -593,9 +593,11 @@ namespace Phineas.Data.Migrations
 
                     b.HasIndex("DealershipId", "ConseillerId");
 
-                    b.HasIndex("DealershipId", "Courriel");
+                    b.HasIndex("DealershipId", "Courriel")
+                        .IsUnique();
 
-                    b.HasIndex("DealershipId", "TelephoneChiffres");
+                    b.HasIndex("DealershipId", "TelephoneChiffres")
+                        .IsUnique();
 
                     b.ToTable("Prospects");
                 });

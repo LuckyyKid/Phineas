@@ -299,10 +299,11 @@ public class ServiceProspects : IServiceProspects
             return resultat;
 
         int concessionId = conseiller.DealershipId!.Value;
-        await ChercherDoublonAsync(concessionId, valeurs, null, resultat);
+        await ChercherDoublonAsync(concessionId, valeurs, null, utilisateurId, ContexteDoublon.Creation, resultat);
         if (!resultat.Succes)
             return resultat;
 
+        // Le prospect et sa première opportunité : un seul SaveChanges, donc une seule transaction (tout ou rien).
         var prospect = CreerEntites(valeurs, utilisateurId, concessionId);
         _db.Prospects.Add(prospect);
         try
@@ -311,8 +312,14 @@ public class ServiceProspects : IServiceProspects
         }
         catch (DbUpdateException)
         {
-            // Rien n'a été enregistré : jamais de message de succès dans ce cas.
+            // Rien n'a été enregistré : jamais de message de succès dans ce cas. Si une création simultanée du même
+            // courriel ou téléphone vient d'être enregistrée, l'index unique a refusé celle-ci : on le dit comme un
+            // doublon ordinaire (même message, sans données d'un collègue) ; sinon, échec technique.
             _db.ChangeTracker.Clear();
+            var refus = new ResultatService<int>();
+            await ChercherDoublonAsync(concessionId, valeurs, null, utilisateurId, ContexteDoublon.Creation, refus);
+            if (!refus.Succes)
+                return refus;
             return ResultatService<int>.Echec(
                 "L'enregistrement a échoué : le prospect n'a pas été créé. Réessayez dans un instant."
             );
@@ -399,7 +406,7 @@ public class ServiceProspects : IServiceProspects
         if (!resultat.Succes)
             return resultat;
 
-        await ChercherDoublonAsync(prospect.DealershipId, valeurs, prospect.Id, resultat);
+        await ChercherDoublonAsync(prospect.DealershipId, valeurs, prospect.Id, utilisateurId, ContexteDoublon.Modification, resultat);
         if (!resultat.Succes)
             return resultat;
 
@@ -436,7 +443,12 @@ public class ServiceProspects : IServiceProspects
         }
         catch (DbUpdateException)
         {
+            // Index unique : un autre dossier vient de recevoir ce courriel ou ce téléphone (même règle qu'à la création).
             _db.ChangeTracker.Clear();
+            var refus = new ResultatService();
+            await ChercherDoublonAsync(prospect.DealershipId, valeurs, prospect.Id, utilisateurId, ContexteDoublon.Modification, refus);
+            if (!refus.Succes)
+                return refus;
             return ResultatService.Echec("L'enregistrement a échoué : les modifications n'ont pas été enregistrées. Réessayez dans un instant.");
         }
         return ResultatService.Ok();
@@ -1193,10 +1205,22 @@ public class ServiceProspects : IServiceProspects
     private static string? Libelle(IReadOnlyList<(string Cle, string Libelle)> liste, string? cle) =>
         liste.FirstOrDefault(x => x.Cle == cle).Libelle;
 
+    // Création ou modification : seule la fin du message de refus change.
+    private enum ContexteDoublon
+    {
+        Creation,
+        Modification,
+    }
+
     // Doublon = même courriel ou même téléphone dans la concession. Le nom seul ne suffit jamais :
     // deux personnes peuvent s'appeler pareil. On refuse l'enregistrement, sans rien fusionner.
+    // La même règle est garantie par les index uniques (DealershipId, Courriel) et (DealershipId, TelephoneChiffres).
     // exclureId : le prospect en cours de modification, qui ne peut pas être son propre doublon.
-    private async Task ChercherDoublonAsync(int concessionId, NouveauProspectSaisie s, int? exclureId, ResultatService resultat)
+    // Confidentialité (fonctionnalité 17) : le nom n'est donné que si le dossier existant est déjà accessible au
+    // conseiller (le sien, dans sa concession). Pour le dossier d'un collègue, le message ne dit rien de plus que
+    // « un dossier existe » : ni nom, ni coordonnées, ni identifiant, ni conseiller responsable.
+    private async Task ChercherDoublonAsync(int concessionId, NouveauProspectSaisie s, int? exclureId, string utilisateurId,
+        ContexteDoublon contexte, ResultatService resultat)
     {
         var autres = _db.Prospects.AsNoTracking().Where(p => p.DealershipId == concessionId);
         if (exclureId is not null)
@@ -1206,8 +1230,7 @@ public class ServiceProspects : IServiceProspects
         {
             var existant = await autres.FirstOrDefaultAsync(p => p.Courriel == s.Courriel);
             if (existant is not null)
-                resultat.Erreurs.Add(new ErreurChamp("courriel",
-                    $"Ce courriel appartient déjà à {existant.Prenom} {existant.Nom}, un prospect de votre concession."));
+                resultat.Erreurs.Add(new ErreurChamp("courriel", MessageDoublon("ce courriel", existant, utilisateurId, contexte)));
         }
 
         string? chiffres = TelephoneEnChiffres(s.Telephone);
@@ -1215,9 +1238,20 @@ public class ServiceProspects : IServiceProspects
         {
             var existant = await autres.FirstOrDefaultAsync(p => p.TelephoneChiffres == chiffres);
             if (existant is not null)
-                resultat.Erreurs.Add(new ErreurChamp("telephone",
-                    $"Ce téléphone appartient déjà à {existant.Prenom} {existant.Nom}, un prospect de votre concession."));
+                resultat.Erreurs.Add(new ErreurChamp("telephone", MessageDoublon("ce téléphone", existant, utilisateurId, contexte)));
         }
+    }
+
+    // Message de refus d'un doublon. Prospect du conseiller : il peut déjà ouvrir sa fiche, le nom l'aide à le retrouver.
+    // Prospect d'un collègue : message neutre, aucune donnée du dossier existant.
+    private static string MessageDoublon(string coordonnee, Prospect existant, string utilisateurId, ContexteDoublon contexte)
+    {
+        string suite = contexte == ContexteDoublon.Creation
+            ? "Aucune nouvelle fiche n'a été créée."
+            : "Les modifications n'ont pas été enregistrées.";
+        if (existant.ConseillerId == utilisateurId)
+            return $"Un de vos prospects a déjà {coordonnee} : {existant.Prenom} {existant.Nom}. {suite}";
+        return $"Un dossier correspondant à {coordonnee} existe déjà dans votre concession. {suite}";
     }
 
     // Le prospect et son unique opportunité, enregistrés ensemble par le même SaveChanges.
