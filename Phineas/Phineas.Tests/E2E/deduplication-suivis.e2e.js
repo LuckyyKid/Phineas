@@ -35,6 +35,52 @@ function sql(requete) {
   return execFileSync("docker", ["exec", CONTENEUR, "mysql", "-uphineas", "-pphineas_dev_password", "-N", "-B", "--default-character-set=utf8mb4", BASE, "-e", requete], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 }
 
+// ---------- Attendu calculé indépendamment du moteur (billet #89) ----------
+// Règles métier, réécrites ici sans appeler regrouperObligations ni prioriser (intelligence-regles.js) :
+// - première réponse : échéance = demande + 1 h (ConfigIntelligence.DelaiPremiereReponseHeures) ; priorité de base
+//   « Élevé », « Urgent » si l'échéance est dépassée (la montée « moins de six heures » ne s'applique pas à « Élevé ») ;
+// - suivi du jour : échéance = jour du suivi à 23 h 59 min 00 s, heure locale ; « Normal », « Élevé » si l'échéance est
+//   dépassée ou à moins de six heures, jamais « Urgent » (règle sans urgence possible) ;
+// - obligation regroupée : échéance = la plus proche des deux (une égalité garde cet instant) ; raison principale = la
+//   plus prioritaire, puis l'échéance la plus proche, puis la plus concrète (le suivi avant la première réponse).
+const HEURE = 3600000;
+const LIBELLES_NIVEAU = ["Faible", "Normal", "Élevé", "Urgent"];
+function attenduObligation(demandeMs, jourSuivi, maintenantMs) {
+  const premiere = demandeMs + HEURE;
+  const morceaux = jourSuivi.split("-").map(Number);
+  const suivi = new Date(morceaux[0], morceaux[1] - 1, morceaux[2], 23, 59, 0, 0).getTime();
+  const niveauPremiere = premiere < maintenantMs ? 3 : 2;
+  const niveauSuivi = suivi < maintenantMs || suivi - maintenantMs < 6 * HEURE ? 2 : 1;
+  let principale;
+  if (niveauPremiere !== niveauSuivi) principale = niveauPremiere > niveauSuivi ? "premiere" : "suivi";
+  else if (premiere !== suivi) principale = premiere < suivi ? "premiere" : "suivi";
+  else principale = "suivi";
+  return {
+    echeance: Math.min(premiere, suivi),
+    egalite: premiere === suivi,
+    principale: principale,
+    priorite: LIBELLES_NIVEAU[principale === "premiere" ? niveauPremiere : niveauSuivi],
+  };
+}
+
+// Ce que montre la ligne « À traiter » d'une obligation, et ce que le moteur a produit pour elle (échéance, raisons).
+async function lireObligation(page, oppId) {
+  const ligne = await trouverLigne(page, "contact:oe-" + oppId);
+  const texte = ligne ? await ligne.innerText() : "";
+  const moteur = await page.evaluate(function (id) {
+    const g = window.IntelligenceRegles.regrouperObligations(window.Intelligence.actives({ conseiller: window.Prospects.moiId }))
+      .filter(function (x) { return x.id === "contact:" + id; })[0];
+    return g ? { echeance: new Date(g.echeance).getTime(), raisons: g.raisons.map(function (r) { return r.regle; }).sort().join(), principale: g.principale.regle,
+      lignes: document.querySelectorAll('#relances tr[data-obligation="contact:' + id + '"]').length } : null;
+  }, "oe-" + oppId);
+  return { texte: texte, moteur: moteur };
+}
+
+// Texte d'échéance tel que l'interface le formule (format seulement, aucun choix d'échéance).
+async function texteEcheance(page, ms) {
+  return page.evaluate(function (x) { return window.IntelligenceUI.echeanceTexte(new Date(x).toISOString()); }, ms);
+}
+
 async function nouvellePage(navigateur, options) {
   return (await navigateur.newContext(Object.assign({ viewport: { width: 1440, height: 900 } }, options || {}))).newPage();
 }
@@ -145,13 +191,18 @@ async function messageAffiche(page) {
     let miennes = lignes.filter(function (l) { return l.obligation === "contact:oe-" + a.oppId; });
     verifier(miennes.length === 1 && !lignes.some(function (l) { return l.obligation !== "contact:oe-" + a.oppId && l.action && l.action.indexOf("oe-" + a.oppId) >= 0 && l.action.indexOf("oe-" + a.oppId + "0") < 0 && (l.action.endsWith("oe-" + a.oppId) || l.action.indexOf("oe-" + a.oppId + ":") >= 0); }), "une seule ligne pour cette prise de contact, sur toutes les pages");
     verifier(miennes[0].raisons.slice().sort().join() === "premiere-reponse,suivi-echeance" && miennes[0].texte.includes("Demande reçue sans première réponse") && miennes[0].texte.includes("Suivi demandé arrivé à échéance") && miennes[0].texte.includes("Même prise de contact : 2 raisons"), "les deux raisons restent visibles dans la ligne");
-    // Échéance attendue : la plus proche des deux raisons (première réponse, une heure après la demande), calculée par le moteur.
-    const echeances = await page.evaluate(function (id) {
-      const raisons = window.Intelligence.actives({ conseiller: window.Prospects.moiId }).filter(function (x) { return x.relance && x.opportuniteId === id; });
-      const proche = raisons.map(function (x) { return x.echeance; }).sort()[0];
-      return { proche: window.IntelligenceUI.echeanceTexte(proche), suivi: window.IntelligenceUI.echeanceTexte(raisons.filter(function (x) { return x.regle === "suivi-echeance"; })[0].echeance) };
-    }, "oe-" + a.oppId);
-    verifier(miennes[0].texte.includes("Priorité : Élevé") && miennes[0].texte.includes("Préparer une réponse initiale · " + echeances.proche) && echeances.proche !== echeances.suivi, "priorité (Élevé) et échéance la plus proche (« " + echeances.proche + " », avant celle du suivi « " + echeances.suivi + " ») affichées");
+    // Billet #89 : l'échéance et la raison principale attendues sont calculées indépendamment (attenduObligation), à partir
+    // de la demande enregistrée et du jour du suivi. L'ancienne assertion supposait que la première réponse échoit
+    // toujours avant le suivi : faux après 22 h 59 (demande + 1 h tombe après 23 h 59).
+    // Instant exact de la demande (fractions de seconde comprises), en UTC comme en base.
+    const demandeA = new Date(sql("SELECT DATE_FORMAT(DateCreation, '%Y-%m-%dT%H:%i:%s.%f') FROM OpportunitesVente WHERE Id = " + a.oppId).slice(0, 23) + "Z").getTime();
+    const attenduA = attenduObligation(demandeA, jour(0), await page.evaluate(function () { return Date.now(); }));
+    const lueA = await lireObligation(page, a.oppId);
+    const echeanceAttendueA = await texteEcheance(page, attenduA.echeance);
+    const libelleA = attenduA.principale === "premiere" ? "Préparer une réponse initiale" : action;
+    verifier(lueA.moteur && lueA.moteur.echeance === attenduA.echeance && miennes[0].texte.includes("Priorité : " + attenduA.priorite) &&
+      miennes[0].texte.includes(libelleA + " · " + echeanceAttendueA),
+      "priorité (" + attenduA.priorite + ") et échéance la plus proche des deux raisons (« " + echeanceAttendueA + " », " + (attenduA.principale === "premiere" ? "première réponse" : "suivi") + " en tête) affichées");
     const autre = lignes.filter(function (l) { return l.obligation === "contact:oe-" + b.oppId; });
     verifier(autre.length === 1 && autre[0].texte.includes("Rappeler pour le deuxième véhicule"), "la deuxième opportunité du même client reste une ligne distincte");
 
@@ -265,6 +316,45 @@ async function messageAffiche(page) {
     await page.click("#onglet-a-traiter");
     ligne = await trouverLigne(page, "contact:oe-" + b.oppId);
     await ligne.screenshot({ path: "dedup-ligne-clair.png" });
+
+    // ---------- Billet #89 : échéance et raison principale à des instants fixes ----------
+    // Chaque cas : une opportunité « Nouveau » sans contact (première réponse due) avec un suivi du jour, la demande à
+    // une heure choisie, et l'horloge du navigateur fixée. Le serveur (UTC) n'intervient pas dans ce calcul : la demande
+    // est enregistrée comme un instant UTC, le suivi comme un jour du conseiller.
+    const fixe = await creerAvecSuivi(page, "Echeance" + suffixe, "Suivi du dossier " + suffixe, 0);
+    const jourCas = jour(0), lendemain = jour(1);
+    const cas = [
+      { nom: "avant le seuil (10 h 20, demande 10 h 00)", demande: [jourCas, 10, 0], maintenant: [jourCas, 10, 20], principale: "premiere", echeance: "premiere" },
+      { nom: "première réponse plus proche (22 h 40, demande 22 h 30)", demande: [jourCas, 22, 30], maintenant: [jourCas, 22, 40], principale: "premiere", echeance: "premiere" },
+      // Égalité : deux raisons « Élevé », même échéance : le suivi passe en tête (plus concret que la première réponse).
+      { nom: "égalité au seuil (23 h 05, demande 22 h 59 : deux échéances à 23 h 59)", demande: [jourCas, 22, 59], maintenant: [jourCas, 23, 5], principale: "suivi", echeance: "egalite" },
+      { nom: "suivi plus proche (23 h 40, demande 23 h 33)", demande: [jourCas, 23, 33], maintenant: [jourCas, 23, 40], principale: "suivi", echeance: "suivi" },
+      { nom: "après minuit local (le lendemain 00 h 10, demande la veille 23 h 33)", demande: [jourCas, 23, 33], maintenant: [lendemain, 0, 10], principale: "suivi", echeance: "suivi" },
+    ];
+    function instant(t) { const m = t[0].split("-").map(Number); return new Date(m[0], m[1] - 1, m[2], t[1], t[2], 0, 0); }
+    for (const c of cas) {
+      const demande = instant(c.demande);
+      sql("UPDATE OpportunitesVente SET DateCreation = '" + demande.toISOString().slice(0, 19).replace("T", " ") + "' WHERE Id = " + fixe.oppId);
+      const v = await nouvellePage(navigateur);
+      await v.clock.setFixedTime(instant(c.maintenant));
+      await connecter(v, SOPHIE);
+      await ouvrirSuivis(v);
+      const lue = await lireObligation(v, fixe.oppId);
+      const attendu = attenduObligation(demande.getTime(), jourCas, instant(c.maintenant).getTime());
+      const premiere = demande.getTime() + HEURE;
+      const suivi = instant([jourCas, 23, 59]).getTime();
+      const texte = await texteEcheance(v, attendu.echeance);
+      const libelle = attendu.principale === "premiere" ? "Préparer une réponse initiale" : "Suivi du dossier " + suffixe;
+      // L'oracle lui-même est vérifié contre la situation décrite (aucun cas ne passe par hasard).
+      const oracleConforme = attendu.principale === c.principale &&
+        (c.echeance === "premiere" ? attendu.echeance === premiere && premiere < suivi : c.echeance === "suivi" ? attendu.echeance === suivi && suivi < premiere : attendu.egalite && premiere === suivi);
+      verifier(oracleConforme && lue.moteur && lue.moteur.lignes === 1 && lue.moteur.raisons === "premiere-reponse,suivi-echeance" &&
+        lue.moteur.echeance === attendu.echeance && lue.texte.includes("Priorité : " + attendu.priorite) && lue.texte.includes(libelle + " · " + texte),
+        "#89, " + c.nom + " : une ligne, deux raisons, priorité « " + attendu.priorite + " », « " + libelle + " · " + texte + " »");
+      await v.context().close();
+    }
+    verifier(sql("SELECT COUNT(*) FROM HistoriquesSuiviOpportunite WHERE OpportuniteId = " + fixe.oppId) === "0" && sql("SELECT COUNT(*) FROM NotesProspect WHERE OpportuniteId = " + fixe.oppId) === "0",
+      "#89 : ces lectures n'écrivent rien (ni réalisation, ni note)");
 
     console.log("\nParcours de regroupement réussi (" + etape + " vérifications).");
   } catch (erreur) {
