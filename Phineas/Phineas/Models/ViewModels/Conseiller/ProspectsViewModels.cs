@@ -62,7 +62,8 @@ public record Opportunite(
     // garde leurs libellés, lus par les autres modules (Centre d'actions, liste, relations).
     IReadOnlyList<VehiculeEnvisageVue>? VehiculesDetail = null,
     // Opportunité enregistrée : ses rendez-vous commerciaux enregistrés, du plus tôt au plus tard (fonctionnalité 22).
-    IReadOnlyList<RendezVousEnregistreVue>? RendezVousEnregistres = null
+    IReadOnlyList<RendezVousEnregistreVue>? RendezVousEnregistres = null,
+    IReadOnlyList<EssaiRoutierVue>? EssaisRoutiers = null
 );
 
 // Prochaine action enregistrée d'une opportunité active, pour la vue « À venir » de « Mes suivis »
@@ -239,6 +240,28 @@ public class RendezVousSaisie
     public string? Mode { get; set; }
     public string? Lieu { get; set; }
     public string? Objectif { get; set; }
+    public string? Commentaire { get; set; }
+}
+
+// Essai routier planifié d'une opportunité enregistrée, tel que la fiche l'affiche (fonctionnalité 24). Id : « er-12 ».
+// VehiculeEnvisageId : « ve-… » du véhicule envisagé choisi, ou null (description libre, ou véhicule retiré depuis).
+// DebutUtc : instant UTC ; la fiche l'affiche dans le fuseau Fuseau, jamais dans celui du navigateur.
+public record EssaiRoutierVue(string Id, string? VehiculeEnvisageId, string VehiculeLibelle, DateTime DebutUtc, string Fuseau,
+    int DureeMinutes, string? Commentaire);
+
+// Champs postés par la fenêtre « Planifier un essai routier » de la fiche (fonctionnalité 24). Textes bruts : la
+// validation se fait dans ServiceProspects.PlanifierEssaiRoutierAsync. VehiculeId : « ve-… » d'un véhicule envisagé de
+// cette opportunité, ou vide ; alors Vehicule (description libre) est obligatoire. Date et Heure : heure commerciale.
+public class EssaiRoutierSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? Version { get; set; }
+    public string? VehiculeId { get; set; }
+    public string? Vehicule { get; set; }
+    public string? Date { get; set; }
+    public string? Heure { get; set; }
+    public string? DureeMinutes { get; set; }
     public string? Commentaire { get; set; }
 }
 

@@ -541,7 +541,7 @@
         "<div><dt>Critères</dt><dd>" + (criteres.length ? esc(criteres.join(" · ")) : aPreciser()) +
         '<span class="pr-sous d-block">Complétude : ' + comp.remplis + " / " + comp.total + "</span></dd></div>" +
         "<div><dt>Prochaine action</dt><dd>" + (P.estActive(o) ? prochaineHtml(o) + badgeSuivi(o) : '<span class="text-muted">Opportunité clôturée</span>') + "</dd></div>" +
-        "</dl>" + soumissionsHtml(o) + rendezVousHtml(o) + transactionsHtml(o) + "</div>" +
+        "</dl>" + soumissionsHtml(o) + rendezVousHtml(o) + essaisRoutiersHtml(o) + transactionsHtml(o) + "</div>" +
         '<div class="pr-opp-pied">' +
         '<span class="pr-sous">Ouverte le ' + esc(P.dateCourte(o.dateCreation)) + " · activité " + esc(P.relatif(o.derniereActivite)) + "</span>" +
         '<label class="visually-hidden" for="opp-etape-' + esc(o.id) + '">Étape de « ' + esc(o.titre) + " »</label>" +
@@ -650,6 +650,29 @@
       (liste.length
         ? "<ul>" + lignes + "</ul>" + '<p class="pr-sous mb-0 mt-1">Heures du fuseau ' + esc(fuseau) + ". Enregistrés dans le dossier ; aucune invitation envoyée, aucun créneau réservé.</p>"
         : '<p class="pr-sous mb-0" data-rendezvous-vide>Aucun rendez-vous planifié pour cette opportunité.</p>') + "</div>";
+  }
+
+  // Essais routiers enregistrés d'une opportunité réelle (fonctionnalité 24) : seulement ceux de CETTE opportunité, du
+  // plus tôt au plus tard, dans leur fuseau commercial. Planifiés seulement : ni véhicule réservé, ni permis ou assurance
+  // vérifiés, ni présence confirmée, ni résultat (F25). Rien pour une opportunité de démonstration.
+  function essaisRoutiersHtml(o) {
+    if (!P.estEnregistree(o.id)) return "";
+    var liste = P.essaisRoutiersDe(o.id);
+    var lignes = liste.map(function (e) {
+      var f = P.formaterRendezVous(e);
+      return '<li data-essai-id="' + esc(e.id) + '"><strong data-essai-vehicule>' + esc(e.vehiculeLibelle) + "</strong>" +
+        '<span class="rv-statut rv-st-Planifie"><i class="bi bi-speedometer" aria-hidden="true"></i>Planifié</span>' +
+        '<span class="pr-sous d-block w-100" data-essai-horaire>' + esc(f.jour + ", de " + f.debut + " à " + f.fin) + "</span>" +
+        (e.commentaire ? '<span class="pr-sous d-block w-100">' + esc(e.commentaire) + "</span>" : "") +
+        "</li>";
+    }).join("");
+    var fuseau = liste.length ? liste[0].fuseau : "";
+    return '<div class="pr-soumissions" data-essais-reels="' + esc(o.id) + '"><div class="pr-soumissions-tete"><span>Essais routiers</span>' +
+      (P.estActive(o) ? '<button type="button" class="btn btn-sm btn-link p-0" data-essai-planifier="' + esc(o.id) + '"><i class="bi bi-speedometer me-1" aria-hidden="true"></i>Planifier un essai routier</button>' : "") + "</div>" +
+      (liste.length
+        ? "<ul>" + lignes + "</ul>" + '<p class="pr-sous mb-0 mt-1">Heures du fuseau ' + esc(fuseau) + ". Planifiés dans le dossier ; aucun véhicule réservé, "
+          + "permis et assurance non vérifiés par cet enregistrement.</p>"
+        : '<p class="pr-sous mb-0" data-essai-vide>Aucun essai routier planifié pour cette opportunité.</p>') + "</div>";
   }
 
   // Rendez-vous de l'opportunité (module Rendez-vous chargé sur la fiche) : à venir, passés, essais et résultats.
@@ -1087,6 +1110,68 @@
     var action = b.dataset.rendezvousAction;
     if (action === "modifier" || action === "replanifier") return ouvrirRendezVous(b.dataset.opp, b.dataset.rendezvous, action);
     if (changerStatutRendezVous(b.dataset.opp, b.dataset.rendezvous, action)) b.disabled = true; // contre le double clic
+  });
+
+  // ---------- Essai routier d'une opportunité enregistrée (fonctionnalité 24) ----------
+  // Fenêtre envoyée au serveur, qui vérifie le véhicule (un véhicule envisagé de CETTE opportunité, ou une description),
+  // interprète l'heure dans le fuseau commercial, puis recharge la fiche avec son message.
+  var modalEssai = bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-essai"));
+  var formEssai = document.getElementById("form-essai");
+  var essaiOpp = null;
+
+  // La description libre n'est demandée que si aucun véhicule envisagé n'est choisi.
+  function afficherDescriptionEssai() {
+    var libre = !formEssai.elements.vehiculeId.value;
+    var zone = formEssai.querySelector("[data-essai-description]");
+    zone.hidden = !libre;
+    formEssai.elements.vehicule.disabled = !libre;
+  }
+
+  function ouvrirEssai(oppId) {
+    var o = P.opportunite(oppId);
+    if (!o || !P.estEnregistree(oppId) || !P.estActive(o)) return;
+    essaiOpp = oppId;
+    formEssai.reset();
+    formEssai.querySelectorAll(".is-invalid").forEach(function (x) { x.classList.remove("is-invalid"); });
+    var options = P.vehiculesDe(oppId).map(function (v) { return '<option value="' + esc(v.id) + '">' + esc(v.libelle) + "</option>"; });
+    options.push('<option value="">Autre véhicule (le décrire)</option>');
+    formEssai.elements.vehiculeId.innerHTML = options.join("");
+    afficherDescriptionEssai();
+    formEssai.querySelector("[data-essai-mention]").textContent = "Projet « " + o.titre + " ». L'essai est planifié dans le dossier : aucun véhicule "
+      + "n'est réservé, aucune clé attribuée, le permis et l'assurance ne sont pas vérifiés et aucune invitation n'est envoyée au client.";
+    formEssai.querySelector("[data-essai-envoyer]").disabled = false;
+    modalEssai.show();
+  }
+
+  formEssai.elements.vehiculeId.addEventListener("change", afficherDescriptionEssai);
+
+  formEssai.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var el = formEssai.elements;
+    var aVerifier = [el.date, el.heure];
+    if (!el.vehiculeId.value) aVerifier.unshift(el.vehicule);
+    var invalides = [];
+    aVerifier.forEach(function (x) {
+      x.classList.remove("is-invalid");
+      if (!x.value.trim() || !x.checkValidity()) invalides.push(x);
+    });
+    if (invalides.length) {
+      invalides.forEach(function (x) { x.classList.add("is-invalid"); });
+      invalides[0].focus();
+      return;
+    }
+    if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return;
+    formEssai.querySelector("[data-essai-envoyer]").disabled = true; // contre le double clic
+    definirModifiee(false);
+    if (!P.envoyerEssaiRoutier(essaiOpp, formEssai)) {
+      formEssai.querySelector("[data-essai-envoyer]").disabled = false;
+      P.notifier("Cette opportunité ne peut plus recevoir d'essai routier : actualisez la page.");
+    }
+  });
+
+  racine.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-essai-planifier]");
+    if (b) ouvrirEssai(b.dataset.essaiPlanifier);
   });
 
   P.abonner(rendre);

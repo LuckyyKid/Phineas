@@ -563,6 +563,67 @@
     </div>
 </div>
 
+@* ---------- Essai routier d'une opportunité enregistrée (fonctionnalité 24) ----------
+   Envoyé tel quel au serveur (PlanifierEssaiRoutier) ; prospects-fiche.js remplit l'opportunité, l'empreinte et la liste
+   des véhicules envisagés de CETTE opportunité. Heure : heure commerciale du fuseau de l'application, affiché. *@
+<div class="modal fade" id="modal-essai" tabindex="-1" aria-labelledby="modal-essai-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-essai" method="post" asp-controller="Prospects" asp-action="PlanifierEssaiRoutier" novalidate>
+            <input type="hidden" name="prospectId" value="@Model.ProspectId" />
+            <input type="hidden" name="opportuniteId" />
+            <input type="hidden" name="version" />
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-essai-titre">Planifier un essai routier</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted" data-essai-mention></p>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="er-vehicule">Véhicule à essayer <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="er-vehicule" name="vehiculeId"></select>
+                    </div>
+                    <div class="col-12" data-essai-description>
+                        <label class="form-label" for="er-description">Description du véhicule <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="er-description" name="vehicule" maxlength="120" autocomplete="off" placeholder="Ex. Kia Sportage hybride, gris" />
+                        <div class="invalid-feedback">Décrivez le véhicule à essayer.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="er-date">Date <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="er-date" name="date" type="date" required min="@aujourdhuiCommercial" />
+                        <div class="invalid-feedback">Indiquez la date.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="er-heure">Heure <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="er-heure" name="heure" type="time" required step="300" />
+                        <div class="invalid-feedback">Indiquez l'heure.</div>
+                    </div>
+                    <div class="col-12 form-text mt-1" data-essai-fuseau="@FuseauCommercial.Id">
+                        <i class="bi bi-globe2 me-1" aria-hidden="true"></i>Heure du fuseau commercial de la concession : @FuseauCommercial.Id (même heure pour tous les postes).
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="er-duree">Durée <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="er-duree" name="dureeMinutes" required>
+                            @foreach (var d in ReferentielsRendezVous.Durees)
+                            {
+                                <option value="@d" selected="@(d == 45)">@d min</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="er-commentaire">Commentaire <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <textarea class="form-control" id="er-commentaire" name="commentaire" maxlength="500" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="submit" class="btn btn-primary" data-essai-envoyer>Planifier l'essai</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @* ---------- Nouvelle opportunité ---------- *@
 <div class="modal fade" id="modal-opportunite" tabindex="-1" aria-labelledby="modal-opp-titre" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

@@ -51,6 +51,9 @@ public interface IServiceProspects
     Task<ResultatService<int>> ModifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
     Task<ResultatService<int>> ReplanifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
     Task<ResultatService<int>> ChangerStatutRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
+
+    // Essai routier planifié pour une opportunité enregistrée (fonctionnalité 24).
+    Task<ResultatService<int>> PlanifierEssaiRoutierAsync(string utilisateurId, EssaiRoutierSaisie saisie);
     Task<ResultatService> ModifierVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
     Task<ResultatService> RetirerVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
 
@@ -149,6 +152,8 @@ public class ServiceProspects : IServiceProspects
             .ThenInclude(o => o.RendezVous)
             .ThenInclude(r => r.Evenements)
             .ThenInclude(h => h.Auteur)
+            .Include(p => p.Opportunites)
+            .ThenInclude(o => o.EssaisRoutiers)
             .AsSplitQuery()
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
@@ -258,7 +263,8 @@ public class ServiceProspects : IServiceProspects
             qualification,
             VersionSuivi: EmpreinteSuivi(o.ProchaineAction, o.DateProchaineAction),
             VehiculesDetail: vehicules,
-            RendezVousEnregistres: RendezVousDe(o)
+            RendezVousEnregistres: RendezVousDe(o),
+            EssaisRoutiers: EssaisRoutiersDe(o)
         );
     }
 
@@ -1114,6 +1120,121 @@ public class ServiceProspects : IServiceProspects
             AuteurId = utilisateurId,
         };
         return await EnregistrerCycleRendezVousAsync(transaction, r, evenement);
+    }
+
+    // ---------- Essais routiers d'une opportunité enregistrée (fonctionnalité 24) ----------
+
+    public const string PrefixeEssaiRoutier = "er-";
+    private const int LongueurDescriptionVehiculeEssai = 120;
+    private const int LongueurCommentaireEssai = 500;
+
+    // Essais d'une opportunité pour la fiche, du plus tôt au plus tard (à début égal, dans l'ordre de création).
+    private static List<EssaiRoutierVue> EssaisRoutiersDe(OpportuniteVente o)
+    {
+        var liste = new List<EssaiRoutierVue>();
+        foreach (var e in o.EssaisRoutiers.OrderBy(e => e.DebutUtc).ThenBy(e => e.Id))
+        {
+            string? vehicule = null;
+            if (e.VehiculeEnvisageId is not null)
+                vehicule = PrefixeVehicule + e.VehiculeEnvisageId;
+            liste.Add(new EssaiRoutierVue(PrefixeEssaiRoutier + e.Id, vehicule, e.VehiculeLibelle, Utc(e.DebutUtc), e.Fuseau, e.DureeMinutes, e.Commentaire));
+        }
+        return liste;
+    }
+
+    private const string MessageConflitEssai =
+        "Ce dossier a été modifié entre-temps : l'essai routier n'a pas été enregistré. La page affiche maintenant les valeurs "
+        + "actuelles ; vérifiez les essais de l'opportunité avant de recommencer.";
+
+    // Planifie un essai routier pour UNE opportunité du conseiller (son prospect, sa concession, l'opportunité de ce
+    // prospect, contrôlés côté serveur). Véhicule : un véhicule envisagé de CETTE opportunité (son libellé est recopié)
+    // ou, à défaut, une description libre. Horaire : mêmes règles que les rendez-vous (LireHoraireRendezVous : fuseau
+    // commercial, moment futur, changements d'heure). Double envoi : empreinte du prospect sous son verrou.
+    // Planifier n'est ni réserver un véhicule, ni vérifier un permis ou une assurance, ni rencontrer le client : aucun
+    // contact, aucune première réponse, aucun suivi, aucune étape ni date d'activité ne change.
+    public async Task<ResultatService<int>> PlanifierEssaiRoutierAsync(string utilisateurId, EssaiRoutierSaisie saisie)
+    {
+        int? idProspect = LireId(saisie.ProspectId, PrefixeProspect);
+        int? idOpportunite = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        if (idProspect is null || idOpportunite is null)
+            return ResultatService<int>.NonTrouve();
+        // Un véhicule envoyé doit être un identifiant « ve-… » lisible ; sinon la requête est forgée.
+        string? texteVehicule = Texte(saisie.VehiculeId);
+        int? idVehicule = null;
+        if (texteVehicule is not null)
+        {
+            idVehicule = LireId(texteVehicule, PrefixeVehicule);
+            if (idVehicule is null)
+                return ResultatService<int>.NonTrouve();
+        }
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+        if (_fuseau is null)
+            return ResultatService<int>.Echec("Le fuseau commercial n'est pas configuré : l'essai routier n'a pas été enregistré.");
+
+        // Horaire et champs libres, vérifiés avant toute lecture du dossier.
+        var resultat = new ResultatService<int>();
+        var horaireSaisi = new RendezVousSaisie { Date = saisie.Date, Heure = saisie.Heure, DureeMinutes = saisie.DureeMinutes };
+        var horaire = LireHoraireRendezVous(horaireSaisi, _fuseau, _temps.GetUtcNow().UtcDateTime, resultat.Erreurs);
+        string? description = Texte(saisie.Vehicule);
+        if (idVehicule is null && description is null)
+            resultat.Erreurs.Add(new ErreurChamp("vehicule", "Choisissez un véhicule envisagé ou décrivez le véhicule à essayer."));
+        if (idVehicule is null && description is not null && description.Length > LongueurDescriptionVehiculeEssai)
+            resultat.Erreurs.Add(new ErreurChamp("vehicule", $"Véhicule : {LongueurDescriptionVehiculeEssai} caractères au plus."));
+        string? commentaire = Texte(saisie.Commentaire);
+        if (commentaire is not null && commentaire.Length > LongueurCommentaireEssai)
+            resultat.Erreurs.Add(new ErreurChamp("commentaire", $"Commentaire : {LongueurCommentaireEssai} caractères au plus."));
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, idProspect.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == idOpportunite.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<int>.NonTrouve();
+        // Le véhicule envisagé est cherché dans CETTE opportunité seulement (jamais dans une autre du même prospect).
+        VehiculeEnvisage? vehicule = null;
+        if (idVehicule is not null)
+        {
+            vehicule = opportunite.VehiculesEnvisages.FirstOrDefault(v => v.Id == idVehicule.Value);
+            if (vehicule is null)
+                return ResultatService<int>.NonTrouve();
+        }
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService<int>.Echec(MessageConflitEssai);
+        if (!EstActive(opportunite))
+            return ResultatService<int>.Echec("Cette opportunité est clôturée : planifiez l'essai routier sur une opportunité active.");
+
+        string libelle;
+        if (vehicule is not null)
+            libelle = LibelleVehicule(vehicule);
+        else
+            libelle = description!;
+        var essai = new EssaiRoutier
+        {
+            OpportuniteId = opportunite.Id,
+            VehiculeEnvisageId = vehicule?.Id,
+            VehiculeLibelle = libelle,
+            DebutUtc = horaire.DebutUtc,
+            Fuseau = _fuseau.Id,
+            DureeMinutes = horaire.DureeMinutes,
+            Commentaire = commentaire,
+            DateCreation = _temps.GetUtcNow().UtcDateTime,
+        };
+        _db.EssaisRoutiers.Add(essai);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<int>.Echec("L'enregistrement a échoué : l'essai routier n'a pas été enregistré. Réessayez dans un instant.");
+        }
+        return ResultatService<int>.Ok(essai.Id);
     }
 
     // ---------- Véhicules envisagés d'une opportunité enregistrée (fonctionnalité 21) ----------
@@ -2118,6 +2239,7 @@ public class ServiceProspects : IServiceProspects
         var requete = _db.Prospects
             .Include(p => p.Opportunites).ThenInclude(o => o.VehiculesEnvisages)
             .Include(p => p.Opportunites).ThenInclude(o => o.RendezVous)
+            .Include(p => p.Opportunites).ThenInclude(o => o.EssaisRoutiers)
             .Where(p =>
             p.Id == id && p.ConseillerId == utilisateurId && p.DealershipId == p.Conseiller!.DealershipId);
         if (!suivre)
@@ -2167,6 +2289,13 @@ public class ServiceProspects : IServiceProspects
                 texte.Append('@');
                 texte.AppendJoin('|', r.Id, r.Type, r.DebutUtc.ToString("O", CultureInfo.InvariantCulture), r.Fuseau, r.DureeMinutes, r.Mode,
                     r.Statut, r.Lieu, r.Objectif, r.Commentaire);
+            }
+            // Essais routiers (fonctionnalité 24), même principe : rien d'ajouté pour une opportunité sans essai.
+            foreach (var e in o.EssaisRoutiers.OrderBy(e => e.Id))
+            {
+                texte.Append('!');
+                texte.AppendJoin('|', e.Id, e.VehiculeEnvisageId, e.VehiculeLibelle, e.DebutUtc.ToString("O", CultureInfo.InvariantCulture), e.Fuseau,
+                    e.DureeMinutes, e.Commentaire);
             }
         }
         byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte.ToString()));

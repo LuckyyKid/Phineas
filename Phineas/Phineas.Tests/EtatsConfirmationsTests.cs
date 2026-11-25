@@ -275,7 +275,7 @@ public class EtatsConfirmationsTests : IClassFixture<ApplicationDeTest>
         Assert.Contains(MentionsDonnees.BandeauTexte, reelle);
         Assert.Contains(MentionsDonnees.BandeauTexte, fictive);
         Assert.Equal(2, phrases.Length);
-        foreach (var persiste in new[] { "dossiers enregistrés", "qualifications", "véhicules envisagés", "rendez-vous commerciaux" })
+        foreach (var persiste in new[] { "dossiers enregistrés", "qualifications", "véhicules envisagés", "rendez-vous commerciaux", "essais routiers planifiés" })
             Assert.Contains(persiste, phrases[0]);
         Assert.DoesNotContain("soumission", phrases[0]);
         Assert.DoesNotContain("transaction", phrases[0]);

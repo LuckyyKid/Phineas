@@ -88,4 +88,7 @@ public class OpportuniteVente
 
     // Rendez-vous commerciaux planifiés pour ce projet (fonctionnalité 22, voir RendezVousCommercial).
     public ICollection<RendezVousCommercial> RendezVous { get; set; } = new List<RendezVousCommercial>();
+
+    // Essais routiers planifiés pour ce projet (fonctionnalité 24, voir EssaiRoutier).
+    public ICollection<EssaiRoutier> EssaisRoutiers { get; set; } = new List<EssaiRoutier>();
 }

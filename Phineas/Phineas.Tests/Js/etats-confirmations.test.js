@@ -83,7 +83,7 @@ test("G1 : le bandeau distingue ce qui est enregistré (qualification, véhicule
   const texte = constante("BandeauTexte");
   const [enregistre, demonstration] = texte.split("sont enregistrés en base de données.");
   assert.ok(demonstration !== undefined, "une phrase annonce ce qui est enregistré en base");
-  ["dossiers enregistrés", "qualifications", "véhicules envisagés", "rendez-vous commerciaux"].forEach((x) => assert.ok(enregistre.includes(x), x));
+  ["dossiers enregistrés", "qualifications", "véhicules envisagés", "rendez-vous commerciaux", "essais routiers planifiés"].forEach((x) => assert.ok(enregistre.includes(x), x));
   assert.ok(demonstration.includes("dossiers fictifs") && demonstration.includes("soumissions et les transactions") && demonstration.includes("ne sont pas enregistrés en base"));
   assert.ok(demonstration.includes("rendez-vous de démonstration restent également fictifs"));
   assert.ok(!/soumission[^.]*sont enregistrés|transaction[^.]*sont enregistrés/.test(enregistre), "aucune soumission ni transaction annoncée enregistrée");

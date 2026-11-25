@@ -304,6 +304,27 @@ public class ProspectsController : Controller
         return RetourRendezVous(saisie, resultat, confirmation, "Statut du rendez-vous inchangé. ");
     }
 
+    // Fenêtre « Planifier un essai routier » d'une opportunité enregistrée (fonctionnalité 24) : enregistrement réel, puis
+    // retour aux opportunités de la fiche, celle-ci sélectionnée. Le message dit ce que l'enregistrement ne vérifie pas.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlanifierEssaiRoutier(EssaiRoutierSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.PlanifierEssaiRoutierAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        if (resultat.Succes)
+            TempData[CleConfirmation] = "Essai routier planifié dans le dossier. La disponibilité du véhicule et les autorisations de conduite "
+                + "ne sont pas vérifiées par cet enregistrement.";
+        else
+            TempData[CleErreur] = "Essai routier non enregistré. " + string.Join(" ", resultat.Erreurs.Select(e => e.Message).Distinct());
+        return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "opportunites");
+    }
+
     // Message (confirmation ou refus avec ses motifs), puis retour aux opportunités de la fiche, celle-ci sélectionnée.
     private IActionResult RetourRendezVous(RendezVousSaisie saisie, ResultatService<int> resultat, string confirmation, string refus)
     {

@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<VehiculeEnvisage> VehiculesEnvisages => Set<VehiculeEnvisage>();
     public DbSet<RendezVousCommercial> RendezVousCommerciaux => Set<RendezVousCommercial>();
     public DbSet<EvenementRendezVousCommercial> EvenementsRendezVous => Set<EvenementRendezVousCommercial>();
+    public DbSet<EssaiRoutier> EssaisRoutiers => Set<EssaiRoutier>();
     public DbSet<VeilleRecommandation> VeillesRecommandation => Set<VeilleRecommandation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -155,6 +156,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Statut (fonctionnalité 23), gardé par son nom. Les rendez-vous déjà enregistrés reçoivent « Planifie »
             // par la migration AjoutCycleVieRendezVous (valeur par défaut de la colonne).
             e.Property(r => r.Statut).HasConversion<string>().HasMaxLength(20);
+        });
+
+        // Essais routiers (fonctionnalité 24) : ils disparaissent avec leur opportunité, comme les rendez-vous. Le retrait
+        // d'un véhicule envisagé (F21) ne supprime jamais un essai : la référence devient vide, le libellé reste.
+        builder.Entity<EssaiRoutier>(e =>
+        {
+            e.ToTable("EssaisRoutiers");
+
+            e.HasOne(x => x.Opportunite)
+                .WithMany(o => o.EssaisRoutiers)
+                .HasForeignKey(x => x.OpportuniteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.VehiculeEnvisage)
+                .WithMany()
+                .HasForeignKey(x => x.VehiculeEnvisageId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Historique des rendez-vous (fonctionnalité 23) : il disparaît avec son rendez-vous, donc avec l'opportunité ;

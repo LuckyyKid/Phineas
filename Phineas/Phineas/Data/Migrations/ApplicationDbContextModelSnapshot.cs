@@ -300,6 +300,52 @@ namespace Phineas.Data.Migrations
                     b.ToTable("Dealerships");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.EssaiRoutier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Commentaire")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DebutUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DureeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Fuseau")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("OpportuniteId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VehiculeEnvisageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VehiculeLibelle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportuniteId");
+
+                    b.HasIndex("VehiculeEnvisageId");
+
+                    b.ToTable("EssaisRoutiers", (string)null);
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.EvenementRendezVousCommercial", b =>
                 {
                     b.Property<int>("Id")
@@ -1011,6 +1057,24 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Vehicule");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.EssaiRoutier", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
+                        .WithMany("EssaisRoutiers")
+                        .HasForeignKey("OpportuniteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Phineas.Models.Entities.VehiculeEnvisage", "VehiculeEnvisage")
+                        .WithMany()
+                        .HasForeignKey("VehiculeEnvisageId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Opportunite");
+
+                    b.Navigation("VehiculeEnvisage");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.EvenementRendezVousCommercial", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.ApplicationUser", "Auteur")
@@ -1210,6 +1274,8 @@ namespace Phineas.Data.Migrations
 
             modelBuilder.Entity("Phineas.Models.Entities.OpportuniteVente", b =>
                 {
+                    b.Navigation("EssaisRoutiers");
+
                     b.Navigation("HistoriqueEtapes");
 
                     b.Navigation("HistoriqueSuivis");

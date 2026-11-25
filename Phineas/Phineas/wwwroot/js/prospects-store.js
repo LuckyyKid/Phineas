@@ -483,6 +483,30 @@
     return true;
   }
 
+  // ---------- Essais routiers enregistrés (fonctionnalité 24) ----------
+
+  // Essais routiers d'UNE opportunité enregistrée, tels que le serveur les a envoyés, du plus tôt au plus tard :
+  // { id: "er-…", vehiculeEnvisageId, vehiculeLibelle, debutUtc, fuseau, dureeMinutes, commentaire }.
+  // Une opportunité de démonstration n'en a aucun (ses essais fictifs restent dans le module Rendez-vous).
+  function essaisRoutiersDe(oppId) {
+    var o = opportunite(oppId);
+    return o && estEnregistree(oppId) ? o.essaisRoutiers || [] : [];
+  }
+
+  // Planification d'un essai routier : le formulaire de la fiche est envoyé tel quel à
+  // ProspectsController.PlanifierEssaiRoutier, avec l'opportunité et l'empreinte du prospect affichée. Rien n'est écrit
+  // dans l'onglet : la fiche se recharge avec le message du serveur. Faux pour la démonstration ou un projet clos.
+  function envoyerEssaiRoutier(oppId, formulaire) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !estEnregistree(oppId) || !estActive(o) || !charge.urlPlanifierEssaiRoutier) return false;
+    formulaire.elements.opportuniteId.value = o.id;
+    formulaire.elements.version.value = c.version || "";
+    formulaire.action = charge.urlPlanifierEssaiRoutier;
+    formulaire.submit();
+    return true;
+  }
+
   // ---------- Cycle de vie des rendez-vous enregistrés (fonctionnalité 23) ----------
 
   // Date (« 2027-01-15 ») et heure (« 14:00 ») du début dans le fuseau du rendez-vous, au format des champs
@@ -771,6 +795,8 @@
     formaterRendezVous: formaterRendezVous,
     envoyerRendezVous: envoyerRendezVous,
     rendezVousEnregistre: rendezVousEnregistre,
+    essaisRoutiersDe: essaisRoutiersDe,
+    envoyerEssaiRoutier: envoyerEssaiRoutier,
     champsHoraire: champsHoraire,
     actionsRendezVous: actionsRendezVous,
     rendezVousFuturs: rendezVousFuturs,
