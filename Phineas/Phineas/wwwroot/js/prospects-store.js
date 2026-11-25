@@ -401,6 +401,28 @@
     return true;
   }
 
+  // Qualification d'une opportunité enregistrée (fonctionnalité 20) : le formulaire de la fiche est envoyé tel quel à
+  // ProspectsController.Qualifier, avec l'opportunité, l'empreinte du prospect affichée et la liste des champs envoyés
+  // (champs : seuls ceux-là changent sur le serveur). Rien n'est écrit dans l'onglet : la fiche se recharge avec les
+  // valeurs enregistrées et un message du serveur.
+  function envoyerQualification(oppId, formulaire, champs) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !estEnregistree(oppId) || !charge.urlQualifier) return false;
+    var caches = { prospectId: c.id, opportuniteId: o.id, version: c.version || "", champs: champs.join(","), __RequestVerificationToken: charge.jeton };
+    Object.keys(caches).forEach(function (nom) {
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = nom;
+      input.value = caches[nom];
+      formulaire.appendChild(input);
+    });
+    formulaire.method = "post";
+    formulaire.action = charge.urlQualifier;
+    formulaire.submit();
+    return true;
+  }
+
   // « Marquer comme réalisé » du suivi d'une opportunité enregistrée : envoi à ProspectsController.RealiserSuivi,
   // qui archive l'action et revient à la page d'origine (retour : chemin local, ex. /Intelligence/Suivis) avec un message.
   // versionSuivi : empreinte de l'action affichée ; le serveur refuse si l'action a changé entre-temps.
@@ -497,9 +519,10 @@
     return o;
   }
 
+  // Démonstration seulement : une opportunité enregistrée se qualifie sur le serveur (envoyerQualification).
   function enregistrerQualification(oppId, q, preferencesContact) {
     var o = opportunite(oppId);
-    if (!o) return;
+    if (!o || estEnregistree(oppId)) return false;
     o.qualification = q;
     o.derniereActivite = iso(maintenant());
     var c = contact(o.prospectId);
@@ -604,6 +627,7 @@
       return oppId && String(oppId).indexOf("oe-") === 0 && String(id).indexOf("pe-") === 0 ? url + "?opportunite=" + encodeURIComponent(oppId) : url;
     },
     envoyerOpportunite: envoyerOpportunite,
+    envoyerQualification: envoyerQualification,
     projet: projet,
     urlListe: charge.urlListe,
     // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).

@@ -174,6 +174,26 @@ public class ProspectsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // Formulaire « Qualification » de la fiche d'un prospect enregistré (fonctionnalité 20) : enregistrement réel de la
+    // qualification d'UNE opportunité, puis Post/Redirect/Get vers la fiche, cette opportunité et l'onglet Qualification.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Qualifier(QualificationSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.QualifierAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        if (resultat.Succes)
+            TempData[CleConfirmation] = "Qualification enregistrée.";
+        else
+            TempData[CleErreur] = "Qualification non enregistrée. " + string.Join(" ", resultat.Erreurs.Select(e => e.Message).Distinct());
+        return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "qualification");
+    }
+
     // Fenêtre « Nouvelle opportunité » de la fiche d'un prospect enregistré (fonctionnalité 18) : enregistrement réel,
     // puis Post/Redirect/Get vers la fiche, la nouvelle opportunité sélectionnée. Refus : message, rien d'écrit.
     [HttpPost]

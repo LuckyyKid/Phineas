@@ -171,6 +171,34 @@ public class NouveauProspectSaisie
     public DateTime? DateSuivi { get; set; }
 }
 
+// Champs postés par le formulaire « Qualification » de la fiche d'un prospect enregistré (fonctionnalité 20). Textes
+// bruts : toute la lecture et la validation se font dans ServiceProspects.QualifierAsync. Champs : noms des champs que
+// le formulaire envoie ; seuls ceux-là sont modifiés (un champ absent de la liste garde sa valeur enregistrée).
+public class QualificationSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? Version { get; set; }
+    public string? Champs { get; set; }
+    public string? Categorie { get; set; }
+    public string? Etat { get; set; }
+    public string? Marques { get; set; }
+    public string? Modeles { get; set; }
+    public string? Places { get; set; }
+    public List<string> Caracteristiques { get; set; } = [];
+    public string? Utilisation { get; set; }
+    public string? BudgetTotal { get; set; }
+    public string? BudgetMensuel { get; set; }
+    public string? ModeAchat { get; set; }
+    public string? MiseDeFonds { get; set; }
+    public string? Reprise { get; set; }
+    public string? RepriseDetail { get; set; }
+    public string? Horizon { get; set; }
+    public string? DateCible { get; set; }
+    public List<string> ElementsDecision { get; set; } = [];
+    public string? Objections { get; set; }
+}
+
 // Champs postés par la fenêtre « Nouvelle opportunité » de la fiche d'un prospect enregistré (fonctionnalité 18).
 // Toute la validation se fait dans ServiceProspects.CreerOpportuniteAsync.
 public class NouvelleOpportuniteSaisie

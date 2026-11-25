@@ -229,6 +229,14 @@
     val("dateCible", P.versChampDate(q.dateCible));
     val("contactPrefere", c.contactPrefere);
     val("momentContact", c.momentContact);
+    // Dossier enregistré (fonctionnalité 20) : ces préférences du contact ne se changent pas ici (« Modifier » pour le
+    // moyen préféré ; le moment de contact n'est pas encore enregistré) et ne partent pas avec la qualification.
+    var reel = !!(c.enregistre && P.estEnregistree(o.id));
+    formQ.elements.contactPrefere.disabled = reel;
+    formQ.elements.momentContact.disabled = reel;
+    formQ.querySelector("[data-preferences-texte]").textContent = reel
+      ? "Préférences du contact : le moyen préféré se change avec « Modifier » ; le moment de contact n'est pas encore enregistré pour un dossier réel."
+      : "Ces deux préférences s'appliquent au contact, donc à toutes ses opportunités.";
     cases("elementsDecision", q.elementsDecision);
     val("objections", q.objections);
     formQ.elements.dateCible.min = P.aujourdhuiChamp();
@@ -291,9 +299,20 @@
 
   formQ.addEventListener("input", function () { definirModifiee(true); majReprise(); majResumeQualif(); });
   formQ.addEventListener("change", function () { definirModifiee(true); majReprise(); majResumeQualif(); });
+  // Champs de la qualification d'une opportunité (attribut name), envoyés au serveur pour un dossier enregistré.
+  var CHAMPS_QUALIFICATION = ["categorie", "etat", "marques", "modeles", "places", "caracteristiques", "utilisation", "budgetTotal",
+    "budgetMensuel", "modeAchat", "miseDeFonds", "reprise", "repriseDetail", "horizon", "dateCible", "elementsDecision", "objections"];
+
   formQ.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!oppQualif || !validerQualification()) return;
+    // Opportunité enregistrée (fonctionnalité 20) : enregistrement sur le serveur ; bouton désactivé contre le double clic.
+    if (P.estEnregistree(oppQualif)) {
+      formQ.querySelectorAll('button[type="submit"]').forEach(function (b) { b.disabled = true; });
+      definirModifiee(false);
+      P.envoyerQualification(oppQualif, formQ, CHAMPS_QUALIFICATION);
+      return;
+    }
     var fd = new FormData(formQ);
     P.enregistrerQualification(oppQualif, lireQualification(), {
       contactPrefere: fd.get("contactPrefere"),

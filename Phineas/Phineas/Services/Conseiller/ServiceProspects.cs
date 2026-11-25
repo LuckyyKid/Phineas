@@ -34,6 +34,9 @@ public interface IServiceProspects
     // Résultat : l'identifiant de l'opportunité créée ; NonTrouve si le prospect n'est pas dans son dossier.
     Task<ResultatService<int>> CreerOpportuniteAsync(string utilisateurId, NouvelleOpportuniteSaisie saisie);
 
+    // Fonctionnalité 20 : qualification commerciale d'une opportunité enregistrée du conseiller (seulement elle).
+    Task<ResultatService> QualifierAsync(string utilisateurId, QualificationSaisie saisie);
+
     // Change l'étape d'une opportunité enregistrée (id « oe-34 ») et trace le changement dans l'historique.
     // version : empreinte du prospect lue par la page (voir Empreinte). Valeur du résultat : true si l'étape a changé,
     // false si l'opportunité était déjà à cette étape (rien n'est écrit, aucun historique).
@@ -190,9 +193,22 @@ public class ServiceProspects : IServiceProspects
         var qualification = new QualificationOpportunite
         {
             Categorie = o.Categorie,
-            Modeles = o.Modele is null ? [] : [o.Modele],
+            Etat = o.EtatVehicule,
+            Marques = ListeTexte(o.Marques),
+            Modeles = ListeTexte(o.Modele),
+            Places = o.Places,
+            Caracteristiques = ListeTexte(o.Caracteristiques),
+            Utilisation = o.Utilisation,
             BudgetTotal = o.BudgetTotal,
+            BudgetMensuel = o.BudgetMensuel,
+            ModeAchat = o.ModeAchat,
+            MiseDeFonds = o.MiseDeFonds,
+            Reprise = o.Reprise,
+            RepriseDetail = o.RepriseDetail,
             Horizon = o.Horizon,
+            DateCible = o.DateCible,
+            ElementsDecision = ListeTexte(o.ElementsDecision),
+            Objections = o.Objections,
         };
 
         return new Opportunite(
@@ -551,6 +567,208 @@ public class ServiceProspects : IServiceProspects
         }
         return ResultatService<int>.Ok(opportunite.Id);
     }
+
+    // ---------- Qualification d'une opportunité enregistrée (fonctionnalité 20) ----------
+
+    private const int LongueurMarques = 120;
+    private const int LongueurRepriseDetail = 120;
+    private const int LongueurObjections = 500;
+    private const decimal BudgetMensuelMaximum = 10_000m;
+    private static readonly int[] PlacesAdmises = [2, 4, 5, 7, 8];
+
+    // Noms des champs du formulaire « Qualification » (attribut name) qu'on peut modifier.
+    private static readonly string[] ChampsQualification =
+    [
+        "categorie", "etat", "marques", "modeles", "places", "caracteristiques", "utilisation", "budgetTotal", "budgetMensuel",
+        "modeAchat", "miseDeFonds", "reprise", "repriseDetail", "horizon", "dateCible", "elementsDecision", "objections",
+    ];
+
+    private const string MessageConflitQualification =
+        "Ce dossier a été modifié entre-temps : la qualification n'a pas été enregistrée. La page affiche maintenant les valeurs "
+        + "actuelles ; refaites vos changements si besoin.";
+
+    // Enregistre la qualification d'UNE opportunité du conseiller (contrôlée côté serveur : son prospect, sa concession,
+    // l'opportunité de ce prospect). Seuls les champs nommés dans saisie.Champs changent ; un champ de la liste envoyé
+    // vide efface la valeur (tout est facultatif). Ni contact déclaré, ni étape, ni suivi, ni date d'activité : la
+    // qualification décrit le projet, elle ne dit pas qu'on a parlé au client. Tout ou rien, sous le verrou du prospect,
+    // avec l'empreinte affichée par la page (une page périmée ne peut pas écraser une valeur plus récente).
+    public async Task<ResultatService> QualifierAsync(string utilisateurId, QualificationSaisie saisie)
+    {
+        int? idProspect = LireId(saisie.ProspectId, PrefixeProspect);
+        int? idOpportunite = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        if (idProspect is null || idOpportunite is null)
+            return ResultatService.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService.Echec(MessageCompteInutilisable);
+
+        var champs = (saisie.Champs ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Where(c => ChampsQualification.Contains(c)).ToHashSet();
+        var resultat = new ResultatService();
+        var valeurs = LireQualification(saisie, champs, resultat);
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, idProspect.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == idOpportunite.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService.NonTrouve();
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService.Echec(MessageConflitQualification);
+
+        AppliquerQualification(opportunite, champs, valeurs);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService.Echec("L'enregistrement a échoué : la qualification n'a pas été enregistrée. Réessayez dans un instant.");
+        }
+        return ResultatService.Ok();
+    }
+
+    // Valeurs lues et validées (seulement pour les champs envoyés) ; les erreurs sont ajoutées au résultat.
+    private sealed record ValeursQualification(
+        string? Categorie, string? Etat, string? Marques, string? Modeles, int? Places, string? Caracteristiques, string? Utilisation,
+        decimal? BudgetTotal, decimal? BudgetMensuel, string? ModeAchat, decimal? MiseDeFonds, string? Reprise, string? RepriseDetail,
+        string? Horizon, DateTime? DateCible, string? ElementsDecision, string? Objections);
+
+    private static ValeursQualification LireQualification(QualificationSaisie s, HashSet<string> champs, ResultatService resultat)
+    {
+        void Erreur(string champ, string message) => resultat.Erreurs.Add(new ErreurChamp(champ, message));
+
+        string? Cle(string champ, string? valeur, IReadOnlyList<(string Cle, string Libelle)> liste, string message)
+        {
+            string? v = Texte(valeur);
+            if (!champs.Contains(champ) || v is null)
+                return null;
+            if (!EstDansListe(liste, v))
+                Erreur(champ, message);
+            return v;
+        }
+        string? TexteBorne(string champ, string? valeur, int longueur, string libelle)
+        {
+            string? v = Texte(valeur);
+            if (!champs.Contains(champ) || v is null)
+                return null;
+            if (v.Length > longueur)
+                Erreur(champ, $"{libelle} : {longueur} caractères au plus.");
+            return v;
+        }
+        decimal? Montant(string champ, string? valeur, decimal maximum, string libelle)
+        {
+            string? v = Texte(valeur);
+            if (!champs.Contains(champ) || v is null)
+                return null;
+            bool lisible = decimal.TryParse(v, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal montant);
+            if (!lisible || montant < 0 || montant > maximum)
+            {
+                Erreur(champ, $"{libelle} : un montant entre 0 et {maximum.ToString("N0", CultureFrancaise)} $.");
+                return null;
+            }
+            return montant;
+        }
+        string? Cles(string champ, List<string> valeurs, IReadOnlyList<(string Cle, string Libelle)> liste, string message)
+        {
+            if (!champs.Contains(champ))
+                return null;
+            var retenues = valeurs.Select(Texte).Where(v => v is not null).Select(v => v!).Distinct().ToList();
+            if (retenues.Any(v => !EstDansListe(liste, v)))
+                Erreur(champ, message);
+            return retenues.Count == 0 ? null : string.Join(",", retenues);
+        }
+
+        int? places = null;
+        string? textePlaces = Texte(s.Places);
+        if (champs.Contains("places") && textePlaces is not null)
+        {
+            bool lisible = int.TryParse(textePlaces, NumberStyles.None, CultureInfo.InvariantCulture, out int nombre);
+            if (!lisible || !PlacesAdmises.Contains(nombre))
+                Erreur("places", "Nombre de places inconnu.");
+            else
+                places = nombre;
+        }
+
+        DateTime? dateCible = null;
+        string? texteDate = Texte(s.DateCible);
+        if (champs.Contains("dateCible") && texteDate is not null)
+        {
+            bool lisible = DateTime.TryParseExact(texteDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime jour);
+            if (!lisible || jour.Year < 2000 || jour > DateTime.Today.AddYears(10))
+                Erreur("dateCible", "Date cible invalide.");
+            else
+                dateCible = jour;
+        }
+
+        // Marques et modèles : listes séparées par des virgules, gardées comme le conseiller les a écrites (sans doublon).
+        string? marques = TexteBorne("marques", NormaliserListe(s.Marques), LongueurMarques, "Marques");
+        string? modeles = TexteBorne("modeles", NormaliserListe(s.Modeles), LongueurModele, "Modèles");
+        string? reprise = Cle("reprise", s.Reprise, ReferentielsVente.Reprises, "Réponse de reprise inconnue.");
+        // Comme le formulaire : la précision de la reprise n'a de sens que si un véhicule est (peut-être) à reprendre.
+        string? repriseDetail = TexteBorne("repriseDetail", s.RepriseDetail, LongueurRepriseDetail, "Précision de la reprise");
+
+        return new ValeursQualification(
+            Cle("categorie", s.Categorie, ReferentielsVente.Categories, "Catégorie inconnue."),
+            Cle("etat", s.Etat, ReferentielsVente.Etats, "Choix neuf ou occasion inconnu."),
+            marques,
+            modeles,
+            places,
+            Cles("caracteristiques", s.Caracteristiques, ReferentielsVente.Caracteristiques, "Caractéristique inconnue."),
+            Cle("utilisation", s.Utilisation, ReferentielsVente.Utilisations, "Utilisation inconnue."),
+            Montant("budgetTotal", s.BudgetTotal, BudgetMaximum, "Budget total"),
+            Montant("budgetMensuel", s.BudgetMensuel, BudgetMensuelMaximum, "Budget mensuel"),
+            Cle("modeAchat", s.ModeAchat, ReferentielsVente.ModesAchat, "Mode d'achat inconnu."),
+            Montant("miseDeFonds", s.MiseDeFonds, BudgetMaximum, "Mise de fonds"),
+            reprise,
+            repriseDetail,
+            Cle("horizon", s.Horizon, ReferentielsVente.Horizons, "Horizon d'achat inconnu."),
+            dateCible,
+            Cles("elementsDecision", s.ElementsDecision, ReferentielsVente.ElementsDecision, "Élément de décision inconnu."),
+            TexteBorne("objections", s.Objections, LongueurObjections, "Objections"));
+    }
+
+    // Écrit seulement les champs envoyés. Un titre automatique suit la catégorie et le modèle (même règle que ModifierAsync).
+    private static void AppliquerQualification(OpportuniteVente o, HashSet<string> champs, ValeursQualification v)
+    {
+        bool titreAutomatique = o.Titre == TitreAutomatique(o.Modele, o.Categorie);
+        if (champs.Contains("categorie")) o.Categorie = v.Categorie;
+        if (champs.Contains("etat")) o.EtatVehicule = v.Etat;
+        if (champs.Contains("marques")) o.Marques = v.Marques;
+        if (champs.Contains("modeles")) o.Modele = v.Modeles;
+        if (champs.Contains("places")) o.Places = v.Places;
+        if (champs.Contains("caracteristiques")) o.Caracteristiques = v.Caracteristiques;
+        if (champs.Contains("utilisation")) o.Utilisation = v.Utilisation;
+        if (champs.Contains("budgetTotal")) o.BudgetTotal = v.BudgetTotal;
+        if (champs.Contains("budgetMensuel")) o.BudgetMensuel = v.BudgetMensuel;
+        if (champs.Contains("modeAchat")) o.ModeAchat = v.ModeAchat;
+        if (champs.Contains("miseDeFonds")) o.MiseDeFonds = v.MiseDeFonds;
+        if (champs.Contains("reprise"))
+            o.Reprise = v.Reprise;
+        // La précision ne vaut que si un véhicule est (peut-être) à reprendre ; non envoyée, elle garde sa valeur.
+        if (o.Reprise is not ("oui" or "a-determiner"))
+            o.RepriseDetail = null;
+        else if (champs.Contains("repriseDetail"))
+            o.RepriseDetail = v.RepriseDetail;
+        if (champs.Contains("horizon")) o.Horizon = v.Horizon;
+        if (champs.Contains("dateCible")) o.DateCible = v.DateCible;
+        if (champs.Contains("elementsDecision")) o.ElementsDecision = v.ElementsDecision;
+        if (champs.Contains("objections")) o.Objections = v.Objections;
+        if (titreAutomatique)
+            o.Titre = TitreAutomatique(o.Modele, o.Categorie);
+    }
+
+    // « a, b ,, a » devient « a, b » ; texte vide : null.
+    private static string? NormaliserListe(string? texte) =>
+        Texte(string.Join(", ", ListeTexte(texte)));
+
+    // Liste enregistrée (virgules) relue en éléments, sans espaces superflus ni doublons.
+    private static IReadOnlyList<string> ListeTexte(string? texte) =>
+        (texte ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct().ToList();
 
     // ---------- Changement d'étape ----------
 
@@ -1153,6 +1371,10 @@ public class ServiceProspects : IServiceProspects
             texte.AppendJoin('|', o.Id, o.Titre, o.Etape, o.Categorie, o.Modele,
                 o.BudgetTotal?.ToString(CultureInfo.InvariantCulture), o.Horizon, o.ProchaineAction,
                 o.DateProchaineAction?.ToString("O", CultureInfo.InvariantCulture));
+            // Qualification (fonctionnalité 20) : une page qui ne l'affiche pas à jour ne peut plus rien enregistrer.
+            texte.AppendJoin('|', o.EtatVehicule, o.Marques, o.Places, o.Caracteristiques, o.Utilisation,
+                o.BudgetMensuel?.ToString(CultureInfo.InvariantCulture), o.ModeAchat, o.MiseDeFonds?.ToString(CultureInfo.InvariantCulture),
+                o.Reprise, o.RepriseDetail, o.DateCible?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), o.ElementsDecision, o.Objections);
         }
         byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte.ToString()));
         return Convert.ToHexString(hachage, 0, 8);

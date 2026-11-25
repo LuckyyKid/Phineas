@@ -101,6 +101,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             e.Property(o => o.Etape).HasConversion<string>().HasMaxLength(30);
             e.Property(o => o.BudgetTotal).HasPrecision(10, 2);
+            // Qualification (fonctionnalité 20).
+            e.Property(o => o.BudgetMensuel).HasPrecision(10, 2);
+            e.Property(o => o.MiseDeFonds).HasPrecision(10, 2);
+            e.Property(o => o.DateCible).HasColumnType("date");
 
             e.HasOne(o => o.Prospect)
                 .WithMany(p => p.Opportunites)

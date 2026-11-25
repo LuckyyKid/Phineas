@@ -29,6 +29,45 @@ public class OpportuniteVente
     [MaxLength(30)]
     public string? Horizon { get; set; }
 
+    // Qualification commerciale (fonctionnalité 20), en plus de Categorie, Modele, BudgetTotal et Horizon ci-dessus.
+    // Tout est facultatif : une information absente reste null, jamais une valeur par défaut présentée comme dite
+    // par le client. Valeurs fermées : clés de ReferentielsVente. Listes de clés : séparées par des virgules.
+    [MaxLength(20)]
+    public string? EtatVehicule { get; set; }
+
+    [MaxLength(120)]
+    public string? Marques { get; set; }
+
+    public int? Places { get; set; }
+
+    [MaxLength(200)]
+    public string? Caracteristiques { get; set; }
+
+    [MaxLength(20)]
+    public string? Utilisation { get; set; }
+
+    public decimal? BudgetMensuel { get; set; }
+
+    [MaxLength(20)]
+    public string? ModeAchat { get; set; }
+
+    public decimal? MiseDeFonds { get; set; }
+
+    [MaxLength(20)]
+    public string? Reprise { get; set; }
+
+    [MaxLength(120)]
+    public string? RepriseDetail { get; set; }
+
+    // Jour civil visé par le client (sans heure).
+    public DateTime? DateCible { get; set; }
+
+    [MaxLength(200)]
+    public string? ElementsDecision { get; set; }
+
+    [MaxLength(500)]
+    public string? Objections { get; set; }
+
     [MaxLength(120)]
     public string? ProchaineAction { get; set; }
 
