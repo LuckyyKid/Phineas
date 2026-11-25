@@ -238,6 +238,26 @@ public class ProspectsController : Controller
         return RetourVehicule(saisie, resultat.Succes, "Véhicule envisagé retiré.", "Véhicule envisagé non retiré. ", resultat.Erreurs);
     }
 
+    // Fenêtre « Planifier un rendez-vous » d'une opportunité enregistrée (fonctionnalité 22) : création réelle, puis
+    // Post/Redirect/Get vers les opportunités de la fiche, cette opportunité sélectionnée. Refus : message, rien d'écrit.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlanifierRendezVous(RendezVousSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.PlanifierRendezVousAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        if (resultat.Succes)
+            TempData[CleConfirmation] = "Rendez-vous enregistré dans le dossier (aucune invitation n'a été envoyée au client).";
+        else
+            TempData[CleErreur] = "Rendez-vous non enregistré. " + string.Join(" ", resultat.Erreurs.Select(e => e.Message).Distinct());
+        return RedirectToAction(nameof(Fiche), null, new { id = saisie.ProspectId, opportunite = saisie.OpportuniteId }, "opportunites");
+    }
+
     // Message (confirmation ou refus avec ses motifs), puis retour aux opportunités de la fiche, celle-ci sélectionnée.
     private RedirectToActionResult RetourVehicule(VehiculeSaisie saisie, bool succes, string confirmation, string refus, List<ErreurChamp> erreurs)
     {

@@ -558,11 +558,12 @@
   function modulesDemonstrationHtml() {
     var liens = [];
     if (window.Soumissions && window.Soumissions.urlListe) liens.push('<a href="' + esc(window.Soumissions.urlListe) + '">Voir la démonstration des soumissions</a>');
-    if (window.RendezVous && window.RendezVous.urlAgenda) liens.push('<a href="' + esc(window.RendezVous.urlAgenda()) + '">des rendez-vous</a>');
     if (window.Transactions && window.Transactions.urlListe) liens.push('<a href="' + esc(window.Transactions.urlListe) + '">des transactions</a>');
-    return '<div class="pr-soumissions" data-modules-demonstration><div class="pr-soumissions-tete"><span>Soumissions, rendez-vous et transactions</span></div>' +
-      '<p class="pr-sous mb-0">Pas encore enregistrés dans les dossiers réels : ces modules sont une démonstration. Aucune soumission, aucun rendez-vous ' +
-      "et aucune transaction n'est rattaché à cette opportunité." + (liens.length ? " " + liens.join(", ") + "." : "") + "</p></div>";
+    // Les rendez-vous sont enregistrés depuis la fonctionnalité 22 (voir rendezVousEnregistresHtml) : ce bloc ne parle
+    // plus que des soumissions et des transactions.
+    return '<div class="pr-soumissions" data-modules-demonstration><div class="pr-soumissions-tete"><span>Soumissions et transactions</span></div>' +
+      '<p class="pr-sous mb-0">Pas encore enregistrés dans les dossiers réels : ces modules sont une démonstration. Aucune soumission ' +
+      "et aucune transaction n'est rattachée à cette opportunité." + (liens.length ? " " + liens.join(", ") + "." : "") + "</p></div>";
   }
 
   // Soumissions de l'opportunité (module Soumissions chargé sur la fiche).
@@ -583,9 +584,33 @@
         : '<p class="pr-sous mb-0">Aucune soumission pour cette opportunité.</p>') + "</div>";
   }
 
+  // Rendez-vous enregistrés d'une opportunité réelle (fonctionnalité 22) : seulement ceux de CETTE opportunité, du plus
+  // tôt au plus tard, affichés dans leur fuseau commercial. Tous sont « Planifié » : ni confirmation du client, ni
+  // invitation, ni réservation. Aucune commande de modification ou d'annulation (F23).
+  function rendezVousEnregistresHtml(o) {
+    var liste = P.rendezVousDe(o.id);
+    var lignes = liste.map(function (r) {
+      var f = P.formaterRendezVous(r);
+      var details = [r.modeLibelle, r.lieu].filter(Boolean).join(", ");
+      return '<li data-rendezvous-id="' + esc(r.id) + '"><strong>' + esc(r.typeLibelle) + "</strong>" +
+        '<span class="rv-statut rv-st-Planifie"><i class="bi bi-calendar-event" aria-hidden="true"></i>Planifié</span>' +
+        '<span class="pr-sous d-block w-100" data-rendezvous-horaire>' + esc(f.jour + ", de " + f.debut + " à " + f.fin) + "</span>" +
+        '<span class="pr-sous d-block w-100">' + esc(details) + (r.objectif ? " · " + esc(r.objectif) : "") + "</span>" +
+        (r.commentaire ? '<span class="pr-sous d-block w-100">' + esc(r.commentaire) + "</span>" : "") +
+        "</li>";
+    }).join("");
+    var fuseau = liste.length ? liste[0].fuseau : "";
+    return '<div class="pr-soumissions" data-rendezvous-reels="' + esc(o.id) + '"><div class="pr-soumissions-tete"><span>Rendez-vous</span>' +
+      (P.estActive(o) ? '<button type="button" class="btn btn-sm btn-link p-0" data-rendezvous-planifier="' + esc(o.id) + '"><i class="bi bi-calendar-plus me-1" aria-hidden="true"></i>Planifier un rendez-vous</button>' : "") + "</div>" +
+      (liste.length
+        ? "<ul>" + lignes + "</ul>" + '<p class="pr-sous mb-0 mt-1">Heures du fuseau ' + esc(fuseau) + ". Enregistrés dans le dossier ; aucune invitation envoyée, aucun créneau réservé.</p>"
+        : '<p class="pr-sous mb-0" data-rendezvous-vide>Aucun rendez-vous planifié pour cette opportunité.</p>') + "</div>";
+  }
+
   // Rendez-vous de l'opportunité (module Rendez-vous chargé sur la fiche) : à venir, passés, essais et résultats.
+  // Opportunité enregistrée : ses rendez-vous enregistrés (fonctionnalité 22), jamais ceux de la démonstration.
   function rendezVousHtml(o) {
-    if (P.estEnregistree(o.id)) return "";
+    if (P.estEnregistree(o.id)) return rendezVousEnregistresHtml(o);
     var R = window.RendezVous;
     if (!R) return "";
     var maintenant = new Date();
@@ -891,6 +916,52 @@
       definirModifiee(false);
       P.envoyerRetraitVehicule(b.dataset.opp, v.id);
     }
+  });
+
+  // ---------- Rendez-vous d'une opportunité enregistrée (fonctionnalité 22) ----------
+  // Fenêtre envoyée au serveur, qui interprète la date et l'heure dans le fuseau commercial, refuse un moment passé ou
+  // un changement d'heure, puis recharge la fiche avec son message : rien n'est annoncé avant sa réponse.
+  var modalRendezVous = bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-rendezvous"));
+  var formRendezVous = document.getElementById("form-rendezvous");
+  var rendezVousOpp = null;
+
+  function ouvrirRendezVous(oppId) {
+    var o = P.opportunite(oppId);
+    if (!o || !P.estEnregistree(oppId) || !P.estActive(o)) return;
+    rendezVousOpp = oppId;
+    formRendezVous.reset();
+    formRendezVous.querySelectorAll(".is-invalid").forEach(function (x) { x.classList.remove("is-invalid"); });
+    formRendezVous.querySelector("[data-rendezvous-mention]").textContent = "Projet « " + o.titre + " ». Le rendez-vous est enregistré dans le dossier ; "
+      + "aucune invitation n'est envoyée au client, et aucun créneau, aucune salle ni aucun véhicule n'est réservé.";
+    formRendezVous.querySelector("[data-rendezvous-envoyer]").disabled = false;
+    modalRendezVous.show();
+  }
+
+  formRendezVous.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var el = formRendezVous.elements;
+    var invalides = [];
+    [el.type, el.date, el.heure].forEach(function (x) {
+      x.classList.remove("is-invalid");
+      if (!x.value || !x.checkValidity()) invalides.push(x);
+    });
+    if (invalides.length) {
+      invalides.forEach(function (x) { x.classList.add("is-invalid"); });
+      invalides[0].focus();
+      return;
+    }
+    if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return;
+    formRendezVous.querySelector("[data-rendezvous-envoyer]").disabled = true; // contre le double clic
+    definirModifiee(false);
+    if (!P.envoyerRendezVous(rendezVousOpp, formRendezVous)) {
+      formRendezVous.querySelector("[data-rendezvous-envoyer]").disabled = false;
+      P.notifier("Cette opportunité ne peut plus recevoir de rendez-vous : actualisez la page.");
+    }
+  });
+
+  racine.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-rendezvous-planifier]");
+    if (b) ouvrirRendezVous(b.dataset.rendezvousPlanifier);
   });
 
   P.abonner(rendre);

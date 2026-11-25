@@ -60,7 +60,9 @@ public record Opportunite(
     string? VersionSuivi = null,
     // Opportunité enregistrée : ses véhicules envisagés avec leur identifiant (fonctionnalité 21). VehiculesEnvisages
     // garde leurs libellés, lus par les autres modules (Centre d'actions, liste, relations).
-    IReadOnlyList<VehiculeEnvisageVue>? VehiculesDetail = null
+    IReadOnlyList<VehiculeEnvisageVue>? VehiculesDetail = null,
+    // Opportunité enregistrée : ses rendez-vous commerciaux enregistrés, du plus tôt au plus tard (fonctionnalité 22).
+    IReadOnlyList<RendezVousEnregistreVue>? RendezVousEnregistres = null
 );
 
 // Prochaine action enregistrée d'une opportunité active, pour la vue « À venir » de « Mes suivis »
@@ -200,6 +202,29 @@ public class QualificationSaisie
     public string? DateCible { get; set; }
     public List<string> ElementsDecision { get; set; } = [];
     public string? Objections { get; set; }
+}
+
+// Rendez-vous commercial enregistré, tel que la fiche l'affiche (fonctionnalité 22). Id : « rv-12 ». DebutUtc est un
+// instant UTC (sérialisé avec « Z ») ; la fiche l'affiche dans le fuseau Fuseau, jamais dans celui du navigateur.
+public record RendezVousEnregistreVue(string Id, string Type, string TypeLibelle, DateTime DebutUtc, string Fuseau, int DureeMinutes,
+    string Mode, string ModeLibelle, string? Lieu, string? Objectif, string? Commentaire);
+
+// Champs postés par la fenêtre « Planifier un rendez-vous » de la fiche (fonctionnalité 22). Textes bruts : toute la
+// validation se fait dans ServiceProspects.PlanifierRendezVousAsync. Date (« 2027-01-15 ») et Heure (« 14:00 ») sont
+// l'heure commerciale, comprise dans le fuseau commercial de l'application (FuseauCommercial), jamais celui du poste.
+public class RendezVousSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? OpportuniteId { get; set; }
+    public string? Version { get; set; }
+    public string? Type { get; set; }
+    public string? Date { get; set; }
+    public string? Heure { get; set; }
+    public string? DureeMinutes { get; set; }
+    public string? Mode { get; set; }
+    public string? Lieu { get; set; }
+    public string? Objectif { get; set; }
+    public string? Commentaire { get; set; }
 }
 
 // Véhicule envisagé d'une opportunité enregistrée, tel que la fiche l'affiche (fonctionnalité 21). Id : « ve-12 ».

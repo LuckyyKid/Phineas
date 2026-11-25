@@ -9,6 +9,7 @@ using Phineas.Data;
 using Phineas.Models.Entities;
 using Phineas.Models.ViewModels.Account;
 using Phineas.Models.ViewModels.Conseiller;
+using Phineas.Services;
 using Phineas.Services.Commun;
 
 namespace Phineas.Services.Conseiller;
@@ -40,6 +41,10 @@ public interface IServiceProspects
     // Véhicules envisagés d'une opportunité enregistrée du conseiller (fonctionnalité 21) : ajout (identifiant du
     // véhicule créé), modification des champs envoyés, retrait. Simple description : ni inventaire, ni réservation.
     Task<ResultatService<int>> AjouterVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
+
+    // Rendez-vous commercial planifié pour une opportunité enregistrée du conseiller (fonctionnalité 22) : création
+    // seulement ; identifiant du rendez-vous créé. Ni invitation, ni réservation, ni contact déclaré.
+    Task<ResultatService<int>> PlanifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie);
     Task<ResultatService> ModifierVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
     Task<ResultatService> RetirerVehiculeAsync(string utilisateurId, VehiculeSaisie saisie);
 
@@ -102,11 +107,17 @@ public class ServiceProspects : IServiceProspects
 
     private readonly ApplicationDbContext _db;
     private readonly ServiceProspectsDemo _demo;
+    // Rendez-vous (fonctionnalité 22) : horloge du serveur (remplacée par une horloge fixe dans les tests) et fuseau
+    // commercial de l'application. Facultatifs pour les tests qui construisent le service à la main sans rendez-vous.
+    private readonly TimeProvider _temps;
+    private readonly FuseauCommercial? _fuseau;
 
-    public ServiceProspects(ApplicationDbContext db, ServiceProspectsDemo demo)
+    public ServiceProspects(ApplicationDbContext db, ServiceProspectsDemo demo, TimeProvider? temps = null, FuseauCommercial? fuseau = null)
     {
         _db = db;
         _demo = demo;
+        _temps = temps ?? TimeProvider.System;
+        _fuseau = fuseau;
     }
 
     // ---------- Lecture ----------
@@ -128,6 +139,8 @@ public class ServiceProspects : IServiceProspects
             .ThenInclude(h => h.Auteur)
             .Include(p => p.Opportunites)
             .ThenInclude(o => o.VehiculesEnvisages)
+            .Include(p => p.Opportunites)
+            .ThenInclude(o => o.RendezVous)
             .AsSplitQuery()
             .Where(p => p.ConseillerId == conseiller.Id && p.DealershipId == p.Conseiller!.DealershipId)
             .OrderBy(p => p.Id)
@@ -236,7 +249,8 @@ public class ServiceProspects : IServiceProspects
             vehicules.Select(v => v.Libelle).ToList(),
             qualification,
             VersionSuivi: EmpreinteSuivi(o.ProchaineAction, o.DateProchaineAction),
-            VehiculesDetail: vehicules
+            VehiculesDetail: vehicules,
+            RendezVousEnregistres: RendezVousDe(o)
         );
     }
 
@@ -580,6 +594,193 @@ public class ServiceProspects : IServiceProspects
             return ResultatService<int>.Echec("L'enregistrement a échoué : l'opportunité n'a pas été créée. Réessayez dans un instant.");
         }
         return ResultatService<int>.Ok(opportunite.Id);
+    }
+
+    // ---------- Rendez-vous commerciaux d'une opportunité enregistrée (fonctionnalité 22) ----------
+
+    public const string PrefixeRendezVous = "rv-";
+    private const int LongueurLieuRendezVous = 120;
+    private const int LongueurObjectifRendezVous = 200;
+    private const int LongueurCommentaireRendezVous = 500;
+
+    // Types existants permis pour un rendez-vous commercial ordinaire (décision F22). Exclus : EssaiRoutier (lot E6),
+    // Livraison, Financement et SuiviApresVente (processus ultérieurs), DiscussionSoumission (les soumissions ne sont pas
+    // encore enregistrées, lot E7) et Finalisation (la vente et la transaction ne sont pas encore enregistrées).
+    public static readonly IReadOnlyList<TypeRendezVous> TypesRendezVousPermis =
+    [
+        TypeRendezVous.PremiereRencontre,
+        TypeRendezVous.Consultation,
+        TypeRendezVous.PresentationVehicule,
+        TypeRendezVous.Negociation,
+        TypeRendezVous.Autre,
+    ];
+
+    // Rendez-vous d'une opportunité pour la fiche, du plus tôt au plus tard (à début égal, dans l'ordre de création).
+    private static List<RendezVousEnregistreVue> RendezVousDe(OpportuniteVente o)
+    {
+        var liste = new List<RendezVousEnregistreVue>();
+        foreach (var r in o.RendezVous.OrderBy(r => r.DebutUtc).ThenBy(r => r.Id))
+        {
+            liste.Add(new RendezVousEnregistreVue(
+                PrefixeRendezVous + r.Id,
+                r.Type.ToString(),
+                ReferentielsRendezVous.Libelle(r.Type),
+                DateTime.SpecifyKind(r.DebutUtc, DateTimeKind.Utc),
+                r.Fuseau,
+                r.DureeMinutes,
+                r.Mode,
+                LibelleDansListe(ReferentielsRendezVous.Modes, r.Mode),
+                r.Lieu,
+                r.Objectif,
+                r.Commentaire));
+        }
+        return liste;
+    }
+
+    private static string LibelleDansListe(IReadOnlyList<(string Cle, string Libelle)> liste, string cle)
+    {
+        foreach (var (c, libelle) in liste)
+        {
+            if (c == cle)
+                return libelle;
+        }
+        return cle;
+    }
+
+    private const string MessageConflitRendezVous =
+        "Ce dossier a été modifié entre-temps : le rendez-vous n'a pas été enregistré. La page affiche maintenant les valeurs "
+        + "actuelles ; vérifiez les rendez-vous de l'opportunité avant de recommencer.";
+
+    // Planifie un rendez-vous pour UNE opportunité du conseiller (son prospect, sa concession, l'opportunité de ce
+    // prospect, contrôlés côté serveur). La date et l'heure saisies sont comprises dans le fuseau commercial de
+    // l'application, converties en instant UTC et enregistrées avec ce fuseau. Refus : type non permis, heure qui
+    // n'existe pas ou qui existe deux fois (changement d'heure), rendez-vous qui traverse un changement d'heure,
+    // début déjà passé (horloge du serveur), durée, mode ou longueurs invalides. Double envoi : même mécanisme que
+    // F18 à F21 (empreinte du prospect sous son verrou). Ni contact déclaré, ni première réponse, ni suivi, ni étape,
+    // ni date d'activité : planifier n'est pas rencontrer. Aucune invitation, aucune réservation.
+    public async Task<ResultatService<int>> PlanifierRendezVousAsync(string utilisateurId, RendezVousSaisie saisie)
+    {
+        int? idProspect = LireId(saisie.ProspectId, PrefixeProspect);
+        int? idOpportunite = LireId(saisie.OpportuniteId, PrefixeOpportunite);
+        if (idProspect is null || idOpportunite is null)
+            return ResultatService<int>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+        if (_fuseau is null)
+            return ResultatService<int>.Echec("Le fuseau commercial n'est pas configuré : le rendez-vous n'a pas été enregistré.");
+
+        var resultat = new ResultatService<int>();
+        var valeurs = LireRendezVous(saisie, _fuseau, _temps.GetUtcNow().UtcDateTime, resultat.Erreurs);
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, idProspect.Value);
+        var opportunite = prospect?.Opportunites.FirstOrDefault(o => o.Id == idOpportunite.Value);
+        if (prospect is null || opportunite is null)
+            return ResultatService<int>.NonTrouve();
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService<int>.Echec(MessageConflitRendezVous);
+        // Comme pour un suivi : on ne planifie rien sur un projet gagné ou perdu.
+        if (!EstActive(opportunite))
+            return ResultatService<int>.Echec("Cette opportunité est clôturée : planifiez le rendez-vous sur une opportunité active.");
+
+        var rendezVous = new RendezVousCommercial
+        {
+            OpportuniteId = opportunite.Id,
+            Type = valeurs.Type,
+            DebutUtc = valeurs.DebutUtc,
+            Fuseau = _fuseau.Id,
+            DureeMinutes = valeurs.DureeMinutes,
+            Mode = valeurs.Mode,
+            Lieu = valeurs.Lieu,
+            Objectif = valeurs.Objectif,
+            Commentaire = valeurs.Commentaire,
+            DateCreation = _temps.GetUtcNow().UtcDateTime,
+        };
+        _db.RendezVousCommerciaux.Add(rendezVous);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<int>.Echec("L'enregistrement a échoué : le rendez-vous n'a pas été enregistré. Réessayez dans un instant.");
+        }
+        return ResultatService<int>.Ok(rendezVous.Id);
+    }
+
+    private sealed record ValeursRendezVous(TypeRendezVous Type, DateTime DebutUtc, int DureeMinutes, string Mode, string? Lieu, string? Objectif, string? Commentaire);
+
+    // Lit et valide la saisie ; les erreurs sont ajoutées à la liste donnée. maintenantUtc : horloge du serveur.
+    private static ValeursRendezVous LireRendezVous(RendezVousSaisie s, FuseauCommercial fuseau, DateTime maintenantUtc, List<ErreurChamp> erreurs)
+    {
+        void Erreur(string champ, string message) => erreurs.Add(new ErreurChamp(champ, message));
+
+        // Type : un nom existant (jamais un nombre) ET permis par F22.
+        TypeRendezVous type = TypeRendezVous.Autre;
+        string? texteType = Texte(s.Type);
+        bool typeConnu = false;
+        foreach (var t in TypesRendezVousPermis)
+        {
+            if (t.ToString() == texteType)
+            {
+                type = t;
+                typeConnu = true;
+            }
+        }
+        if (!typeConnu)
+            Erreur("type", "Choisissez un type de rendez-vous proposé.");
+
+        int duree = 0;
+        bool dureeLisible = int.TryParse(Texte(s.DureeMinutes), NumberStyles.None, CultureInfo.InvariantCulture, out duree);
+        if (!dureeLisible || !ReferentielsRendezVous.Durees.Contains(duree))
+            Erreur("dureeMinutes", "Choisissez une durée proposée.");
+
+        string mode = Texte(s.Mode) ?? "";
+        if (!EstDansListe(ReferentielsRendezVous.Modes, mode))
+            Erreur("mode", "Choisissez la modalité du rendez-vous.");
+
+        string? lieu = Texte(s.Lieu);
+        if (lieu is not null && lieu.Length > LongueurLieuRendezVous)
+            Erreur("lieu", $"Lieu : {LongueurLieuRendezVous} caractères au plus.");
+        string? objectif = Texte(s.Objectif);
+        if (objectif is not null && objectif.Length > LongueurObjectifRendezVous)
+            Erreur("objectif", $"Objectif : {LongueurObjectifRendezVous} caractères au plus.");
+        string? commentaire = Texte(s.Commentaire);
+        if (commentaire is not null && commentaire.Length > LongueurCommentaireRendezVous)
+            Erreur("commentaire", $"Commentaire : {LongueurCommentaireRendezVous} caractères au plus.");
+
+        // Date et heure commerciales, au format des champs du navigateur (« 2027-01-15 » et « 14:00 »).
+        bool dateLisible = DateTime.TryParseExact(Texte(s.Date), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime jour);
+        bool heureLisible = TimeSpan.TryParseExact(Texte(s.Heure), @"hh\:mm", CultureInfo.InvariantCulture, out TimeSpan heure);
+        if (!dateLisible)
+            Erreur("date", "Indiquez une date valide.");
+        if (!heureLisible)
+            Erreur("heure", "Indiquez une heure valide.");
+
+        DateTime debutUtc = default;
+        if (dateLisible && heureLisible)
+        {
+            var conversion = fuseau.VersUtc(jour.Date + heure);
+            if (conversion.Etat == EtatHeureCommerciale.Inexistante)
+                Erreur("heure", "Cette heure n'existe pas ce jour-là (passage à l'heure d'été) : choisissez un autre horaire.");
+            else if (conversion.Etat == EtatHeureCommerciale.Ambigue)
+                Erreur("heure", "Cette heure existe deux fois ce jour-là (retour à l'heure normale) : choisissez un autre horaire.");
+            else
+            {
+                debutUtc = conversion.Utc!.Value;
+                if (debutUtc <= maintenantUtc)
+                    Erreur("heure", "Ce moment est déjà passé : planifiez le rendez-vous à venir.");
+                else if (dureeLisible && fuseau.Decalage(debutUtc) != fuseau.Decalage(debutUtc.AddMinutes(duree)))
+                    Erreur("dureeMinutes", "Ce rendez-vous traverserait un changement d'heure : choisissez un autre horaire.");
+            }
+        }
+        return new ValeursRendezVous(type, debutUtc, duree, mode, lieu, objectif, commentaire);
     }
 
     // ---------- Véhicules envisagés d'une opportunité enregistrée (fonctionnalité 21) ----------
@@ -1581,7 +1782,10 @@ public class ServiceProspects : IServiceProspects
     // Même règle que la liste (ObtenirAsync) : prospect du conseiller, dans sa concession actuelle.
     private async Task<Prospect?> TrouverDansSonDossierAsync(string utilisateurId, int id, bool suivre)
     {
-        var requete = _db.Prospects.Include(p => p.Opportunites).ThenInclude(o => o.VehiculesEnvisages).Where(p =>
+        var requete = _db.Prospects
+            .Include(p => p.Opportunites).ThenInclude(o => o.VehiculesEnvisages)
+            .Include(p => p.Opportunites).ThenInclude(o => o.RendezVous)
+            .Where(p =>
             p.Id == id && p.ConseillerId == utilisateurId && p.DealershipId == p.Conseiller!.DealershipId);
         if (!suivre)
             requete = requete.AsNoTracking();
@@ -1621,6 +1825,12 @@ public class ServiceProspects : IServiceProspects
             {
                 texte.Append('~');
                 texte.AppendJoin('|', v.Id, v.Marque, v.Modele, v.Annee, v.Finition);
+            }
+            // Rendez-vous (fonctionnalité 22), même principe : rien d'ajouté pour une opportunité sans rendez-vous.
+            foreach (var r in o.RendezVous.OrderBy(r => r.Id))
+            {
+                texte.Append('@');
+                texte.AppendJoin('|', r.Id, r.Type, r.DebutUtc.ToString("O", CultureInfo.InvariantCulture), r.Fuseau, r.DureeMinutes, r.Mode);
             }
         }
         byte[] hachage = SHA256.HashData(Encoding.UTF8.GetBytes(texte.ToString()));

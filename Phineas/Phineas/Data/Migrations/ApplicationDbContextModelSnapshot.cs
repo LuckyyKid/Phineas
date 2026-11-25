@@ -652,6 +652,60 @@ namespace Phineas.Data.Migrations
                     b.ToTable("Prospects");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.RendezVousCommercial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Commentaire")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DebutUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("DureeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Fuseau")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Lieu")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Objectif")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("OpportuniteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportuniteId");
+
+                    b.ToTable("RendezVousCommerciaux", (string)null);
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
                 {
                     b.Property<int>("Id")
@@ -1013,6 +1067,17 @@ namespace Phineas.Data.Migrations
                     b.Navigation("Dealership");
                 });
 
+            modelBuilder.Entity("Phineas.Models.Entities.RendezVousCommercial", b =>
+                {
+                    b.HasOne("Phineas.Models.Entities.OpportuniteVente", "Opportunite")
+                        .WithMany("RendezVous")
+                        .HasForeignKey("OpportuniteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opportunite");
+                });
+
             modelBuilder.Entity("Phineas.Models.Entities.Vehicule", b =>
                 {
                     b.HasOne("Phineas.Models.Entities.Dealership", "Dealership")
@@ -1072,6 +1137,8 @@ namespace Phineas.Data.Migrations
                     b.Navigation("HistoriqueEtapes");
 
                     b.Navigation("HistoriqueSuivis");
+
+                    b.Navigation("RendezVous");
 
                     b.Navigation("VehiculesEnvisages");
                 });

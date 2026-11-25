@@ -1,8 +1,14 @@
 @using Phineas.Models.ViewModels.Conseiller
+@using Phineas.Services.Conseiller
 @model ProspectsPageViewModel
+@inject Phineas.Services.FuseauCommercial FuseauCommercial
+@inject TimeProvider Horloge
 @{
     ViewData["Title"] = "Fiche prospect";
     Layout = "~/Views/Conseiller/_LayoutConseiller.cshtml";
+    // Rendez-vous (fonctionnalité 22) : premier jour proposé = aujourd'hui dans le fuseau commercial (indication
+    // seulement ; le serveur refuse de toute façon un moment déjà passé).
+    string aujourdhuiCommercial = FuseauCommercial.VersHeureCommerciale(Horloge.GetUtcNow().UtcDateTime).ToString("yyyy-MM-dd");
 }
 
 @section Styles {
@@ -469,6 +475,86 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
                 <button type="submit" class="btn btn-primary" data-vehicule-envoyer>Ajouter le véhicule</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ---------- Rendez-vous commercial d'une opportunité enregistrée (fonctionnalité 22) ----------
+   Envoyé tel quel au serveur (PlanifierRendezVous) ; prospects-fiche.js remplit l'opportunité et l'empreinte.
+   Date et heure : heure commerciale du fuseau de l'application, affiché ; types : ceux permis par F22 seulement. *@
+<div class="modal fade" id="modal-rendezvous" tabindex="-1" aria-labelledby="modal-rendezvous-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-rendezvous" method="post" asp-controller="Prospects" asp-action="PlanifierRendezVous" novalidate>
+            <input type="hidden" name="prospectId" value="@Model.ProspectId" />
+            <input type="hidden" name="opportuniteId" />
+            <input type="hidden" name="version" />
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modal-rendezvous-titre">Planifier un rendez-vous</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted" data-rendezvous-mention></p>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="rv-type">Type de rendez-vous <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="rv-type" name="type" required>
+                            <option value="">Choisir</option>
+                            @foreach (var t in ServiceProspects.TypesRendezVousPermis)
+                            {
+                                <option value="@t">@ReferentielsRendezVous.Libelle(t)</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Choisissez le type de rendez-vous.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="rv-date">Date <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="rv-date" name="date" type="date" required min="@aujourdhuiCommercial" />
+                        <div class="invalid-feedback">Indiquez la date.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="rv-heure">Heure <span class="pr-requis">*</span></label>
+                        <input class="form-control" id="rv-heure" name="heure" type="time" required step="300" />
+                        <div class="invalid-feedback">Indiquez l'heure.</div>
+                    </div>
+                    <div class="col-12 form-text mt-1" data-rendezvous-fuseau="@FuseauCommercial.Id">
+                        <i class="bi bi-globe2 me-1" aria-hidden="true"></i>Heure du fuseau commercial de la concession : @FuseauCommercial.Id (même heure pour tous les postes).
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="rv-duree">Durée <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="rv-duree" name="dureeMinutes" required>
+                            @foreach (var d in ReferentielsRendezVous.Durees)
+                            {
+                                <option value="@d" selected="@(d == 45)">@d min</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="rv-mode">Modalité <span class="pr-requis">*</span></label>
+                        <select class="form-select" id="rv-mode" name="mode" required>
+                            @foreach (var (cle, libelle) in ReferentielsRendezVous.Modes)
+                            {
+                                <option value="@cle">@libelle</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="rv-lieu">Lieu <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <input class="form-control" id="rv-lieu" name="lieu" maxlength="120" autocomplete="off" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="rv-objectif">Objectif <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <input class="form-control" id="rv-objectif" name="objectif" maxlength="200" autocomplete="off" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="rv-commentaire">Commentaire <span class="text-muted fw-normal">(facultatif)</span></label>
+                        <textarea class="form-control" id="rv-commentaire" name="commentaire" maxlength="500" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary" data-rendezvous-envoyer>Enregistrer le rendez-vous</button>
             </div>
         </form>
     </div>

@@ -449,6 +449,37 @@
     return true;
   }
 
+  // Rendez-vous commerciaux enregistrés d'UNE opportunité (fonctionnalité 22), tels que le serveur les a envoyés, du
+  // plus tôt au plus tard : { id: "rv-…", type, typeLibelle, debutUtc, fuseau, dureeMinutes, mode, modeLibelle, … }.
+  // Une opportunité de démonstration n'en a aucun (ses rendez-vous fictifs restent dans le module Rendez-vous).
+  function rendezVousDe(oppId) {
+    var o = opportunite(oppId);
+    return o && estEnregistree(oppId) ? o.rendezVousEnregistres || [] : [];
+  }
+
+  // Jour, heures de début et de fin d'un rendez-vous enregistré, TOUJOURS dans son fuseau commercial (r.fuseau), jamais
+  // dans celui du poste : un rendez-vous de 14 h à Toronto s'affiche 14 h partout. La fin = début + durée écoulée.
+  function formaterRendezVous(r) {
+    var debut = new Date(r.debutUtc);
+    var fin = new Date(debut.getTime() + r.dureeMinutes * 60000);
+    var formatJour = new Intl.DateTimeFormat("fr-CA", { timeZone: r.fuseau, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    var formatHeure = new Intl.DateTimeFormat("fr-CA", { timeZone: r.fuseau, hour: "numeric", minute: "2-digit" });
+    return { jour: formatJour.format(debut), debut: formatHeure.format(debut), fin: formatHeure.format(fin), fuseau: r.fuseau };
+  }
+
+  // Planification d'un rendez-vous (fonctionnalité 22) : le formulaire de la fiche est envoyé tel quel à
+  // ProspectsController.PlanifierRendezVous, avec l'opportunité et l'empreinte du prospect affichée. Rien n'est écrit
+  // dans l'onglet : la fiche se recharge avec le message du serveur.
+  function envoyerRendezVous(oppId, formulaire) {
+    var o = opportunite(oppId);
+    var c = o ? contact(o.prospectId) : null;
+    if (!o || !c || !c.enregistre || !estEnregistree(oppId) || !estActive(o)) return false;
+    formulaire.elements.opportuniteId.value = o.id;
+    formulaire.elements.version.value = c.version || "";
+    formulaire.submit();
+    return true;
+  }
+
   // Retrait d'un véhicule envisagé (fonctionnalité 21) : envoi à ProspectsController.RetirerVehicule avec
   // l'identifiant exact du véhicule et l'empreinte affichée ; la fiche se recharge avec le message du serveur.
   function envoyerRetraitVehicule(oppId, vehiculeId) {
@@ -668,6 +699,9 @@
     vehiculesDe: vehiculesDe,
     envoyerVehicule: envoyerVehicule,
     envoyerRetraitVehicule: envoyerRetraitVehicule,
+    rendezVousDe: rendezVousDe,
+    formaterRendezVous: formaterRendezVous,
+    envoyerRendezVous: envoyerRendezVous,
     projet: projet,
     urlListe: charge.urlListe,
     // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).

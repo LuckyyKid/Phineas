@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<NoteProspect> NotesProspect => Set<NoteProspect>();
     public DbSet<HistoriqueSuiviOpportunite> HistoriquesSuiviOpportunite => Set<HistoriqueSuiviOpportunite>();
     public DbSet<VehiculeEnvisage> VehiculesEnvisages => Set<VehiculeEnvisage>();
+    public DbSet<RendezVousCommercial> RendezVousCommerciaux => Set<RendezVousCommercial>();
     public DbSet<VeilleRecommandation> VeillesRecommandation => Set<VeilleRecommandation>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -135,6 +136,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne(v => v.Opportunite)
                 .WithMany(o => o.VehiculesEnvisages)
                 .HasForeignKey(v => v.OpportuniteId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Rendez-vous commerciaux (fonctionnalité 22) : type gardé par son nom (comme l'étape) ; ils disparaissent avec
+        // leur opportunité. Aucun lien vers un calendrier, un véhicule, une soumission ou une transaction.
+        builder.Entity<RendezVousCommercial>(e =>
+        {
+            e.ToTable("RendezVousCommerciaux");
+            e.Property(r => r.Type).HasConversion<string>().HasMaxLength(30);
+
+            e.HasOne(r => r.Opportunite)
+                .WithMany(o => o.RendezVous)
+                .HasForeignKey(r => r.OpportuniteId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

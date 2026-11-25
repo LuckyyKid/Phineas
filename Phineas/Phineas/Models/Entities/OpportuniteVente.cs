@@ -85,4 +85,7 @@ public class OpportuniteVente
 
     // Véhicules que le client considère pour ce projet (fonctionnalité 21, voir VehiculeEnvisage).
     public ICollection<VehiculeEnvisage> VehiculesEnvisages { get; set; } = new List<VehiculeEnvisage>();
+
+    // Rendez-vous commerciaux planifiés pour ce projet (fonctionnalité 22, voir RendezVousCommercial).
+    public ICollection<RendezVousCommercial> RendezVous { get; set; } = new List<RendezVousCommercial>();
 }

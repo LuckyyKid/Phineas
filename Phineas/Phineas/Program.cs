@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Phineas.Data;
 using Phineas.Data.Seed;
 using Phineas.Models.Entities;
+using Phineas.Services;
 using Phineas.Services.Account;
 using Phineas.Services.Admin;
 using Phineas.Services.Conseiller;
@@ -64,6 +65,9 @@ builder.Services.AddScoped<IServiceUtilisateurs, ServiceUtilisateurs>();
 builder.Services.AddScoped<IServiceConcessions, ServiceConcessions>();
 // Horloge des données fictives vendeur (billet #87) : celle du système ; les tests la remplacent par une horloge fixe.
 builder.Services.AddSingleton(TimeProvider.System);
+// Fuseau commercial unique des rendez-vous (fonctionnalité 22) : lu et vérifié ici, au démarrage ; sans fuseau valide,
+// l'application s'arrête avec un message clair plutôt que d'interpréter les heures dans un fuseau choisi au hasard.
+builder.Services.AddSingleton(FuseauCommercial.Depuis(builder.Configuration));
 // Données fictives (phase frontend vendeur) : remplacer par l'implémentation réelle.
 builder.Services.AddScoped<IServiceTableauBordConseiller, ServiceTableauBordDemo>();
 // Prospects : données fictives + prospects réellement enregistrés en base (création réelle).
