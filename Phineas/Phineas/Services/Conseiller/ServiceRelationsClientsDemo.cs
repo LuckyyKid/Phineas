@@ -9,12 +9,22 @@ namespace Phineas.Services.Conseiller;
 // reçu : les réponses représentent ce qu'un client pourrait déclarer.
 public class ServiceRelationsClientsDemo : IServiceRelationsClients
 {
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
+
+    public ServiceRelationsClientsDemo(TimeProvider? temps = null)
+    {
+        _temps = temps ?? TimeProvider.System;
+    }
+
     private const string Moi = "moi";
     private const string Antoine = "Antoine Lefebvre";
 
     public Task<DonneesRelationsClients> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var n = DateTime.Now;
+        var n = _temps.GetUtcNow().LocalDateTime;
         var j = n.Date;
         var moi = conseiller.FullName;
 

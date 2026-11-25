@@ -147,7 +147,8 @@ async function statutHistorique(page, id) {
     await ouvrir(page, "/Intelligence/Suivis");
     await Promise.all([page.waitForNavigation(), page.locator('#relances [data-realiser-suivi="oe-' + a.oppId + '"]').click()]);
     verifier((await messageAffiche(page)).indexOf("marqué comme réalisé") >= 0, "confirmation du serveur après la réalisation");
-    verifier(sql("SELECT CONCAT(Cloture, '|', DATE(DatePrevue) = CURDATE()) FROM HistoriquesSuiviOpportunite WHERE OpportuniteId = " + a.oppId) === "Realise|1", "en base : historique « Réalisé » du suivi prévu aujourd'hui");
+    // Billet #87 : le suivi a été prévu pour jour(0), le jour de l'utilisateur (pas CURDATE(), jour UTC de MySQL).
+    verifier(sql("SELECT CONCAT(Cloture, '|', DATE(DatePrevue) = '" + jour(0) + "') FROM HistoriquesSuiviOpportunite WHERE OpportuniteId = " + a.oppId) === "Realise|1", "en base : historique « Réalisé » du suivi prévu aujourd'hui");
     await ouvrir(page, "/Intelligence");
     let h = await statutHistorique(page, a.suivi);
     let c = await compteursCentre(page);

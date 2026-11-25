@@ -190,12 +190,25 @@ async function premiereReponseDue(page, oppId) {
       const I = window.Intelligence;
       const lignes = I.actives({ conseiller: window.Prospects.moiId }).filter(function (x) { return x.relance; });
       const notesCommeContact = lignes.map(function (x) { return I.contexteRelance(x.id).derniere; }).filter(function (c) { return c && c.type === "note"; }).length;
-      const soumission = I.actives().filter(function (x) { return x.regle === "soumission-sans-reponse"; }).map(function (x) { return x.motif; });
+      const sansReponse = I.actives().filter(function (x) { return x.regle === "soumission-sans-reponse"; });
+      const soumission = sansReponse.map(function (x) { return x.motif; });
+      const ids = sansReponse.map(function (x) { return x.id.split(":")[1]; }).sort();
+      const expirent = I.actives().filter(function (x) { return x.regle === "soumission-expire"; }).map(function (x) { return x.id.split(":")[1]; });
+      // Validité de la soumission de Karim, en jours depuis le jour du navigateur (règle « expire bientôt » : 2 jours ou moins).
+      const karim = JSON.parse(document.getElementById("soumissions-donnees").textContent).donnees.soumissions.filter(function (x) { return x.id === "s-karim-outback"; })[0];
+      const validiteKarim = window.Prospects.ecartJours(karim.versions[karim.versions.length - 1].offre.dateValidite);
       const camille = lignes.filter(function (x) { return x.client === "Camille Lavoie"; }).map(function (x) { return I.contexteRelance(x.id).derniere; })[0];
-      return { notesCommeContact: notesCommeContact, soumission: soumission, camille: camille ? camille.type : null };
+      return { notesCommeContact: notesCommeContact, soumission: soumission, ids: ids, expirent: expirent, validiteKarim: validiteKarim, camille: camille ? camille.type : null };
     });
     verifier(demo.notesCommeContact === 0 && demo.camille === "appel", "démonstration : aucune note affichée comme dernier contact (Camille Lavoie : l'appel, plus la note)");
-    verifier(demo.soumission.length === 1 && /contact déclaré/.test(demo.soumission[0]), "règle « soumission sans réponse » (démonstration) : conservée, formulée en contacts déclarés");
+    // Billet #87 : « soumission sans réponse » = envoyée depuis 3 jours ou plus, sans contact déclaré, validité à PLUS de
+    // 2 jours (sinon c'est « expire bientôt »). Éric (validité j + 6) l'est toujours. Karim (validité j + 3, j = jour du
+    // SERVEUR) l'est seulement si sa validité reste à plus de 2 jours du jour du navigateur : le jour d'un serveur UTC et
+    // celui d'un navigateur à Toronto diffèrent le soir. On vérifie donc la règle soumission par soumission, pas un nombre.
+    const karimSansReponse = demo.validiteKarim > 2;
+    verifier(demo.ids.join() === (karimSansReponse ? "s-eric-cx5,s-karim-outback" : "s-eric-cx5") && (demo.expirent.indexOf("s-karim-outback") >= 0) === !karimSansReponse &&
+      demo.soumission.length > 0 && demo.soumission.every(function (m) { return /contact déclaré/.test(m); }),
+      "règle « soumission sans réponse » (démonstration) : Éric toujours, Karim selon sa validité (" + demo.validiteKarim + " j : " + (karimSansReponse ? "sans réponse" : "expire bientôt") + "), toutes formulées en contacts déclarés");
 
     await page.goto(BASE_URL + "/Outils/Performances"); await page.waitForTimeout(1200);
     const perf = await page.evaluate(function () { return [].slice.call(document.querySelectorAll(".pf-chiffre, li, div")).map(function (x) { return x.innerText || ""; }).join(" | "); });

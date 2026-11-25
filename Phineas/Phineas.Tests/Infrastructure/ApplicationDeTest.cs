@@ -20,6 +20,9 @@ public sealed class ApplicationDeTest : WebApplicationFactory<Program>, IAsyncLi
     public PanneEnregistrement Panne { get; } = new() { EnPanne = false };
     public PanneLectureProspects PanneLecture { get; } = new();
 
+    // Heure réelle par défaut ; un test peut la fixer (données fictives vendeur datées par rapport à « maintenant »).
+    public HorlogeDeTest Horloge { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -29,6 +32,8 @@ public sealed class ApplicationDeTest : WebApplicationFactory<Program>, IAsyncLi
             services.ConfigureDbContext<ApplicationDbContext>(options =>
                 options.UseMySql(Base.ChaineConnexion, BaseMySqlDeTest.VersionMySql).AddInterceptors(Panne, PanneLecture)
             );
+            // Remplace l'horloge du système enregistrée par Program.cs (la dernière inscription l'emporte).
+            services.AddSingleton<TimeProvider>(Horloge);
         });
     }
 

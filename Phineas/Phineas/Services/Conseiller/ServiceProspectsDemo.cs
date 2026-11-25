@@ -59,6 +59,16 @@ public static class IdsProspectsDemo
 // datés par rapport à « maintenant ». ServiceProspects y ajoute les prospects enregistrés en base.
 public class ServiceProspectsDemo
 {
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
+
+    public ServiceProspectsDemo(TimeProvider? temps = null)
+    {
+        _temps = temps ?? TimeProvider.System;
+    }
+
     // Identifiant du conseiller connecté dans les données envoyées au navigateur (ConseillerConnecteId).
     public const string IdConseillerConnecte = "moi";
     private const string Moi = IdConseillerConnecte;
@@ -68,7 +78,7 @@ public class ServiceProspectsDemo
 
     public Task<DonneesProspects> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var n = DateTime.Now;
+        var n = _temps.GetUtcNow().LocalDateTime;
         var j = n.Date;
         var moi = conseiller.FullName;
         var heureOlivier = FormatVente.Heure(CreneauxDemo.PresentationOlivier(n));

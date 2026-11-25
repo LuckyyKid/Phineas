@@ -14,9 +14,15 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
     private readonly IServiceProspects _prospects;
     private readonly IServiceSoumissions _soumissions;
     private readonly IServiceRendezVous _rendezVous;
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
 
-    public ServiceTableauBordDemo(IServiceProspects prospects, IServiceSoumissions soumissions, IServiceRendezVous rendezVous)
+    public ServiceTableauBordDemo(IServiceProspects prospects, IServiceSoumissions soumissions, IServiceRendezVous rendezVous,
+        TimeProvider? temps = null)
     {
+        _temps = temps ?? TimeProvider.System;
         _prospects = prospects;
         _soumissions = soumissions;
         _rendezVous = rendezVous;
@@ -24,7 +30,7 @@ public class ServiceTableauBordDemo : IServiceTableauBordConseiller
 
     public async Task<TableauBordConseillerViewModel> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var maintenant = DateTime.Now;
+        var maintenant = _temps.GetUtcNow().LocalDateTime;
         var aujourdhui = maintenant.Date;
         var prospects = await _prospects.ObtenirAsync(conseiller);
         var soumissions = await _soumissions.ObtenirAsync(conseiller);

@@ -217,8 +217,10 @@ async function messageAffiche(page) {
       "le suivi reporté est dans « À venir »");
 
     // ---------- Deux opportunités du même prospect ----------
+    // Billet #87 : « aujourd'hui » est le jour de l'utilisateur (jour(0), celui du navigateur), jamais CURDATE() (jour UTC
+    // de MySQL, déjà le lendemain le soir à Toronto : le suivi serait « demain » pour le navigateur).
     const m = await creer(page, "DeuxOpp" + suffixe);
-    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" + m.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler pour le deuxième véhicule', TIMESTAMP(CURDATE(), '09:00:00'), DATE_SUB(NOW(), INTERVAL " + (recul + 1) + " DAY), NOW())");
+    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" + m.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler pour le deuxième véhicule', TIMESTAMP('" + jour(0) + "', '09:00:00'), DATE_SUB(NOW(), INTERVAL " + (recul + 1) + " DAY), NOW())");
     const oppB = sql("SELECT Id FROM OpportunitesVente WHERE ProspectId = " + m.prospectId + " AND Titre = 'Deuxième véhicule'");
     await accueil(page);
     const ca = await carte(page, m.oppId), cbb = await carte(page, oppB);

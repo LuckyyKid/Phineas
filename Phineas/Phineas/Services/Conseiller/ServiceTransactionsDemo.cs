@@ -16,12 +16,20 @@ public class ServiceTransactionsDemo : IServiceTransactions
     private const string MarieEve = "c-marie-eve";
 
     private readonly IServiceSoumissions _soumissions;
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
 
-    public ServiceTransactionsDemo(IServiceSoumissions soumissions) => _soumissions = soumissions;
+    public ServiceTransactionsDemo(IServiceSoumissions soumissions, TimeProvider? temps = null)
+    {
+        _soumissions = soumissions;
+        _temps = temps ?? TimeProvider.System;
+    }
 
     public async Task<DonneesTransactions> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var n = DateTime.Now;
+        var n = _temps.GetUtcNow().LocalDateTime;
         var j = n.Date;
         var moi = conseiller.FullName;
         var soumissions = (await _soumissions.ObtenirAsync(conseiller)).Soumissions;

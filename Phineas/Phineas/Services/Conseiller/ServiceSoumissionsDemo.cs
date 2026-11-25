@@ -10,11 +10,21 @@ namespace Phineas.Services.Conseiller;
 // vrai inventaire, dont VehiculeInventaire reprend la forme).
 public class ServiceSoumissionsDemo : IServiceSoumissions
 {
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
+
+    public ServiceSoumissionsDemo(TimeProvider? temps = null)
+    {
+        _temps = temps ?? TimeProvider.System;
+    }
+
     private const string Moi = "moi";
 
     public Task<DonneesSoumissions> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var n = DateTime.Now;
+        var n = _temps.GetUtcNow().LocalDateTime;
         var j = n.Date;
         var moi = conseiller.FullName;
 

@@ -93,6 +93,49 @@ async function centre(page) {
   await page.waitForTimeout(900);
 }
 
+// Billet #87 : obligations « à traiter » des DOSSIERS RÉELS seulement (clé de l'obligation = raisons regroupées), et
+// compteurs du même chargement. Les données fictives sont recalculées par le serveur à chaque chargement, par rapport
+// à SON jour (UTC dans un conteneur) : au minuit du serveur, elles changent de jour sans que le dossier réel change.
+async function chargement(page) {
+  return page.evaluate(function () {
+    const R = window.IntelligenceRegles, I = window.Intelligence, moi = window.Prospects.moiId;
+    const reelles = R.regrouperObligations(R.actionsGardees(I.actives({ conseiller: moi })).filter(function (a) { return R.estDossierReel(a); }))
+      .map(function (g) { return g.id + "=" + g.raisons.map(function (r) { return r.regle; }).sort().join("+"); }).sort();
+    const nbFile = document.querySelector('[data-champ="nb-file"]');
+    return { reelles: reelles, compteurs: I.compteurs(moi), nbFile: nbFile ? Number(nbFile.textContent) : null };
+  });
+}
+
+// Instant fixe du jour du test (heure locale) : les vérifications liées à la règle des six heures n'utilisent jamais
+// l'heure réelle. Le suivi du jour a pour échéance 23 h 59 : « Normal » jusqu'à 17 h 59, « Élevé » ensuite.
+function aujourdhuiA(heure) {
+  const d = new Date();
+  d.setHours(heure, 0, 0, 0);
+  return d;
+}
+
+async function pageA(navigateur, instant) {
+  const p = await nouvellePage(navigateur);
+  await p.clock.setFixedTime(instant);
+  await connecter(p, SOPHIE);
+  return p;
+}
+
+// Ligne « À traiter » de « Mes suivis » pour une opportunité (pagination parcourue depuis la page 1), ou null.
+async function ligneMesSuivis(page, oppId) {
+  await page.goto(BASE_URL + "/Intelligence/Suivis");
+  await page.waitForTimeout(800);
+  for (let numero = 1; numero <= 40; numero++) {
+    const ligne = page.locator("#relances tr").filter({ has: page.locator('[data-realiser-suivi="oe-' + oppId + '"]') });
+    if (await ligne.count()) return ligne.first();
+    const suivante = page.locator('[data-zone="pagination-relances"] [data-aller-page="' + (numero + 1) + '"]:not([disabled])');
+    if (!(await suivante.count())) return null;
+    await suivante.first().click();
+    await page.waitForTimeout(150);
+  }
+  return null;
+}
+
 // Ligne de la file « À traiter » d'une opportunité (pagination parcourue depuis la page 1), ou null.
 async function ligneFile(page, oppId) {
   const selecteur = '#file article[data-obligation="contact:oe-' + oppId + '"], #file article[data-action-id$=":oe-' + oppId + '"], #file article[data-action-id*=":oe-' + oppId + ':"]';
@@ -189,7 +232,8 @@ function dossier(oppId) {
     const accueilAvant = (await prioriteAccueil(page, a.oppId)).join() === "premiere-reponse+suivi-echeance";
     await centre(page);
     verifier(accueilAvant && (await etat(page, a.oppId)).presentees.join() === "premiere-reponse,suivi-echeance", "dossier réel : priorité de l'Accueil, deux raisons présentées au Centre");
-    const avant = await page.evaluate(function () { return window.Intelligence.compteurs(window.Prospects.moiId); });
+    const avant = await chargement(page);
+    verifier(avant.nbFile === avant.compteurs.aTraiter, "même chargement : le chiffre de la file (" + avant.nbFile + ") est celui du compteur « à traiter » (" + avant.compteurs.aTraiter + ")");
 
     await mettreEnVeille(page, a, 3);
     verifier((await messageAffiche(page)) === "Recommandation mise en veille pour 3 jours. Elle n'est pas marquée comme réalisée : le dossier ne change pas.", "confirmation du serveur");
@@ -197,14 +241,39 @@ function dossier(oppId) {
     verifier(e.presentees.join() === "suivi-echeance" && e.enVeille.join() === "premiere-reponse", "seule la première réponse est en veille ; le suivi reste présenté");
     const ligne = await ligneFile(page, a.oppId);
     verifier(ligne && (await ligne.getAttribute("data-nb-raisons")) === null && (await ligne.getAttribute("data-action-id")).indexOf("suivi-echeance:") === 0, "la carte regroupée se recalcule : une seule raison, le suivi");
-    const apres = await page.evaluate(function () { return window.Intelligence.compteurs(window.Prospects.moiId); });
-    verifier(apres.aTraiter === avant.aTraiter && apres.enVeille === avant.enVeille + 1 && apres.terminees === avant.terminees,
-      "compteurs : l'obligation reste à traiter (suivi), « en veille » + 1, « terminées » inchangé");
+    // Billet #87 : on compare les obligations des dossiers réels, pas le total qui inclut les données fictives (au minuit
+    // du serveur, celles-ci changent légitimement de jour entre les deux chargements).
+    const apres = await chargement(page);
+    const cleA = "contact:oe-" + a.oppId;
+    verifier(avant.reelles.indexOf(cleA + "=premiere-reponse+suivi-echeance") >= 0 && apres.reelles.indexOf(cleA + "=suivi-echeance") >= 0 &&
+      apres.reelles.length === avant.reelles.length,
+      "obligations réelles : celle du dossier reste à traiter (le suivi seul), aucune autre ne change (" + apres.reelles.length + ")");
+    verifier(apres.compteurs.enVeille === avant.compteurs.enVeille + 1 && apres.compteurs.terminees === avant.compteurs.terminees,
+      "compteurs : « en veille » + 1, « terminées » inchangé (une veille n'est pas une réalisation)");
+    verifier(apres.nbFile === apres.compteurs.aTraiter, "même chargement : le chiffre de la file est toujours celui du compteur « à traiter »");
     verifier(await page.evaluate(function (cle) { return window.Intelligence.action(cle).statut; }, a.cle) === "EnVeille", "statut « En veille », pas « Terminée »");
     verifier(veilles(a.oppId) === a.cle + "|" + a.cle + "|non|72" && dossier(a.oppId) === avantDossier, "en base : une veille de 72 h ; suivi, étape, historique et notes inchangés");
-    await page.goto(BASE_URL + "/Conseiller"); await page.waitForTimeout(900);
-    verifier((await prioriteAccueil(page, a.oppId)).length === 0,
-      "Accueil : la première réponse en veille n'est plus une priorité immédiate (le suivi du jour, Normal, n'en est pas une)");
+    // Billet #87 : règle des six heures vérifiée à des instants fixes du jour du test (horloge du navigateur), jamais
+    // à l'heure réelle du lancement. La première réponse reste en veille aux deux instants ; seul le suivi peut monter.
+    const cleSuivi = "suivi-echeance:oe-" + a.oppId + ":" + jour(0);
+    const historiqueAvant = sql("SELECT COUNT(*) FROM HistoriquesSuiviOpportunite WHERE OpportuniteId = " + a.oppId);
+    for (const [heure, priorite, surAccueil] of [[12, "Normal", false], [19, "Eleve", true]]) {
+      const v = await pageA(navigateur, aujourdhuiA(heure));
+      await v.goto(BASE_URL + "/Conseiller"); await v.waitForTimeout(900);
+      const accueil = await prioriteAccueil(v, a.oppId);
+      await centre(v);
+      const ev = await etat(v, a.oppId);
+      const prioriteSuivi = await v.evaluate(function (cle) { const x = window.Intelligence.action(cle); return x ? x.priorite + "/" + x.statut : null; }, cleSuivi);
+      verifier(ev.enVeille.join() === "premiere-reponse" && ev.presentees.join() === "suivi-echeance",
+        heure + " h : la première réponse reste en veille, le suivi distinct reste présenté");
+      verifier(prioriteSuivi === priorite + "/ATraiter", heure + " h : le suivi du jour est « " + priorite + " » et à traiter (" + prioriteSuivi + ")");
+      verifier(surAccueil ? accueil.join() === "suivi-echeance" : accueil.length === 0,
+        heure + " h : Accueil " + (surAccueil ? "avec le suivi seul (la raison en veille ne revient pas)" : "sans cette opportunité") + " (" + (accueil.join() || "aucune") + ")");
+      verifier((await ligneMesSuivis(v, a.oppId)) !== null, heure + " h : « Mes suivis » présente le suivi à traiter");
+      await v.context().close();
+    }
+    verifier(veilles(a.oppId) === a.cle + "|" + a.cle + "|non|72" && sql("SELECT COUNT(*) FROM HistoriquesSuiviOpportunite WHERE OpportuniteId = " + a.oppId) === historiqueAvant &&
+      dossier(a.oppId) === avantDossier, "en base : la veille est intacte, aucune réalisation ni aucun report n'a été écrit");
 
     await centre(page);
     await page.reload(); await page.waitForTimeout(900);

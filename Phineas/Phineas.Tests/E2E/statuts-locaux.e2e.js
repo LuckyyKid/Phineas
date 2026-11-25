@@ -268,7 +268,9 @@ function dossier(oppId) {
       "report enregistré : le suivi passe « À venir » ; la première réponse reste due malgré un ancien report local");
 
     // ---------- Deux opportunités du même prospect ----------
-    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" + a.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler', TIMESTAMP(CURDATE(), '09:00:00'), DATE_SUB(NOW(), INTERVAL 3 DAY), NOW())");
+    // Billet #87 : « aujourd'hui » est le jour de l'utilisateur (jour(0), celui du navigateur), jamais CURDATE() (jour UTC
+    // de MySQL, déjà le lendemain le soir à Toronto : le suivi serait « demain » pour le navigateur).
+    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" + a.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler', TIMESTAMP('" + jour(0) + "', '09:00:00'), DATE_SUB(NOW(), INTERVAL 3 DAY), NOW())");
     const b = sql("SELECT MAX(Id) FROM OpportunitesVente WHERE ProspectId = " + a.prospectId);
     await ouvrir(page, "/Intelligence");
     await injecter(page, { prospectId: a.prospectId, oppId: b, premiere: "premiere-reponse:oe-" + b, suivi: "suivi-echeance:oe-" + b + ":" + jour(0) }, { preference: true });

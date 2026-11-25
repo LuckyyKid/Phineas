@@ -15,17 +15,23 @@ public class ServiceIntelligenceCommercialeDemo : IServiceIntelligenceCommercial
     private readonly IServiceRelationsClients _relations;
     private readonly IServiceOutilsVendeur _outils;
     private readonly IServiceVeillesRecommandations _veilles;
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
 
-    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations, IServiceOutilsVendeur outils, IServiceVeillesRecommandations veilles)
+    public ServiceIntelligenceCommercialeDemo(IServiceRelationsClients relations, IServiceOutilsVendeur outils, IServiceVeillesRecommandations veilles,
+        TimeProvider? temps = null)
     {
         _relations = relations;
         _outils = outils;
         _veilles = veilles;
+        _temps = temps ?? TimeProvider.System;
     }
 
     public async Task<DonneesIntelligence> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var n = DateTime.Now;
+        var n = _temps.GetUtcNow().LocalDateTime;
         var j = n.Date;
 
         var preferences = new List<PreferencesCommunication>

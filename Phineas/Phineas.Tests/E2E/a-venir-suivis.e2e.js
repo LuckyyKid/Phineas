@@ -254,7 +254,7 @@ async function pageCourante(page, liste) {
     // ---------- Pagination : ordre, égalités, indépendance des deux vues ----------
     const p = a.prospectId;
     const valeurs = [];
-    for (let i = 0; i < 9; i++) valeurs.push("(" + p + ", 'Pagination " + i + " " + suffixe + "', 'Qualifie', 'Pagination " + i + " " + suffixe + "', TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL " + (i < 2 ? 12 : 13 + i) + " DAY), '09:00:00'), NOW(), NOW())");
+    for (let i = 0; i < 9; i++) valeurs.push("(" + p + ", 'Pagination " + i + " " + suffixe + "', 'Qualifie', 'Pagination " + i + " " + suffixe + "', TIMESTAMP(DATE_ADD('" + jour(0) + "', INTERVAL " + (i < 2 ? 12 : 13 + i) + " DAY), '09:00:00'), NOW(), NOW())");
     sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES " + valeurs.join(", "));
     await ouvrirAVenir(page);
     const ordre = [];
@@ -269,7 +269,9 @@ async function pageCourante(page, liste) {
       const P = window.Prospects;
       return JSON.parse(document.getElementById("suivis-planifies").textContent).filter(function (s) { return P.ecartJours(s.datePrevue) > 0; }).map(function (s) { return s.opportuniteId; });
     });
-    const enBase = sql("SELECT CONCAT('oe-', o.Id) FROM OpportunitesVente o JOIN Prospects x ON x.Id = o.ProspectId JOIN AspNetUsers u ON u.Id = x.ConseillerId WHERE u.Email = '" + SOPHIE + "' AND o.ProchaineAction IS NOT NULL AND DATE(o.DateProchaineAction) > CURDATE() AND o.Etape NOT IN ('Gagne', 'Perdu') ORDER BY o.DateProchaineAction, o.Id").split("\n");
+    // Billet #87 : « à venir » = après le jour de l'utilisateur (jour(0), celui du navigateur), pas après CURDATE() (jour
+    // UTC de MySQL) : le soir à Toronto, les suivis de demain manqueraient à la référence.
+    const enBase = sql("SELECT CONCAT('oe-', o.Id) FROM OpportunitesVente o JOIN Prospects x ON x.Id = o.ProspectId JOIN AspNetUsers u ON u.Id = x.ConseillerId WHERE u.Email = '" + SOPHIE + "' AND o.ProchaineAction IS NOT NULL AND DATE(o.DateProchaineAction) > '" + jour(0) + "' AND o.Etape NOT IN ('Gagne', 'Perdu') ORDER BY o.DateProchaineAction, o.Id").split("\n");
     verifier(ordre.length === enBase.length && ordre.join() === enBase.join() && ordre.join() === attendu.join(), "toutes les pages réunies : les " + ordre.length + " suivis à venir de la base, par date puis par opportunité");
     const egaux = sql("SELECT CONCAT('oe-', Id) FROM OpportunitesVente WHERE ProchaineAction IN ('Pagination 0 " + suffixe + "', 'Pagination 1 " + suffixe + "') ORDER BY Id").split("\n");
     verifier(ordre.indexOf(egaux[0]) + 1 === ordre.indexOf(egaux[1]), "à date égale, ordre stable par opportunité");

@@ -235,7 +235,9 @@ async function regles(page, oppId) {
 
     // ---------- Scénario D : deux opportunités du même client ----------
     const d = await creer(page, "DeuxOpp" + suffixe, TACHE);
-    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" + d.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler pour le deuxième véhicule', TIMESTAMP(CURDATE(), '09:00:00'), NOW(), NOW())");
+    // Billet #87 : « aujourd'hui » est le jour de l'utilisateur (jour(0), celui du navigateur), jamais CURDATE() (jour UTC
+    // de MySQL, déjà le lendemain le soir à Toronto : le suivi serait « demain » pour le navigateur).
+    sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" + d.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler pour le deuxième véhicule', TIMESTAMP('" + jour(0) + "', '09:00:00'), NOW(), NOW())");
     const oppB = sql("SELECT Id FROM OpportunitesVente WHERE ProspectId = " + d.prospectId + " AND Titre = 'Deuxième véhicule'");
     await ouvrirCentre(page);
     verifier((await carteObligation(page, d.oppId)) !== null && (await carteObligation(page, oppB)) !== null, "deux opportunités du même client : deux cartes distinctes");

@@ -62,6 +62,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IServiceUtilisateurs, ServiceUtilisateurs>();
 builder.Services.AddScoped<IServiceConcessions, ServiceConcessions>();
+// Horloge des données fictives vendeur (billet #87) : celle du système ; les tests la remplacent par une horloge fixe.
+builder.Services.AddSingleton(TimeProvider.System);
 // Données fictives (phase frontend vendeur) : remplacer par l'implémentation réelle.
 builder.Services.AddScoped<IServiceTableauBordConseiller, ServiceTableauBordDemo>();
 // Prospects : données fictives + prospects réellement enregistrés en base (création réelle).

@@ -132,8 +132,10 @@ async function messageAffiche(page) {
     const action = "Préparer le dossier de financement " + suffixe; // une tâche, pas un contact client
     const a = await creerAvecSuivi(page, "Dedup" + suffixe, action, 0);
     // Deuxième opportunité du même client, avec sa propre prise de contact (obligation indépendante).
+    // Billet #87 : « aujourd'hui » est le jour de l'utilisateur (jour(0), celui du navigateur), jamais CURDATE() (jour UTC
+    // de MySQL, déjà le lendemain le soir à Toronto : le suivi serait « demain » pour le navigateur).
     sql("INSERT INTO OpportunitesVente (ProspectId, Titre, Etape, ProchaineAction, DateProchaineAction, DateCreation, DerniereActivite) VALUES (" +
-      a.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler pour le deuxième véhicule', TIMESTAMP(CURDATE(), '09:00:00'), NOW(), NOW())");
+      a.prospectId + ", 'Deuxième véhicule', 'Nouveau', 'Rappeler pour le deuxième véhicule', TIMESTAMP('" + jour(0) + "', '09:00:00'), NOW(), NOW())");
     const b = { oppId: sql("SELECT Id FROM OpportunitesVente WHERE ProspectId = " + a.prospectId + " AND Titre = 'Deuxième véhicule'") };
     verifier(sql("SELECT CONCAT(Etape, ' | ', ProchaineAction, ' | ', DATE(DateProchaineAction)) FROM OpportunitesVente WHERE Id = " + a.oppId) === "Nouveau | " + action + " | " + jour(0), "prospect réel « Nouveau » avec un suivi du jour, en base (oe-" + a.oppId + ")");
 
@@ -159,13 +161,23 @@ async function messageAffiche(page) {
     verifier(new Set(lignes.map(function (l) { return l.obligation; })).size === lignes.length, "pagination : chaque obligation apparaît une seule fois sur l'ensemble des pages");
 
     // Cas distincts des données de démonstration (audit) : même opportunité, obligations différentes, lignes séparées.
+    // Billet #87 : le NOMBRE de ces cas dépend de l'heure du serveur (données fictives recalculées par rapport à son jour) ;
+    // on vérifie donc la règle sur TOUTES les obligations (seules les prises de contact générales se regroupent), puis
+    // deux cas identifiés présents quelle que soit l'heure : Inès (rendez-vous à confirmer / première réponse) et Éric
+    // (soumission sans réponse / client absent au rendez-vous).
     const distinctes = await page.evaluate(function () {
       const groupes = window.IntelligenceRegles.regrouperObligations(window.Intelligence.actives({ conseiller: window.Prospects.moiId }).filter(function (x) { return x.relance; }));
+      const contactGeneral = ["premiere-reponse", "suivi", "reprise"];
+      const melanges = groupes.filter(function (g) {
+        return g.raisons.length > 1 && g.raisons.some(function (r) { return contactGeneral.indexOf(r.relance) < 0; });
+      }).map(function (g) { return g.id; });
       const parOpp = {};
       groupes.forEach(function (g) { (parOpp[g.principale.opportuniteId] = parOpp[g.principale.opportuniteId] || []).push(g.raisons.map(function (r) { return r.regle; }).join("+")); });
-      return Object.keys(parOpp).filter(function (k) { return parOpp[k].length > 1; }).map(function (k) { return k + " : " + parOpp[k].join(" / "); });
+      const lignes = Object.keys(parOpp).filter(function (k) { return parOpp[k].length > 1; }).map(function (k) { return k + " : " + parOpp[k].join(" / "); });
+      return { melanges: melanges, lignes: lignes, ines: (parOpp["o-ines-cx5"] || []).slice().sort(), eric: (parOpp["o-eric-cx5"] || []).slice().sort() };
     });
-    verifier(distinctes.length >= 3 && distinctes.some(function (d) { return d.indexOf("rdv-a-confirmer") >= 0 && d.indexOf("premiere-reponse") >= 0; }), "obligations distinctes conservées (rendez-vous, soumission, prise de contact) : " + distinctes.join(" ; "));
+    verifier(distinctes.melanges.length === 0 && distinctes.ines.join() === "premiere-reponse,rdv-a-confirmer" && distinctes.eric.join() === "rdv-client-absent,soumission-sans-reponse",
+      "aucune obligation ne mélange une prise de contact et une autre nature ; cas identifiés séparés (Inès, Éric) ; obligations distinctes conservées (rendez-vous, soumission, prise de contact) : " + distinctes.lignes.join(" ; "));
 
     await page.reload(); await page.waitForTimeout(900);
     const apresActualisation = (await lignesATraiter(page)).filter(function (l) { return l.obligation === "contact:oe-" + a.oppId; });

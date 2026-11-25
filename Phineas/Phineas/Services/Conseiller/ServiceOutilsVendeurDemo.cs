@@ -9,11 +9,21 @@ namespace Phineas.Services.Conseiller;
 // publicitaire n'est synchronisée ; aucune IA n'a rédigé ces textes.
 public class ServiceOutilsVendeurDemo : IServiceOutilsVendeur
 {
+    // Horloge (billet #87) : les dates fictives sont calculées par rapport à « maintenant » ; les tests peuvent fixer cet
+    // instant (ApplicationDeTest.Horloge). GetUtcNow().LocalDateTime donne exactement DateTime.Now (heure locale du
+    // serveur, même sérialisation) : rien ne change en production.
+    private readonly TimeProvider _temps;
+
+    public ServiceOutilsVendeurDemo(TimeProvider? temps = null)
+    {
+        _temps = temps ?? TimeProvider.System;
+    }
+
     private const string Moi = "moi";
 
     public Task<DonneesOutilsVendeur> ObtenirAsync(UserSummaryViewModel conseiller)
     {
-        var n = DateTime.Now;
+        var n = _temps.GetUtcNow().LocalDateTime;
         var j = n.Date;
         var moi = conseiller.FullName;
         EvenementAnnonce Ev(DateTime d, string t) => new(d, t, moi);
