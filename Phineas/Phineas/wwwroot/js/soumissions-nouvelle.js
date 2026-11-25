@@ -57,7 +57,10 @@
   function rendreClients() {
     var recherche = normaliser(rechercheClient.value.trim());
     var clients = [];
+    // Démonstration seulement (fonctionnalité 19) : un dossier enregistré n'est jamais proposé, pour qu'aucun élément fictif ne
+    // soit rattaché à une opportunité réelle (il apparaîtrait sur sa fiche et dans ses recommandations).
     P.contacts().forEach(function (contact) {
+      if (contact.enregistre) return;
       var texte = normaliser(nomComplet(contact) + " " + (contact.courriel || "") + " " + (contact.telephone || ""));
       if (recherche === "" || texte.indexOf(recherche) >= 0) clients.push(contact);
     });
@@ -508,6 +511,7 @@
   // ---------- Présélection depuis une opportunité ou une fiche prospect (?opportunite= ou ?prospect=) ----------
   var oppDemandee = null;
   if (racine.dataset.opportunite) oppDemandee = P.opportunite(racine.dataset.opportunite);
+  if (oppDemandee && P.estEnregistree(oppDemandee.id)) oppDemandee = null; // dossier réel : jamais présélectionné
   if (oppDemandee) {
     etat.prospectId = oppDemandee.prospectId;
     if (P.estActive(oppDemandee)) etat.oppId = oppDemandee.id;
@@ -517,7 +521,7 @@
       etat.vehiculeId = vDemande.id;
       etat.etapeMax = 2;
     }
-  } else if (racine.dataset.prospect && P.contact(racine.dataset.prospect)) {
+  } else if (racine.dataset.prospect && P.contact(racine.dataset.prospect) && !P.contact(racine.dataset.prospect).enregistre) {
     choisirProspect(racine.dataset.prospect);
   }
   rendre();

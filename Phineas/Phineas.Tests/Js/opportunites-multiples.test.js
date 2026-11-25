@@ -25,7 +25,7 @@ const MAINTENANT = new Date(2026, 10, 24, 14, 0, 0);
 const CREATION = new Date(MAINTENANT.getTime() - 2 * JOUR).toISOString();
 
 // prospects-store.js chargé comme dans le navigateur, avec un faux document ; formulaires postés capturés.
-function chargerProspects() {
+function chargerProspects(opportunitesRemplacees) {
   const code = fs.readFileSync(path.join(racine, "wwwroot", "js", "prospects-store.js"), "utf8");
   const charge = { referentiels: { typesContact: typesContact, etapes: [{ cle: "Nouveau", libelle: "Nouveau" }] }, jeton: "jeton",
     urlFiche: "/Prospects/Fiche/__id__", urlCreerOpportunite: "/Prospects/CreerOpportunite",
@@ -35,6 +35,7 @@ function chargerProspects() {
         { id: "oe-2", prospectId: "pe-1", titre: "B", etape: "Nouveau", dateCreation: CREATION, derniereActivite: CREATION, vehiculesEnvisages: [] },
         { id: "o-chloe", prospectId: "chloe", titre: "Démo", etape: "Nouveau", dateCreation: CREATION, derniereActivite: CREATION, vehiculesEnvisages: [] }],
       interactions: [] } };
+  if (opportunitesRemplacees) charge.donnees.opportunites = opportunitesRemplacees;
   const postes = [];
   const stockage = {};
   function element(nom) {
@@ -107,4 +108,37 @@ test("un contact déclaré sur A ne satisfait pas la première réponse de B (r�
   const actions = Regles.analyser(contexte([opportunite("oe-1", false), opportunite("oe-2", false)], [appelA])).actions;
   assert.ok(!actions.some((a) => a.id === "premiere-reponse:oe-1"));
   assert.ok(actions.some((a) => a.id === "premiere-reponse:oe-2"));
+});
+
+// ---------- Fonctionnalité 19 : identité du projet sur les cartes ----------
+function opp(id, titre, jour) {
+  const d = new Date(2026, 10, jour, 10, 0, 0).toISOString();
+  return { id: id, prospectId: "pe-1", titre: titre, etape: "Nouveau", dateCreation: d, derniereActivite: d, vehiculesEnvisages: [] };
+}
+
+test("F19 : une seule opportunité, aucun libellé de projet (carte aussi simple qu'avant)", () => {
+  const { P } = chargerProspects([opp("oe-1", "Kia Sportage", 20)]);
+  assert.equal(P.projet("oe-1"), null);
+  assert.equal(P.projet("oe-inconnue"), null);
+});
+
+test("F19 : deux projets aux titres différents, chacun nommé par son titre", () => {
+  const { P } = chargerProspects([opp("oe-1", "VUS familial", 20), opp("oe-2", "Deuxième véhicule", 21)]);
+  assert.equal(P.projet("oe-1"), "VUS familial");
+  assert.equal(P.projet("oe-2"), "Deuxième véhicule");
+});
+
+test("F19 : même titre, jours différents : la date d'ouverture les distingue", () => {
+  const { P } = chargerProspects([opp("oe-1", "Kia Sportage", 20), opp("oe-2", " kia sportage ", 22)]);
+  const a = P.projet("oe-1"), b = P.projet("oe-2");
+  assert.notEqual(a, b);
+  assert.match(a, /^Kia Sportage · ouverte le /);
+  assert.doesNotMatch(a, /n° /);
+});
+
+test("F19 : même titre, même jour : le numéro de l'opportunité les distingue, rien n'est inventé", () => {
+  const { P } = chargerProspects([opp("oe-11", "Kia Sportage", 20), opp("oe-12", "Kia Sportage", 20)]);
+  assert.match(P.projet("oe-11"), /· n° 11$/);
+  assert.match(P.projet("oe-12"), /· n° 12$/);
+  assert.notEqual(P.projet("oe-11"), P.projet("oe-12"));
 });

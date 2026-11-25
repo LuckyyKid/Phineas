@@ -126,6 +126,9 @@
     // Carte de démonstration : toutes ses commandes sont locales ; on le dit, sans couleur nouvelle.
     var demonstration = commandes.every(function (c) { return c.commande === "realiser-local"; });
     var type = g.regroupee ? "Prise de contact · " + g.raisons.length + " raisons" : a.regleLibelle;
+    // Plusieurs projets pour ce client (fonctionnalité 19) : le projet concerné est nommé sur la carte.
+    var projet = a.opportuniteId ? P.projet(a.opportuniteId) : null;
+    if (projet) type += " · Projet : " + projet;
     var texte = g.regroupee ? g.raisons.map(function (r) { return r.regleLibelle; }).join(" · ") : a.motif;
     return '<article class="ph-focus-item" data-priorite data-action-id="' + esc(a.id) + '" data-obligation="' + esc(g.id) + '"' + (index > 0 ? " hidden" : "") + ">" +
       '<p class="ph-focus-type">' + esc(type) + (demonstration ? " · Démonstration" : "") + retard + "</p>" +

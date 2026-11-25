@@ -460,6 +460,63 @@ public class OpportunitesMultiplesTests : IClassFixture<ApplicationDeTest>
         Assert.Equal("oe-" + ids[1], interactions.Single(i => i.GetProperty("type").GetString() == "suivi-realise").GetProperty("opportuniteId").GetString());
     }
 
+    // ---------- Fonctionnalité 19 ----------
+
+    [Fact]
+    public async Task F19_reporter_le_suivi_de_A_et_mettre_en_veille_B_restent_independants()
+    {
+        var client = await _app.ConnecterAsync(Sophie);
+        int prospectId = await CreerProspectAsync(client);
+        await CreerOpportuniteAsync(client, prospectId, "Projet B", "Nouveau");
+        var ids = (await LireAsync(prospectId)).Opportunites.OrderBy(o => o.Id).Select(o => o.Id).ToList();
+        await PlanifierAsync(client, prospectId, ids[0], "Rappeler A", 0);
+        var a = (await LireAsync(prospectId)).Opportunites.Single(o => o.Id == ids[0]);
+
+        var report = await PosterAsync(client, "/Prospects/ReporterSuivi", new Dictionary<string, string>
+        {
+            ["opportuniteId"] = "oe-" + ids[0], ["versionSuivi"] = ServiceProspects.EmpreinteSuivi(a.ProchaineAction, a.DateProchaineAction)!,
+            ["date"] = DateTime.Today.AddDays(3).ToString("yyyy-MM-dd"), ["retour"] = "/Intelligence",
+            ["__RequestVerificationToken"] = await JetonAsync(client, "/Intelligence"),
+        });
+        var veille = await PosterAsync(client, "/Intelligence/MettreEnVeille", new Dictionary<string, string>
+        {
+            ["cle"] = "premiere-reponse:oe-" + ids[1], ["jours"] = "3", ["etape"] = "Nouveau", ["retour"] = "/Intelligence",
+            ["__RequestVerificationToken"] = await JetonAsync(client, "/Intelligence"),
+        });
+
+        Assert.Equal(HttpStatusCode.Redirect, report.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, veille.StatusCode);
+        var apres = (await LireAsync(prospectId)).Opportunites.OrderBy(o => o.Id).ToList();
+        Assert.Equal(ClotureSuivi.Reporte, apres[0].HistoriqueSuivis.Single().Cloture);
+        Assert.Empty(apres[1].HistoriqueSuivis);
+        Assert.Null(apres[1].ProchaineAction);
+        using var scope = _app.Services.CreateScope();
+        var veilles = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().VeillesRecommandation.AsNoTracking()
+            .Where(v => ids.Contains(v.OpportuniteId)).ToListAsync();
+        Assert.Equal(new[] { ids[1] }, veilles.Select(v => v.OpportuniteId).ToArray());
+    }
+
+    [Theory]
+    [InlineData("/Soumissions/Nouvelle?opportunite=")]
+    [InlineData("/RendezVous/Nouveau?opportunite=")]
+    [InlineData("/Transactions/Nouvelle?opportunite=")]
+    public async Task F19_ouvrir_un_module_de_demonstration_avec_une_opportunite_reelle_n_ecrit_rien(string page)
+    {
+        var client = await _app.ConnecterAsync(Sophie);
+        int prospectId = await CreerProspectAsync(client);
+        var avant = await LireAsync(prospectId);
+        string version = ServiceProspects.Empreinte(avant);
+
+        var reponse = await client.GetAsync(page + "oe-" + avant.Opportunites.Single().Id);
+
+        Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
+        var apres = await LireAsync(prospectId);
+        Assert.Equal(version, ServiceProspects.Empreinte(apres));
+        Assert.Empty(apres.Notes);
+        Assert.Empty(apres.Opportunites.Single().HistoriqueEtapes);
+        Assert.Empty(apres.Opportunites.Single().HistoriqueSuivis);
+    }
+
     // ---------- F17 inchangée ----------
 
     [Fact]

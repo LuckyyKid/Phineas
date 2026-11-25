@@ -74,7 +74,10 @@
 
   function rendreClients() {
     var recherche = normaliser(rechercheClient.value.trim());
+    // Démonstration seulement (fonctionnalité 19) : un dossier enregistré n'est jamais proposé, pour qu'aucun élément fictif ne
+    // soit rattaché à une opportunité réelle (il apparaîtrait sur sa fiche et dans ses recommandations).
     var contacts = P.contacts().filter(function (c) {
+      if (c.enregistre) return false;
       var texte = normaliser(c.prenom + " " + c.nom + " " + (c.courriel || "") + " " + (c.telephone || ""));
       var correspond = !recherche || texte.indexOf(recherche) >= 0;
       var aUneOpportuniteActive = P.opportunitesDe(c.id).some(P.estActive);
@@ -689,7 +692,7 @@
     var sR = depuisRendezVous.soumissionId ? S.soumission(depuisRendezVous.soumissionId) : null;
     var vR = sR ? versionAcceptee(sR) : null;
     if (vR) retenirVersion(sR, vR);
-  } else if (ds.opportunite && P.opportunite(ds.opportunite)) {
+  } else if (ds.opportunite && P.opportunite(ds.opportunite) && !P.estEnregistree(ds.opportunite)) { // dossier réel : jamais présélectionné
     var o = P.opportunite(ds.opportunite);
     etat.prospectId = o.prospectId;
     if (P.estActive(o)) etat.oppId = o.id;
@@ -700,7 +703,7 @@
       s.versions.forEach(function (v) { if (v.statut === "Acceptee") acceptees.push({ s: s, v: v }); });
     });
     if (acceptees.length === 1) retenirVersion(acceptees[0].s, acceptees[0].v);
-  } else if (ds.prospect && P.contact(ds.prospect)) {
+  } else if (ds.prospect && P.contact(ds.prospect) && !P.contact(ds.prospect).enregistre) {
     etat.prospectId = ds.prospect;
     var activesDepart = P.opportunitesDe(etat.prospectId).filter(P.estActive);
     if (activesDepart.length === 1) etat.oppId = activesDepart[0].id;

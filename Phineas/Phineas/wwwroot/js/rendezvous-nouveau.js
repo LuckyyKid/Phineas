@@ -83,7 +83,10 @@
   function rendreClients() {
     var recherche = normaliser(rechercheClient.value.trim());
     var clients = [];
+    // Démonstration seulement (fonctionnalité 19) : un dossier enregistré n'est jamais proposé, pour qu'aucun élément fictif ne
+    // soit rattaché à une opportunité réelle (il apparaîtrait sur sa fiche et dans ses recommandations).
     P.contacts().forEach(function (contact) {
+      if (contact.enregistre) return;
       var texte = normaliser(contact.prenom + " " + contact.nom + " " + (contact.courriel || "") + " " + (contact.telephone || ""));
       if (recherche === "" || texte.indexOf(recherche) >= 0) clients.push(contact);
     });
@@ -761,6 +764,7 @@
 
   var depuisSoumission = racine.dataset.soumission ? S.soumission(racine.dataset.soumission) : null;
   var depuisOpportunite = racine.dataset.opportunite ? P.opportunite(racine.dataset.opportunite) : null;
+  if (depuisOpportunite && P.estEnregistree(depuisOpportunite.id)) depuisOpportunite = null; // dossier réel : jamais présélectionné
   if (ancien) {
     // Replanification : tout est repris, seul le créneau change.
     etat.prospectId = ancien.prospectId;
@@ -791,7 +795,7 @@
   } else if (depuisOpportunite) {
     etat.prospectId = depuisOpportunite.prospectId;
     if (selectionnable(depuisOpportunite)) etat.oppId = depuisOpportunite.id;
-  } else if (racine.dataset.prospect && P.contact(racine.dataset.prospect)) {
+  } else if (racine.dataset.prospect && P.contact(racine.dataset.prospect) && !P.contact(racine.dataset.prospect).enregistre) {
     etat.prospectId = racine.dataset.prospect;
     var activesProspect = P.opportunitesDe(etat.prospectId).filter(selectionnable);
     if (activesProspect.length === 1) etat.oppId = activesProspect[0].id;

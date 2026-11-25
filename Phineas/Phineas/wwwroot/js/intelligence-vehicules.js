@@ -97,7 +97,7 @@
     var indisp = I.indispensables(o.id);
     var valeurs = valeursCriteres(q);
     zone("criteres").innerHTML = tableauCriteres(valeurs) + interrupteursIndispensables(valeurs, indisp) +
-      '<p class="ivv-qualif"><a href="' + esc(P.urlFiche(o.prospectId) + "#qualification") + '">Compléter la qualification</a> pour améliorer la couverture.</p>';
+      '<p class="ivv-qualif"><a href="' + esc(P.urlFiche(o.prospectId, o.id) + "#qualification") + '">Compléter la qualification</a> pour améliorer la couverture.</p>';
   }
 
   // État d'un groupe de critères pour une pastille : un écart l'emporte, puis l'inconnu.
@@ -154,7 +154,7 @@
     // Dossier réel : la note se saisit dans la fiche (enregistrée en base) ; les options envisagées ne sont pas encore
     // enregistrables. Démonstration : actions locales, comme avant (fonctionnalité 16).
     if (P.estEnregistree(o.id)) {
-      items += '<li><a class="dropdown-item" href="' + esc(P.urlFiche(o.prospectId) + "#historique") + '" data-noter-fiche><i class="bi bi-journal-text" aria-hidden="true"></i>Ajouter une note dans la fiche</a></li>';
+      items += '<li><a class="dropdown-item" href="' + esc(P.urlFiche(o.prospectId, o.id) + "#historique") + '" data-noter-fiche><i class="bi bi-journal-text" aria-hidden="true"></i>Ajouter une note dans la fiche</a></li>';
       items += '<li><p class="dropdown-item-text small mb-0">Dossier enregistré : les options envisagées ne sont pas encore enregistrables.</p></li>';
     } else {
       var libelleEnvisager = dejaEnvisage ? "Déjà envisagé" : "Ajouter aux options envisagées";
@@ -263,16 +263,16 @@
     var texteDernier = dernier ? P.relatif(dernier.date) : "Aucun contact";
     var suivi = r.suspension ? '<span class="ivv-avertissement">' + esc(r.suspension) + "</span>" : '<span class="iv-sous">Contact possible</span>';
     return "<tr>" +
-      '<td data-label="Prospect"><a class="iv-nom" href="' + esc(P.urlFiche(c.id)) + '">' + esc(c.prenom + " " + c.nom) + '</a><span class="iv-sous">' + esc(o.titre) + "</span></td>" +
+      '<td data-label="Prospect"><a class="iv-nom" href="' + esc(P.urlFiche(c.id, o.id)) + '">' + esc(c.prenom + " " + c.nom) + '</a><span class="iv-sous">' + esc(o.titre) + "</span></td>" +
       '<td data-label="Besoin et budget">' + esc(P.resumeVehicule(o) || P.libelle("categories", q.categorie) || "À préciser") + '<span class="iv-sous">' + esc(P.resumeBudget(q) || "Budget inconnu") + "</span></td>" +
       '<td data-label="Compatibilité">' + compatibiliteCourte(r) + '<span class="iv-sous">Couverture ' + r.couverture + " %</span></td>" +
       '<td data-label="Horizon et dernier contact">' + esc(P.libelle("horizons", q.horizon) || "Horizon inconnu") + '<span class="iv-sous">' + esc(texteDernier) + "</span></td>" +
       '<td data-label="Conseiller et suivi">' + esc(P.conseiller(c.conseillerId).nom) + suivi + "</td>" +
-      '<td data-label="Actions"><span class="ivv-cellule-actions"><a class="iv-btn iv-btn-blanc iv-btn-petit" href="' + esc(P.urlFiche(c.id)) + '">Consulter</a>' +
+      '<td data-label="Actions"><span class="ivv-cellule-actions"><a class="iv-btn iv-btn-blanc iv-btn-petit" href="' + esc(P.urlFiche(c.id, o.id)) + '">Consulter</a>' +
       '<button type="button" class="iv-btn iv-btn-blanc iv-btn-petit" data-presenter="' + esc(o.id) + '"' + (r.suspension ? " disabled" : "") + ">Préparer une présentation</button>" +
       (P.estEnregistree(o.id)
         // Dossier réel : le suivi se planifie dans la fiche, où il est enregistré (fonctionnalité 16).
-        ? '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(c.id)) + '" data-suivi-fiche>Planifier le suivi dans la fiche</a>'
+        ? '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(c.id, o.id)) + '" data-suivi-fiche>Planifier le suivi dans la fiche</a>'
         : '<button type="button" class="iv-btn iv-btn-discret" data-suivi-opp="' + esc(o.id) + '">Ajouter un suivi (démonstration)</button>') +
       "</span></td></tr>";
   }

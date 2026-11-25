@@ -56,8 +56,8 @@
   // Une ligne par opportunité : client (lien vers la fiche), opportunité, action, date prévue, actions existantes.
   function ligneAVenir(s) {
     return '<tr data-suivi="' + esc(s.opportuniteId) + '">' +
-      '<td><a class="iv-nom" href="' + esc(P.urlFiche(s.prospectId)) + '">' + esc(s.client) + "</a></td>" +
-      "<td>" + esc(s.opportunite) + "</td>" +
+      '<td><a class="iv-nom" href="' + esc(P.urlFiche(s.prospectId, s.opportuniteId)) + '">' + esc(s.client) + "</a></td>" +
+      "<td>" + esc(P.projet(s.opportuniteId) || s.opportunite) + "</td>" +
       "<td>" + esc(s.action) + "</td>" +
       "<td>" + esc(fmtJourLong.format(new Date(s.datePrevue))) + '<span class="iv-sous">' + esc(dansCombien(s.datePrevue)) + "</span></td>" +
       '<td><span class="iv-cellule-boutons">' +
@@ -89,7 +89,10 @@
     var o = ctx.opportunite;
     var icone = ICONES_CANAL[ctx.canalCle] || "bi-chat-left-text";
 
-    var client = '<a class="iv-nom" href="' + esc(P.urlFiche(a.prospectId)) + '">' + esc(a.client) + "</a>";
+    var client = '<a class="iv-nom" href="' + esc(P.urlFiche(a.prospectId, a.opportuniteId)) + '">' + esc(a.client) + "</a>";
+    // Plusieurs projets pour ce client (fonctionnalité 19) : le projet de cette obligation est nommé.
+    var projet = a.opportuniteId ? P.projet(a.opportuniteId) : null;
+    if (projet) client += '<span class="iv-sous" data-projet>Projet : ' + esc(projet) + "</span>";
     if (a.vehicule) client += '<span class="iv-sous">' + esc(a.vehicule) + "</span>";
     client += '<span class="iv-sous">Priorité : ' + esc(I.ref.libellesPriorite[g.priorite] || g.priorite) + "</span>";
 

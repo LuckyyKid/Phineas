@@ -33,7 +33,7 @@
   function references(x) {
     var l = [];
     if (x.contact) l.push({ libelle: "Prospect : " + x.contact.prenom + " " + x.contact.nom, url: P.urlFiche(x.contact.id) });
-    if (x.opp) l.push({ libelle: "Opportunité : " + x.opp.titre + " (" + P.libelleEtape(x.opp.etape) + ")", url: P.urlFiche(x.opp.prospectId) });
+    if (x.opp) l.push({ libelle: "Opportunité : " + x.opp.titre + " (" + P.libelleEtape(x.opp.etape) + ")", url: P.urlFiche(x.opp.prospectId, x.opp.id) });
     if (x.rdv) l.push({ libelle: "Rendez-vous : " + R.type(x.rdv.type).libelle + " · " + R.creneauTexte(x.rdv).toLowerCase(), url: R.urlDetail(x.rdv.id) });
     if (x.soumission) l.push({ libelle: "Soumission : " + x.soumission.reference + " v" + S.versionCourante(x.soumission).numero, url: S.urlDetail(x.soumission.id) });
     if (x.transaction) l.push({ libelle: "Transaction : " + x.transaction.reference, url: T.urlDetail(x.transaction.id) });
@@ -96,7 +96,7 @@
     return { sections: CR.syntheseVehicule(v, A.champsInventaire(v), A.disponibilite(v), compat, ref),
       liens: [{ libelle: "Voir dans les recommandations de véhicules (inventaire)", url: (ref.urls.vehicules || "#") + "?vehicule=" + encodeURIComponent(v.id) },
         { libelle: "Créer une annonce pour ce véhicule", url: ref.urls.annonces + "?vehicule=" + encodeURIComponent(v.id) }]
-        .concat(x.opp ? [{ libelle: "Ouvrir l'opportunité concernée", url: P.urlFiche(x.opp.prospectId) }] : []),
+        .concat(x.opp ? [{ libelle: "Ouvrir l'opportunité concernée", url: P.urlFiche(x.opp.prospectId, x.opp.id) }] : []),
       provenance: "Fiche d'inventaire " + v.numeroStock + " (données de démonstration)" + (compat ? " et Vehicle Matching Engine (phase 06)" : "") };
   }
   function objection(x, cle) {

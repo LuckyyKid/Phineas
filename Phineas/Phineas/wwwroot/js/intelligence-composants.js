@@ -133,7 +133,8 @@
     return '<article class="ia-carte ia-prio-bord-' + esc(a.priorite) + (enRetard(a) && actif ? " is-retard" : "") + '" data-action-id="' + esc(a.id) + '" aria-labelledby="ia-t-' + esc(cleId(a.id)) + '">' +
       '<header class="ia-carte-tete"><span class="ia-type"><i class="bi ' + esc(cat.icone || "bi-lightning") + '" aria-hidden="true"></i><span id="ia-t-' + esc(cleId(a.id)) + '">' + esc(a.regleLibelle) + "</span></span>" +
       '<span class="ia-carte-pastilles">' + pastillePriorite(a.priorite) + (a.statut !== "ATraiter" ? pastilleEtat(a.statut) : "") + "</span></header>" +
-      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId, a.opportuniteId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">· ' + esc(a.vehicule) + "</span>" : "") + "</p>" +
+      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId, a.opportuniteId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">· ' + esc(a.vehicule) + "</span>" : "") +
+        (a.opportuniteId && P.projet(a.opportuniteId) ? ' <span class="pr-sous" data-projet>· Projet : ' + esc(P.projet(a.opportuniteId)) + "</span>" : "") + "</p>" +
       (a.declencheur ? '<p class="ia-situation">' + esc(a.declencheur) + "</p>" : "") +
       '<p class="ia-motif"><span class="visually-hidden">Raison : </span>' + esc(a.motif) + "</p>" +
       ((a.contexte || []).length && !options.compacte ? '<ul class="ia-contexte">' + a.contexte.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
@@ -209,6 +210,12 @@
     return html;
   }
 
+  // Plusieurs projets pour ce client (fonctionnalité 19) : la ligne nomme le projet concerné ; sinon rien de plus.
+  function projetLigne(a) {
+    var projet = a.opportuniteId ? P.projet(a.opportuniteId) : null;
+    return projet ? '<span class="iv-action-type" data-projet>Projet : ' + esc(projet) + "</span>" : "";
+  }
+
   function ligne(a) {
     var cat = CAT[a.categorie] || {};
     var prio = PRIO[a.priorite] || { libelle: a.priorite };
@@ -224,7 +231,7 @@
       '<button type="button" class="iv-action-ouvrir" data-iv-ouvrir="' + esc(a.id) + '" aria-expanded="' + ouverte + '" aria-controls="' + esc(idDetail) + '">' +
       '<span class="iv-prio iv-prio-' + esc(a.priorite) + '" title="Priorité : ' + esc(prio.libelle) + '"><span class="visually-hidden">Priorité ' + esc(prio.libelle) + "</span></span>" +
       '<span class="iv-action-texte"><span class="iv-action-nom">' + esc(a.client) + "</span>" +
-      '<span class="iv-action-type">' + esc(a.regleLibelle) + "</span>" + etatAction +
+      '<span class="iv-action-type">' + esc(a.regleLibelle) + "</span>" + etatAction + projetLigne(a) +
       (a.vehicule ? '<span class="iv-action-type">' + esc(a.vehicule) + "</span>" : "") +
       '<span class="iv-action-raison">' + esc(raison) + "</span></span></button>" +
       '<span class="iv-action-echeance' + (retard ? " is-retard" : "") + '">' + esc(echeanceCourte(a)) + "</span>" +
@@ -255,7 +262,7 @@
       '<button type="button" class="iv-action-ouvrir" data-iv-ouvrir="' + esc(g.id) + '" aria-expanded="' + ouverte + '" aria-controls="' + esc(idDetail) + '">' +
       '<span class="iv-prio iv-prio-' + esc(g.priorite) + '" title="Priorité : ' + esc(prio.libelle) + '"><span class="visually-hidden">Priorité ' + esc(prio.libelle) + "</span></span>" +
       '<span class="iv-action-texte"><span class="iv-action-nom">' + esc(a.client) + "</span>" +
-      '<span class="iv-action-type">Prise de contact · ' + g.raisons.length + " raisons</span>" +
+      '<span class="iv-action-type">Prise de contact · ' + g.raisons.length + " raisons</span>" + projetLigne(a) +
       (a.vehicule ? '<span class="iv-action-type">' + esc(a.vehicule) + "</span>" : "") +
       '<span class="iv-action-raison">' + esc(libelles) + "</span></span></button>" +
       '<span class="iv-action-echeance' + (enRetard(vue) ? " is-retard" : "") + '">' + esc(echeanceCourte(vue)) + "</span>" +

@@ -212,6 +212,25 @@
     if (etapeFiltre) liste = liste.filter(function (o) { return o.etape === etapeFiltre; });
     return liste[0] || null;
   }
+  // Libellé du projet d'une opportunité (fonctionnalité 19), seulement si son prospect en a plusieurs : sinon null, et
+  // la carte reste aussi simple qu'avant. Deux projets au même titre (casse et espaces ignorés) : la date d'ouverture
+  // les distingue ; ouverts le même jour, le numéro de l'opportunité aussi. Rien n'est inventé.
+  function projet(oppId) {
+    var o = opportunite(oppId);
+    if (!o) return null;
+    var soeurs = opportunitesDe(o.prospectId);
+    if (soeurs.length < 2) return null;
+    function cle(x) { return String(x.titre || "").trim().toLowerCase(); }
+    var memesTitres = soeurs.filter(function (x) { return x.id !== o.id && cle(x) === cle(o); });
+    var libelle = o.titre;
+    if (!memesTitres.length) return libelle;
+    var jourOuverture = dateCourte(o.dateCreation);
+    libelle += " · ouverte le " + jourOuverture;
+    var memeJour = memesTitres.some(function (x) { return dateCourte(x.dateCreation) === jourOuverture; });
+    if (memeJour) libelle += " · n° " + String(o.id).replace(/^oe?-/, "");
+    return libelle;
+  }
+
   function derniereInteraction(contactId) {
     var i = interactionsDe(contactId)[0];
     if (i) return i;
@@ -585,6 +604,7 @@
       return oppId && String(oppId).indexOf("oe-") === 0 && String(id).indexOf("pe-") === 0 ? url + "?opportunite=" + encodeURIComponent(oppId) : url;
     },
     envoyerOpportunite: envoyerOpportunite,
+    projet: projet,
     urlListe: charge.urlListe,
     // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).
     enregistrement: charge.enregistrement || {},

@@ -33,6 +33,7 @@ public static class MentionsDonnees
 
     public const string BandeauTexte =
         "Les prospects créés avec « Nouveau prospect » sont enregistrés, ainsi que leurs modifications, notes, étapes "
-        + "intermédiaires et suivis. Le reste (prospects fictifs, qualification détaillée, nouvelles opportunités, rendez-vous, "
-        + "soumissions, transactions) reste dans cet onglet du navigateur : ce n'est pas enregistré en base et disparaît à sa fermeture.";
+        + "intermédiaires et suivis, et les opportunités ajoutées à leur fiche. Le reste (prospects fictifs, qualification détaillée, "
+        + "véhicules envisagés, rendez-vous, soumissions, transactions) reste dans cet onglet du navigateur : ce n'est pas enregistré "
+        + "en base et disparaît à sa fermeture.";
 }

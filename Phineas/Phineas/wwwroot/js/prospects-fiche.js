@@ -515,8 +515,22 @@
     }).join("") : '<div class="pr-etat-vide card"><i class="bi bi-briefcase"></i><strong>Aucune opportunité</strong><span>Créez une opportunité pour suivre un projet d\'achat.</span></div>';
   }
 
+  // Opportunité enregistrée (fonctionnalité 19) : soumissions, rendez-vous et transactions ne sont pas encore enregistrés
+  // dans les dossiers réels (lots E5 et E7). Aucune création n'est proposée sur cette opportunité ; la démonstration
+  // reste accessible, sans y rattacher le dossier réel.
+  function modulesDemonstrationHtml() {
+    var liens = [];
+    if (window.Soumissions && window.Soumissions.urlListe) liens.push('<a href="' + esc(window.Soumissions.urlListe) + '">Voir la démonstration des soumissions</a>');
+    if (window.RendezVous && window.RendezVous.urlAgenda) liens.push('<a href="' + esc(window.RendezVous.urlAgenda()) + '">des rendez-vous</a>');
+    if (window.Transactions && window.Transactions.urlListe) liens.push('<a href="' + esc(window.Transactions.urlListe) + '">des transactions</a>');
+    return '<div class="pr-soumissions" data-modules-demonstration><div class="pr-soumissions-tete"><span>Soumissions, rendez-vous et transactions</span></div>' +
+      '<p class="pr-sous mb-0">Pas encore enregistrés dans les dossiers réels : ces modules sont une démonstration. Aucune soumission, aucun rendez-vous ' +
+      "et aucune transaction n'est rattaché à cette opportunité." + (liens.length ? " " + liens.join(", ") + "." : "") + "</p></div>";
+  }
+
   // Soumissions de l'opportunité (module Soumissions chargé sur la fiche).
   function soumissionsHtml(o) {
+    if (P.estEnregistree(o.id)) return modulesDemonstrationHtml();
     var S = window.Soumissions;
     if (!S) return "";
     var liste = S.parOpportunite(o.id);
@@ -534,6 +548,7 @@
 
   // Rendez-vous de l'opportunité (module Rendez-vous chargé sur la fiche) : à venir, passés, essais et résultats.
   function rendezVousHtml(o) {
+    if (P.estEnregistree(o.id)) return "";
     var R = window.RendezVous;
     if (!R) return "";
     var maintenant = new Date();
@@ -559,6 +574,7 @@
 
   // Transactions de l'opportunité (module Transactions chargé sur la fiche) : progression, blocages, prochaine action.
   function transactionsHtml(o) {
+    if (P.estEnregistree(o.id)) return "";
     var T = window.Transactions, UI = window.TransactionsUI;
     if (!T || !UI) return "";
     var liste = T.parOpportunite(o.id);

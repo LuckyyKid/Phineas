@@ -453,7 +453,7 @@
     if (o.type === "soumission") return S.urlDetail(o.id);
     if (o.type === "rendezvous" && R) return R.urlDetail(o.id);
     if (o.type === "transaction" && T) return T.urlDetail(o.id);
-    return a.prospectId ? P.urlFiche(a.prospectId) : "#";
+    return a.prospectId ? P.urlFiche(a.prospectId, a.opportuniteId) : "#";
   }
 
   // ---------- Cycle de vie (actions du conseiller, locales) ----------

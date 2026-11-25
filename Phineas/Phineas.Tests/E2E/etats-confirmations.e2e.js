@@ -244,7 +244,7 @@ async function statutHistorique(page, id) {
       const m = document.querySelector(".ivv-proposer .dropdown-menu");
       return m ? { noter: !!m.querySelector("[data-noter]"), envisager: !!m.querySelector("[data-envisager]"), fiche: (m.querySelector("[data-noter-fiche]") || {}).href || "" } : null;
     });
-    verifier(menu && !menu.noter && !menu.envisager && menu.fiche.indexOf("/Prospects/Fiche/pe-" + d.prospectId + "#historique") >= 0,
+    verifier(menu && !menu.noter && !menu.envisager && menu.fiche.indexOf("/Prospects/Fiche/pe-" + d.prospectId + "?opportunite=oe-" + d.oppId + "#historique") >= 0, // F19 : l'opportunité est désignée
       "Véhicules, dossier réel : « Ajouter une note dans la fiche » (bon prospect), plus de note ni d'option envisagée locales");
     verifier(await page.evaluate(function (id) { return !document.querySelector('#d-opportunite option[value="' + id + '"]'); }, "oe-" + d.oppId),
       "demande de recherche : un dossier enregistré n'est pas proposé (aucune demande locale)");
