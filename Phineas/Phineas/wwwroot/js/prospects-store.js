@@ -366,6 +366,22 @@
     form.submit();
   }
 
+  // Nouvelle opportunité d'un prospect enregistré (fonctionnalité 18) : envoi à ProspectsController.CreerOpportunite,
+  // avec l'empreinte du prospect affichée (un deuxième envoi identique est refusé par le serveur). Retour : la fiche,
+  // la nouvelle opportunité sélectionnée, avec un message.
+  function envoyerOpportunite(contactId, d) {
+    var c = contact(contactId);
+    if (!c || !c.enregistre || !charge.urlCreerOpportunite) return false;
+    posterSuivi(charge.urlCreerOpportunite, {
+      prospectId: c.id,
+      version: c.version || "",
+      titre: d.titre,
+      categorie: d.categorie || "",
+      etape: d.etape,
+    });
+    return true;
+  }
+
   // « Marquer comme réalisé » du suivi d'une opportunité enregistrée : envoi à ProspectsController.RealiserSuivi,
   // qui archive l'action et revient à la page d'origine (retour : chemin local, ex. /Intelligence/Suivis) avec un message.
   // versionSuivi : empreinte de l'action affichée ; le serveur refuse si l'action a changé entre-temps.
@@ -563,7 +579,12 @@
     etapes: ref.etapes,
     actives: ACTIVES,
     moiId: moiId,
-    urlFiche: function (id) { return charge.urlFiche.replace("__id__", encodeURIComponent(id)); },
+    // oppId (facultatif) : opportunité enregistrée à présenter sélectionnée sur la fiche (fonctionnalité 18).
+    urlFiche: function (id, oppId) {
+      var url = charge.urlFiche.replace("__id__", encodeURIComponent(id));
+      return oppId && String(oppId).indexOf("oe-") === 0 && String(id).indexOf("pe-") === 0 ? url + "?opportunite=" + encodeURIComponent(oppId) : url;
+    },
+    envoyerOpportunite: envoyerOpportunite,
     urlListe: charge.urlListe,
     // Résultat de la dernière création envoyée au serveur : { confirmation, saisie, erreurs } (voir _DonneesProspects).
     enregistrement: charge.enregistrement || {},

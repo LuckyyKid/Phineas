@@ -110,7 +110,8 @@ public class ProspectsEtapesControllerTests : IClassFixture<ApplicationDeTest>
         var envoi = await EnvoyerAsync(client, Changement(p, "Negociation", await JetonAsync(client, "/Prospects/Fiche/pe-" + p.Id)));
 
         Assert.Equal(HttpStatusCode.Redirect, envoi.StatusCode);
-        Assert.Equal("/Prospects/Fiche/pe-" + p.Id, envoi.Headers.Location!.ToString());
+        // Depuis la fonctionnalité 18, la fiche se rouvre sur l'opportunité modifiée.
+        Assert.Equal("/Prospects/Fiche/pe-" + p.Id + "?opportunite=oe-" + p.Opportunites.Single().Id, envoi.Headers.Location!.ToString());
         var o = (await LireAsync(p.Id)).Opportunites.Single();
         Assert.Equal(EtapeVente.Negociation, o.Etape);
         var h = Assert.Single(o.HistoriqueEtapes);

@@ -25,10 +25,14 @@ public interface IServiceProspects
     // Vérifie qu'un prospect enregistré (id « pe-12 ») est consultable par ce conseiller.
     // NonTrouve : id invalide, inexistant ou hors de son dossier (même réponse, rien n'est révélé).
     // Échec : la base n'a pas pu être lue.
-    Task<ResultatService> ConsulterAsync(string utilisateurId, string? prospectId);
+    Task<ResultatService> ConsulterAsync(string utilisateurId, string? prospectId, string? opportuniteId = null);
 
     // Modifie le contact d'un prospect enregistré et, si OpportuniteId est fourni, le premier intérêt de cette opportunité.
     Task<ResultatService> ModifierAsync(string utilisateurId, ModificationProspectSaisie saisie);
+
+    // Fonctionnalité 18 : nouvelle opportunité pour un prospect enregistré du conseiller (jamais un nouveau prospect).
+    // Résultat : l'identifiant de l'opportunité créée ; NonTrouve si le prospect n'est pas dans son dossier.
+    Task<ResultatService<int>> CreerOpportuniteAsync(string utilisateurId, NouvelleOpportuniteSaisie saisie);
 
     // Change l'étape d'une opportunité enregistrée (id « oe-34 ») et trace le changement dans l'historique.
     // version : empreinte du prospect lue par la page (voir Empreinte). Valeur du résultat : true si l'étape a changé,
@@ -226,6 +230,12 @@ public class ServiceProspects : IServiceProspects
         if (p.CommentaireInitial is not null)
             liste.Add(new(PrefixeInteraction + p.Id + "-note", contactId, opportuniteId, date, "note", auteur, p.CommentaireInitial));
 
+        // Opportunités ajoutées ensuite (fonctionnalité 18) : leur ouverture, rattachée à elles seules. Ce n'est ni un
+        // contact déclaré ni une note : seulement la trace de la date d'ouverture enregistrée.
+        foreach (var o in p.Opportunites.Where(o => premiere is not null && o.Id != premiere.Id))
+            liste.Add(new(PrefixeInteraction + "o" + o.Id, contactId, PrefixeOpportunite + o.Id, HeureLocale(o.DateCreation), "opportunite", auteur,
+                "Nouvelle opportunité : « " + o.Titre + " »."));
+
         // Notes enregistrées (NoteProspect) : type = catégorie choisie (note, appel, courriel, visite), texte tel que saisi.
         foreach (var n in p.Notes)
         {
@@ -346,7 +356,9 @@ public class ServiceProspects : IServiceProspects
 
     // ---------- Consultation et modification ----------
 
-    public async Task<ResultatService> ConsulterAsync(string utilisateurId, string? prospectId)
+    // opportuniteId (facultatif, ex. adresse /Prospects/Fiche/pe-3?opportunite=oe-7) : elle doit appartenir à ce
+    // prospect. Une opportunité inconnue ou d'un autre dossier donne NonTrouve, jamais une autre opportunité par défaut.
+    public async Task<ResultatService> ConsulterAsync(string utilisateurId, string? prospectId, string? opportuniteId = null)
     {
         int? id = LireId(prospectId, PrefixeProspect);
         if (id is null)
@@ -355,7 +367,13 @@ public class ServiceProspects : IServiceProspects
         try
         {
             var prospect = await TrouverDansSonDossierAsync(utilisateurId, id.Value, suivre: false);
-            return prospect is null ? ResultatService.NonTrouve() : ResultatService.Ok();
+            if (prospect is null)
+                return ResultatService.NonTrouve();
+            if (opportuniteId is null)
+                return ResultatService.Ok();
+            int? idOpportunite = LireId(opportuniteId, PrefixeOpportunite);
+            bool appartient = prospect.Opportunites.Any(o => o.Id == idOpportunite);
+            return appartient ? ResultatService.Ok() : ResultatService.NonTrouve();
         }
         catch (DbException)
         {
@@ -462,6 +480,77 @@ public class ServiceProspects : IServiceProspects
     // Même règle que prospects-store.js (ajouterProspect).
     public static string TitreAutomatique(string? modele, string? categorie) =>
         modele ?? Libelle(ReferentielsVente.Categories, categorie) ?? "Premier intérêt";
+
+    // ---------- Nouvelle opportunité d'un prospect enregistré (fonctionnalité 18) ----------
+
+    private const int LongueurTitreOpportunite = 80;
+
+    private const string MessageConflitOpportunite =
+        "La fiche a changé depuis l'ouverture du formulaire (cette opportunité a peut-être déjà été créée) : "
+        + "aucune nouvelle opportunité n'a été créée. Vérifiez la liste des opportunités, puis recommencez si besoin.";
+
+    // Ajoute un projet d'achat au prospect existant : même concession, même conseiller, aucun nouveau prospect
+    // (la règle de doublon F17 ne s'applique qu'à la création d'un prospect). Étape initiale et catégorie suivent les
+    // règles de la création (F01). Rien n'est copié depuis une autre opportunité : ni suivi, ni note, ni historique.
+    // Double envoi : la page envoie l'empreinte du prospect qu'elle affiche (Empreinte, qui inclut ses opportunités).
+    // Sous le verrou du prospect, un deuxième envoi identique trouve une empreinte déjà changée par le premier : il
+    // est refusé, et une seule opportunité est créée. Deux créations voulues restent possibles : la page rechargée
+    // après la première porte la nouvelle empreinte.
+    public async Task<ResultatService<int>> CreerOpportuniteAsync(string utilisateurId, NouvelleOpportuniteSaisie saisie)
+    {
+        int? id = LireId(saisie.ProspectId, PrefixeProspect);
+        if (id is null)
+            return ResultatService<int>.NonTrouve();
+
+        var conseiller = await CompteUtilisableAsync(utilisateurId);
+        if (conseiller is null)
+            return ResultatService<int>.Echec(MessageCompteInutilisable);
+
+        string? titre = Texte(saisie.Titre);
+        string? categorie = Texte(saisie.Categorie);
+        var resultat = new ResultatService<int>();
+        if (titre is null)
+            resultat.Erreurs.Add(new ErreurChamp("titre", "Indiquez le projet d'achat."));
+        else if (titre.Length > LongueurTitreOpportunite)
+            resultat.Erreurs.Add(new ErreurChamp("titre", $"Le projet d'achat ne doit pas dépasser {LongueurTitreOpportunite} caractères."));
+        if (categorie is not null && !EstDansListe(ReferentielsVente.Categories, categorie))
+            resultat.Erreurs.Add(new ErreurChamp("categorie", "Type de véhicule inconnu."));
+        EtapeVente? etape = LireEtape(Texte(saisie.Etape));
+        if (etape is null)
+            resultat.Erreurs.Add(new ErreurChamp("etape", "Choisissez l'étape initiale."));
+        if (!resultat.Succes)
+            return resultat;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        var prospect = await VerrouillerDansSonDossierAsync(utilisateurId, id.Value);
+        if (prospect is null)
+            return ResultatService<int>.NonTrouve();
+        if (saisie.Version != Empreinte(prospect))
+            return ResultatService<int>.Echec(MessageConflitOpportunite);
+
+        var maintenant = DateTime.UtcNow;
+        var opportunite = new OpportuniteVente
+        {
+            ProspectId = prospect.Id,
+            Titre = titre!,
+            Categorie = categorie,
+            Etape = etape!.Value,
+            DateCreation = maintenant,
+            DerniereActivite = maintenant,
+        };
+        _db.OpportunitesVente.Add(opportunite);
+        try
+        {
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            return ResultatService<int>.Echec("L'enregistrement a échoué : l'opportunité n'a pas été créée. Réessayez dans un instant.");
+        }
+        return ResultatService<int>.Ok(opportunite.Id);
+    }
 
     // ---------- Changement d'étape ----------
 

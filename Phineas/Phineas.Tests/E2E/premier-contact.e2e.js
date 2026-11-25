@@ -184,11 +184,12 @@ async function raisonsLigne(page, oppId) {
     verifier(await attendPremiereReponse(page, f.oppId) && sql("SELECT Cloture FROM HistoriquesSuiviOpportunite WHERE OpportuniteId = " + f.oppId) === "Realise", "suivi réalisé (historique « Realise ») : la première réponse reste due");
 
     // ---------- Fenêtre « Préparer une relance » : pas de contact local sur un dossier enregistré ----------
+    // Depuis la fonctionnalité 18, le lien ouvre la fiche sur l'opportunité concernée (?opportunite=oe-…).
     await page.goto(BASE_URL + "/Intelligence/Suivis"); await page.waitForTimeout(900);
     await raisonsLigne(page, g.oppId);
     await page.locator('#relances tr[data-obligation="contact:oe-' + g.oppId + '"] [data-ia="relance"]').click();
     await page.waitForSelector("#ia-modale.show");
-    verifier(await page.locator('#ia-modale [data-ia-relance="contact"]').count() === 0 && (await page.locator("#ia-modale a.btn-primary").getAttribute("href")) === "/Prospects/Fiche/pe-" + g.prospectId,
+    verifier(await page.locator('#ia-modale [data-ia-relance="contact"]').count() === 0 && (await page.locator("#ia-modale a.btn-primary").getAttribute("href")) === "/Prospects/Fiche/pe-" + g.prospectId + "?opportunite=oe-" + g.oppId,
       "dossier réel : la fenêtre de relance renvoie à la fiche pour déclarer le contact (aucune déclaration locale)");
     await page.keyboard.press("Escape"); await page.waitForTimeout(300);
     const demo = await page.evaluate(function () { const x = window.Intelligence.actives().find(function (y) { return y.relance && String(y.opportuniteId).indexOf("o-") === 0; }); return x ? x.id : null; });

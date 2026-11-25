@@ -181,6 +181,12 @@
 
   function choisirOppQualif(opps) {
     if (oppQualif && opps.some(function (o) { return o.id === oppQualif; })) return;
+    // Adresse « ?opportunite=oe-… » (fonctionnalité 18) : cette opportunité, déjà vérifiée par le serveur.
+    var demandee = racine.dataset.opportunite;
+    if (demandee && opps.some(function (o) { return o.id === demandee; })) {
+      oppQualif = demandee;
+      return;
+    }
     var p = P.principale(contactId);
     oppQualif = p ? p.id : null;
   }
@@ -359,13 +365,23 @@
   }
   formNote.elements.type.addEventListener("change", afficherAideContact);
   formNote.elements.opportuniteId.addEventListener("change", afficherAideContact);
+  formNote.elements.opportuniteId.addEventListener("change", function () { formNote.elements.opportuniteId.dataset.choixManuel = "1"; });
   function rendreFormNote(opps) {
     var sel = formNote.elements.opportuniteId;
     var actuel = sel.value;
     sel.innerHTML = '<option value="">Le contact (général)</option>' +
       opps.map(function (o) { return '<option value="' + esc(o.id) + '">' + esc(o.titre) + "</option>"; }).join("");
-    var p = P.principale(contactId);
-    sel.value = actuel && opps.some(function (o) { return o.id === actuel; }) ? actuel : p ? p.id : "";
+    // Dossier enregistré à plusieurs opportunités (fonctionnalité 18) : l'opportunité sélectionnée dans la fiche (visible
+    // dans « Opportunité : … »), jamais la première de la liste par défaut.
+    // Elle suit la sélection de la fiche tant que le conseiller n'a pas choisi lui-même dans cette liste.
+    var c0 = P.contact(contactId);
+    var plusieurs = !!(c0 && c0.enregistre && opps.length > 1);
+    var p = plusieurs ? P.opportunite(oppQualif) : P.principale(contactId);
+    var actuelValide = actuel === "" || opps.some(function (o) { return o.id === actuel; });
+    var garder;
+    if (plusieurs) garder = sel.dataset.choixManuel === "1" && actuelValide;
+    else garder = actuel !== "" && actuelValide;
+    sel.value = garder ? actuel : p ? p.id : "";
     formNote.elements.date.min = P.aujourdhuiChamp();
 
     // Prospect enregistré : empreinte lue par la page, vérifiée par le serveur si un suivi est planifié avec la note.
@@ -598,8 +614,15 @@
     var actives = P.opportunitesDe(contactId).filter(P.estActive);
     var sel = formSuivi.elements.opportuniteId;
     sel.innerHTML = actives.map(function (o) { return '<option value="' + esc(o.id) + '">' + esc(o.titre) + "</option>"; }).join("");
-    var p = P.principale(contactId);
-    sel.value = oppId || (p && P.estActive(p) ? p.id : actives[0] ? actives[0].id : "");
+    var c0 = P.contact(contactId);
+    if (!oppId && c0 && c0.enregistre && actives.length > 1) {
+      // Dossier enregistré à plusieurs opportunités (fonctionnalité 18) : aucune n'est choisie à la place du conseiller.
+      sel.insertAdjacentHTML("afterbegin", '<option value="" selected>Choisir l\'opportunité</option>');
+      sel.value = "";
+    } else {
+      var p = P.principale(contactId);
+      sel.value = oppId || (p && P.estActive(p) ? p.id : actives[0] ? actives[0].id : "");
+    }
     formSuivi.elements.date.min = P.aujourdhuiChamp();
     formSuivi.elements.date.value = P.aujourdhuiChamp();
     var c = P.contact(contactId);
@@ -650,6 +673,13 @@
     el.titre.classList.remove("is-invalid");
     if (!el.titre.value.trim()) { el.titre.classList.add("is-invalid"); el.titre.focus(); return; }
     if (qualifModifiee && !window.confirm("Abandonner les modifications de qualification non enregistrées ?")) return;
+    // Prospect enregistré (fonctionnalité 18) : le serveur crée l'opportunité ; bouton désactivé contre le double clic.
+    if (P.contact(contactId) && P.contact(contactId).enregistre) {
+      formOpp.querySelector('button[type="submit"]').disabled = true;
+      definirModifiee(false);
+      P.envoyerOpportunite(contactId, { titre: el.titre.value.trim(), categorie: el.categorie.value || null, etape: el.etape.value });
+      return;
+    }
     var o = P.ajouterOpportunite(contactId, {
       titre: el.titre.value.trim(),
       categorie: el.categorie.value || null,
@@ -690,6 +720,13 @@
       case "opportunite":
         formOpp.reset();
         formOpp.elements.titre.classList.remove("is-invalid");
+        formOpp.querySelector('button[type="submit"]').disabled = false;
+        // Dossier enregistré : opportunité enregistrée en base ; pas de véhicules envisagés (non enregistrés, lot E4).
+        var enregistre = !!(P.contact(contactId) && P.contact(contactId).enregistre);
+        formOpp.querySelector("[data-vehicules-locaux]").hidden = enregistre;
+        formOpp.querySelector("[data-opp-mention]").textContent = enregistre
+          ? "Un nouveau projet d'achat pour ce prospect, enregistré dans son dossier. Ses suivis, son étape et son historique seront indépendants des autres opportunités."
+          : "Un nouveau projet d'achat pour ce contact. Sa qualification sera indépendante des autres opportunités.";
         modalOpp.show();
         break;
       case "suivi":

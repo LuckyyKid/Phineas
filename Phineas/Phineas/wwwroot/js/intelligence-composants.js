@@ -50,7 +50,7 @@
       return '<button type="button" class="' + classes + '" data-ia="terminer" data-id="' + esc(a.id) + '"><i class="' + classeIcone + '"></i>Marquer comme réalisée</button>';
     }
     if (commande === "declarer-contact") {
-      return '<a class="' + classes + '" href="' + esc(P.urlFiche(a.prospectId)) + '" data-declarer-contact="' + esc(a.id) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique.">' +
+      return '<a class="' + classes + '" href="' + esc(P.urlFiche(a.prospectId, a.opportuniteId)) + '" data-declarer-contact="' + esc(a.id) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique.">' +
         '<i class="bi bi-journal-plus' + (classeIcone.indexOf("me-1") >= 0 ? " me-1" : "") + '"></i>Déclarer le contact dans la fiche</a>';
     }
     return "";
@@ -133,7 +133,7 @@
     return '<article class="ia-carte ia-prio-bord-' + esc(a.priorite) + (enRetard(a) && actif ? " is-retard" : "") + '" data-action-id="' + esc(a.id) + '" aria-labelledby="ia-t-' + esc(cleId(a.id)) + '">' +
       '<header class="ia-carte-tete"><span class="ia-type"><i class="bi ' + esc(cat.icone || "bi-lightning") + '" aria-hidden="true"></i><span id="ia-t-' + esc(cleId(a.id)) + '">' + esc(a.regleLibelle) + "</span></span>" +
       '<span class="ia-carte-pastilles">' + pastillePriorite(a.priorite) + (a.statut !== "ATraiter" ? pastilleEtat(a.statut) : "") + "</span></header>" +
-      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">· ' + esc(a.vehicule) + "</span>" : "") + "</p>" +
+      '<p class="ia-qui"><a href="' + esc(a.prospectId ? P.urlFiche(a.prospectId, a.opportuniteId) : "#") + '"><strong>' + esc(a.client) + "</strong></a>" + (a.vehicule ? ' <span class="pr-sous">· ' + esc(a.vehicule) + "</span>" : "") + "</p>" +
       (a.declencheur ? '<p class="ia-situation">' + esc(a.declencheur) + "</p>" : "") +
       '<p class="ia-motif"><span class="visually-hidden">Raison : </span>' + esc(a.motif) + "</p>" +
       ((a.contexte || []).length && !options.compacte ? '<ul class="ia-contexte">' + a.contexte.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" : "") +
@@ -201,7 +201,7 @@
       boutons += '<a class="iv-btn iv-btn-sapin iv-btn-petit" href="' + esc(lien) + '">' + esc(a.actionProposee) + "</a>";
     }
     boutons += '<a class="iv-btn iv-btn-blanc iv-btn-petit" href="' + esc(lien) + '">Consulter le dossier</a>';
-    if (a.prospectId) boutons += '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(a.prospectId)) + '">Fiche du client</a>';
+    if (a.prospectId) boutons += '<a class="iv-btn iv-btn-discret" href="' + esc(P.urlFiche(a.prospectId, a.opportuniteId)) + '">Fiche du client</a>';
     boutons += commandeRealiser(a, "iv-btn iv-btn-discret", "bi bi-check2");
     boutons += '<div class="dropdown"><button type="button" class="iv-btn iv-btn-discret dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Autres actions">Plus</button>' +
       '<div class="dropdown-menu dropdown-menu-end">' + boutonsSecondaires(a, true) + "</div></div>";
@@ -432,7 +432,7 @@
       '<p class="pr-note mt-1 mb-0"><i class="bi bi-info-circle me-1"></i>Phineas n\'envoie rien. Copier le message ne l\'envoie pas ; vous le transmettez vous-même, puis vous pouvez déclarer le contact.</p></section>' +
       (estDossierEnregistre(a)
         // Dossier enregistré : le suivi se planifie dans la fiche (enregistré en base), jamais en local ici.
-        ? '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi</h3><p class="pr-note mb-2">Dossier enregistré : planifiez le suivi dans la fiche, il y sera enregistré.</p><a class="btn btn-sm btn-outline-primary" href="' + esc(P.urlFiche(a.prospectId)) + '"><i class="bi bi-alarm me-1"></i>Planifier le suivi dans la fiche</a></section>'
+        ? '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi</h3><p class="pr-note mb-2">Dossier enregistré : planifiez le suivi dans la fiche, il y sera enregistré.</p><a class="btn btn-sm btn-outline-primary" href="' + esc(P.urlFiche(a.prospectId, a.opportuniteId)) + '"><i class="bi bi-alarm me-1"></i>Planifier le suivi dans la fiche</a></section>'
         : '<section class="ia-relance-suivi"><h3 class="ia-sous-titre">Programmer un suivi (local)</h3><div class="row g-2"><div class="col-sm-5"><input type="date" class="form-control form-control-sm" id="ia-suivi-date" min="' + esc(P.aujourdhuiChamp()) + '" value="' + esc(P.versChampDate(demain)) + '" aria-label="Date du suivi" /></div>' +
       '<div class="col-sm-7"><input class="form-control form-control-sm" id="ia-suivi-texte" maxlength="120" value="' + esc(a.actionProposee) + '" aria-label="Action de suivi" /></div></div>' +
       '<button type="button" class="btn btn-sm btn-outline-primary mt-2" data-ia-relance="suivi"><i class="bi bi-alarm me-1"></i>Programmer le suivi</button></section>') +
@@ -443,7 +443,7 @@
       (estDossierEnregistre(a) ? "" : '<button type="button" class="btn btn-outline-primary" data-ia-relance="brouillon"><i class="bi bi-journal-text me-1"></i>Enregistrer dans l\'historique</button>') +
       (P.estEnregistree(a.opportuniteId || "")
         // Dossier enregistré : le contact se déclare par une note de la fiche, enregistrée en base (jamais en local ici).
-        ? '<a class="btn btn-primary" href="' + esc(P.urlFiche(a.prospectId)) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique."><i class="bi bi-journal-plus me-1"></i>Déclarer le contact dans la fiche</a>'
+        ? '<a class="btn btn-primary" href="' + esc(P.urlFiche(a.prospectId, a.opportuniteId)) + '" title="Ajoutez une note « Appel effectué », « Courriel (résumé) » ou « Visite en concession » liée à l\'opportunité, dans l\'onglet Historique."><i class="bi bi-journal-plus me-1"></i>Déclarer le contact dans la fiche</a>'
         : '<button type="button" class="btn btn-primary" data-ia-relance="contact"' + (suspension ? " disabled" : "") + '><i class="bi bi-check2 me-1"></i>J\'ai contacté le client</button>'));
   }
 

@@ -81,7 +81,8 @@ public class ProspectsController : Controller
     private static string NomDuChamp(string cle) =>
         cle.Length == 0 ? "" : char.ToLowerInvariant(cle[0]) + cle.Substring(1);
 
-    public async Task<IActionResult> Fiche(string id)
+    // opportunite (facultatif) : opportunité à présenter sélectionnée ; le serveur vérifie qu'elle est à ce prospect.
+    public async Task<IActionResult> Fiche(string id, string? opportunite)
     {
         if (string.IsNullOrWhiteSpace(id))
             return RedirectToAction(nameof(Index));
@@ -95,11 +96,12 @@ public class ProspectsController : Controller
         bool estEnregistre = id.StartsWith(ServiceProspects.PrefixeProspect, StringComparison.Ordinal);
         if (estEnregistre)
         {
-            var acces = await _prospects.ConsulterAsync(me.Id, id);
+            var acces = await _prospects.ConsulterAsync(me.Id, id, opportunite);
             if (acces.Introuvable)
                 return await FicheIntrouvableAsync(id);
             if (!acces.Succes)
                 return ErreurDeLecture();
+            ViewData["OpportuniteChoisie"] = opportunite;
         }
 
         var modele = await ConstruireAsync(id, false, avecModules: true);
@@ -168,8 +170,31 @@ public class ProspectsController : Controller
 
         bool versLaFiche = retour == "fiche" && prospectId is not null && prospectId.StartsWith(ServiceProspects.PrefixeProspect, StringComparison.Ordinal);
         if (versLaFiche)
-            return RedirectToAction(nameof(Fiche), new { id = prospectId });
+            return RedirectToAction(nameof(Fiche), new { id = prospectId, opportunite = opportuniteId });
         return RedirectToAction(nameof(Index));
+    }
+
+    // Fenêtre « Nouvelle opportunité » de la fiche d'un prospect enregistré (fonctionnalité 18) : enregistrement réel,
+    // puis Post/Redirect/Get vers la fiche, la nouvelle opportunité sélectionnée. Refus : message, rien d'écrit.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreerOpportunite(NouvelleOpportuniteSaisie saisie)
+    {
+        var me = await _account.GetSummaryAsync(User);
+        if (me is null)
+            return Challenge();
+
+        var resultat = await _prospects.CreerOpportuniteAsync(me.Id, saisie);
+        if (resultat.Introuvable)
+            return NotFound();
+        if (!resultat.Succes)
+        {
+            TempData[CleErreur] = "Opportunité non créée. " + resultat.PremierMessage;
+            return RedirectToAction(nameof(Fiche), new { id = saisie.ProspectId });
+        }
+
+        TempData[CleConfirmation] = "Opportunité « " + saisie.Titre?.Trim() + " » créée pour ce prospect.";
+        return RedirectToAction(nameof(Fiche), new { id = saisie.ProspectId, opportunite = ServiceProspects.PrefixeOpportunite + resultat.Valeur });
     }
 
     // Formulaire « Ajouter une note » (onglet Historique) d'un prospect enregistré : enregistrement réel,

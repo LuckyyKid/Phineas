@@ -171,6 +171,18 @@ public class NouveauProspectSaisie
     public DateTime? DateSuivi { get; set; }
 }
 
+// Champs postés par la fenêtre « Nouvelle opportunité » de la fiche d'un prospect enregistré (fonctionnalité 18).
+// Toute la validation se fait dans ServiceProspects.CreerOpportuniteAsync.
+public class NouvelleOpportuniteSaisie
+{
+    public string? ProspectId { get; set; }
+    public string? Titre { get; set; }
+    public string? Categorie { get; set; }
+    public string? Etape { get; set; }
+    // Empreinte du prospect lue par la page : un deuxième envoi identique est refusé (une seule opportunité créée).
+    public string? Version { get; set; }
+}
+
 // Champs postés par le formulaire « Ajouter une note » de la fiche (onglet Historique) pour un prospect enregistré.
 // Les noms suivent les attributs name du formulaire ; toute la validation se fait dans ServiceProspects.AjouterNoteAsync.
 public class NoteSaisie

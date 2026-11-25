@@ -26,7 +26,8 @@
     <a class="btn btn-sm btn-outline-primary" asp-action="Index">Retour aux prospects</a>
 </div>
 
-<div id="fiche" data-prospect-id="@Model.ProspectId" hidden>
+@* opportunite : opportunité demandée par l'adresse (?opportunite=oe-…), déjà vérifiée par le serveur (fonctionnalité 18). *@
+<div id="fiche" data-prospect-id="@Model.ProspectId" data-opportunite="@(ViewData["OpportuniteChoisie"] as string)" hidden>
 
     <section class="card pr-fiche-tete" aria-labelledby="fiche-nom">
         <div class="pr-fiche-identite">
@@ -434,7 +435,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted">Un nouveau projet d'achat pour ce contact. Sa qualification sera indépendante des autres opportunités.</p>
+                <p class="small text-muted" data-opp-mention>Un nouveau projet d'achat pour ce contact. Sa qualification sera indépendante des autres opportunités.</p>
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="form-label" for="o-titre">Projet d'achat <span class="pr-requis">*</span></label>
@@ -458,7 +459,8 @@
                             <option value="@EtapeVente.AQualifier" selected>@FormatVente.Libelle(EtapeVente.AQualifier)</option>
                         </select>
                     </div>
-                    <div class="col-12">
+                    @* Véhicules envisagés : démonstration seulement (non enregistrés pour un dossier réel, lot E4). *@
+                    <div class="col-12" data-vehicules-locaux>
                         <label class="form-label" for="o-vehicules">Véhicules envisagés <span class="text-muted fw-normal">(facultatif)</span></label>
                         <input class="form-control" id="o-vehicules" name="vehicules" maxlength="200" placeholder="Séparés par des virgules" />
                     </div>

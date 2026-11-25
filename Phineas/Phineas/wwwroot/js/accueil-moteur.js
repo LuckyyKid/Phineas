@@ -107,7 +107,7 @@
       return '<button type="button" class="' + classe + '" data-realiser-suivi="' + esc(r.opportuniteId) + '" data-raison="' + esc(r.id) + '">Marquer le suivi comme réalisé' + fleche + "</button>";
     }
     if (c.commande === "declarer-contact") {
-      return '<a class="' + classe + '" href="' + esc(P.urlFiche(r.prospectId)) + '" data-declarer-contact="' + esc(r.id) + '">Déclarer le contact dans la fiche' + fleche + "</a>";
+      return '<a class="' + classe + '" href="' + esc(P.urlFiche(r.prospectId, r.opportuniteId)) + '" data-declarer-contact="' + esc(r.id) + '">Déclarer le contact dans la fiche' + fleche + "</a>";
     }
     if (c.commande === "realiser-local") {
       return '<button type="button" class="' + classe + '" data-valider data-raison="' + esc(r.id) + '">' + esc(r.actionProposee) + fleche + "</button>";
@@ -119,7 +119,7 @@
   function htmlPriorite(g, index) {
     var a = g.principale;
     var nom = esc(a.client);
-    if (a.prospectId) nom = '<a class="sv-lien-fiche" href="' + esc(P.urlFiche(a.prospectId)) + '">' + nom + "</a>";
+    if (a.prospectId) nom = '<a class="sv-lien-fiche" href="' + esc(P.urlFiche(a.prospectId, a.opportuniteId)) + '">' + nom + "</a>";
     var retard = estEnRetard(g.echeance) ? ' <span class="ph-tag-retard">En retard</span>' : "";
     var vehicule = a.vehicule ? "<span>" + esc(a.vehicule) + "</span>" : "";
     var commandes = Regles.commandesObligation(g);
